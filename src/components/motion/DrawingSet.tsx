@@ -51,6 +51,29 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
       return () => io.disconnect();
     }
 
+    // A 3D-rotated element is composited into one GPU texture and bilinear-
+    // resampled, softening vector linework + text. So the sheet currently being
+    // read (>= half in view) is held FLAT (de-composited) and stays pixel-crisp;
+    // only sheets entering or leaving carry the HINGE rotation, where the softness
+    // is masked by motion and off-center position.
+    const flat = new Set<Element>();
+    const flatIO = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          const el = e.target as HTMLElement;
+          if (e.isIntersecting && e.intersectionRatio >= 0.45) {
+            flat.add(el);
+            el.style.transform = 'none';
+            el.style.transformStyle = 'flat';
+          } else {
+            flat.delete(el);
+          }
+        });
+      },
+      { threshold: [0, 0.45, 0.9] },
+    );
+    sections.forEach((s) => flatIO.observe(s));
+
     gsap.registerPlugin(ScrollTrigger);
 
     const lenis = new Lenis({ lerp: 0.09, wheelMultiplier: 1 });
@@ -78,17 +101,29 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
         });
       });
 
-      // HINGE — subtle page-turn about the leading edge.
+      // HINGE — subtle page-turn about the leading edge. A 3D-rotated element is
+      // composited into one GPU texture and bilinear-resampled, which softens the
+      // vector linework and text (worse the larger the window). So we rotate ONLY
+      // while a sheet is entering or leaving, and snap it to transform:none through
+      // the central reading band — where the sheet is the one being read, and must
+      // rasterize pixel-crisp. The page-turn survives; the blur does not.
+      const HINGE_START = 1.6;
+      const HINGE_END = -1.4;
       sections.forEach((sec) => {
-        gsap.fromTo(
-          sec,
-          { rotateY: 1.6, transformOrigin: 'left center' },
-          {
-            rotateY: -1.4,
-            ease: 'none',
-            scrollTrigger: { trigger: sec, start: 'top bottom', end: 'bottom top', scrub: true },
+        const el = sec as HTMLElement;
+        el.style.transformOrigin = 'left center';
+        ScrollTrigger.create({
+          trigger: sec,
+          start: 'top bottom',
+          end: 'bottom top',
+          onUpdate: (self) => {
+            // The active (crisp) sheet is owned by flatIO — leave it de-composited.
+            if (flat.has(el)) return;
+            const angle = HINGE_START + (HINGE_END - HINGE_START) * self.progress;
+            el.style.transformStyle = 'preserve-3d';
+            el.style.transform = `rotateY(${angle.toFixed(2)}deg)`;
           },
-        );
+        });
       });
 
       // Overall progress (feeds the 3D camera).
@@ -114,7 +149,13 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
 
     return () => {
       io.disconnect();
+      flatIO.disconnect();
       ctx.revert();
+      // HINGE sets inline transforms directly (not via gsap), so clear them here.
+      sections.forEach((s) => {
+        s.style.transform = '';
+        s.style.transformStyle = '';
+      });
       gsap.ticker.remove(tick);
       lenis.destroy();
       delete (window as unknown as { __lenis?: Lenis }).__lenis;

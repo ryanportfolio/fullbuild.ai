@@ -6,13 +6,6 @@
   perspective-origin: 50% 40%;
 }
 
-.sheetWrap {
-  transform-origin: left center;
-  transform-style: preserve-3d;
-  backface-visibility: hidden;
-  will-change: transform;
-}
-
 /* The WebGL island sits behind the drawing set as a fixed backdrop. */
 .canvasLayer {
   position: fixed;
