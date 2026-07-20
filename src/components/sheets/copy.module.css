@@ -26,10 +26,15 @@
 
 @keyframes masthead-ink {
   from {
+    /* right edge pulled fully in -> word hidden, wipe starts at the left */
     clip-path: inset(0 100% 0 0);
   }
   to {
-    clip-path: inset(0 0 0 0);
+    /* NEGATIVE right inset expands the clip past the border box, so the reveal
+       never cuts the wordmark where it overflows its column (it is one nowrap
+       token and bleeds a little at narrow / zoomed widths). Purely visual —
+       clip-path does not affect layout. */
+    clip-path: inset(0 -100% 0 0);
   }
 }
 
