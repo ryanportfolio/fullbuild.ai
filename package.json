@@ -1,0 +1,11 @@
+{
+  "name": "fullbuild-ai",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "serve": "node scripts/serve.mjs",
+    "test": "node --test",
+    "verify": "node scripts/verify-site.mjs"
+  }
+}

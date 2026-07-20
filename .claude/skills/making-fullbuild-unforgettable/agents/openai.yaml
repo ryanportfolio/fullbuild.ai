@@ -1,0 +1,4 @@
+interface:
+  display_name: "Making fullbuild Unforgettable"
+  short_description: "Forge fullbuild.ai into a memorable portfolio"
+  default_prompt: "Use $making-fullbuild-unforgettable to redesign or audit fullbuild.ai for original art direction, cinematic craft, and recruiter-facing wow."

@@ -1,0 +1,116 @@
+{
+  "brand": {
+    "name": "fullbuild.ai",
+    "tagline": "idea → design → engineering → shipped"
+  },
+  "hero": {
+    "eyebrow": "Independent AI product builder",
+    "title": "From maybe to made.",
+    "lede": "I turn uncertain ideas into complete, working products—design, engineering, and the decisions between them."
+  },
+  "caseStudy": {
+    "id": "00",
+    "title": "The first world is this one.",
+    "status": "engineering",
+    "summary": "fullbuild.ai is being built in public: concept, interface, code, and every consequential decision."
+  },
+  "deployment": {
+    "verified": false,
+    "url": null
+  },
+  "stages": [
+    {
+      "id": "idea",
+      "label": "idea",
+      "index": "01",
+      "artifact": "The confirmed brief: build a portfolio for people hiring complete AI product builders, and make every claim inspectable.",
+      "decision": "Make fullbuild.ai itself the first case study.",
+      "constraint": "No fabricated projects, metrics, testimonials, or experience claims.",
+      "verification": "Confirmed in the project brief and canonical content.",
+      "evidence": ".agents/reference/product/vision.md"
+    },
+    {
+      "id": "design",
+      "label": "design",
+      "index": "02",
+      "artifact": "Three competing worlds, a hard originality test, and one visual system built from the winning direction.",
+      "decision": "Make one impossible seam transform the whole viewport instead of decorating a conventional portfolio.",
+      "constraint": "The new world could not inherit the previous visual vocabulary or hide weak content behind spectacle.",
+      "verification": "The selected direction stays distinct, legible, and complete from desktop to mobile.",
+      "evidence": "docs/specs/2026-07-20-build-seam-design.md"
+    },
+    {
+      "id": "engineering",
+      "label": "engineering",
+      "index": "03",
+      "artifact": "A dependency-free DOM, CSS, and variable-type system with deterministic lifecycle states.",
+      "decision": "Make the seam itself carry navigation, content state, and material transformation.",
+      "constraint": "Complete meaning must survive without JavaScript, pointer input, or motion.",
+      "verification": "Contract tests pass locally; every material state remains semantic without motion.",
+      "evidence": ".agents/reference/engineering/architecture.md"
+    },
+    {
+      "id": "shipped",
+      "label": "shipped",
+      "index": "04",
+      "artifact": "No production artifact is claimed.",
+      "decision": "Keep the final material joint open and the shipment state locked.",
+      "constraint": "No reachable production URL or release evidence exists yet.",
+      "verification": "Production proof pending.",
+      "evidence": ".agents/reference/operations/deployment.md",
+      "locked": true
+    }
+  ],
+  "placeholders": [
+    {
+      "id": "future-product",
+      "index": "01",
+      "kind": "Future product",
+      "title": "Project title pending",
+      "form": "portal",
+      "placeholder": true,
+      "purpose": "A complete product story—from unresolved need to working release.",
+      "missing": "Problem, artifact, and shipment evidence pending."
+    },
+    {
+      "id": "future-research",
+      "index": "02",
+      "kind": "Future research",
+      "title": "Question pending",
+      "form": "fold",
+      "placeholder": true,
+      "purpose": "A research story where sources become a product decision.",
+      "missing": "Question, synthesis, and resulting decision pending."
+    },
+    {
+      "id": "future-experiment",
+      "index": "03",
+      "kind": "Future experiment",
+      "title": "Hypothesis pending",
+      "form": "stack",
+      "placeholder": true,
+      "purpose": "A runnable experiment, including the failure that made it useful.",
+      "missing": "Hypothesis, runnable artifact, and result pending."
+    }
+  ],
+  "principles": [
+    {
+      "title": "One world, four laws",
+      "copy": "The same intent changes behavior as it crosses idea, design, engineering, and shipped."
+    },
+    {
+      "title": "No invented proof",
+      "copy": "Unknown work stays visibly pending. Empty space becomes an honest, authored state."
+    },
+    {
+      "title": "Mobile gets the whole idea",
+      "copy": "The signature, lifecycle, and next move arrive in the first small-screen view."
+    }
+  ],
+  "exit": {
+    "title": "Let’s build the whole thing.",
+    "contact": "Channel pending",
+    "placeholder": true,
+    "note": "Contact details will replace this honest holding state."
+  }
+}
