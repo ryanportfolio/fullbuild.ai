@@ -98,15 +98,37 @@ export default function MastheadPlot({ text }: { text: string }) {
       // it, the shapes would be the wrong width — bail to the plain word rather
       // than ship a mismatch.
       if (!('fontStretch' in mctx)) return bail();
+      mctx.font = `${fontWeight} ${fontSize * dpr}px ${family}`;
+      // MUST set fontStretch AFTER font: the `font` shorthand setter re-parses and
+      // resets font-stretch to normal, so setting it first (then font) silently
+      // rendered the master at normal width — narrower than the h1's expanded
+      // instance — and the handoff drifted.
       (mctx as CanvasRenderingContext2D & { fontStretch: string }).fontStretch =
         'expanded';
-      mctx.font = `${fontWeight} ${fontSize * dpr}px ${family}`;
       mctx.textBaseline = 'alphabetic';
       mctx.fillStyle = color;
+      // The <h1> tightens with letter-spacing: -0.01em; fillText ignores CSS
+      // letter-spacing, so without this the master word is wider than the DOM
+      // word and the handoff visibly reflows (drifts to the right). Match it.
+      if ('letterSpacing' in mctx) {
+        const ls = parseFloat(cs.letterSpacing);
+        (mctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing =
+          `${Number.isFinite(ls) ? ls * dpr : 0}px`;
+      }
       const metrics = mctx.measureText(text);
-      const ascent =
-        metrics.actualBoundingBoxAscent || fontSize * dpr * 0.72;
-      const baseline = ascent + OFFSET_Y * dpr;
+      // Match the DOM baseline exactly, or the crossfade to the real <h1> reads as
+      // a snap. The browser positions glyphs in the LINE BOX using the font's
+      // ascent/descent + half-leading (line-height < 1 here), not the ink box —
+      // so recreate that, rather than using the ink ascent.
+      const lineHpx = parseFloat(cs.lineHeight);
+      const lineBox = (Number.isFinite(lineHpx) ? lineHpx : hCss) * dpr;
+      const fA = metrics.fontBoundingBoxAscent;
+      const fD = metrics.fontBoundingBoxDescent;
+      const baseline =
+        (fA && fD
+          ? (lineBox - (fA + fD)) / 2 + fA
+          : metrics.actualBoundingBoxAscent || fontSize * dpr * 0.72) +
+        OFFSET_Y * dpr;
       mctx.fillText(text, 0, baseline);
 
       // --- quantise ink into grid modules -----------------------------------
@@ -210,15 +232,13 @@ export default function MastheadPlot({ text }: { text: string }) {
         }
 
         if (idx >= modules.length) {
-          // handoff: crossfade the canvas out, the crisp <h1> in
-          h1.style.transition = 'opacity 0.14s linear';
+          // handoff: the full canvas is now pixel-aligned with the real <h1>
+          // (same font, expanded width, baseline, letter-spacing), so swap
+          // instantly — no crossfade, no snap, no opacity dip.
+          h1.style.transition = 'none';
           h1.style.opacity = '1';
-          canvas.style.opacity = '0';
-          window.setTimeout(() => {
-            if (cancelled) return;
-            canvas.style.display = 'none';
-            pen.style.display = 'none';
-          }, 160);
+          canvas.style.display = 'none';
+          pen.style.display = 'none';
           return;
         }
         raf = requestAnimationFrame(frame);

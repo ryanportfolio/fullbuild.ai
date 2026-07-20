@@ -19,11 +19,6 @@
   display: none;
 }
 
-.canvas {
-  /* opacity is driven inline for the handoff crossfade */
-  transition: opacity 0.14s linear;
-}
-
 .pen {
   width: 1px;
   height: 100%;
