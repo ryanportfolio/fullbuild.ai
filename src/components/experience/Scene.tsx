@@ -54,7 +54,7 @@ const STAGGER_SPAN = 0.7; // vertical lag (world units) between first + last mem
 const DAMP_TIME = 0.12;
 const CAM_AZ = (20 * Math.PI) / 180; // axonometric azimuth
 const CAM_TILT = (15 * Math.PI) / 180; // axonometric tilt (sectioned axon)
-const FRAME_MARGIN = 1.45;
+const FRAME_MARGIN = 1.95; // zoom out so the frame is compact and clears the copy
 const UP = new Vector3(0, 1, 0);
 
 // Bloom membership + composer-mount thresholds, measured on the diamond's ACTUAL
@@ -137,6 +137,9 @@ interface Built {
 
 function buildScene(frame: Frame, pal: Palette): Built {
   const group = new Group();
+  // NB: do NOT translate this group to reposition the frame on screen — the pour
+  // clip planes are world-space and would desync from the geometry. Framing/pan is
+  // done on the camera (CameraRig), which keeps world coords (and the cut) intact.
   const disposables: { dispose: () => void }[] = [];
   const track = <T extends { dispose: () => void }>(o: T): T => {
     disposables.push(o);
@@ -325,10 +328,17 @@ function CameraRig({ frame }: { frame: Frame }) {
     if (aspect >= 1) halfW = ext * aspect;
     else halfH = ext / aspect;
 
-    cam.left = -halfW;
-    cam.right = halfW;
-    cam.top = halfH;
-    cam.bottom = -halfH;
+    // Camera-space pan: shift the frustum window so the centred model renders in
+    // the lower part of the sheet (clear of the large heading + lead note), a hair
+    // left-of-centre. Panning the frustum (not the model) keeps world coords — and
+    // the world-space pour clip planes — intact. Scaled by the frustum extent so it
+    // pans a consistent fraction at any viewport size.
+    const panY = 0.34 * halfH; // +down on screen
+    const panX = -0.12 * halfW; // slightly right on screen
+    cam.left = -halfW + panX;
+    cam.right = halfW + panX;
+    cam.top = halfH + panY;
+    cam.bottom = -halfH + panY;
     cam.near = 0.1;
     cam.far = 500;
     cam.zoom = 1;

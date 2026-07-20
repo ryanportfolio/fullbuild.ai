@@ -96,7 +96,11 @@ body {
   background: var(--ground);
   color: var(--ink-graphite);
   font-family: var(--font-body);
-  font-size: 16px;
+  /* Confident editorial scale. The whole type + spacing system is rem/clamp-based,
+     so the root size is the single "zoom" lever: ~23px on desktop reads big and
+     intentional (timid small type is an AI-slop tell), easing down on narrow
+     viewports. Everything scales together like a browser zoom. */
+  font-size: clamp(18px, 0.7vw + 12px, 23px);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;

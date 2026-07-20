@@ -27,18 +27,24 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  // The pour backdrop EMERGES with the pipeline: hidden at idea, faint at design,
-  // present at engineering, full at shipped. Ramp the layer opacity off overall
-  // scroll progress so the 3D never competes with the early sheets' own linework.
+  // The pour backdrop belongs to STATE 04 (its home). Drive the layer opacity off
+  // how centred STATE 04 is in the viewport: it emerges as STATE 04 arrives, is
+  // full while it's read, and fades out both before it (STATE 03's own linework)
+  // and after it (the revision-log appendix) so the 3D never sits behind that copy.
   useEffect(() => {
     const el = canvasRef.current;
     if (!el) return;
-    const apply = (progress: number) => {
-      el.style.opacity = String(smoothstep(0.34, 0.8, progress));
+    const apply = () => {
+      const sec = document.getElementById('state-04');
+      if (!sec) return;
+      const r = sec.getBoundingClientRect();
+      const vh = window.innerHeight || 1;
+      const dist = Math.abs(r.top + r.height / 2 - vh / 2) / vh; // 0 = centred
+      el.style.opacity = String(smoothstep(0.78, 0.06, dist));
     };
-    apply(useWorkingSet.getState().progress);
+    apply();
     return useWorkingSet.subscribe((s, p) => {
-      if (s.progress !== p.progress) apply(s.progress);
+      if (s.progress !== p.progress) apply();
     });
   }, []);
 
