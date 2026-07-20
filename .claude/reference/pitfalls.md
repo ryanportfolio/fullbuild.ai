@@ -71,3 +71,25 @@ Fixes, in order of preference:
 Note: `chrome-devtools emulate` supports `colorScheme` (use it for light/dark
 theme shots) but NOT `prefers-reduced-motion`, so you can't force the static
 reduced-motion path for capture that way.
+
+## Screenshots of a frameloop="demand" WebGL layer capture STALE (2026-07-20)
+
+Symptom: after a state change, `getComputedStyle`/pixel readback of the canvas
+shows the NEW frame, but `chrome-devtools take_screenshot` shows the PREVIOUS
+one (e.g. a diamond that is red in the buffer renders black in the screenshot).
+Cause: CDP `Page.captureScreenshot` grabs the compositor SURFACE, and an R3F
+`frameloop="demand"` canvas only commits a new surface when it actually renders;
+after an on-demand render the compositor copy can lag. `preserveDrawingBuffer`
+lets `canvas.drawImage`/readback see the true latest buffer, but does NOT fix the
+screenshot.
+
+Fixes:
+1. Force a fresh compositor commit right before capture by nudging the canvas
+   layer: `layer.style.opacity = '0.985'` (any tiny style change works). Reliable
+   and does NOT disturb app state.
+2. Do NOT use `resize_page` for this if you're holding manual store state — a
+   resize fires ScrollTrigger.refresh and overwrites scroll-derived values
+   (e.g. `pour` jumps back to its scroll position).
+3. Authoritative check regardless of the screenshot: read pixels via
+   `ctx.drawImage(canvas,0,0)` + `getImageData` (needs `preserveDrawingBuffer`),
+   or sample store/uniform values directly.

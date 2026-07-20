@@ -18,8 +18,29 @@ import styles from './DrawingSet.module.css';
  * Under prefers-reduced-motion every verb resolves to its finished end-state and
  * only the title-block state tracker runs.
  */
+const smoothstep = (e0: number, e1: number, x: number): number => {
+  const t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0)));
+  return t * t * (3 - 2 * t);
+};
+
 export default function DrawingSet({ children }: { children: ReactNode }) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+
+  // The pour backdrop EMERGES with the pipeline: hidden at idea, faint at design,
+  // present at engineering, full at shipped. Ramp the layer opacity off overall
+  // scroll progress so the 3D never competes with the early sheets' own linework.
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    const apply = (progress: number) => {
+      el.style.opacity = String(smoothstep(0.34, 0.8, progress));
+    };
+    apply(useWorkingSet.getState().progress);
+    return useWorkingSet.subscribe((s, p) => {
+      if (s.progress !== p.progress) apply(s.progress);
+    });
+  }, []);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -92,6 +113,8 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
         freeze: () => gsap.ticker.sleep(),
         thaw: () => gsap.ticker.wake(),
       };
+      // Dev handle for the store — inspect/drive state (e.g. health) when verifying.
+      (window as unknown as { __ws?: typeof useWorkingSet }).__ws = useWorkingSet;
     }
 
     const ctx = gsap.context(() => {
@@ -175,11 +198,17 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <div ref={rootRef} className={styles.set}>
-      <div className={styles.canvasLayer} aria-hidden="true">
+    <>
+      {/* The WebGL backdrop MUST live outside .set: .set has `perspective`, which
+          makes it the containing block for position:fixed descendants, so a fixed
+          canvas nested inside would size to the full document height and scroll
+          with the page instead of staying a viewport-fixed backdrop. */}
+      <div ref={canvasRef} className={styles.canvasLayer} aria-hidden="true">
         <ExperienceIsland />
       </div>
-      {children}
-    </div>
+      <div ref={rootRef} className={styles.set}>
+        {children}
+      </div>
+    </>
   );
 }

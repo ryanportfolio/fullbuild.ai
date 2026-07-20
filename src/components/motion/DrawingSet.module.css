@@ -12,4 +12,7 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  /* Starts hidden; DrawingSet ramps opacity with scroll progress (idea -> shipped)
+     so the backdrop never flashes at full strength before the ramp takes over. */
+  opacity: 0;
 }
