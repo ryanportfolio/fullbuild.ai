@@ -131,9 +131,7 @@ for (const [skillDir, expected] of desired) {
   }
   const actual = fs.readFileSync(adapterPath, "utf8").replaceAll("\r\n", "\n");
   if (actual === expected) continue;
-  if (!generatedAdapter(adapterPath)) {
-    throw new Error(`${adapterPath}: refusing to overwrite a hand-authored Codex skill`);
-  }
+  if (!generatedAdapter(adapterPath)) continue;
   actions.push({ type: "update", skillDir, adapterPath, expected });
 }
 
