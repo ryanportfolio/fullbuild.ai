@@ -16,6 +16,28 @@
   line-height: 0.92;
   font-size: clamp(2.4rem, 7vw, 4.6rem);
   margin-bottom: 1.1rem;
+  /* DRAW, applied to type: the wordmark inks itself left→right on load, like the
+     pen plotter drawing the elevation beside it — not a new verb, and no fade
+     (a fade would read as generic reveal). `both` holds the pre-inked state
+     through the delay so there is never a flash of the full word, then holds the
+     finished word after. Reduced motion drops straight to the finished word. */
+  animation: masthead-ink 0.72s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+}
+
+@keyframes masthead-ink {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .masthead {
+    animation: none;
+    clip-path: none;
+  }
 }
 
 .tagline {
