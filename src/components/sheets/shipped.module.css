@@ -1,0 +1,238 @@
+.sheet {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  padding: var(--sheet-margin);
+}
+
+.frame {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--rule-strong);
+  padding: clamp(1rem, 2.5vw, 2rem);
+  padding-bottom: clamp(3rem, 12vh, 7rem);
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(0.75rem, 2vw, 1.75rem);
+  padding-bottom: 0.85rem;
+  margin-bottom: clamp(1.5rem, 4vh, 3rem);
+  border-bottom: 1px solid var(--rule);
+}
+.stateNo {
+  font-size: 0.7rem;
+  color: var(--ink-witness);
+}
+.stateName {
+  font-size: clamp(0.8rem, 1.6vw, 1rem);
+  color: var(--accent-live);
+}
+.sheetNo {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--ink-witness);
+}
+
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-witness);
+  margin-bottom: 1rem;
+}
+
+.lead {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(1.5rem, 5vw, 4rem);
+  align-items: end;
+  margin-bottom: clamp(1.75rem, 5vh, 3.5rem);
+}
+.pour {
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  line-height: 0.86;
+  font-size: clamp(2.6rem, 9vw, 6rem);
+  /* Graphite, NOT red — a section title is not a live-in-production element.
+     Red is reserved for marks in the ledger that resolve to a real URL. */
+  color: var(--ink-graphite);
+  margin: 0;
+}
+.leadNote {
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 42ch;
+  opacity: 0.9;
+}
+
+/* the ledger of built elements */
+.ledger {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--rule-strong);
+}
+.row {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr) auto;
+  gap: clamp(1rem, 3vw, 2.5rem);
+  align-items: baseline;
+  padding: clamp(1rem, 2.5vh, 1.6rem) 0;
+  border-bottom: 1px solid var(--rule);
+}
+.rowSheet {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-witness);
+}
+.title {
+  font-family: var(--font-display);
+  font-stretch: 112%;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  font-size: clamp(1.3rem, 3.5vw, 2rem);
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  transition: opacity 0.2s var(--ease-draw);
+}
+/* LIVE = revision-red (large text passes 3:1). */
+.title[data-live='true'] {
+  color: var(--accent-live);
+}
+/* DOWN or not-shipped = graphite; red never lies. */
+.title[data-live='false'] {
+  color: var(--ink-graphite);
+}
+.title:hover {
+  opacity: 0.7;
+}
+/* live dot — a filled registration marking a reachable element */
+.dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+.title[data-live='false'] .dot {
+  background: none;
+  border: 1px solid currentColor;
+}
+
+.role {
+  font-size: 0.9rem;
+  opacity: 0.75;
+  margin-top: 0.5rem;
+  max-width: 46ch;
+}
+.stack {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  color: var(--ink-witness);
+  margin-top: 0.5rem;
+}
+
+/* metrics as witness lines */
+.metrics {
+  display: flex;
+  gap: clamp(1rem, 3vw, 2.25rem);
+  text-align: right;
+}
+.metric {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.metricVal {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+.metricVal[data-empty='true']::after {
+  content: '';
+  display: block;
+  width: 2.2rem;
+  margin-left: auto;
+  border-bottom: 1px dashed currentColor;
+  opacity: 0.5;
+}
+.metricLbl {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-witness);
+  margin-top: 0.4rem;
+}
+
+/* Closing detail — anchors the sheet bottom so a short ledger reads as
+   composed, and scopes the falsifiable red rule to the ledger above. */
+.close {
+  margin-top: auto;
+  padding-top: clamp(1.5rem, 4vh, 3rem);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  /* keep clear of the fixed title block in the bottom-right corner */
+  padding-right: var(--title-block-w);
+}
+.scalebar {
+  color: var(--ink-witness);
+  flex: none;
+  width: 16rem;
+  max-width: 42%;
+}
+.scalebar :global(svg) {
+  width: 100%;
+  height: auto;
+}
+.closeNote {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  color: var(--ink-witness);
+  max-width: 34ch;
+  text-align: left;
+}
+.closeNote b {
+  color: var(--ink-graphite);
+  font-weight: 600;
+}
+
+/* honest empty state when no live work exists yet */
+.empty {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--ink-witness);
+  padding: 2rem 0;
+}
+
+@media (max-width: 720px) {
+  .lead {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  .row {
+    grid-template-columns: 3.5rem 1fr;
+  }
+  .metrics {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    text-align: left;
+    margin-top: 0.75rem;
+  }
+  .metricVal[data-empty='true']::after {
+    margin-left: 0;
+  }
+}

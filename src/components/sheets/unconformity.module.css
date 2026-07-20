@@ -1,0 +1,149 @@
+.sheet {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  padding: var(--sheet-margin);
+}
+.frame {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--rule-strong);
+  padding: clamp(1rem, 2.5vw, 2rem);
+  padding-bottom: clamp(3rem, 12vh, 7rem);
+}
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(0.75rem, 2vw, 1.75rem);
+  padding-bottom: 0.85rem;
+  margin-bottom: clamp(1.5rem, 4vh, 2.5rem);
+  border-bottom: 1px solid var(--rule);
+}
+.stateNo {
+  font-size: 0.7rem;
+  color: var(--ink-witness);
+}
+.stateName {
+  font-size: clamp(0.8rem, 1.6vw, 1rem);
+}
+.sheetNo {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--ink-witness);
+}
+
+.body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1.3fr 0.7fr;
+  gap: clamp(1.5rem, 5vw, 4rem);
+  align-content: center;
+}
+
+.heading {
+  font-family: var(--font-display);
+  font-stretch: 112%;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: clamp(1.4rem, 3vw, 2.1rem);
+  margin-bottom: 1rem;
+}
+.intro {
+  font-size: 1rem;
+  line-height: 1.65;
+  max-width: 46ch;
+  opacity: 0.9;
+  margin-bottom: 1.75rem;
+}
+
+/* revision table */
+.revTable {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  border-top: 1px solid var(--rule-strong);
+}
+.revRow {
+  display: grid;
+  grid-template-columns: 2rem 1fr 5rem;
+  gap: 1rem;
+  padding: 0.55rem 0.4rem;
+  border-bottom: 1px solid var(--rule);
+  position: relative;
+}
+.revRow[data-current='true'] {
+  outline: 1.5px solid var(--ink-graphite);
+  outline-offset: -1px;
+}
+.revTag {
+  color: var(--ink-witness);
+}
+/* Prose, not a measured fact — set in the lettered (body) face, never mono. */
+.revDesc {
+  font-family: var(--font-body);
+  letter-spacing: 0;
+}
+.revWhen {
+  text-align: right;
+  color: var(--ink-witness);
+}
+.cloudNote {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--ink-witness);
+  margin-top: 0.75rem;
+}
+
+/* field-specimen contact tag */
+.specimen {
+  align-self: center;
+  border: 1px solid var(--rule-strong);
+  padding: 1.1rem 1.25rem;
+}
+.specimenHead {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-witness);
+  padding-bottom: 0.7rem;
+  margin-bottom: 0.85rem;
+  border-bottom: 1px solid var(--rule);
+}
+.fieldRow {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  align-items: baseline;
+}
+.fieldKey {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-witness);
+}
+.fieldVal[data-empty='true']::after {
+  content: '';
+  display: inline-block;
+  width: 100%;
+  min-width: 3rem;
+  border-bottom: 1px dashed currentColor;
+  opacity: 0.5;
+  vertical-align: middle;
+}
+.fieldVal a {
+  border-bottom: 1px solid currentColor;
+}
+
+@media (max-width: 820px) {
+  .body {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}

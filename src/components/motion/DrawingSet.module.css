@@ -1,0 +1,22 @@
+.set {
+  position: relative;
+  z-index: 1;
+  /* HINGE reads as turning a sheet on the table — needs depth. */
+  perspective: 2200px;
+  perspective-origin: 50% 40%;
+}
+
+.sheetWrap {
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+/* The WebGL island sits behind the drawing set as a fixed backdrop. */
+.canvasLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}

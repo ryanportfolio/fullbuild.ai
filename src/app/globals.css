@@ -1,0 +1,155 @@
+/* ============================================================================
+   THE WORKING SET — design tokens.
+   Constraint contract (binding, enforced here):
+   - Four inks, four meanings, never mixed:
+       graphite  = STATE 01 IDEA
+       cyanotype = STATE 02 DESIGN
+       concrete  = STATE 03 ENGINEERING
+       revision-red = STATE 04 SHIPPED / live-in-production ONLY
+   - Two grounds only (vellum / drafting-table). Same inks in both themes;
+     only the ground changes. STATE 02 inverts in dark = true cyanotype negative.
+   - NO gradients. NO backdrop-filter. NO glassmorphism. Depth is earned by
+     linework, real projection, and baked AO — never a blur.
+   - Red is spent on exactly one semantic: live in production right now.
+   ========================================================================= */
+
+:root {
+  /* Inks — identical MEANING across themes; a few rendering values are
+     theme-scoped below purely to hold WCAG contrast. */
+  --ink-graphite: #211f1c;
+  --ink-cyanotype: #1c4a5a;
+  /* concrete darkened on vellum to clear WCAG AA as text (canonical concrete
+     #8c8579 is the dark-theme value); still the SAME "engineering" meaning. */
+  --ink-concrete: #675f52;
+  /* The measured/annotation voice. De-emphasis is a real token, NOT opacity —
+     so composited contrast is knowable. Verified >= 4.5:1 on its ground. */
+  --ink-witness: #5f5a4f;
+
+  /* Revision-red split into two rendering tokens with ONE meaning ("live"):
+     -live  = large text + 3D emissive (passes 3:1 at large sizes / glows)
+     -link  = body-size shipped links (AA >= 4.5:1 on ground) */
+  --accent-live: #cb3a26;
+  --accent-link: #b3301f;
+
+  /* Constants — identical in both themes (used by the cyanotype negative). */
+  --vellum: #e9e3d6;
+  --cyanotype-deep: #124b63; /* blueprint ground for the negative sheet — clearly blue */
+
+  /* Ground + paper structure */
+  --ground: #e9e3d6; /* vellum */
+  --ground-tint: #ded7c7; /* faint tonal block on vellum */
+  --rule: rgba(33, 31, 28, 0.16); /* graphite grid / witness rules on vellum */
+  --rule-strong: rgba(33, 31, 28, 0.34);
+
+  /* Type */
+  --font-display: var(--font-archivo), "Arial Narrow", system-ui, sans-serif;
+  --font-body: var(--font-archivo), system-ui, sans-serif;
+  --font-mono: var(--font-martian), ui-monospace, "SFMono-Regular", monospace;
+
+  /* Motion doctrine — deceleration into rest, no overshoot */
+  --ease-draw: cubic-bezier(0.22, 1, 0.36, 1); /* power2-ish out */
+  --ease-hinge: cubic-bezier(0.65, 0, 0.35, 1); /* inOut for scrubbed turns */
+  --dur-draw: 1.9s;
+
+  /* Fixed drafting scale — driftless */
+  --sheet-margin: clamp(1.25rem, 4vw, 3.5rem);
+  --title-block-w: clamp(15rem, 22vw, 19rem);
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --ink-graphite: #d8d2c4; /* pencil reads as light lettering on the night table */
+  --ink-cyanotype: #6fb7cf; /* legible line-ink when blue is NOT the ground */
+  --ink-concrete: #8c8579; /* passes on the dark table */
+  --accent-live: #ff5138;
+  --accent-link: #ff6a54;
+  --ink-witness: #97907f; /* AA-passing muted voice on the dark table */
+
+  --ground: #14181a; /* night drafting table / blueprint negative */
+  --ground-tint: #1b2023;
+  --rule: rgba(216, 210, 196, 0.14);
+  --rule-strong: rgba(216, 210, 196, 0.3);
+
+  color-scheme: dark;
+}
+
+/* ---- reset ---------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: auto; /* Lenis owns scroll; native smooth is off */
+  /* HINGE rotateY can paint a hair past the edge — never let it scroll sideways. */
+  overflow-x: clip;
+}
+
+html,
+body {
+  min-height: 100%;
+  background: var(--ground);
+  color: var(--ink-graphite);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* Faint drafting grid — real linework, not a gradient. */
+  background-image:
+    linear-gradient(to right, var(--rule) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--rule) 1px, transparent 1px);
+  background-size: 2.25rem 2.25rem;
+  background-position: center top;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+svg {
+  display: block;
+}
+
+::selection {
+  background: var(--accent-live);
+  color: var(--ground);
+}
+
+/* Lettered voice = display; measured voice = mono. Enforced by usage. */
+.u-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.u-label {
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+/* Focus — a drafted registration box, never a glow */
+:focus-visible {
+  outline: 2px solid var(--accent-live);
+  outline-offset: 3px;
+}
+
+/* Reduced motion collapses the set to four finished static sheets. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

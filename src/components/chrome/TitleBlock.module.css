@@ -1,0 +1,121 @@
+.block {
+  position: fixed;
+  right: var(--sheet-margin);
+  bottom: var(--sheet-margin);
+  z-index: 40;
+  width: var(--title-block-w);
+  background: var(--ground);
+  border: 1px solid var(--rule-strong);
+  font-family: var(--font-mono);
+  user-select: none;
+  /* no blur, no shadow-glow — a real title block sits ON the sheet */
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid var(--rule);
+}
+.brand {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+}
+.brand b {
+  font-weight: 700;
+}
+.themeBtn {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: none;
+  border: 1px solid var(--rule-strong);
+  color: inherit;
+  padding: 0.2rem 0.45rem;
+  cursor: pointer;
+}
+.themeBtn:hover {
+  border-color: var(--ink-graphite);
+}
+
+.mid {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0.4rem 0.7rem 0.35rem;
+}
+.sheetLabel {
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-witness);
+}
+.sheetNo {
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.stateName {
+  font-family: var(--font-display);
+  font-stretch: 120%;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.7rem;
+}
+
+.nav {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--rule);
+}
+.navBtn {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  background: none;
+  border: none;
+  border-right: 1px solid var(--rule);
+  color: var(--ink-witness);
+  padding: 0.4rem 0;
+  cursor: pointer;
+  transition: color 0.2s var(--ease-draw);
+}
+.navBtn:last-child {
+  border-right: none;
+}
+.navBtn:hover {
+  color: var(--ink-graphite);
+}
+/* Current sheet marker is graphite, not red — a page indicator is not a
+   live-in-production element, so it never spends the accent. */
+.navBtn[data-active='true'] {
+  color: var(--ink-graphite);
+}
+.navBtn[data-active='true']::after {
+  content: '';
+  display: block;
+  width: 0.9rem;
+  height: 2px;
+  margin: 0.3rem auto 0;
+  background: var(--ink-graphite);
+}
+
+.rev {
+  padding: 0.4rem 0.7rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-witness);
+  display: flex;
+  justify-content: space-between;
+}
+
+@media (max-width: 560px) {
+  .block {
+    width: calc(100vw - 2 * var(--sheet-margin));
+    max-width: 20rem;
+  }
+}
