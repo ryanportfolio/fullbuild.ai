@@ -1,5 +1,6 @@
 import Sheet from './Sheet';
 import { Line, Path, Dim, Registration } from '../drafting/Marks';
+import MastheadPlot from '../motion/MastheadPlot';
 import copy from './copy.module.css';
 
 /**
@@ -17,7 +18,7 @@ export default function SheetElevation() {
       drawing={<Elevation />}
     >
       <p className={copy.eyebrow}>Working drawing set · rev-controlled</p>
-      <h1 className={copy.masthead}>fullbuild.ai</h1>
+      <MastheadPlot text="fullbuild.ai" />
       <p className={copy.tagline}>
         <span className={copy.s1}>idea</span> →{' '}
         <span className={copy.s2}>design</span> →{' '}
