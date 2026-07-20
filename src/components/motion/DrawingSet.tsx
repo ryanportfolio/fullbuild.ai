@@ -83,6 +83,17 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
     gsap.ticker.add(tick);
     gsap.ticker.lagSmoothing(0);
 
+    // Dev-only capture handle. Lenis + GSAP drive rAF continuously, so the page
+    // never idles and CDP Page.captureScreenshot times out. sleep() halts the
+    // ticker (and Lenis, whose raf runs on it) so automated screenshots can grab
+    // a stable frame; wake() resumes cleanly with no reload. Not shipped to prod.
+    if (process.env.NODE_ENV !== 'production') {
+      (window as unknown as { __capture?: { freeze: () => void; thaw: () => void } }).__capture = {
+        freeze: () => gsap.ticker.sleep(),
+        thaw: () => gsap.ticker.wake(),
+      };
+    }
+
     const ctx = gsap.context(() => {
       // DRAW — reveal strokes per sheet in authored order.
       sections.forEach((sec) => {
@@ -159,6 +170,7 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
       gsap.ticker.remove(tick);
       lenis.destroy();
       delete (window as unknown as { __lenis?: Lenis }).__lenis;
+      delete (window as unknown as { __capture?: unknown }).__capture;
     };
   }, []);
 
