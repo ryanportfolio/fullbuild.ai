@@ -15,7 +15,7 @@ export const PHASE_TOKENS = Object.freeze([
     width: 112,
     weight: 680,
     depth: 0.34,
-    scatter: 0.35,
+    scatter: 0.28,
     heat: 0.15,
     silhouette: "blueprint",
   }),

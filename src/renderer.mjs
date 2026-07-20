@@ -71,9 +71,14 @@ export function createArtifactGeometry() {
   const random = createSeededRandom();
   const { positions, triangles } = createBaseSphere(3);
 
+  // Vapor: clumped displacement. Vertices sharing a coarse directional cell
+  // share a puff factor, so connected chunks drift together as soft puffs
+  // instead of each vertex spiking into the crystal-blob cliché.
   const vapor = positions.map(([x, y, z]) => {
-    const puff = 1.25 + random() * 0.55;
-    const wobble = 0.18;
+    const cell = Math.floor(x * 1.5) * 7 + Math.floor(y * 1.5) * 13 + Math.floor(z * 1.5) * 29;
+    const clump = createSeededRandom(SEED + cell);
+    const puff = 1.05 + clump() * 0.3;
+    const wobble = 0.1;
     return [
       x * puff + (random() - 0.5) * wobble,
       y * puff + (random() - 0.5) * wobble,
@@ -81,10 +86,16 @@ export function createArtifactGeometry() {
     ];
   });
 
-  const blueprint = positions.map(([x, y, z], index) => {
-    const plane = index % 3;
+  // Blueprint: dominant-axis snap. Each vertex collapses onto the orthogonal
+  // plane facing its own direction, so triangles form coherent planar facets
+  // with straight creases the wire pass can trace as drafting lines.
+  const blueprint = positions.map(([x, y, z]) => {
+    const ax = Math.abs(x);
+    const ay = Math.abs(y);
+    const az = Math.abs(z);
+    const axis = ax > ay ? (ax > az ? 0 : 2) : (ay > az ? 1 : 2);
     const point = [x * 1.15, y * 1.15, z * 1.15];
-    point[plane] = point[plane] >= 0 ? 0.62 : -0.62;
+    point[axis] = point[axis] >= 0 ? 0.62 : -0.62;
     return point;
   });
 
@@ -96,7 +107,7 @@ export function createArtifactGeometry() {
   const fused = positions.map(([x, y, z]) => {
     const cubeRadius = 0.92 / Math.max(Math.abs(x), Math.abs(y), Math.abs(z));
     const sphereRadius = 0.92;
-    const radius = sphereRadius + (cubeRadius - sphereRadius) * 0.88;
+    const radius = sphereRadius + (cubeRadius - sphereRadius) * 1.0;
     return [x * radius, y * radius, z * radius];
   });
 
@@ -206,9 +217,9 @@ void main() {
 `;
 
 const STATE_LOOKS = Object.freeze([
-  Object.freeze({ base: [0.5, 0.35, 0.9], edge: [0.55, 0.91, 1.0], rim: [0.55, 0.91, 1.0], wire: 0.55, flat: 0.05 }),
-  Object.freeze({ base: [0.95, 0.94, 0.91], edge: [0.2, 0.28, 1.0], rim: [0.2, 0.28, 1.0], wire: 0.95, flat: 0.0 }),
-  Object.freeze({ base: [0.13, 0.13, 0.19], edge: [0.91, 1.0, 0.4], rim: [0.55, 0.91, 1.0], wire: 0.8, flat: 1.0 }),
+  Object.freeze({ base: [0.66, 0.64, 0.78], edge: [0.72, 0.74, 0.86], rim: [0.72, 0.74, 0.86], wire: 0.3, flat: 0.0 }),
+  Object.freeze({ base: [0.95, 0.94, 0.91], edge: [0.2, 0.28, 1.0], rim: [0.2, 0.28, 1.0], wire: 0.95, flat: 0.5 }),
+  Object.freeze({ base: [0.2, 0.21, 0.26], edge: [0.91, 1.0, 0.4], rim: [0.55, 0.91, 1.0], wire: 0.6, flat: 1.0 }),
   Object.freeze({ base: [1.0, 0.42, 0.35], edge: [0.09, 0.08, 0.12], rim: [0.95, 0.94, 0.91], wire: 0.12, flat: 0.25 }),
 ]);
 
@@ -310,9 +321,9 @@ export function createWorkshopRenderer(canvas, { maxDevicePixelRatio = 1.75 } = 
     scatter: 0.02,
     heat: 0.35,
     spin: -0.55,
-    offsetX: 0.62,
-    offsetY: 0.02,
-    scale: 0.62,
+    offsetX: 0.92,
+    offsetY: 0.06,
+    scale: 0.58,
   };
 
   const render = () => {

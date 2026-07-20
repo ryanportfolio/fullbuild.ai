@@ -205,10 +205,15 @@ const fitView = () => {
   const width = window.innerWidth;
   const tier = width <= 760 ? "narrow" : width <= 1080 ? "mid" : "wide";
   const views = {
-    narrow: { free: { offsetX: 0, offsetY: -0.75, scale: 0.35 }, spine: { offsetX: 0, offsetY: 0.42, scale: 0.42 } },
-    mid: { free: { offsetX: 0.15, offsetY: -1.2, scale: 0.4 }, spine: { offsetX: -0.3, offsetY: 0.15, scale: 0.45 } },
-    wide: { free: { offsetX: 0.62, offsetY: 0.02, scale: 0.62 }, spine: { offsetX: -0.55, offsetY: 0, scale: 0.5 } },
+    narrow: { free: { offsetX: 0, offsetY: -1.15, scale: 0.32 }, spine: { offsetX: 0, offsetY: 0.42, scale: 0.42 } },
+    mid: { free: { offsetX: 0.55, offsetY: -1.25, scale: 0.33 }, spine: { offsetX: -0.3, offsetY: 0.15, scale: 0.45 } },
+    wide: { free: { offsetX: 0.92, offsetY: 0.06, scale: 0.58 }, spine: { offsetX: -0.55, offsetY: 0, scale: 0.5 } },
   };
+  // Short landscape viewports squeeze the free band between lede and promise
+  // row; pull the artifact further right and down so spikes clear the text.
+  if (tier === "mid" && window.innerHeight <= 760) {
+    views.mid.free = { offsetX: 0.8, offsetY: -1.45, scale: 0.29 };
+  }
   renderer.set(scrollOwnsTime ? views[tier].spine : views[tier].free);
 };
 
@@ -222,7 +227,7 @@ if (track) {
       ticking = false;
       const rect = track.getBoundingClientRect();
       const viewport = window.innerHeight;
-      const inside = rect.top < viewport * 0.5 && rect.bottom > viewport * 1.0;
+      const inside = rect.top < viewport * 0.5 && rect.bottom > viewport - 2;
       if (inside && !reducedMotion) {
         if (!scrollOwnsTime) {
           scrollOwnsTime = true;
@@ -248,7 +253,7 @@ if (track) {
         document.documentElement.dataset.activePhase = resolvePhase(state.index).id;
         tweenTo(controlTarget);
       }
-      const nearTrack = rect.top < viewport * 0.9 && rect.bottom > viewport;
+      const nearTrack = rect.top < viewport * 0.9 && rect.bottom > viewport - 2;
       const nearArrival = window.scrollY < viewport * 0.6;
       document.documentElement.classList.toggle("workshop-docked", !(nearTrack || nearArrival));
     });

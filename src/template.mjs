@@ -12,11 +12,18 @@ const STAGE_SVGS = {
   shipped: `<svg viewBox="0 0 120 120" role="img" aria-label="Fused: sealed crate"><g class="svg-fused"><rect x="24" y="28" width="72" height="66" rx="10"/><path d="M24 48h72M60 28v66" class="svg-accent"/><rect x="46" y="52" width="28" height="14" rx="3" class="svg-stamp"/></g></svg>`,
 };
 
+const STAGE_MATERIALS = {
+  idea: "vapor — unformed",
+  design: "blueprint — measured planes",
+  engineering: "machine — articulated assembly",
+  shipped: "fused — sealed crate",
+};
+
 const renderStage = (stage, index) => `
     <article class="lifecycle-stage lifecycle-stage--${stage.id}" id="stage-${stage.id}" data-stage-panel="${stage.id}"${stage.locked ? ' data-locked="true"' : ""}>
       <div class="lifecycle-stage__figure" aria-hidden="true">${STAGE_SVGS[stage.id]}</div>
       <div class="lifecycle-stage__heading">
-        <p>t+0${index + 1} / ${stage.locked ? "gate closed" : "manufacture state"}</p>
+        <p>t+0${index + 1} / ${stage.locked ? "gate closed" : "manufacture state"} · ${STAGE_MATERIALS[stage.id]}</p>
         <h3>${escapeHtml(stage.label)}</h3>
       </div>
       <div class="lifecycle-stage__body">
@@ -49,7 +56,7 @@ const renderPlaceholder = (item) => `
     <article class="future-case future-case--${item.form}" data-placeholder-case data-placeholder-form="${item.form}">
       <div class="future-case__object" aria-hidden="true">${PLACEHOLDER_SVGS[item.form]}</div>
       <div class="future-case__copy">
-        <p>${escapeHtml(item.kind)} / ${escapeHtml(item.index)}</p>
+        <p>${escapeHtml(item.kind)}</p>
         <h3>${escapeHtml(item.title)}</h3>
         <p>${escapeHtml(item.purpose)}</p>
         <p class="future-case__missing">${escapeHtml(item.missing)}</p>
@@ -93,7 +100,6 @@ export function renderPage(site) {
         <p class="arrival__lede">${escapeHtml(site.hero.lede)}</p>
       </div>
       <div class="arrival__note" aria-hidden="true">
-        <p>current state — engineering / articulated assembly</p>
         <p>scroll = time. drag the artifact. every vertex seeded, nothing improvised.</p>
       </div>
       <div class="arrival__promise">
@@ -107,7 +113,7 @@ export function renderPage(site) {
     </section>
 
     <section class="case-zero" id="case-00" aria-labelledby="case-title">
-      <div class="case-zero__index" aria-hidden="true"><span>WORK ORDER</span>00</div>
+      <div class="case-zero__index" aria-hidden="true">${escapeHtml(site.caseStudy.id)}</div>
       <div class="case-zero__copy">
         <p class="section-label">Current build / honest evidence</p>
         <h2 id="case-title">${escapeHtml(site.caseStudy.title)}</h2>
@@ -143,7 +149,7 @@ ${site.stages.map(renderStage).join("")}
         <h2 id="principles-title">The house contract.</h2>
       </div>
       <div class="principles__list">
-        ${site.principles.map((item, index) => `<article><span>rule 0${index + 1}</span><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.copy)}</p></article>`).join("")}
+        ${site.principles.map((item) => `<article><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.copy)}</p></article>`).join("")}
       </div>
     </section>
 
