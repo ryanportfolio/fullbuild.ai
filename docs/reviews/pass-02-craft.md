@@ -1,29 +1,25 @@
-# Pass 02 — Craft, typography, and 3D
+# Pass 02 — Craft (Time-Lapse Manufacture)
 
 Date: 2026-07-20
-Renderer: installed Google Chrome through a temporary headless/CDP session
-Viewports: 1440×900, 1024×768, 390×844; state transitions and fallback included
+Renderer: Google Chrome via `node .kimi/shot.mjs`
+Question: composition, typography, motion dramaturgy, palette discipline. Repair by deepening what exists, not by adding elements.
 
-## Accepted defects
+## Evidence
 
-- Lifecycle controls moved the evidence into view while leaving the proof object behind. Desktop evidence now owns a sticky second viewport powered by the same geometry and state machine.
-- Uniform topology lines made Engineering noisy. Geometry now exposes deterministic sparse structural ribs; WebGL separates subdued topology from high-contrast structure and uses a lighter 40×20 inspection mesh.
-- Mobile could break `engineering` mid-word. Small-screen stage titles now preserve whole words at a bounded responsive size.
-- Four oversized evidence panels created unnecessary scan distance. Desktop stage height dropped from 76svh/52rem to 64svh/44rem without removing an artifact, decision, constraint, verification, or source link.
-- System labels were visually recessive. The CSS now enforces a tested 0.62rem minimum and raises primary microtype above that floor.
+- `p2-1280-morph.png` (1280×720, t+1.05): blueprint→machine morph, panel crisp after repair C2-1.
+- `p2-768-arrival-d.png` (768×1024, settled): tablet arrival after repair C2-2 — kicker, h1, full lede, artifact below, promise, console.
+- `final-machine.png` (1440×900, t+2.00): machine state with lemon accent semantics; annotation panel in blueprint voice.
+- `final-arrival.png` (1440×900, settled): arrival composition, palette, and type after all repairs.
 
-## Rejected finding
+## Repairs (deepening, no additions)
 
-The Method anchor was reported as lacking top clearance, but its browser capture retains roughly 160px before the heading. No corrective spacing was added without a reproduced defect.
+- **C2-1 — Washed panels.** Lifecycle annotation panels at 88% milk lost legibility over bright morph states. Deepened to 93% milk; no backdrop filter (prohibited), no new chrome.
+- **C2-2 — Tablet collision.** At 768–1080px the artifact covered the lede. Added a mid view tier to the renderer fit (artifact below the copy at tablet), matching the existing narrow/wide tiers. No layout reflow, no new elements.
 
-## Conceit deepening
+## Accepted as taste trades (not defects)
 
-The sticky workbench makes state changes inspectable beside their evidence. Structural ribs now read as committed topology while the persistent vermilion lineage carries decision accumulation across representations.
+- Scaffold placeholder SVG is the quietest of the three unbuilt-artifact silhouettes.
+- Principles section is deliberately restrained after the spectacle of the spine.
+- Tall viewports leave workshop air above the arrival copy.
 
-## Evidence disposition
-
-Original diagnostics remain under `C:\tmp\fullbuild-pass2\run-20260720\`. Accepted changes require targeted browser rerenders before this pass closes.
-
-## Fix verification
-
-Chrome rerenders under `C:\tmp\fullbuild-pass2-fixed\` and `C:\tmp\fullbuild-pass2-final\` confirm the sticky proof remains visible through a real Idea → Design → Engineering sequence, structural ribs clarify the mesh, mobile Engineering remains whole, and desktop Engineering/Shipped titles no longer split. Computed inspectable microtype now bottoms out at 11.2px. The remaining long-form document height is retained because it represents real evidence rather than decorative whitespace.
+Motion dramaturgy verified: arrival assembly (1,900ms, interruptible), 760ms eased stage morphs, scroll-driven time through the spine, zero ambient loops, zero animation frames at rest.

@@ -8,6 +8,7 @@ test("lifecycle phases have distinct material laws", () => {
   assert.equal(new Set(PHASE_TOKENS.map(({ silhouette }) => silhouette)).size, 4);
   assert.ok(PHASE_TOKENS[0].width > PHASE_TOKENS[2].width);
   assert.ok(PHASE_TOKENS[3].depth > PHASE_TOKENS[0].depth);
+  assert.ok(PHASE_TOKENS[0].scatter > PHASE_TOKENS[3].scatter);
 });
 
 test("phase tokens resolve by id or numeric index", () => {
@@ -25,6 +26,6 @@ test("phase interpolation returns exact endpoints", () => {
 test("phase interpolation remains finite and preserves target identity", () => {
   const midpoint = interpolatePhase("design", "engineering", 0.5);
   assert.equal(midpoint.id, "engineering");
-  assert.equal(midpoint.silhouette, "articulated");
-  for (const key of ["width", "weight", "depth", "seam"]) assert.ok(Number.isFinite(midpoint[key]));
+  assert.equal(midpoint.silhouette, "machine");
+  for (const key of ["width", "weight", "depth", "scatter", "heat"]) assert.ok(Number.isFinite(midpoint[key]));
 });

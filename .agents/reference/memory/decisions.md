@@ -23,3 +23,11 @@ Two consecutive fresh Chrome critique passes must find no material issue across 
 ### 2026-07-20: Build Seam clears local visual acceptance
 
 Two consecutive independent Playwright/Chrome critiques found no material issue at 1440×900, 1280×720, 768×1024, 390×844, or the 720×450 reflow stress case. The locked Shipped explanation, keyboard path, reduced-motion state, pending project worlds, exit, and zero-overflow contract all passed; remaining hero collisions were classified as non-material art-direction pressure. This is local acceptance only—production shipment remains locked until deployment evidence exists.
+
+### 2026-07-20: Time-Lapse Manufacture replaces the Build Seam
+
+The Build Seam test direction failed the swap test (acid-poster neo-brutalist cluster; the seam was a stripe, not a law). The site is now a time-lapse build: scrolling is time, and one seeded raw-WebGL2 artifact (642 vertices, shared topology, fixed seed 20260720) morphs through vapor, blueprint, machine, and sealed-crate states. The rendered layer is enhancement only; semantic DOM, anchor controls, and SVG silhouettes carry full meaning without JavaScript, WebGL, motion, or pointer input. Three named review passes (recruiter, craft, anti-slop resilience) with fresh Chrome evidence are the acceptance gate; two consecutive clean passes were achieved.
+
+### 2026-07-20: Placeholder forms renamed to unbuilt artifacts
+
+Future cases keep their honesty contract but take manufacture-world forms: scaffold (product), blueprint fold (research), parts tray (experiment). Distinct silhouettes, explicit pending chips, no invented claims.

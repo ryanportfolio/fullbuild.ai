@@ -34,18 +34,18 @@
       "label": "design",
       "index": "02",
       "artifact": "Three competing worlds, a hard originality test, and one visual system built from the winning direction.",
-      "decision": "Make one impossible seam transform the whole viewport instead of decorating a conventional portfolio.",
+      "decision": "Turn scrolling into time: one artifact is manufactured through four states as the visitor descends.",
       "constraint": "The new world could not inherit the previous visual vocabulary or hide weak content behind spectacle.",
       "verification": "The selected direction stays distinct, legible, and complete from desktop to mobile.",
-      "evidence": "docs/specs/2026-07-20-build-seam-design.md"
+      "evidence": "docs/specs/2026-07-20-manufacture-design.md"
     },
     {
       "id": "engineering",
       "label": "engineering",
       "index": "03",
-      "artifact": "A dependency-free DOM, CSS, and variable-type system with deterministic lifecycle states.",
-      "decision": "Make the seam itself carry navigation, content state, and material transformation.",
-      "constraint": "Complete meaning must survive without JavaScript, pointer input, or motion.",
+      "artifact": "A dependency-free DOM, CSS, variable-type system, and a raw-WebGL2 artifact with seeded, shared-topology manufacture states.",
+      "decision": "Make one rendered artifact carry arrival, navigation, and proof—as enhancement only, never gating meaning.",
+      "constraint": "Complete meaning must survive without JavaScript, WebGL, pointer input, or motion.",
       "verification": "Contract tests pass locally; every material state remains semantic without motion.",
       "evidence": ".agents/reference/engineering/architecture.md"
     },
@@ -67,7 +67,7 @@
       "index": "01",
       "kind": "Future product",
       "title": "Project title pending",
-      "form": "portal",
+      "form": "scaffold",
       "placeholder": true,
       "purpose": "A complete product story—from unresolved need to working release.",
       "missing": "Problem, artifact, and shipment evidence pending."
@@ -77,7 +77,7 @@
       "index": "02",
       "kind": "Future research",
       "title": "Question pending",
-      "form": "fold",
+      "form": "blueprint",
       "placeholder": true,
       "purpose": "A research story where sources become a product decision.",
       "missing": "Question, synthesis, and resulting decision pending."
@@ -87,7 +87,7 @@
       "index": "03",
       "kind": "Future experiment",
       "title": "Hypothesis pending",
-      "form": "stack",
+      "form": "tray",
       "placeholder": true,
       "purpose": "A runnable experiment, including the failure that made it useful.",
       "missing": "Hypothesis, runnable artifact, and result pending."

@@ -1,43 +1,37 @@
-# Pass 03 — Anti-slop, accessibility, and resilience
+# Pass 03 — Anti-slop, accessibility, and resilience (Time-Lapse Manufacture)
 
 Date: 2026-07-20
-Renderer: Google Chrome 143 through a temporary headless/CDP session
-States: desktop, mobile, explicit fallback, reduced motion, forced colors, keyboard, and no JavaScript
+Renderer: Google Chrome via `node .kimi/shot.mjs` and `.kimi/audit-shot.mjs` (`--nojs`, `--reduced`); interaction checks via live CDP session
+States: desktop, tablet, mobile, no JavaScript, reduced motion, keyboard, shipment gate, idle rest, 200%-equivalent
 
-## Accepted defects
+## Rejection tests (inspection of captured states)
 
-- Public copy claimed a Canvas fallback that did not exist. Product and engineering memory now truthfully name deterministic SVG/DOM fallback only.
-- Lifecycle buttons became inert without JavaScript. The three available states are now native anchors; Shipped is a semantically disabled, focusable lock. JavaScript progressively enhances the same controls with synchronized geometry.
-- The no-JavaScript notice covered evidence. It now occupies normal document flow after the footer.
-- The sticky lifecycle rail used translucent blur. It now uses opaque Carbon with no backdrop filter.
-- `/favicon.ico` created avoidable console noise. The page now declares a purpose-built SVG lifecycle mark at `/assets/favicon.svg`.
+- **Cluster test:** no four-tell cluster in any viewport. Centered-hero + abstract-decoration absent; artifact is load-bearing. Scroll reveal softened (0.6rem, three element kinds) to stay below the fade-up-cascade tell.
+- **Swap test:** the world is bound to `idea → design → engineering → shipped`, Case 00, and the honest gate; an interchangeable agency could not keep the copy.
+- **Decoration test:** remove the artifact and navigation, state, and proof still function (anchors, SVG silhouettes, semantic panels). It encodes state — not garnish.
+- **Silhouette test:** vapor cloud / blueprint planes / faceted machine / sealed crate are distinct at a squint.
+- **Retelling test:** “you scroll and the product gets built; the crate stays locked until deployment is proven.”
+- **Placeholder test:** three unbuilt artifacts (scaffold, blueprint fold, parts tray) with explicit pending chips.
+- **Adjacent-evolution test:** one retained primitive (subject-derived palette). Reinvention threshold met.
+- **Information-device test:** `t+01–t+04` encode real build time; `WORK ORDER 00` is the real case; `BUILD / ENGINEERING` is live state.
 
-## Verified strengths before repair
+## Defects found and fixed
 
-- No horizontal overflow at 1440, 390, or 320 CSS pixels.
-- Keyboard arrow navigation preserved the locked shipment gate and showed focus.
-- Normal and reduced-motion states reached zero animation frames at rest.
-- Explicit fallback and forced colors avoided WebGL.
-- No fabricated deployment, metrics, testimonials, project inventory, or production artifact appeared.
+- Reduced-motion clock overlapped the first stage heading → clock hidden under `prefers-reduced-motion`.
+- Stage figure SVGs lost their 5.5rem sizing and `fill: none` in the stylesheet rewrite → restored; figures now appear exactly in no-JS/reduced contexts and hide when the rendered layer carries the state.
+- Canonical stage copy still narrated the retired Build Seam → `content/site.json` design/engineering decisions rewritten to the manufacture world; evidence link now points at `docs/specs/2026-07-20-manufacture-design.md`.
 
-## Conceit deepening
+## Verified
 
-The favicon now compresses the same four-node decision lineage into the browser chrome. Lifecycle links remain meaningful before enhancement, so the interface itself carries proof instead of merely describing resilience.
+- **No JavaScript:** full story, machine SVG fallback in arrival, anchor controls resolve to static stage panels (`p3-nojs-arrival.png`).
+- **Reduced motion:** discrete stacked states with figure icons; no transitions; canvas never initializes (`p3-reduced-lifecycle-b.png`, `p3-reduced-design-b.png`).
+- **Keyboard:** arrow/Home/End navigation moves focus and state; `aria-current="step"` follows; focus visible.
+- **Shipment gate:** shipped control announces `shipped — production proof pending` in the polite live region, flashes the gated state for 3s, and never activates; `deployment.verified` remains `false`.
+- **Idle rest:** 0 `requestAnimationFrame` calls per second after settling (measured in the live page).
+- **200%-equivalent (720×450):** no horizontal overflow; identity and copy reachable (`p3-zoom200.png`).
+- **Determinism:** fixed seed `20260720`; two geometry builds byte-identical (unit-tested). 642 vertices / 1,280 triangles, inside the 1,400/2,800 budget.
 
-## Evidence disposition
+## Limitations
 
-Original diagnostics remain under `C:\tmp\fullbuild-pass3\`.
-
-## Fix verification
-
-Targeted Chrome rerenders and interactions closed every accepted defect:
-
-- No-JavaScript Design navigation reached `#stage-design`; the Shipped lock remained a focusable non-link and the notice stayed in document flow.
-- Fallback copy names SVG and DOM only; explicit fallback created zero WebGL roots.
-- The stage rail computed to opaque Carbon with no backdrop filter.
-- `/favicon.ico` and `/assets/favicon.svg` both returned `200 image/svg+xml` with no favicon console error.
-- Tab, arrows, Enter, and Space preserved visible focus and the shipment lock; the live region announced `shipped — production proof required`.
-- A 200%-equivalent reflow check showed no horizontal overflow or inspected text clipping.
-- Two fresh 390×844 Chrome processes reported healthy, identical DOM and paint state. A repeated all-black CDP screenshot was isolated to the capture pipeline: a real Chrome window-surface capture from the same page rendered correctly.
-
-Final evidence is under `C:\tmp\fullbuild-pass3-final\`. No application exceptions or remaining contract violations were observed.
+- Forced-colors mode is gated statically (dedicated media block plus the deterministic verifier); no local forced-colors emulator was available for a fresh render.
+- WebGL renders through SwiftShader in headless captures; discrete-GPU frame timing was not measured.

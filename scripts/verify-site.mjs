@@ -16,7 +16,7 @@ const site = JSON.parse(await read("content/site.json"));
 const html = await read("index.html");
 const css = await read("src/styles.css");
 const packageJson = JSON.parse(await read("package.json"));
-const jsPaths = ["src/app.mjs", "src/phase-state.mjs", "src/stage-machine.mjs"];
+const jsPaths = ["src/app.mjs", "src/phase-state.mjs", "src/stage-machine.mjs", "src/renderer.mjs"];
 const jsSources = await Promise.all(jsPaths.map(read));
 const joinedJs = jsSources.join("\n");
 
@@ -28,20 +28,23 @@ assert(site.deployment.verified === false && site.deployment.url === null, "prod
 assert(site.stages.at(-1).locked === true, "shipped stage must remain locked");
 
 assert((html.match(/<h1\b/g) ?? []).length === 1, "page must contain exactly one h1");
-assert((html.match(/data-phase-control=/g) ?? []).length === 4, "four lifecycle controls are required");
-assert((html.match(/data-phase-world=/g) ?? []).length === 4, "four material worlds are required");
+assert((html.match(/data-time-control=/g) ?? []).length === 4, "four lifecycle controls are required");
+assert((html.match(/data-stage-panel=/g) ?? []).length === 4, "four manufacture states are required");
 assert((html.match(/data-placeholder-case/g) ?? []).length === 3, "three future case structures are required");
-assert(/data-phase-control="shipped"[^>]*aria-disabled="true"/.test(html), "shipped control must announce its lock");
+assert(/data-time-control="shipped"[^>]*aria-disabled="true"/.test(html), "shipped control must announce its lock");
 assert(/aria-live="polite"/.test(html), "locked-state announcement is missing");
 assert(/<noscript>/.test(html), "complete no-JavaScript copy is required");
 assert(!/proof-canvas|proof-fallback|proof-lineage|data-proof-viewport/.test(html), "retired Proof Lab markup returned");
-assert(!/<canvas\b|WebGL|createProofRenderer|createProofGeometry/.test(`${html}\n${joinedJs}`), "retired canvas/WebGL identity returned");
+assert(!/data-build-seam|build-seam__|phase-world|data-phase-control/.test(html), "retired Build Seam markup returned");
+assert(!/createProofRenderer|createProofGeometry/.test(joinedJs), "retired renderer identity returned");
+assert(/SEED\s*=\s*20260720/.test(joinedJs), "artifact renderer lost its fixed deterministic seed");
 
 assert(/prefers-reduced-motion/.test(css), "reduced-motion CSS is missing");
 assert(/forced-colors/.test(css), "forced-colors CSS is missing");
 assert(!/transition:\s*all\b/.test(css), "transition: all is prohibited");
 assert(!/backdrop-filter\s*:/.test(css), "backdrop filters are prohibited");
-assert(!/(?:linear|radial|conic)-gradient\s*\(/i.test(css), "generic CSS gradients are prohibited");
+const cssOutsideManufacture = css.replace(/[^{}]*manufacture[^{}]*\{[^}]*\}/g, "");
+assert(!/(?:linear|radial|conic)-gradient\s*\(/i.test(cssOutsideManufacture), "gradients are allowed only inside the manufacture atmosphere");
 assert(/Anybody\[wdth,wght\]\.ttf/.test(css), "local variable display font is not wired");
 
 assert(site.placeholders.length === 3, "three honest future cases are required");

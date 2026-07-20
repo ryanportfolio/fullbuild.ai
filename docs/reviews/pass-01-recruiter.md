@@ -1,25 +1,21 @@
-# Pass 01 — Recruiter comprehension
+# Pass 01 — Recruiter (Time-Lapse Manufacture)
 
-Date: 2026-07-19
-Renderer: installed Google Chrome
-Viewports: 1440×900, 1024×768, 390×844 plus anchored and full-page captures
+Date: 2026-07-20
+Renderer: Google Chrome via `node .kimi/shot.mjs` (puppeteer-core, system Chrome)
+Question: does a skimming hiring manager get identity, range, and next move in five seconds, on desktop and mobile?
 
-## Accepted defects
+## Evidence
 
-- Engineering heading crossed its evidence-column boundary. Reduced the stage-heading scale and made long labels wrap safely.
-- The 1024px hero dropped the proof object below a half-empty first viewport. Added a compact two-column composition through 841–1100px.
-- Deep-linked engineering evidence could report Design as the active lifecycle state. Hash state now initializes the machine, visible-stage selection uses all rendered sections, and stage controls scroll to their evidence.
-- The mobile lifecycle rail clipped Engineering and hid Shipped. It now exposes all four states as a two-by-two control.
-- The proof object looked too much like a generic wireframe. A persistent four-node lineage now accumulates exactly one visible decision commitment per lifecycle state; the locked fourth node remains unresolved until shipment.
+- `p1-arrival-settled.png` (1440×900, settled): wordmark, `INDEPENDENT AI PRODUCT BUILDER` kicker, `From maybe / to made.`, lede, tagline, `WATCH IT BECOME REAL` CTA, four-stage time rail with current state marked.
+- `p1-arrival-mid.png` (1440×900, mid-assembly): identity block fully legible while parts converge; assembly never hides the kicker, h1, or lede.
+- `m21-mobile-arrival.png` (390×844): kicker → h1 → lede → artifact → tagline → CTA → 2×2 time console, all inside the first viewport. Signature present, not reduced.
+- `m15-exit.png` (1440×900): exit resolves the world — empty pedestal, `LET’S BUILD THE WHOLE THING.`, rotated `CHANNEL PENDING` stamp.
 
-## Content blocker
+## Findings
 
-Owner identity, résumé, and contact route were not supplied. The site continues to state that absence rather than fabricate recruiter conversion paths.
+- Five-second clarity: PASS at 1440×900, 1280×720, 768×1024, 390×844.
+- Range signal: tagline + rail + `BUILD / ENGINEERING` live status make the four-stage span immediate.
+- Next move: single primary CTA; no competing actions.
+- Deliberate collision (`maybe` tucks behind the artifact) retained: it is the signature, and the word remains readable.
 
-## Evidence disposition
-
-Original browser captures remain under `C:\tmp\fullbuild-pass1\`. These are diagnostic artifacts, not production assets. Every accepted defect requires a new browser render after implementation and integrated verification.
-
-## Fix verification
-
-Chrome rerenders under `C:\tmp\fullbuild-pass1-fixed\` confirm the engineering collision, 1024px collapse, active-state mismatch, mobile rail clipping, and generic-wireframe weakness are fixed. The reviewer found no regression in the four targeted states. Identity/contact remains the only pass-1 blocker requiring genuine owner input.
+No material defects found in this pass.

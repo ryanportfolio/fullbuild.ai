@@ -17,3 +17,15 @@ Keep dated project-specific symptoms, causes, and fixes here. Split by area and 
 ### 2026-07-20: Browser automation waits on the truthful Shipped lock
 
 **Symptom:** Playwright `locator.click()` waits until timeout on the Shipped phase control. **Cause:** The control correctly exposes `aria-disabled="true"`, which Playwright treats as disabled. **Fix:** Use `dispatchEvent("click")` when auditing the guarded handler, then assert the active phase remains Engineering and the pending-proof feedback becomes visible.
+
+### 2026-07-20: chrome-devtools MCP screenshots time out on this backend
+
+**Symptom:** `take_screenshot` via the MCP browser hangs past 120s or fails with `Page.captureScreenshot timed out`, even with the WebGL canvas hidden and tweens frozen. **Cause:** backend/CDP environment issue, not page rAF loops (the page idles at 0 rAF/sec). **Fix:** capture with `node .kimi/shot.mjs <url> <out.png> [--mobile] [--full] [--wait=N]` (system Chrome via puppeteer-core) and Read the PNG. `.kimi/audit-shot.mjs` adds `--nojs` and `--reduced` (prefers-reduced-motion) flags for resilience states. `window.__capture.freeze()/.thaw()` remains available for live sessions.
+
+### 2026-07-20: View-space +Y points up, not down
+
+**Symptom:** artifact moved the wrong way when tuning mobile/tablet placement. **Cause:** the renderer's view translate uses view space, where positive Y is up. **Fix:** negative `offsetY` lowers the artifact; keep the three fit tiers (narrow/mid/wide) in `fitView()` synchronized with CSS breakpoints.
+
+### 2026-07-20: Copy must be re-truthed after a direction change
+
+**Symptom:** stage panels narrated the retired Build Seam inside the new manufacture world. **Cause:** `content/site.json` decision/evidence strings survived the redesign. **Fix:** treat canonical copy as part of any direction change; the anti-slop pass now includes a copy-vs-world truth check.

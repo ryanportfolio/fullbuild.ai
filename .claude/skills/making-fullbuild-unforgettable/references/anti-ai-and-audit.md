@@ -43,6 +43,7 @@ No single device proves AI authorship. Failure comes from predictable devices ac
 - **Retelling test:** A visitor must describe one unique behavior without naming the technology.
 - **Placeholder test:** Replace all case content with honest placeholders. The composition must remain intentional.
 - **Adjacent-evolution test:** Count inherited palette, type, silhouette, layout, metaphor, object, and motion primitives. Three retained primitives fails a reinvention brief.
+- **Information-device test:** Numbers, indices, eyebrows, dividers, and coordinates must encode real information. `01–04` marks an actual four-stage sequence; a decorative index on a non-sequence is a tell.
 
 ## Browser evidence matrix
 
@@ -78,9 +79,10 @@ Any 0 blocks progress. Any 1 is material. Fix composition and concept before mic
 1. Record screenshot, viewport, state, and exact failure.
 2. Name causal layer: thesis, content, composition, type, motion, rendering, or responsiveness.
 3. Make the smallest change capable of removing the cause. Large conceptual failure permits replacement.
-4. Re-run failed state and neighboring state.
-5. Ask: “What still looks generated, ornamental, repeated, timid, or unexplained?”
-6. Repeat.
+4. Repair by deepening, not accreting: before adding any element, ask whether what is already present can become more of a piece. When a state feels overworked, remove one device and re-score. New elements are the last resort, never the first move.
+5. Re-run failed state and neighboring state.
+6. Ask: “What still looks generated, ornamental, repeated, timid, or unexplained?”
+7. Repeat.
 
 Fresh critique agents must use a browser. Source-only review cannot validate visual quality. If the preferred browser tool is unavailable, use installed Chrome/headless Chrome and visually inspect the screenshots; disclose that substitution.
 

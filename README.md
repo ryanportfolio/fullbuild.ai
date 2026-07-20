@@ -17,10 +17,13 @@ npm run serve
 
 Open the localhost URL printed by `npm run serve`. The build is dependency-free:
 Node.js emits semantic static HTML from `content/site.json`; CSS supplies the
-responsive material world; small ES modules add a guarded lifecycle state machine
-and deterministic phase tokens. Semantic DOM preserves the complete story when
-JavaScript, motion, or pointer input are unavailable. The local Anybody variable
-font is distributed under the SIL Open Font License in `assets/fonts/OFL.txt`.
+responsive workshop; small ES modules add a guarded lifecycle state machine,
+deterministic phase tokens, and a raw-WebGL2 artifact whose seeded,
+shared-topology mesh morphs through the four manufacture states as you scroll.
+The rendered layer only enhances: semantic DOM and inline SVG silhouettes
+preserve the complete story when JavaScript, WebGL, motion, or pointer input
+are unavailable. The local Anybody variable font is distributed under the SIL
+Open Font License in `assets/fonts/OFL.txt`.
 
 ## Verification state
 

@@ -13,6 +13,16 @@ This is a repo-specific synthesis, not a copied third-party skill. Source materi
 | Addy Osmani `frontend-ui-engineering` | 65/100 | baseline accessibility, responsive checks, shallow AI-tell inventory | React/component architecture and generic enterprise defaults |
 | Jezweb `design-loop` | 44/100 | autonomous visual iteration and baton idea | Tailwind/CDN assumptions, multi-page factory behavior, generic vibe mappings |
 
+2026-07-20 refresh (3D/spectacle brief):
+
+| Source | Fit | Keep/adapt | Reject |
+|---|---:|---|---|
+| Anthropic `frontend-design` (re-read) | 93/100 | information-encoding device test; remove-before-adding repair | refreshed AI-default cluster list (already covered, ours stronger) |
+| Anthropic `algorithmic-art` | 45/100 | seeded determinism for generative visuals | p5.js CDN mandate, fixed template, branding |
+| Anthropic `canvas-design` | 35/100 | refine-by-deepening pass | PNG/PDF artifact workflow, font downloads |
+
+Ecosystem finding: no dedicated 3D/WebGL agent skill exists in official or community sources. The spectacle-escalation rules in `art-direction.md` are original synthesis from this repository's own raw-WebGL2 precedent (fixed-geometry renderer with endpoint tests, zero-idle-frame law, SVG/DOM fallback contract).
+
 Result: one mixed generate/apply/audit skill. It keeps domain-derived art direction and executable browser critique, while discarding style catalogs and stack-specific recipes.
 
 ## Award-work observations

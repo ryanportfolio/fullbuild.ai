@@ -25,13 +25,18 @@ Read `references/research-synthesis.md` when challenging a concept, refreshing r
 5. **Design an experience arc.** Specify arrival, first transformation, exploration, proof, payoff, and exit. Give each lifecycle state different visual physics while preserving one lineage. The signature must appear in the first mobile viewport.
 6. **Make placeholders first-class.** Clearly label unknown projects or claims as placeholders. Give them the same compositional care as final content. Never invent clients, metrics, testimonials, awards, employers, or outcomes.
 7. **Build the highest-risk slice.** Implement the signature arrival, one meaningful transformation, and one placeholder proof surface before expanding. Use the existing stack unless the user authorizes dependencies.
-8. **Run the browser loop.** Capture required states, score them, repair the highest-leverage failure, and repeat. Subagents must inspect the actual rendered site; if an in-app browser is unavailable, use installed Chrome and inspect screenshots.
+8. **Run the named iteration passes.** Minimum three, each with fresh real-browser evidence and its own question:
+   - **Pass 1 — Recruiter:** does a skimming hiring manager get identity, range, and next move in five seconds, on desktop and mobile?
+   - **Pass 2 — Craft:** composition, typography, motion dramaturgy, palette discipline; repair by deepening what exists, not by adding elements.
+   - **Pass 3 — Anti-slop resilience:** cluster/swap/decoration/silhouette tests, no-JS and reduced-motion completeness, keyboard, forced colors, placeholder honesty.
+   Record each pass with screenshots, viewport, state, exact failure, and fix. Subagents must inspect the actual rendered site; if an in-app browser is unavailable, use installed Chrome and inspect screenshots.
 9. **Stop by evidence.** Stop only after two consecutive critique passes reveal no material improvement, all experience beats pass on desktop and mobile, and remaining changes would be taste trades or new scope.
 
 ## Hard failures
 
 - Generic centered hero plus abstract decoration.
 - Decorative WebGL, fake terminal, cursor follower, glow, particles, or cards unrelated to meaning.
+- Rendered 3D/canvas layer that gates content or navigation, lacks the SVG/DOM fallback, runs unseeded, or animates at rest.
 - Repeated section formula, slash-label forest, or identical stage silhouettes.
 - Current near-black/vermilion/oversized-grotesk/wireframe cluster reused without a new subject-specific reason.
 - Selected direction retains three or more current primitives—palette, split hero, ruled editorial composition, proof/ledger/press metaphor, micro-label language, or isolated hero object—when the brief asks for reinvention.

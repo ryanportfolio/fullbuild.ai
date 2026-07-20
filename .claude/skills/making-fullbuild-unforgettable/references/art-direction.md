@@ -74,6 +74,20 @@ Use honest labels such as `Future case / 01`, `Proof slot`, or `Project title pe
 
 Vary placeholder forms to prove range. Do not create three identical cards. A product case, research case, and experimental case may share navigation but should not share the same silhouette.
 
+## Spectacle escalation: 3D, shaders, canvas
+
+High-end rendering is permitted when it is the mechanism, never when it is garnish. The decoration test decides: if removing the 3D layer leaves meaning, navigation, and proof intact, the layer is garnish—delete it or make it load-bearing.
+
+When a direction genuinely needs 3D, shaders, or canvas:
+
+1. **Stack discipline.** Prefer raw WebGL2 or 2D canvas; the repo's dependency-free build is a feature. A new runtime dependency (Three.js, GSAP, a loader) requires explicit user authorization before use, and must still respect every contract below.
+2. **Progressive enhancement.** Semantic DOM and the SVG/DOM fallback ship first and carry the full story. The rendered layer adds material richness; it never gates content, navigation, or the shipment lock. No-WebGL, forced-colors, and reduced-motion contexts receive an equivalent discrete experience, not a hole.
+3. **Determinism.** Generative visuals use seeded randomness: same seed, same output, every load. Geometry, particle counts, and simulation parameters are fixed, named, and auditable—not per-frame improvisation. (Precedent: the pre-rebuild renderer ran a fixed 1,225-vertex mesh with endpoint tests.)
+4. **Budgets.** Vertex/triangle counts, texture sizes, and transfer weight are declared up front and enforced by `npm run verify`. The render loop reaches zero animation frames at rest; pointer input affects only the directly manipulated object; no ambient idle loop.
+5. **One rendered world.** A single WebGL/canvas context with one visual law. Multiple unrelated rendered objects read as tech theater.
+
+Spectacle raises the audit bar, it does not lower it: every matrix dimension still must score 3 where required, in a real browser, with the rendered layer active and with it disabled.
+
 ## Implementation sequence
 
 1. Write tests for semantic and truth contracts that the new direction changes.

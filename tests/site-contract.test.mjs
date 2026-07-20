@@ -26,7 +26,7 @@ test("canonical content preserves the exact four-stage promise", () => {
 
 test("future cases are honest, distinct, first-class placeholders", () => {
   assert.equal(site.placeholders.length, 3);
-  assert.deepEqual(site.placeholders.map(({ form }) => form), ["portal", "fold", "stack"]);
+  assert.deepEqual(site.placeholders.map(({ form }) => form), ["scaffold", "blueprint", "tray"]);
 
   for (const item of site.placeholders) {
     assert.equal(item.placeholder, true);
@@ -54,20 +54,21 @@ test("every lifecycle state carries auditable truth", () => {
   assert.equal(shipped.verification, "Production proof pending.");
 });
 
-test("generated HTML contains the complete Build Seam experience", () => {
+test("generated HTML contains the complete Time-Lapse Manufacture experience", () => {
   const html = buildHtml();
 
   assert.doesNotMatch(html, /[ \t]+$/m);
   assert.equal((html.match(/<h1\b/g) ?? []).length, 1);
   assert.match(html, /class="skip-link" href="#main"/);
   assert.match(html, new RegExp(EXPECTED_TAGLINE));
-  assert.match(html, /data-build-seam/);
-  assert.equal((html.match(/data-phase-control=/g) ?? []).length, 4);
-  assert.equal((html.match(/data-phase-world=/g) ?? []).length, 4);
+  assert.match(html, /data-manufacture/);
+  assert.match(html, /data-workshop-canvas/);
+  assert.equal((html.match(/data-time-control=/g) ?? []).length, 4);
+  assert.equal((html.match(/data-stage-panel=/g) ?? []).length, 4);
   assert.equal((html.match(/data-placeholder-case/g) ?? []).length, 3);
-  assert.match(html, /data-placeholder-form="portal"/);
-  assert.match(html, /data-placeholder-form="fold"/);
-  assert.match(html, /data-placeholder-form="stack"/);
+  assert.match(html, /data-placeholder-form="scaffold"/);
+  assert.match(html, /data-placeholder-form="blueprint"/);
+  assert.match(html, /data-placeholder-form="tray"/);
   assert.match(html, /Project title pending/);
   assert.match(html, /Question pending/);
   assert.match(html, /Hypothesis pending/);
@@ -79,7 +80,7 @@ test("generated HTML contains the complete Build Seam experience", () => {
   assert.doesNotMatch(html, /data-deployment-verified="true"/);
 });
 
-test("the stale proof-lab identity is absent", () => {
+test("retired visual identities stay absent", () => {
   const html = buildHtml();
   const css = readFileSync("src/styles.css", "utf8");
 
@@ -87,24 +88,27 @@ test("the stale proof-lab identity is absent", () => {
   assert.doesNotMatch(html, /proof object/i);
   assert.doesNotMatch(html, /Z = distance from maybe/);
   assert.doesNotMatch(css, /\.proof-stage|\.proof-canvas|\.proof-fallback/);
+
+  assert.doesNotMatch(html, /data-build-seam|build-seam__|phase-world|data-phase-control|data-phase-readout/);
+  assert.doesNotMatch(css, /\.build-seam|\.phase-world|\.phase-console|\.phase-readout/);
 });
 
 test("lifecycle controls remain truthful and accessible", () => {
   const html = buildHtml();
   const css = readFileSync("src/styles.css", "utf8");
 
-  assert.equal((html.match(/<button\b[^>]*data-phase-control=/g) ?? []).length, 4);
-  assert.match(html, /data-phase-control="shipped"[^>]*aria-disabled="true"/);
+  assert.equal((html.match(/<a\b[^>]*href="#stage-[^"]*"[^>]*data-time-control=/g) ?? []).length, 3);
+  assert.match(html, /data-time-control="shipped"[^>]*aria-disabled="true"/);
   assert.match(html, /aria-live="polite"/);
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /forced-colors/);
   assert.doesNotMatch(css, /transition:\s*all\b/);
   assert.doesNotMatch(css, /backdrop-filter\s*:/);
-  assert.match(css, /\.is-gated\s+\.phase-readout\s*{[^}]*display:\s*flex/s);
+  assert.match(css, /\.is-gated\s+\.time-readout\s*{[^}]*display:\s*flex/s);
   assert.match(css, /@media\s*\(max-height:\s*600px\)/);
   assert.match(css, /\.skip-link:focus-visible/);
-  assert.match(css, /\.future-case--stack\s+\.future-case__copy/);
-  assert.match(css, /\.lifecycle-stage--engineering\s+\.lifecycle-stage__heading h3\s*{[^}]*font-variation-settings:\s*"wdth" 70/s);
+  assert.match(css, /\.future-case--tray\s+\.future-case__copy/);
+  assert.match(css, /\.lifecycle-stage--engineering\s+\.lifecycle-stage__heading h3\s*{[^}]*font-variation-settings:\s*"wdth" 74/s);
   assert.match(css, /\.lifecycle-stage__heading h3\s*{[^}]*left:\s*auto/s);
   assert.match(css, /\.future-case__copy h3\s*{[^}]*line-height:\s*0\.92/s);
   assert.match(css, /\.exit__wordmark\s*{[^}]*position:\s*relative/s);
