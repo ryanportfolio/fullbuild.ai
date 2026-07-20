@@ -235,4 +235,19 @@
   .metricVal[data-empty='true']::after {
     margin-left: 0;
   }
+  /* The fixed title block is a full-width bottom overlay here, not a corner
+     cartouche — so .close must NOT reserve its width, or the sheet stretches
+     wider than the viewport and the mono lines clip (overflow-x: clip). Stack
+     the closing row and clear the overlay with bottom padding instead. */
+  .close {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+    padding-right: 0;
+    padding-bottom: clamp(9rem, 30vh, 12rem);
+  }
+  .scalebar {
+    width: 100%;
+    max-width: 22rem;
+  }
 }
