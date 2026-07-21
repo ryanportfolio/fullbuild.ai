@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A fullbuild.ai design prototype. A phosphor-dark bench instrument: four channels sweep an idea from broadband noise to a locked waveform.">
+  <meta name="theme-color" content="#0B0C0E">
+  <meta name="color-scheme" content="dark">
+  <title>fullbuild.ai · prototype 03 · burn-in</title>
+  <link rel="icon" href="/prototype/burn-in/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/prototype/burn-in/src/styles.css">
+  <script type="module" src="/prototype/burn-in/src/app.mjs"></script>
+</head>
+<body>
+  <canvas id="gl" data-gl aria-hidden="true"></canvas>
+  <a class="skip-link" href="#main">skip to the work</a>
+
+  <header class="site-header">
+    <a class="wordmark" href="/" aria-label="fullbuild.ai home">fullbuild.ai</a>
+    <nav aria-label="Primary">
+      <a href="#sweep">Channels</a>
+      <a href="#dut">Case 00</a>
+      <a href="#standby">Standby</a>
+      <a href="#calibration">Cal</a>
+      <a href="#transmit">Transmit</a>
+    </nav>
+    <a class="header-proto" href="/prototype">prototype 03</a>
+  </header>
+
+  <main id="main" tabindex="-1">
+
+    <section class="power-on" id="top" aria-labelledby="hero-title">
+      <div class="hero-bezel">
+        <i class="beam-spill" aria-hidden="true"></i>
+        <div class="scope hero-scope" data-scope="hero" data-scope-kind="hero">
+          <svg class="scope-fallback" viewBox="0 0 800 450" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id="age-hero" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#FFB454" stop-opacity="0.18"/>
+                <stop offset="0.55" stop-color="#FFB454" stop-opacity="0.55"/>
+                <stop offset="0.92" stop-color="#FFB454" stop-opacity="0.95"/>
+                <stop offset="1" stop-color="#FFF3DC" stop-opacity="1"/>
+              </linearGradient>
+            </defs>
+            <path d="M20 340 C 90 120, 150 120, 220 225 S 340 400, 400 260 S 480 90, 560 200 S 660 360, 730 210 L 768 150"
+              fill="none" stroke="url(#age-hero)" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="768" cy="150" r="5" fill="#FFF3DC"/>
+          </svg>
+          <h1 id="hero-title" class="hero-tagline"><span>From maybe</span> <span>to made</span></h1>
+        </div>
+        <div class="hero-readouts" aria-hidden="true">
+          <p class="well well--readout">TRIG <b data-readout="trigger">0.50</b></p>
+          <p class="well well--readout">SWEEP <b data-readout="sweep">2.4 ms</b></p>
+          <p class="well well--readout">SIG <b>PROTO 03</b></p>
+        </div>
+      </div>
+
+      <div class="hero-panel">
+        <div class="model-plate" data-plate>
+          <p class="plate-kicker">INDEPENDENT AI PRODUCT BUILDER</p>
+          <p class="plate-model">MODEL <b>BURN-IN</b> <span class="plate-rev">PROTO 03</span></p>
+        </div>
+        <p class="lede">I turn <em class="w-uncertain">uncertain</em> ideas into <strong class="w-working">working products</strong>: design, engineering, and the decisions between them.</p>
+        <div class="knob-rack" role="group" aria-label="Beam controls">
+          <div class="knob-unit">
+            <div class="knob" data-knob="trigger" role="slider" tabindex="0" aria-label="Trigger level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-orientation="horizontal">
+              <i class="knob-cap" aria-hidden="true"></i>
+            </div>
+            <p class="knob-label">TRIGGER</p>
+          </div>
+          <div class="knob-unit">
+            <div class="knob" data-knob="sweep" role="slider" tabindex="0" aria-label="Sweep timebase" aria-valuemin="0" aria-valuemax="100" aria-valuenow="40" aria-orientation="horizontal">
+              <i class="knob-cap" aria-hidden="true"></i>
+            </div>
+            <p class="knob-label">SWEEP</p>
+          </div>
+        </div>
+        <p class="hero-hint" aria-hidden="true">scroll runs the sweep · knobs steer the beam</p>
+      </div>
+    </section>
+
+    <section class="sweep" id="sweep" aria-labelledby="sweep-title">
+      <div class="sweep-intro">
+        <p class="section-label">SWEEP</p>
+        <h2 id="sweep-title">Four channels, one build</h2>
+        <p class="section-body">Scroll is the sweep control. Each channel resolves as it crosses center.</p>
+      </div>
+
+      <article class="channel channel--idea" id="ch1" aria-labelledby="ch1-title">
+        <div class="channel-head">
+          <p class="ch-id" aria-hidden="true">CH1</p>
+          <h3 id="ch1-title">IDEA</h3>
+          <span class="led" data-led="ch-idea" aria-hidden="true"></span>
+        </div>
+        <div class="scope channel-scope" data-scope="ch-idea" data-scope-kind="channel" data-wave="noise">
+          <svg class="scope-fallback" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id="age-idea" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#FFB454" stop-opacity="0.3"/>
+                <stop offset="1" stop-color="#FFB454" stop-opacity="0.95"/>
+              </linearGradient>
+            </defs>
+            <polyline fill="none" stroke="url(#age-idea)" stroke-width="1.2" points="0,31 3,22 6,38 9,27 12,35 15,18 18,40 21,30 24,24 27,36 30,29 33,15 36,44 39,31 42,26 45,34 48,30 52,24 56,18 60,24 64,36 68,42 72,36 76,30 79,21 82,39 85,28 88,34 91,23 94,41 97,30 100,26 103,37 106,30 109,17 112,43 115,29 118,33 121,25 124,38 127,30 134,25 138,19 142,25 146,35 150,41 154,35 158,30 161,22 164,38 167,27 170,35 173,24 176,40 179,31 182,26 185,36 188,29 191,34 194,27 197,33 200,30"/>
+          </svg>
+        </div>
+        <div class="channel-meta">
+          <p class="well well--readout">GAIN <b data-readout="gain-idea">12 dB</b></p>
+          <p class="channel-copy">Broadband noise with brief coherent flashes. Every build starts as maybe.</p>
+        </div>
+      </article>
+
+      <article class="channel channel--design" id="ch2" aria-labelledby="ch2-title">
+        <div class="channel-head">
+          <p class="ch-id" aria-hidden="true">CH2</p>
+          <h3 id="ch2-title">DESIGN</h3>
+          <span class="led" data-led="ch-design" aria-hidden="true"></span>
+        </div>
+        <div class="scope channel-scope" data-scope="ch-design" data-scope-kind="channel" data-wave="envelope">
+          <svg class="scope-fallback" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id="age-design" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#FFB454" stop-opacity="0.3"/>
+                <stop offset="1" stop-color="#FFB454" stop-opacity="0.95"/>
+              </linearGradient>
+            </defs>
+            <path fill="none" stroke="url(#age-design)" stroke-width="1.2" d="M0 30 L4 12 8 46 12 20 16 42 20 24 24 38 28 22 32 40 36 26 40 36 44 27 48 34 52 28 56 33 60 29 C 70 12, 80 12, 90 30 S 110 48, 120 30 S 140 12, 150 30 S 170 48, 180 30 S 196 18, 200 30"/>
+          </svg>
+        </div>
+        <div class="channel-meta">
+          <p class="well well--readout">GAIN <b data-readout="gain-design">6 dB</b></p>
+          <p class="channel-copy">Noise converges on a drafted envelope. The shape appears before the certainty does.</p>
+        </div>
+      </article>
+
+      <article class="channel channel--engineering" id="ch3" aria-labelledby="ch3-title">
+        <div class="channel-head">
+          <p class="ch-id" aria-hidden="true">CH3</p>
+          <h3 id="ch3-title">ENGINEERING</h3>
+          <span class="led" data-led="ch-engineering" aria-hidden="true"></span>
+        </div>
+        <div class="scope channel-scope" data-scope="ch-engineering" data-scope-kind="channel" data-wave="square">
+          <svg class="scope-fallback" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id="age-eng" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#FFB454" stop-opacity="0.35"/>
+                <stop offset="1" stop-color="#FFB454" stop-opacity="1"/>
+              </linearGradient>
+            </defs>
+            <path fill="none" stroke="url(#age-eng)" stroke-width="1.4" d="M0 42 H20 V18 H45 V42 H70 V18 H95 V42 H120 V18 H145 V42 H170 V18 H195 V42 H200"/>
+          </svg>
+        </div>
+        <div class="channel-meta">
+          <p class="well well--readout">RISE <b data-readout="rise">3.2 ms</b></p>
+          <p class="channel-copy">Locked square wave. Rise time measured, not promised.</p>
+        </div>
+      </article>
+
+      <article class="channel channel--shipped" id="ch4" aria-labelledby="ch4-title">
+        <div class="channel-head">
+          <p class="ch-id" aria-hidden="true">CH4</p>
+          <h3 id="ch4-title">SHIPPED</h3>
+          <span class="led led--armed" data-led="ch-shipped" aria-hidden="true"></span>
+        </div>
+        <div class="scope channel-scope" data-scope="ch-shipped" data-scope-kind="channel" data-wave="hold">
+          <svg class="scope-fallback" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <line x1="0" y1="30" x2="200" y2="30" stroke="#FF3B2F" stroke-opacity="0.75" stroke-width="1.4" stroke-dasharray="8 6"/>
+          </svg>
+          <span class="stamp" aria-hidden="true">SAFED</span>
+        </div>
+        <div class="channel-meta">
+          <p class="well well--readout well--armed">HOLD <b data-readout="hold">AWAITING PROOF</b></p>
+          <p class="channel-copy">No signal is displayed because none has been measured. The channel arms when production proof exists.</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="dut" id="dut" aria-labelledby="dut-title">
+      <div class="dut-rail">
+        <div class="dut-panel" data-plate>
+          <p class="section-label">CASE 00</p>
+          <h2 id="dut-title">DEVICE UNDER TEST: THIS SITE</h2>
+          <p class="section-body">The first build is this site, built in public.</p>
+          <div class="dut-wells">
+            <p class="well well--field"><span>BRIEF</span><b>portfolio for complete product creation</b></p>
+            <p class="well well--field well--live"><span>STATE</span><b>engineering / local build<i class="cursor" aria-hidden="true"></i></b></p>
+            <p class="well well--field"><span>PROMISE</span><b>one person, no handoff gap</b></p>
+            <p class="well well--field well--live well--armed"><span>SHIP GATE</span><b>opens on production proof<i class="cursor" aria-hidden="true"></i></b></p>
+          </div>
+        </div>
+        <div class="dut-side">
+          <div class="scope dut-scope" data-scope="dut" data-scope-kind="dut">
+            <svg class="scope-fallback" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+              <defs>
+                <linearGradient id="age-dut" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" stop-color="#FFB454" stop-opacity="0.3"/>
+                  <stop offset="1" stop-color="#FFB454" stop-opacity="0.95"/>
+                </linearGradient>
+              </defs>
+              <path fill="none" stroke="url(#age-dut)" stroke-width="1.2" d="M0 29 L4 20 8 40 12 24 16 37 20 21 24 41 28 27 32 34 36 22 40 39 44 28 48 33 52 25 56 36 60 29 64 32 68 26 72 34 76 29 80 31 86 28 C 100 12, 112 48, 126 30 S 152 12, 166 30 S 192 44, 200 30"/>
+            </svg>
+          </div>
+          <p class="dut-caption">the site's own waveform, mid resolve</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="standby" id="standby" aria-labelledby="standby-title">
+      <div class="standby-intro">
+        <p class="section-label">STANDBY QUEUE</p>
+        <h2 id="standby-title">Three bays, powered and waiting</h2>
+        <p class="section-body">Real work slots in without faking a signal.</p>
+      </div>
+      <div class="bays">
+        <article class="bay" aria-labelledby="bay-product-title">
+          <div class="scope bay-scope" data-scope="bay-product" data-scope-kind="bay">
+            <svg class="scope-fallback" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+              <circle cx="8" cy="30" r="2" fill="#FFB454" fill-opacity="0.55"/>
+            </svg>
+            <span class="stencil" aria-hidden="true">NO SIGNAL</span>
+          </div>
+          <div class="bay-meta">
+            <span class="led led--standby" aria-hidden="true"></span>
+            <h3 id="bay-product-title">FUTURE PRODUCT</h3>
+            <p class="bay-copy">A product run from unresolved need to working release.</p>
+          </div>
+        </article>
+        <article class="bay" aria-labelledby="bay-research-title">
+          <div class="scope bay-scope" data-scope="bay-research" data-scope-kind="bay">
+            <svg class="scope-fallback" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+              <circle cx="8" cy="30" r="2" fill="#FFB454" fill-opacity="0.55"/>
+            </svg>
+            <span class="stencil" aria-hidden="true">NO SIGNAL</span>
+          </div>
+          <div class="bay-meta">
+            <span class="led led--standby" aria-hidden="true"></span>
+            <h3 id="bay-research-title">FUTURE RESEARCH</h3>
+            <p class="bay-copy">Research that ends in a product decision.</p>
+          </div>
+        </article>
+        <article class="bay" aria-labelledby="bay-experiment-title">
+          <div class="scope bay-scope" data-scope="bay-experiment" data-scope-kind="bay">
+            <svg class="scope-fallback" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+              <circle cx="8" cy="30" r="2" fill="#FFB454" fill-opacity="0.55"/>
+            </svg>
+            <span class="stencil" aria-hidden="true">NO SIGNAL</span>
+          </div>
+          <div class="bay-meta">
+            <span class="led led--standby" aria-hidden="true"></span>
+            <h3 id="bay-experiment-title">FUTURE EXPERIMENT</h3>
+            <p class="bay-copy">An experiment, failure included.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="calibration" id="calibration" aria-labelledby="cal-title">
+      <div class="cal-plate" data-plate>
+        <p class="section-label">CALIBRATION</p>
+        <h2 id="cal-title">CAL CONSTANTS</h2>
+        <ol class="cal-list">
+          <li>
+            <p class="cal-index" aria-hidden="true">01</p>
+            <h3>ONE INTENT, FOUR BEHAVIORS</h3>
+            <p class="cal-copy">The same intent behaves differently at each state.</p>
+            <p class="cal-stamp"><span class="cal-check" aria-hidden="true">&#10003;</span>LAST VERIFIED 2026-07-21</p>
+          </li>
+          <li>
+            <p class="cal-index" aria-hidden="true">02</p>
+            <h3>NO INVENTED PROOF</h3>
+            <p class="cal-copy">Unbuilt work stays visibly pending.</p>
+            <p class="cal-stamp"><span class="cal-check" aria-hidden="true">&#10003;</span>LAST VERIFIED 2026-07-21</p>
+          </li>
+          <li>
+            <p class="cal-index" aria-hidden="true">03</p>
+            <h3>MOBILE GETS THE WHOLE IDEA</h3>
+            <p class="cal-copy">Everything essential fits the first phone screen.</p>
+            <p class="cal-stamp"><span class="cal-check" aria-hidden="true">&#10003;</span>LAST VERIFIED 2026-07-21</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="transmit" id="transmit" aria-labelledby="transmit-title">
+      <div class="transmit-panel" data-plate>
+        <p class="section-label">TRANSMIT</p>
+        <h2 id="transmit-title">LET&rsquo;S BUILD THE WHOLE THING</h2>
+        <div class="scope transmit-scope" data-scope="transmit" data-scope-kind="channel" data-wave="hold">
+          <svg class="scope-fallback" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <line x1="0" y1="30" x2="200" y2="30" stroke="#FF3B2F" stroke-opacity="0.75" stroke-width="1.4" stroke-dasharray="8 6"/>
+          </svg>
+        </div>
+        <div class="transmit-switch-unit">
+          <div class="transmit-switch" data-transmit role="button" tabindex="0" aria-disabled="true" aria-label="Transmit, safed, contact pending" aria-describedby="transmit-note">
+            <span class="safety-cover" aria-hidden="true"><span class="safety-engraving">CONTACT PENDING</span></span>
+            <i class="switch-body" aria-hidden="true"></i>
+          </div>
+        </div>
+        <p id="transmit-note" class="transmit-note">The transmit switch is safed until a real contact line is wired in. Nothing on this instrument pretends otherwise.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="telemetry" aria-label="Session telemetry">
+    <p class="well well--readout">T+ <b data-telemetry="elapsed">00:00</b></p>
+    <p class="well well--readout">SWEEPS <b data-telemetry="sweeps">0</b></p>
+    <p class="telemetry-tagline" aria-hidden="true">idea → design → engineering → shipped</p>
+    <p class="telemetry-wordmark">fullbuild.ai</p>
+  </footer>
+
+  <script id="site-data" type="application/json">{"brand":{"name":"fullbuild.ai","tagline":"idea → design → engineering → shipped"},"prototype":{"index":"03","name":"Burn-In","model":"BURN-IN"},"hero":{"eyebrow":"Independent AI product builder","title":"From maybe to made","lede":"I turn uncertain ideas into working products: design, engineering, and the decisions between them."},"caseStudy":{"id":"00","title":"Device under test: this site","status":"engineering","summary":"The first build is this site, built in public.","wells":{"brief":"portfolio for complete product creation","state":"engineering / local build","promise":"one person, no handoff gap","shipGate":"opens on production proof"}},"deployment":{"verified":false,"url":null},"channels":[{"id":"ch-idea","label":"IDEA","wave":"noise","copy":"Broadband noise with brief coherent flashes. Every build starts as maybe."},{"id":"ch-design","label":"DESIGN","wave":"envelope","copy":"Noise converges on a drafted envelope. The shape appears before the certainty does."},{"id":"ch-engineering","label":"ENGINEERING","wave":"square","copy":"Locked square wave. Rise time measured, not promised."},{"id":"ch-shipped","label":"SHIPPED","wave":"hold","locked":true,"copy":"No signal is displayed because none has been measured. The channel arms when production proof exists."}],"standby":[{"id":"bay-product","label":"FUTURE PRODUCT","copy":"A product run from unresolved need to working release."},{"id":"bay-research","label":"FUTURE RESEARCH","copy":"Research that ends in a product decision."},{"id":"bay-experiment","label":"FUTURE EXPERIMENT","copy":"An experiment, failure included."}],"principles":[{"title":"One intent, four behaviors","copy":"The same intent behaves differently at each state."},{"title":"No invented proof","copy":"Unbuilt work stays visibly pending."},{"title":"Mobile gets the whole idea","copy":"Everything essential fits the first phone screen."}],"exit":{"title":"Let's build the whole thing","contact":"Contact pending","placeholder":true,"note":"The transmit switch is safed until a real contact line is wired in. Nothing on this instrument pretends otherwise."}}</script>
+  <noscript><p class="noscript-note">Everything reads without JavaScript. The beam only draws the presentation; the measurements above are the content.</p></noscript>
+</body>
+</html>
