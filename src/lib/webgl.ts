@@ -22,11 +22,28 @@ export function canRunExperience(): boolean {
   // Real WebGL context probe.
   try {
     const canvas = document.createElement('canvas');
-    const gl =
-      canvas.getContext('webgl2') ||
+    const gl = (canvas.getContext('webgl2') ||
       canvas.getContext('webgl') ||
-      canvas.getContext('experimental-webgl');
+      canvas.getContext('experimental-webgl')) as
+      | WebGLRenderingContext
+      | WebGL2RenderingContext
+      | null;
     if (!gl) return false;
+
+    // A context that exists but rasterizes on the CPU (SwiftShader, llvmpipe,
+    // Microsoft Basic Render) can't hold the frame budget — the static sheets
+    // are strictly better than a single-digit-fps pour. Fail open when the
+    // extension is masked (privacy builds): an absent string is not evidence
+    // of a software renderer.
+    const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+    if (dbg) {
+      const renderer = String(
+        gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) ?? '',
+      );
+      if (/swiftshader|llvmpipe|software|microsoft basic render/i.test(renderer)) {
+        return false;
+      }
+    }
   } catch {
     return false;
   }

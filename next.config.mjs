@@ -6,6 +6,11 @@ const nextConfig = {
   // CI/verification can build into an isolated dir so a running dev server's
   // .next is never corrupted mid-session (they otherwise share the directory).
   distDir: process.env.NEXT_DIST_DIR || '.next',
+  // Rewrite these barrel imports to direct module paths so the client graph
+  // only carries the entries actually used.
+  experimental: {
+    optimizePackageImports: ['@react-three/drei', '@react-three/postprocessing'],
+  },
   // /prototype pages are static artifacts in public/; map the clean URLs
   // onto their index.html files.
   async rewrites() {

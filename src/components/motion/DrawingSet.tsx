@@ -53,9 +53,14 @@ export default function DrawingSet({
       const exit = smoothstep(0.12, 0.55, s4.getBoundingClientRect().bottom / vh);
       el.style.opacity = String(Math.min(enter, exit));
     };
-    apply();
+    // Runs only while the WebGL island is actually mounted: on fallback devices
+    // the cell is empty and .canvasLayer already sits at opacity 0 in CSS, so
+    // the two getBoundingClientRect calls per scroll tick would be pure
+    // forced-reflow cost with nothing to show.
+    if (useWorkingSet.getState().webglActive) apply();
     return useWorkingSet.subscribe((s, p) => {
-      if (s.progress !== p.progress) apply();
+      if (!s.webglActive) return;
+      if (s.progress !== p.progress || !p.webglActive) apply();
     });
   }, [island]);
 
