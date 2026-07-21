@@ -23,7 +23,7 @@ Invoke the `caveman` skill at **ultra** at session start. Applies to all prose r
 Defaults until configured:
 
 - Inspect logs / run scripts / read code yourself before claiming anything works.
-- Never claim visual/UI verification you didn't actually perform.
+- Never claim visual/UI verification you didn't actually perform. Real visual checks available: `tools/visual/` (Playwright cross-browser + visual-diff + motion capture) and Figma Dev Mode MCP — see `.claude/reference/commands.md`.
 - Can't run the authoritative check → flag the risk plainly, don't claim it passes.
 - When verification must happen elsewhere (CI, deploy, user's machine) → say so and stop.
 
