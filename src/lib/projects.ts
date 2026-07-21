@@ -242,10 +242,27 @@ export const PROJECTS: Project[] = [
     note: 'Free course catalog on working with AI: 18 guides across 5 layers at 3 depth levels, each with objectives, exercises, and self-checks. No accounts, no fees: the whole catalog reads in about 133 minutes.',
   },
   {
+    id: 'kinefractal',
+    sheet: 'S-04.12',
+    title: 'Kine Fractal',
+    href: 'https://kinefractal.com',
+    repo: null, // source is private — the live site is the artifact
+    live: true,
+    role: 'solo build · rules engine, backtest pipeline, site',
+    year: "'26",
+    stack: ['Python', 'TypeScript', 'React', 'Vite'],
+    langs: ['Python', 'TypeScript'],
+    metrics: [
+      { label: 'index funds', value: '3', source: 'about page: SPY · QQQ · IWM, long only, end-of-day' },
+      { label: 'engine', value: 'v4.7', source: 'about page header: "SPY · QQQ · IWM · ENGINE V4.7 · END-OF-DAY · LONG ONLY"' },
+    ],
+    note: 'A rules engine over SPY, QQQ and IWM that buys fear sized to how afraid the market is, trims only into strength, and steps aside when SPY breaks its long-term protection line. End-of-day and long only, no shorts or leverage: a Python engine replays the full price history after every close, publishes plain data files, and every chart on the site benchmarks it against buy-and-hold.',
+  },
+  {
     // The self-referential anchor, drawn last: this drawing set is itself a
     // shipped artifact. Red is earned. Its REV field is the real deployed commit.
     id: 'fullbuild-ai',
-    sheet: 'S-04.12',
+    sheet: 'S-04.13',
     title: 'fullbuild.ai',
     href: 'https://fullbuild.ai',
     repo: null,
