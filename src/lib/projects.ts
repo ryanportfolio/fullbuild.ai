@@ -106,7 +106,7 @@ export const PROJECTS: Project[] = [
       { label: 'runtime deps', value: '0', source: 'package.json' },
       { label: 'commits', value: '112', source: 'GitHub API, commit pagination' },
     ],
-    note: 'Deterministic GEO audit: no LLM in the scoring path, so the same URL always scores the same; per-line evidence down to the exact robots.txt rule that blocks a crawler.',
+    note: 'Deterministic AEO/GEO audit: no LLM in the scoring path. Instructions for your agent to fix.',
   },
   {
     id: 'agentic-audit',
