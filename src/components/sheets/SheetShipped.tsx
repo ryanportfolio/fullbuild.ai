@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 import { PROJECTS } from '@/lib/projects';
 import { useWorkingSet, isUp } from '@/lib/store';
 import { useHealthProbe } from '@/lib/health';
-import PourReport from './PourReport';
 import s from './shipped.module.css';
 
 /* ============================================================================
@@ -131,11 +130,8 @@ export default function SheetShipped() {
             </div>
           </div>
 
-          {/* Band cell — reserved for the R3F pour (the Margin Law); the pour
-              report anchors its foot with the live tally. */}
-          <div className={s.bandCell} aria-hidden="true">
-            <PourReport />
-          </div>
+          {/* Band cell — reserved for the R3F pour (the Margin Law). */}
+          <div className={s.bandCell} aria-hidden="true" />
         </div>
 
         <div className={s.close}>
