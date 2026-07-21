@@ -111,7 +111,7 @@ export const PROJECTS: Project[] = [
   {
     id: 'agentic-audit',
     sheet: 'S-04.4',
-    title: 'Agentic-SDLC Audit',
+    title: 'SDLC Audit',
     href: 'https://audit.corewise.academy/',
     repo: 'https://github.com/ryanportfolio/ryanportfolio',
     live: true,
@@ -169,7 +169,7 @@ export const PROJECTS: Project[] = [
     live: false,
     role: 'solo build · hotkey daemon, model guard, CI release',
     year: "'26",
-    stack: ['Python 3.11', 'faster-whisper', 'CTranslate2', 'PyInstaller'],
+    stack: ['Python 3.11', 'CTranslate2', 'PyInstaller'],
     langs: ['Python'],
     metrics: [
       { label: 'model footprint', value: '~75MB int8', source: 'README: base.en int8, CPU-only real-time' },
@@ -186,7 +186,7 @@ export const PROJECTS: Project[] = [
     live: false,
     role: 'maintainer · derivative of TinyWall 3.5.1',
     year: "'26",
-    stack: ['C#', '.NET 4.8', 'Windows Filtering Platform', 'WiX'],
+    stack: ['C#', '.NET 4.8', 'Windows Filtering Platform'],
     langs: ['C#'],
     metrics: [
       { label: 'installers', value: '3 MSI', source: 'GitHub releases: x64 / arm64 / x86 + SHA-256 manifest' },
