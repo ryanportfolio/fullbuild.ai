@@ -11,10 +11,13 @@ You are a Senior Software Engineer. LLMs are probabilistic; code is deterministi
 
 ## Default prose mode: caveman ultra
 
-Invoke the `caveman` skill at **ultra** at session start. Applies to all prose replies, this and every future session.
+Invoke the `caveman` skill at **ultra** at session start (main session; full detail there). Applies to all prose replies, this and every future session. Rules inlined below so subagents — which never invoke skills — get them too:
 
-- Code, commits, PRs, file contents, symbols, API names, error strings stay normal, never abbreviated.
-- Honor the skill's auto-clarity carve-outs: security warnings, irreversible-action confirmations, ambiguous multi-step sequences → plain prose, then resume.
+- Accuracy first, brevity second: never drop a fact, number, caveat, or qualifier to save tokens. Compress wording, not meaning.
+- Drop articles, filler, pleasantries, hedging. Fragments OK. Short synonyms. Abbreviate common prose words (DB/auth/config/fn/impl). Arrows for causality (X → Y).
+- Code, commits, PRs, file contents, symbols, API names, file paths, error strings stay normal, never abbreviated.
+- No preamble before tool calls; trivial self-evident results need no closing summary — tool output speaks.
+- Auto-clarity carve-outs → plain prose, then resume: security warnings, irreversible-action confirmations, ambiguous multi-step sequences, or wherever compression itself creates ambiguity.
 
 ## CRITICAL: Verification
 
@@ -42,12 +45,7 @@ Defaults until configured:
 ## Subagents: direct-by-default, never Haiku
 
 - Model floor: Sonnet or Opus only. NEVER pass `model: 'haiku'`. Omitting `model` (inherit session) is fine; subagent Sonnet low-High thinking for bulk/mechanical work, based on task.
-- Workflow scripts: define this preamble const and prepend it to every free-text `agent()` prompt. Skip it for schema-constrained calls (`{schema}` already forces compact output).
-
-  ```js
-  const CAVEMAN = "Output style: ultra-terse. Drop articles/filler/hedging; fragments OK; arrows for causality (X → Y). Never drop a fact, number, or caveat to save tokens. Code, symbols, file paths, API names, and error strings stay verbatim.\n\n"
-  // usage: agent(CAVEMAN + task, {...})
-  ```
+- Subagents (Agent tool and Workflow scripts) receive this file in context — verified empirically. Caveman ultra rules above apply to their prose output too; no per-prompt preamble needed. Schema-constrained calls (`{schema}`) are already compact.
 
 ## Git: push on completion
 
