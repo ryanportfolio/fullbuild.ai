@@ -49,7 +49,11 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  font-size: clamp(2.6rem, 7.5vw, 5.2rem);
+  /* WORKFLOWS is one unbreakable word: at 7.5vw its min-content starved the
+     side column's grid track and pushed the contact specimen under the rail
+     (a Margin Law break, load-bearing now that EMAIL is a click target).
+     4.6vw keeps the word inside its 1.3fr column at every two-column width. */
+  font-size: clamp(2.4rem, 4.6vw, 5.2rem);
   margin-bottom: 1rem;
 }
 .intro {
@@ -113,12 +117,16 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  /* Margin Law: the column may never grow past its grid track — long values
+     wrap inside the specimen instead of running under the rail. */
+  min-width: 0;
 }
 
 /* field-specimen contact tag */
 .specimen {
   border: 1px solid var(--rule-strong);
   padding: 1.1rem 1.25rem;
+  min-width: 0;
 }
 .specimenHead {
   font-family: var(--font-mono);
@@ -129,22 +137,31 @@
   padding-bottom: 0.7rem;
   margin-bottom: 0.85rem;
   border-bottom: 1px solid var(--rule);
-  white-space: nowrap;
 }
 .fieldRow {
   display: grid;
-  grid-template-columns: 5.5rem 1fr;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
   gap: 0.75rem;
   padding: 0.5rem 0;
   font-family: var(--font-mono);
   font-size: 0.8rem;
   align-items: baseline;
 }
+/* the email line carries a real address — too long beside its key at this
+   measure, so it letters on its own line under the key, unbroken */
+.fieldStack {
+  grid-template-columns: 1fr;
+  gap: 0.2rem;
+}
 .fieldKey {
   font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--ink-witness);
+}
+.fieldVal {
+  min-width: 0;
+  overflow-wrap: anywhere; /* last-resort wrap: nothing crosses into the rail */
 }
 .fieldVal[data-empty='true']::after {
   content: '';
@@ -157,6 +174,23 @@
 }
 .fieldVal a {
   border-bottom: 1px solid currentColor;
+}
+/* CHECKED BY — still the deliberate null, but now it is the hook: an empty
+   witness line you can click to go countersign the set. */
+.fieldVal a.checkedBy {
+  display: inline-block;
+  width: 100%;
+  min-width: 3rem;
+  border-bottom: 1px dashed currentColor;
+  opacity: 0.5;
+  vertical-align: middle;
+  height: 0.9em;
+  cursor: pointer;
+  transition: opacity 0.2s var(--ease-draw);
+}
+.checkedBy:hover,
+.checkedBy:focus-visible {
+  opacity: 1;
 }
 
 .revGap {
@@ -246,7 +280,9 @@
   text-align: center;
 }
 
-@media (max-width: 820px) {
+/* Two columns need real room for both the ledger and the specimen; below this
+   the side column stacks under the log instead of squeezing toward the rail. */
+@media (max-width: 1100px) {
   .body {
     grid-template-columns: 1fr;
     gap: 2rem;

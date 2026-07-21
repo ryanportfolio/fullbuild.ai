@@ -146,3 +146,31 @@ exceed the whole path and render solid). This also supersedes the autoRound
 entry above: the attr plugin doesn't round, so `autoRound: false` is gone.
 Detection: compare a stroke's painted extent against its geometry (zoomed
 screenshot), or check `getComputedStyle(stroke).strokeDasharray` for px units.
+
+## fr-track min-content overflow crosses the rail (2026-07-21)
+
+Symptom: sheet content (appendix contact specimen) renders under the fixed
+rail (a Margin Law break) and anything clickable there is unreachable
+(Playwright: "aside[data-rail] intercepts pointer events"). Cause: `fr` grid
+tracks have a min-content floor. One unbreakable item (the WORKFLOWS heading at
+7.5vw ≈ 833px, or a nowrap mono line) forces its column wider than the grid,
+and the overflow runs right, under the rail. Fix pattern: size display-scale
+one-word headings to their column (vw coefficient derived from the column's
+share of the measure), `minmax(0, 1fr)` + `min-width: 0` down the chain,
+`overflow-wrap: anywhere` as last resort, collapse to one column earlier.
+Detection: `elementFromPoint` at the element's center, or compare
+`el.getBoundingClientRect().right` against the rail's `left`.
+
+## Playwright harness traps on this site (2026-07-21)
+
+- `document.body.innerText.includes(...)` returns the RENDERED text —
+  `text-transform: uppercase` content fails a mixed-case sentinel check. Use
+  `textContent` for sentinels.
+- Raw `page.mouse.*` coordinates do NOT auto-scroll the target into view
+  (unlike `click`/`fill`). Scroll first via `__lenis.scrollTo(y, { immediate:
+  true })`, then re-read the bounding box.
+- `mailto:hi@fullbuild.ai` matches TWO links (shipped sheet + appendix);
+  scope selectors (`#rev a[href^="mailto:"]`) or strict mode kills the run.
+- Blank areas of an SVG are not hit targets: an interactive svg (the SGN box)
+  needs a transparent `<rect pointerEvents="fill">` catcher or strokes can
+  only start on painted geometry.

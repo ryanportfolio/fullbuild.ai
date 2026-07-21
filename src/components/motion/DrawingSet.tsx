@@ -25,7 +25,14 @@ const smoothstep = (e0: number, e1: number, x: number): number => {
   return t * t * (3 - 2 * t);
 };
 
-export default function DrawingSet({ children }: { children: ReactNode }) {
+export default function DrawingSet({
+  children,
+  island = true,
+}: {
+  children: ReactNode;
+  /** false = no WebGL band (the standalone /contact sheet has no pour). */
+  island?: boolean;
+}) {
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -36,6 +43,7 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
   useEffect(() => {
     const el = canvasRef.current;
     if (!el) return;
+    if (!island) return;
     const apply = () => {
       const s3 = document.getElementById('state-03');
       const s4 = document.getElementById('state-04');
@@ -49,7 +57,7 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
     return useWorkingSet.subscribe((s, p) => {
       if (s.progress !== p.progress) apply();
     });
-  }, []);
+  }, [island]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -206,6 +214,10 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
         gsap.set(strokes, { attr: { 'stroke-dasharray': '1 1', 'stroke-dashoffset': 1 } });
         const ink = inkOf(sec);
         const crewed = Number(sec.dataset.state) === 1;
+        // T-01 TRANSMITTAL is the set's second crewed sheet: the pen works its
+        // form in full view, then hands itself to the visitor's cursor
+        // (SheetTransmittal owns everything after the completion event).
+        const courier = sec.dataset.state === 't01';
         let leader = -1;
         const tl = gsap.timeline({
           // One hand: the crewed cover waits for the wordmark plot to settle
@@ -217,6 +229,10 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
             ? undefined
             : { trigger: sec, start: 'top 78%', once: true },
           onComplete: () => {
+            if (courier) {
+              window.dispatchEvent(new Event('ws:t01-drawn'));
+              return;
+            }
             if (!crewed) return;
             // A late completion (reader already scrolled past the cover) must
             // not resurrect a parked pen — dock only while STATE 01 is current.
@@ -259,7 +275,7 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
                 leader = i;
               },
               onUpdate() {
-                if (crewed && leader === i) penToStroke(el, this.progress(), ink);
+                if ((crewed || courier) && leader === i) penToStroke(el, this.progress(), ink);
               },
               onComplete: () => {
                 // Hand the finished stroke back to its authored presentation:
@@ -425,9 +441,11 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
           makes it the containing block for position:fixed descendants, so a fixed
           canvas nested inside would size to the full document height and scroll
           with the page instead of staying a viewport-fixed backdrop. */}
-      <div ref={canvasRef} className={styles.canvasLayer} aria-hidden="true">
-        <ExperienceIsland />
-      </div>
+      {island ? (
+        <div ref={canvasRef} className={styles.canvasLayer} aria-hidden="true">
+          <ExperienceIsland />
+        </div>
+      ) : null}
       <PenCarriage />
       <div ref={rootRef} className={styles.set}>
         {children}
