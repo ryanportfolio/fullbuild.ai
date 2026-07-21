@@ -30,6 +30,7 @@ import {
   EdgesGeometry,
   Float32BufferAttribute,
   Group,
+  Line,
   LineBasicMaterial,
   LineLoop,
   LineSegments,
@@ -44,8 +45,9 @@ import {
 } from 'three';
 
 import { useWorkingSet } from '@/lib/store';
-import { LIVE_PROJECTS } from '@/lib/projects';
+import { LIVE_PROJECTS, PROJECTS } from '@/lib/projects';
 import { buildFrame, type Frame, type Member } from '@/lib/pour/frame';
+import { buildVines, type Vine } from '@/lib/vines';
 import { PocheMaterial, type PocheColors } from './pour/PocheMaterial';
 
 // --- tuning ----------------------------------------------------------------
@@ -599,6 +601,247 @@ function Pour({
 }
 
 // ---------------------------------------------------------------------------
+// L-101 OVERGROWTH — twelve vines climbing the erected frame.
+//
+// One vine per schedule entry (12), spread across the 8 bents: helices wrap
+// the real columns and continue along rafters / eave girts / the ridge purlin,
+// leaves budding behind the growth tip, a flower closing each path. Growth is
+// a tip-first drawRange reveal driven by scroll progress THROUGH STATE 04
+// (store.grow), staggered per vine, monotonic (the vine only ever adds), with
+// a short catch-up damp so a fast scroll still grows instead of snapping.
+// Graphite linework, depth-tested — wraps genuinely pass behind poured
+// members. The bloom-center dot is the only mark allowed to spend red, gated
+// EXACTLY like the schedule diamonds: live AND probe-passing AND growth past
+// the ignition threshold.
+// ---------------------------------------------------------------------------
+const GROW_WINDOW = 1.35; // stagger window: 3-4 vines mid-growth at once
+const GROW_DAMP = 0.28; // catch-up damp toward the scroll target
+const LEAF_LAG = 0.05; // leaves sprout this far behind the growth tip
+const IGNITE_AT = 0.85; // same growth threshold as the 2D bed's bloom dots
+
+interface VineViz {
+  vine: Vine;
+  stemGeo: BufferGeometry;
+  leafGeo: BufferGeometry;
+  flower: Group;
+  dot: Mesh;
+  dotMat: MeshBasicMaterial;
+  pointCount: number;
+  segCount: number;
+  leafCursor: number;
+  lastStemCount: number;
+}
+
+interface OvergrowthBuilt {
+  group: Group;
+  vines: VineViz[];
+  stemMat: LineBasicMaterial;
+  dispose: () => void;
+}
+
+function buildOvergrowth(vines: Vine[], pal: Palette): OvergrowthBuilt {
+  const group = new Group();
+  group.visible = false;
+  const disposables: { dispose: () => void }[] = [];
+  const track = <T extends { dispose: () => void }>(o: T): T => {
+    disposables.push(o);
+    return o;
+  };
+
+  // One graphite ink for every stem, leaf, and petal — the same drawn voice
+  // as the wireframe. Depth test stays ON (default): the concrete solids
+  // occlude the far side of every wrap.
+  const stemMat = track(new LineBasicMaterial({ color: pal.graphite.clone() }));
+  const dotGeo = track(new OctahedronGeometry(0.07, 0));
+
+  const viz: VineViz[] = vines.map((vine) => {
+    const stemGeo = track(new BufferGeometry());
+    stemGeo.setAttribute('position', new Float32BufferAttribute(vine.points, 3));
+    stemGeo.setDrawRange(0, 0);
+    const stem = new Line(stemGeo, stemMat);
+    stem.frustumCulled = false; // drawRange animates; skip bounds churn
+    group.add(stem);
+
+    const leafGeo = track(new BufferGeometry());
+    leafGeo.setAttribute('position', new Float32BufferAttribute(vine.leafSegs, 3));
+    leafGeo.setDrawRange(0, 0);
+    const leaves = new LineSegments(leafGeo, stemMat);
+    leaves.frustumCulled = false;
+    group.add(leaves);
+
+    // Flower group at the stem's end; scale animates the opening.
+    const flower = new Group();
+    flower.position.set(vine.center[0], vine.center[1], vine.center[2]);
+    flower.visible = false;
+    flower.scale.setScalar(1e-4);
+    const petalGeo = track(new BufferGeometry());
+    petalGeo.setAttribute('position', new Float32BufferAttribute(vine.petalSegs, 3));
+    const petals = new LineSegments(petalGeo, stemMat);
+    petals.frustumCulled = false;
+    flower.add(petals);
+    const dotMat = track(
+      new MeshBasicMaterial({ color: pal.graphite.clone(), toneMapped: false }),
+    );
+    const dot = new Mesh(dotGeo, dotMat);
+    dot.visible = false;
+    flower.add(dot);
+    group.add(flower);
+
+    return {
+      vine,
+      stemGeo,
+      leafGeo,
+      flower,
+      dot,
+      dotMat,
+      pointCount: vine.points.length / 3,
+      segCount: vine.leafSpawn.length,
+      leafCursor: 0,
+      lastStemCount: 0,
+    };
+  });
+
+  return {
+    group,
+    vines: viz,
+    stemMat,
+    dispose: () => {
+      for (const d of disposables) d.dispose();
+      group.clear();
+    },
+  };
+}
+
+function Overgrowth({ frame }: { frame: Frame }) {
+  const { invalidate } = useThree();
+  const paletteRef = useRef<Palette>(readPalette());
+  const vines = useMemo(
+    () =>
+      buildVines(
+        frame,
+        PROJECTS.map((p) => ({ id: p.id, href: p.href, live: p.live })),
+      ),
+    [frame],
+  );
+  const built = useMemo(() => buildOvergrowth(vines, paletteRef.current), [vines]);
+  // Monotonic scroll target + the damped front chasing it.
+  const targetRef = useRef(0);
+  const frontRef = useRef(0);
+  const litColor = useRef(new Color()).current;
+
+  // Wake the demand loop when the growth clock (or anything the vines read)
+  // moves. Same doctrine as Pour: never subscribe to whole-set progress.
+  useEffect(() => {
+    return useWorkingSet.subscribe((s, p) => {
+      if (
+        s.grow !== p.grow ||
+        s.health !== p.health ||
+        s.state !== p.state ||
+        s.pour !== p.pour
+      ) {
+        invalidate();
+      }
+    });
+  }, [invalidate]);
+
+  // Theme: recolor the shared ink on data-theme change (dots recolor per frame).
+  useEffect(() => {
+    const applyTheme = () => {
+      const pal = readPalette();
+      paletteRef.current = pal;
+      built.stemMat.color.copy(pal.graphite);
+      invalidate();
+    };
+    const obs = new MutationObserver(applyTheme);
+    obs.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+    return () => obs.disconnect();
+  }, [built, invalidate]);
+
+  useEffect(() => {
+    // Dev-only handle so automated verification can read the growth front.
+    if (process.env.NODE_ENV !== 'production') {
+      (window as unknown as { __grow?: unknown }).__grow = {
+        front: () => frontRef.current,
+        target: () => targetRef.current,
+      };
+    }
+    return () => {
+      if (process.env.NODE_ENV !== 'production') {
+        delete (window as unknown as { __grow?: unknown }).__grow;
+      }
+      built.dispose();
+    };
+  }, [built]);
+
+  useFrame((_, dt) => {
+    const s = useWorkingSet.getState();
+    // MONOTONIC: the pencil only adds. Scrolling back up never un-grows.
+    if (s.grow > targetRef.current) targetRef.current = s.grow;
+    const target = targetRef.current;
+    // The overgrowth exists only while its structure does — if the reader
+    // scrolls all the way back and the frame strikes, the vines go with it
+    // (growth itself is preserved and returns fully grown).
+    const show = (s.state >= 3 || s.pour > 0) && target > 0.0005;
+    if (built.group.visible !== show) {
+      built.group.visible = show;
+      invalidate();
+    }
+    if (!show) return;
+
+    // FAST-SCROLL CATCH-UP: a jump lands the target far ahead; the front
+    // tweens toward it instead of snapping, so the growth is always seen.
+    const settling = damp(frontRef, 'current', target, GROW_DAMP, dt);
+    const front = frontRef.current;
+    const pal = paletteRef.current;
+    const n = built.vines.length;
+
+    for (let i = 0; i < n; i++) {
+      const v = built.vines[i];
+      // Staggered per-vine growth; vine n-1 reaches 1 exactly at front 1.
+      const g = clamp01((front * (n - 1 + GROW_WINDOW) - i) / GROW_WINDOW);
+
+      // Tip-first stem reveal.
+      const stemCount = g <= 0 ? 0 : Math.max(2, Math.round(g * v.pointCount));
+      if (stemCount !== v.lastStemCount) {
+        v.lastStemCount = stemCount;
+        v.stemGeo.setDrawRange(0, stemCount);
+      }
+
+      // Leaves sprout behind the tip (cursor is monotonic like the growth).
+      const lg = g - LEAF_LAG;
+      while (v.leafCursor < v.segCount && v.vine.leafSpawn[v.leafCursor] <= lg) {
+        v.leafCursor++;
+      }
+      v.leafGeo.setDrawRange(0, v.leafCursor * 2);
+
+      // Flower opens over the last reach of the vine.
+      const open = smoothstep(0.86, 1, g);
+      v.flower.visible = open > 0.001;
+      if (v.flower.visible) v.flower.scale.setScalar(Math.max(open, 1e-4));
+
+      // Bloom-center ignition — the diamonds' exact gate: red ONLY when the
+      // project is live AND the probe passes AND this vine's growth is past
+      // the threshold. Everything else stays graphite. Red never lies.
+      const ignite = smoothstep(IGNITE_AT, IGNITE_AT + 0.1, g);
+      v.dot.visible = ignite > 0.02;
+      const gate =
+        v.vine.live &&
+        (v.vine.href ? s.health[v.vine.href]?.up !== false : false);
+      if (gate) litColor.copy(pal.graphite).lerp(pal.live, ignite);
+      else litColor.copy(pal.graphite);
+      v.dotMat.color.copy(litColor);
+    }
+
+    if (settling) invalidate();
+  });
+
+  return <primitive object={built.group} />;
+}
+
+// ---------------------------------------------------------------------------
 // Scene root — Canvas + fixed camera + pour + gated selective bloom.
 // ---------------------------------------------------------------------------
 export default function Scene() {
@@ -618,6 +861,7 @@ export default function Scene() {
     >
       <CameraRig frame={frame} />
       <Pour frame={frame} onLitChange={setLit} />
+      <Overgrowth frame={frame} />
       {lit && (
         // No `selection` prop: that force-adds every diamond to the bloom layer
         // (and would keep a health-failed keystone glowing at N>=2). Membership

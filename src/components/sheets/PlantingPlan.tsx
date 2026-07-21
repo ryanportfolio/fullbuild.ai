@@ -1,152 +1,35 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
 import { PROJECTS } from '@/lib/projects';
 import { useWorkingSet, isUp } from '@/lib/store';
 import { buildBed, buildTicks, GRADE_Y, VIEW_W, VIEW_H } from '@/lib/flora';
 import s from './planting.module.css';
 
 /* ============================================================================
-   L-101 — PLANTING PLAN. A landscape-series sheet fragment in the shipped
-   sheet's band cell, directly under the poured structure. Twelve flowers —
-   one per schedule entry, keyed 04.1–04.12 — start as plan symbols on the
-   finished-grade line and resolve stroke-by-stroke into drawn elevations in
-   lockstep with the pour waterline igniting their row. Live projects grow an
-   open bloom; repo-only projects a closed bud. Scrolling up never un-grows.
-
-   The server markup IS the finished bloomed bed: strokes carry no dash
-   offsets and the CSS --fg fallback is 1, so no-JS and reduced-motion both
-   get the complete drawing. The effect below only animates.
+   L-101 — PLANTING PLAN, static floor. The finished flowerbed for the
+   reduced-motion / no-WebGL path ONLY: when the R3F island runs, the live
+   overgrowth (vines climbing the poured structure, Scene.tsx) owns the band
+   cell and StaticFloor unmounts this plate. Twelve flowers — one per schedule
+   entry, keyed 04.1–04.12 — stand fully drawn; live projects an open bloom,
+   repo-only a closed bud. No growth driver, no dash state, no hydration
+   flash: the server markup IS the finished end-state and never changes.
    ========================================================================= */
 
 // Module scope: pure + deterministic (seeded PRNG), identical on both runtimes.
 const BED = buildBed(PROJECTS);
 const TICKS = buildTicks();
 
-/* Mirrors Marks.tsx drawProps but with its OWN class — DrawingSet collects
-   ws-draw (per sheet) and ws-scrub (document-wide); ws-grow belongs to this
-   component's growth driver alone. */
-const growProps = (order: number) => ({
-  className: 'ws-grow',
-  pathLength: 1,
-  'data-o': order,
-  vectorEffect: 'non-scaling-stroke' as const,
-});
-
 const DIM_Y = 193;
 
 export default function PlantingPlan() {
   const health = useWorkingSet((st) => st.health);
-  const rootRef = useRef<SVGSVGElement>(null);
-
-  // GROWTH DRIVER. Direct style writes only — no GSAP (sidesteps the
-  // pathLength=1 CSSPlugin autoRound trap), no rAF loop, no ScrollTrigger.
-  // Clock: scroll progress THROUGH the schedule (section top entering the
-  // viewport -> section bottom reaching it), not the store's pour — pour
-  // saturates during the 03->04 reach, long before the reader has scrolled
-  // the schedule, which left the bed pre-bloomed before it entered frame.
-  useEffect(() => {
-    // Reduced motion FIRST, before any stroke is hidden: DrawingSet never
-    // wires the pour trigger under reduce (pour stays 0), so the bed must
-    // stand finished — which the untouched server markup already is.
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    // The plate is display:none below 1024px — don't drive dash writes into a
-    // hidden SVG. (A viewport that later crosses 1024px gets the finished bed,
-    // the same stand-complete fallback every other no-animation path uses.)
-    if (!window.matchMedia('(min-width: 1024px)').matches) return;
-    const root = rootRef.current;
-    if (!root) return;
-
-    const flowers = Array.from(root.querySelectorAll<SVGGElement>(`.${s.flower}`)).map((g) => ({
-      g,
-      strokes: Array.from(g.querySelectorAll<SVGPathElement>('.ws-grow')).sort(
-        (a, b) => Number(a.dataset.o) - Number(b.dataset.o),
-      ),
-    }));
-
-    // Hide immediately (accepted one-frame exposure, same as ws-draw — STAGE
-    // 04 is far below the fold).
-    for (const f of flowers) {
-      for (const el of f.strokes) {
-        el.style.strokeDasharray = '1';
-        el.style.strokeDashoffset = '1';
-      }
-    }
-
-    const n = flowers.length;
-    // Monotonic front — growth is add-only (pencil only adds); seeding from
-    // the current scroll handles mid-page restoration.
-    let front = 0;
-    const tick = () => {
-      for (let i = 0; i < n; i++) {
-        // Staggered window 1.35 keeps 3–4 flowers mid-growth at once AND lets
-        // flower n-1 reach g = 1 exactly at progress 1
-        // ((n - (n-1) + 0.35) / 1.35 = 1).
-        const g = Math.min(1, Math.max(0, (front * n - i + 0.35) / 1.35));
-        const f = flowers[i];
-        f.g.style.setProperty('--fg', g.toFixed(3));
-        const m = f.strokes.length;
-        for (let k = 0; k < m; k++) {
-          const local = Math.min(1, Math.max(0, (g - k / m) * m));
-          const eased = 1 - (1 - local) * (1 - local); // decelerate into rest
-          f.strokes[k].style.strokeDashoffset = String(1 - eased);
-        }
-      }
-    };
-    // Scroll clock: 0 when the schedule's top meets the viewport bottom, 1
-    // when its bottom does — the bed finishes with the last schedule rows.
-    const section = document.getElementById('state-04');
-    let top = 0;
-    let span = 1;
-    const measure = () => {
-      if (!section) return;
-      const r = section.getBoundingClientRect();
-      top = r.top + window.scrollY;
-      span = Math.max(1, r.height);
-    };
-    const progress = () =>
-      Math.min(1, Math.max(0, (window.scrollY + window.innerHeight - top) / span));
-    const onScroll = () => {
-      const p = progress();
-      if (p > front) {
-        front = p;
-        tick();
-      }
-    };
-    const onResize = () => {
-      measure();
-      onScroll();
-    };
-    measure();
-    front = progress();
-    tick();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onResize, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onResize);
-      for (const f of flowers) {
-        f.g.style.removeProperty('--fg');
-        for (const el of f.strokes) {
-          el.style.strokeDasharray = '';
-          el.style.strokeDashoffset = '';
-        }
-      }
-    };
-  }, []);
 
   const first = BED[0];
   const last = BED[BED.length - 1];
 
   return (
-    <svg
-      ref={rootRef}
-      className={s.plate}
-      viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-      aria-hidden="true"
-    >
-      {/* STATIC layer — always drawn, never animated. Concrete = the poured
-          hardscape (engineering ink). */}
+    <svg className={s.plate} viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} aria-hidden="true">
+      {/* STATIC hardscape — concrete (engineering ink). */}
       <g stroke="var(--ink-concrete)" fill="none">
         {/* finished-grade datum + double-line bed edging */}
         <line x1={8} y1={GRADE_Y} x2={352} y2={GRADE_Y} strokeWidth={1.3} />
@@ -192,9 +75,8 @@ export default function PlantingPlan() {
         </text>
       </g>
 
-      {/* GROWTH layer — one group per flower. ws-grow strokes carry NO React
-          style prop: the driver owns their inline dash state, and a health
-          re-render must never clobber it. */}
+      {/* FLORA layer — one finished flower per schedule entry. The bloom-center
+          dot keeps the red contract: live + probe-passing only. */}
       {BED.map((sp, i) => {
         const p = PROJECTS[i];
         const live = p.live && isUp(health, p.href);
@@ -208,7 +90,6 @@ export default function PlantingPlan() {
                 stroke="currentColor"
                 strokeWidth={st.w}
                 strokeLinecap="round"
-                {...growProps(i * 10 + st.k)}
               />
             ))}
             <circle className={s.bloomDot} cx={sp.dot[0]} cy={sp.dot[1]} r={2.2} />

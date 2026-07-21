@@ -55,7 +55,7 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
     const root = rootRef.current;
     if (!root) return;
 
-    const { setState, setProgress, setPour } = useWorkingSet.getState();
+    const { setState, setProgress, setPour, setGrow } = useWorkingSet.getState();
     const sections = Array.from(root.querySelectorAll<HTMLElement>('[data-state]'));
 
     const stateFromAttr = (v: string | null): PipelineState | null => {
@@ -370,6 +370,18 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
               hidePen();
             }
           },
+        });
+
+        // GROWTH — the L-101 overgrowth clock: progress through the WHOLE
+        // shipped sheet (pour saturates a viewport early; the vines climb for
+        // as long as the reader works the schedule). Raw scrubbed value —
+        // monotonicity and the fast-scroll catch-up damp live in the Scene.
+        ScrollTrigger.create({
+          trigger: shipped,
+          start: 'top bottom',
+          end: 'bottom bottom',
+          scrub: true,
+          onUpdate: (self) => setGrow(self.progress),
         });
       }
     }, root);
