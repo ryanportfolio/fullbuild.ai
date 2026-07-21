@@ -1,0 +1,28 @@
+/* Overlay stage for the plotter-assembly reveal. The real <h1> stays in normal
+   flow (layout, a11y, SEO, theme); the canvas + pen ride on top of it and hand
+   off to the crisp text when the plot completes. */
+.wrap {
+  position: relative;
+  display: block;
+}
+
+/* The plot canvas + pen line sit exactly over the wordmark's text box. Hidden by
+   default — the effect turns them on only when it actually starts plotting, so
+   reduced-motion, the pre-font-load await, and any bail leave a clean <h1> with
+   no stray overlay. */
+.canvas,
+.pen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  display: none;
+}
+
+.pen {
+  width: 1px;
+  height: 100%;
+  background: currentColor;
+  transform: translateX(-1px);
+  will-change: transform;
+}

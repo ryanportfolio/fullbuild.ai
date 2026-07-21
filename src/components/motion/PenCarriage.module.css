@@ -1,0 +1,31 @@
+.pen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px; /* target coords = reticle centre */
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nib {
+  width: 100%;
+  height: 100%;
+  color: var(--ink-graphite);
+  transition: color 0.3s var(--ease-draw);
+}
+
+/* Docked: the instrument rests — slightly dimmed, no emphasis. */
+.pen[data-mode='dock'] {
+  opacity: 0.55 !important;
+}
+
+/* Parked off-stage. CSS owns this fade (transition applies on ENTERING the
+   state), and !important guarantees no interrupted tween can strand a ghost
+   carriage mid-page; leaving the state hands opacity back to the JS fade-in. */
+.pen[data-mode='hide'] {
+  opacity: 0 !important;
+  transition: opacity 0.35s var(--ease-draw);
+}

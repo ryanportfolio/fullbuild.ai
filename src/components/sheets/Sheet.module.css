@@ -1,0 +1,141 @@
+.sheet {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  align-items: stretch;
+  padding: var(--sheet-margin);
+  /* HINGE pivots the sheet about its leading edge; the controller sets the
+     angle. Perspective lives on the scroll container. */
+  transform-style: preserve-3d;
+}
+
+.frame {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--rule-strong);
+  padding: clamp(1rem, 2.5vw, 2rem);
+  background: transparent;
+}
+
+/* Below 900px the rail collapses to a bottom overlay — clear it. */
+@media (max-width: 900px) {
+  .frame {
+    padding-bottom: clamp(3rem, 12vh, 7rem);
+  }
+}
+
+/* The design sheet's linework inherits its container color, so one CSS rule
+   flips every mark. LIGHT: deep cyanotype on vellum. */
+.sheet[data-ink='cyanotype'] .drawing :global(svg) {
+  color: var(--ink-cyanotype);
+}
+
+/* A cyanotype is a NEGATIVE on any table: in light mode the drawing figure is
+   a true blueline print pinned INTO the vellum set — deep blue panel, pale
+   linework. (Dark mode inverts the whole sheet below; same concept, night
+   table.) The two grounds still rule the page; the blue is a document ON them. */
+.sheet[data-ink='cyanotype'][data-negative='true'] .drawing {
+  background: var(--cyanotype-deep);
+  padding: clamp(1rem, 2.2vw, 1.9rem);
+  color: var(--vellum);
+}
+.sheet[data-ink='cyanotype'][data-negative='true'] .drawing :global(svg) {
+  color: var(--vellum);
+}
+
+/* STATE 02 in DARK = true cyanotype negative: the deep blue becomes the ground
+   and every line + letter flips to pale vellum. Literal machinery, not a slogan. */
+:root[data-theme='dark'] .sheet[data-ink='cyanotype'][data-negative='true'] .frame {
+  background: var(--cyanotype-deep);
+  border-color: rgba(233, 227, 214, 0.28);
+}
+:root[data-theme='dark'] .sheet[data-ink='cyanotype'][data-negative='true'] .drawing :global(svg) {
+  color: var(--vellum);
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(0.75rem, 2vw, 1.75rem);
+  padding-bottom: 0.85rem;
+  margin-bottom: clamp(1rem, 3vh, 2.5rem);
+  border-bottom: 1px solid var(--rule);
+}
+
+.stateNo {
+  font-size: 0.7rem;
+  color: var(--ink-graphite);
+  opacity: 0.75;
+}
+
+.stateName {
+  font-size: clamp(0.8rem, 1.6vw, 1rem);
+  color: var(--ink-graphite);
+}
+
+.sheetNo {
+  margin-left: auto;
+  font-size: 0.7rem;
+  opacity: 0.6;
+}
+
+.body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: clamp(1.5rem, 5vw, 5rem);
+  align-items: center;
+}
+
+.frame[data-side='right'] .body {
+  grid-template-columns: 0.9fr 1.1fr;
+}
+.frame[data-side='right'] .drawing {
+  order: 2;
+}
+
+.drawing {
+  min-width: 0;
+}
+.drawing :global(svg) {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.copy {
+  min-width: 0;
+  max-width: 44ch;
+}
+
+/* Cyanotype-negative (DARK only) flips lettering to the paper ground for
+   legibility while keeping the SAME meaning (design ink). In LIGHT the sheet is
+   normal cyanotype-on-vellum, so no override. */
+:root[data-theme='dark'] .sheet[data-ink='cyanotype'][data-negative='true'] .stateNo,
+:root[data-theme='dark'] .sheet[data-ink='cyanotype'][data-negative='true'] .stateName,
+:root[data-theme='dark'] .sheet[data-ink='cyanotype'][data-negative='true'] .sheetNo,
+:root[data-theme='dark'] .sheet[data-ink='cyanotype'][data-negative='true'] .copy {
+  color: var(--vellum);
+  /* pale annotation voice on the blueprint ground (keeps AA on deep cyanotype) */
+  --ink-witness: rgba(233, 227, 214, 0.82);
+}
+:root[data-theme='dark'] .sheet[data-ink='cyanotype'][data-negative='true'] .head {
+  border-color: rgba(233, 227, 214, 0.3);
+}
+
+@media (max-width: 860px) {
+  .body,
+  .frame[data-side='right'] .body {
+    grid-template-columns: 1fr;
+    gap: clamp(1.25rem, 5vw, 2rem);
+  }
+  /* Stacked flow leads with the LETTERED voice (wordmark, prose) — the cover
+     program (index, figures) follows. A right-side drawing never jumps the
+     masthead on a narrow sheet. */
+  .frame[data-side='right'] .drawing {
+    order: 2;
+  }
+}

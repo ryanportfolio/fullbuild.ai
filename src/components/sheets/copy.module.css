@@ -1,0 +1,116 @@
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-witness);
+  margin-bottom: 1.1rem;
+}
+
+.masthead {
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-weight: 700;
+  text-transform: lowercase;
+  letter-spacing: -0.01em;
+  line-height: 0.92;
+  /* Sized to its column: the wordmark must never bleed across the border into
+     the cover program (Margin Law applies to type too). */
+  font-size: clamp(2.2rem, 4.6vw, 3.7rem);
+  margin-bottom: 1.1rem;
+}
+
+.tagline {
+  font-family: var(--font-mono);
+  font-size: clamp(0.8rem, 1.5vw, 0.95rem);
+  letter-spacing: 0.02em;
+  line-height: 1.7;
+  margin-bottom: 1.6rem;
+}
+/* The four stage-words each carry their state ink — the tagline is a legend. */
+.tagline b {
+  font-weight: 400;
+}
+.tagline .s1 {
+  color: var(--ink-graphite);
+}
+.tagline .s2 {
+  color: var(--ink-cyanotype);
+}
+.tagline .s3 {
+  color: var(--ink-concrete);
+}
+/* "shipped" stays graphite here: the tagline is a legend, not a probe-verified
+   live element. Red is never spent on a word. */
+.tagline .s4 {
+  color: var(--ink-graphite);
+  font-weight: 600;
+}
+
+.heading {
+  font-family: var(--font-display);
+  font-stretch: 112%;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1.05;
+  font-size: clamp(1.5rem, 3.2vw, 2.3rem);
+  margin-bottom: 1rem;
+}
+
+.prose {
+  font-size: 1rem;
+  line-height: 1.65;
+  max-width: 40ch;
+  opacity: 0.92;
+}
+.prose + .prose {
+  margin-top: 0.85rem;
+}
+
+/* Measured voice — a spec block that reads like a real drawing's schedule. */
+.spec {
+  margin-top: 1.6rem;
+  border-top: 1px solid var(--rule);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+.specRow {
+  display: grid;
+  grid-template-columns: minmax(6rem, 8.5rem) 1fr;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--rule);
+  font-variant-numeric: tabular-nums;
+}
+.specKey {
+  color: var(--ink-witness);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.specVal {
+  text-align: right;
+  font-size: 0.72rem;
+  text-wrap: balance;
+}
+/* drawing title beneath a figure — mono, drafting register, inherits the
+   figure's ink (pale on a cyanotype panel, graphite on vellum) */
+.drawingCaption {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  margin-top: 0.9rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid currentColor;
+  opacity: 0.8;
+}
+
+/* honest empty witness value */
+.specVal[data-empty='true']::after {
+  content: '';
+  display: inline-block;
+  width: 2.6rem;
+  border-bottom: 1px dashed currentColor;
+  opacity: 0.5;
+  vertical-align: middle;
+}
