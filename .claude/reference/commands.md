@@ -24,9 +24,16 @@ Patterns + selectors to adapt: `tools/visual/tests/example.spec.ts`. Full notes:
 traces gitignored. Firefox needs its own firewall allow for outbound
 (`ms-playwright/firefox-*/firefox/firefox.exe`).
 
-## Figma Dev Mode MCP
+## Figma (plugin: `figma`)
 
-Config in repo `.mcp.json` → official server `127.0.0.1:3845/mcp`. Loads
-automatically each session. Requires paid Figma plan + Dev seat and Figma desktop
-with *Preferences → Enable Dev Mode MCP Server* running. Use it to pull tokens/
-specs/measurements straight from the design source instead of eyeballing screenshots.
+Official Figma Claude Code plugin — installed per-machine (not repo config), OAuth
+to figma.com. Authorize once via `/mcp` in an interactive session. Account: Dev seat,
+Pro tier. Tools: `get_design_context` (specs/measurements from a node), `get_variable_defs`
+(design tokens), `get_screenshot`, `use_figma` (write/build in a file), `get_metadata`,
+`search_design_system`, Code Connect (`get_code_connect_map` etc.), `generate_diagram`.
+Bundled skills load on demand — e.g. `figma-design-to-code` (mandatory before
+`get_design_context` for a full design→code build), `figma-use` (before any `use_figma`).
+Pull tokens/specs straight from the design source instead of eyeballing screenshots.
+
+Note: the plugin supersedes the old hand-rolled Dev Mode local-server `.mcp.json`
+(removed) — no `127.0.0.1:3845` config needed.
