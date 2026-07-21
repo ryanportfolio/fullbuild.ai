@@ -16,7 +16,12 @@ export default function SheetBlueprint() {
       ink="cyanotype"
       drawingSide="left"
       negative
-      drawing={<Plan />}
+      drawing={
+        <>
+          <Plan />
+          <p className={copy.drawingCaption}>PLAN · FOUR STATES · N.T.S.</p>
+        </>
+      }
     >
       <p className={copy.eyebrow}>Sheet S-02 · design intent</p>
       <h2 className={copy.heading}>Resolved, dimensioned, spec&#8209;locked</h2>
@@ -52,22 +57,22 @@ function Plan() {
     <svg viewBox="0 0 400 480" role="img" aria-label="Dimensioned plan of the design system">
       {/* witness/extension lines */}
       {[70, 330].map((x, i) => (
-        <Line key={`wx${x}`} x1={x} y1={60} x2={x} y2={40} ink="cyanotype" w={0.7} o={i} />
+        <Line key={`wx${x}`} x1={x} y1={60} x2={x} y2={40} w={0.7} o={i} />
       ))}
       {[80, 420].map((y, i) => (
-        <Line key={`wy${y}`} x1={60} y1={y} x2={40} y2={y} ink="cyanotype" w={0.7} o={2 + i} />
+        <Line key={`wy${y}`} x1={60} y1={y} x2={40} y2={y} w={0.7} o={2 + i} />
       ))}
 
       {/* outer plan rectangle */}
-      <Path d="M70 80 L330 80 L330 420 L70 420 Z" ink="cyanotype" w={1.6} o={4} />
+      <Path d="M70 80 L330 80 L330 420 L70 420 Z" w={1.6} o={4} />
 
       {/* interior partitions -> a 2x2 = the four states in plan */}
-      <Line x1={70} y1={250} x2={330} y2={250} ink="cyanotype" w={1} o={5} />
-      <Line x1={200} y1={80} x2={200} y2={420} ink="cyanotype" w={1} o={6} />
+      <Line x1={70} y1={250} x2={330} y2={250} w={1} o={5} />
+      <Line x1={200} y1={80} x2={200} y2={420} w={1} o={6} />
 
       {/* a door swing (design flourish that MEANS an opening) */}
-      <Path d="M200 250 A40 40 0 0 1 240 290" ink="cyanotype" w={0.8} o={7} />
-      <Line x1={200} y1={250} x2={200} y2={290} ink="cyanotype" w={0.8} o={7} />
+      <Path d="M200 250 A40 40 0 0 1 240 290" w={0.8} o={7} />
+      <Line x1={200} y1={250} x2={200} y2={290} w={0.8} o={7} />
 
       {/* room tags */}
       {[
@@ -91,14 +96,14 @@ function Plan() {
       ))}
 
       {/* dimension strings */}
-      <Dim x1={70} y1={48} x2={330} y2={48} value="1440" ink="cyanotype" o={9} />
-      <Dim x1={44} y1={80} x2={44} y2={420} value={null} ink="cyanotype" o={10} />
-      <Dim x1={70} y1={440} x2={200} y2={440} value="720" ink="cyanotype" o={11} />
-      <Dim x1={200} y1={440} x2={330} y2={440} value="720" ink="cyanotype" o={11} />
+      <Dim x1={70} y1={48} x2={330} y2={48} value="1440" o={9} />
+      <Dim x1={44} y1={80} x2={44} y2={420} value={null} o={10} />
+      <Dim x1={70} y1={440} x2={200} y2={440} value="720" o={11} />
+      <Dim x1={200} y1={440} x2={330} y2={440} value="720" o={11} />
 
       {/* grid tick module marker */}
-      <Line x1={70} y1={80} x2={82} y2={92} ink="cyanotype" w={0.7} o={12} />
-      <text x={90} y={104} fill="var(--ink-cyanotype)" fontFamily="var(--font-mono)" fontSize={9}>
+      <Line x1={70} y1={80} x2={82} y2={92} w={0.7} o={12} />
+      <text x={90} y={104} fill="currentColor" fontFamily="var(--font-mono)" fontSize={9}>
         2.25
       </text>
     </svg>

@@ -11,12 +11,11 @@ export function canRunExperience(): boolean {
     return false;
   }
 
-  // Below the sheet mobile breakpoint the sheets stack to one narrow column, so
-  // the portal-frame backdrop has no clear ground — it sits directly behind the
-  // small measured-fact lines and reads as noise rather than depth. The complete
-  // static set already stands here, so the WebGL island is desktop-and-up only
-  // (it is progressive enhancement, not content), matching the reduced-motion path.
-  if (window.matchMedia?.('(max-width: 720px)').matches) {
+  // The island renders inside a reserved band cell beside the rail (the Margin
+  // Law); below 1024px there is no room for that cell, the sheets stack to one
+  // column, and the static SVG floor stands in for the frame. Progressive
+  // enhancement, not content — matching the reduced-motion path.
+  if (window.matchMedia?.('(max-width: 1023px)').matches) {
     return false;
   }
 

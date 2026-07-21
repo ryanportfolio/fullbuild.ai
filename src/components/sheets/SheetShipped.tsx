@@ -1,19 +1,44 @@
 'use client';
 
-import { PROJECTS } from '@/lib/projects';
-import { useWorkingSet } from '@/lib/store';
+import { useEffect, useRef } from 'react';
+import { PROJECTS, LIVE_PROJECTS } from '@/lib/projects';
+import { useWorkingSet, isUp } from '@/lib/store';
 import { useHealthProbe } from '@/lib/health';
+import PourReport from './PourReport';
 import s from './shipped.module.css';
 
-/**
- * STATE 04 — SHIPPED. Revision-red arrives for the FIRST and ONLY time, and only
- * on elements genuinely live in production. A project that fails the health
- * probe de-ignites to graphite — red never asserts what it can't prove. This is
- * the recruiter landing zone: real links, no theater in the way.
- */
+/* ============================================================================
+   STATE 04 — SHIPPED. The drawing schedule.
+
+   Eleven real rows — every figure verified against the GitHub API, README
+   claims, or the live site itself (sources ship as title attributes). The DOM
+   pour: the same store value that drives the 3D section plane sweeps a poché
+   waterline down this schedule; a row is "poured" when the line passes it, and
+   ONLY a poured row whose health probe passes may spend revision-red. The
+   probe stamp beside an ignited row is a real measurement: host · status · ms.
+   ========================================================================= */
+
 export default function SheetShipped() {
   useHealthProbe();
   const health = useWorkingSet((st) => st.health);
+  const scheduleRef = useRef<HTMLDivElement>(null);
+
+  // POUR → CSS. One custom property, written straight to the DOM on store
+  // change (no React re-render per scroll tick); each row derives its own
+  // ignition factor from --pour and --i in pure CSS.
+  useEffect(() => {
+    const el = scheduleRef.current;
+    if (!el) return;
+    const apply = (p: number) => el.style.setProperty('--pour', p.toFixed(4));
+    apply(useWorkingSet.getState().pour);
+    return useWorkingSet.subscribe((st, prev) => {
+      if (st.pour !== prev.pour) apply(st.pour);
+    });
+  }, []);
+
+  const probed = Object.keys(health).length > 0;
+  const upCount = LIVE_PROJECTS.filter((p) => isUp(health, p.href)).length;
+  const n = PROJECTS.length;
 
   return (
     <section id="state-04" data-state="04" data-ink="live" className={s.sheet} aria-label="Sheet 04 of 4 — Shipped">
@@ -21,66 +46,105 @@ export default function SheetShipped() {
         <header className={s.head}>
           <span className={`${s.stateNo} u-mono`}>STATE&nbsp;04</span>
           <span className={`${s.stateName} u-label`}>Shipped</span>
-          <span className={`${s.sheetNo} u-mono`}>S-04 / 4</span>
+          <span className={`${s.sheetNo} u-mono`}>S-04 / 04</span>
         </header>
 
-        <p className={s.kicker}>Sheet S-04 · shipped payload</p>
-        <div className={s.lead}>
-          <h2 className={s.pour}>The&nbsp;Pour</h2>
-          <p className={s.leadNote}>
-            The frame fills and the cladding goes on. Below, the accent is spent
-            on one thing only — the mark of what is live in production right now.
-          </p>
-        </div>
+        <div className={s.body}>
+          <div className={s.copyCol}>
+            <p className={s.kicker}>
+              Sheet S-04 · drawing schedule · {n} entries ·{' '}
+              <span className={s.kickerLive}>latencies measured from your session, not cached</span>
+            </p>
+            <div className={s.lead}>
+              <h2 className={s.pour}>The&nbsp;Pour</h2>
+              <p className={s.leadNote}>
+                The frame you watched assemble now fills, bent by bent — and this
+                schedule pours with it. A row earns revision-red only while the
+                production probe can actually reach it: the stamp beside each
+                ignited row is the measurement, not a decoration.
+              </p>
+            </div>
 
-        {PROJECTS.length === 0 ? (
-          <p className={s.empty}>
-            [ awaiting shipment — witness lines reserved, no fabricated payload ]
-          </p>
-        ) : (
-          <div className={s.ledger}>
-            {PROJECTS.map((p) => {
-              const up = health[p.href] !== false; // undefined = assume live until probed
-              const live = p.live && up;
-              return (
-                <article className={s.row} key={p.id}>
-                  <span className={s.rowSheet}>{p.sheet}</span>
-                  <div>
-                    <a
-                      className={s.title}
-                      href={p.href}
-                      target="_blank"
-                      rel="noreferrer"
-                      data-live={live ? 'true' : 'false'}
-                    >
-                      <span className={s.dot} aria-hidden="true" />
-                      {p.title}
-                    </a>
-                    <p className={s.role}>{p.note}</p>
-                    <p className={s.stack}>{p.stack.join('  ·  ')}</p>
-                  </div>
-                  <div className={s.metrics}>
-                    {p.metrics.map((m) => (
-                      <div className={s.metric} key={m.label}>
-                        <div className={s.metricVal} data-empty={m.value === null ? 'true' : undefined}>
-                          {m.value}
-                        </div>
-                        <div className={s.metricLbl}>{m.label}</div>
-                      </div>
-                    ))}
-                  </div>
-                </article>
-              );
-            })}
+            <div className={s.schedule} ref={scheduleRef} style={{ '--n': n } as React.CSSProperties}>
+              {/* the waterline — same store value as the 3D section plane */}
+              <div className={s.waterline} data-waterline aria-hidden="true">
+                <span className={s.waterTag}>POUR</span>
+              </div>
+
+              {PROJECTS.map((p, i) => {
+                const reading = p.href ? health[p.href] : undefined;
+                const up = isUp(health, p.href);
+                const live = p.live && up;
+                const primaryHref = p.href ?? p.repo ?? '#';
+                return (
+                  <article
+                    className={s.row}
+                    key={p.id}
+                    style={{ '--i': i } as React.CSSProperties}
+                    data-live={live ? 'true' : 'false'}
+                  >
+                    <span className={s.rowSheet}>
+                      {p.sheet}
+                      <svg className={s.diamond} viewBox="0 0 12 12" aria-hidden="true">
+                        <path d="M6 0.8 L11.2 6 L6 11.2 L0.8 6 Z" />
+                      </svg>
+                    </span>
+                    <div className={s.rowMain}>
+                      <span className={s.titleLine}>
+                        <a className={s.title} href={primaryHref} target="_blank" rel="noreferrer">
+                          {p.title}
+                        </a>
+                        {p.href && p.repo && (
+                          <a className={s.repoLink} href={p.repo} target="_blank" rel="noreferrer">
+                            repo&nbsp;↗
+                          </a>
+                        )}
+                        {!p.href && (
+                          <span className={s.repoOnly}>repo&nbsp;only</span>
+                        )}
+                        {p.href && !p.repo && (
+                          <span className={s.repoOnly}>source&nbsp;private</span>
+                        )}
+                        <span className={s.year}>{p.year}</span>
+                      </span>
+                      <p className={s.role}>{p.note}</p>
+                      <p className={s.factLine}>
+                        <span className={s.stack}>{p.stack.join(' · ')}</span>
+                      </p>
+                      <p className={s.metricLine}>
+                        {p.metrics.map((m, k) => (
+                          <span className={s.metric} key={m.label} title={m.source}>
+                            {k > 0 && <span className={s.metricSep}> · </span>}
+                            <b>{m.value ?? '––––'}</b> {m.label}
+                          </span>
+                        ))}
+                        {reading && (
+                          <span className={s.probeStamp} data-up={reading.up ? 'true' : 'false'}>
+                            {new URL(p.href as string).host} · {reading.status || 'ERR'} · {reading.ms}ms
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
           </div>
-        )}
+
+          {/* Band cell — reserved for the R3F pour (the Margin Law); the pour
+              report anchors its foot with the live tally. */}
+          <div className={s.bandCell} aria-hidden="true">
+            <PourReport />
+          </div>
+        </div>
 
         <div className={s.close}>
           <div className={s.scalebar} aria-hidden="true">
             <ScaleBar />
           </div>
           <p className={s.closeNote}>
-            Revision&#8209;red is spent on one semantic: <b>live in production</b>.
+            Revision&#8209;red is spent on one semantic: <b>live in production,
+            probe&#8209;verified</b>. {probed ? `${upCount}/${LIVE_PROJECTS.length} in service at last probe.` : 'Awaiting first probe.'}{' '}
             A project that goes down falls back to graphite — the accent never
             asserts what it can&apos;t reach.
           </p>

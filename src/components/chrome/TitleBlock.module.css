@@ -1,14 +1,73 @@
-.block {
+/* ============================================================================
+   THE RAIL — the Margin Law made visible. A full-height title-block column on
+   the sheet's right edge, exactly as a real working set binds one: border line,
+   registration marks, state ticker, and the title block anchored at the bottom.
+   Nothing else on the page may cross into it.
+   ========================================================================= */
+
+.rail {
   position: fixed;
-  right: var(--sheet-margin);
-  bottom: var(--sheet-margin);
+  top: 0;
+  right: 0;
+  bottom: 0;
   z-index: 40;
-  width: var(--title-block-w);
+  width: var(--rail-w);
+  border-left: 1px solid var(--rule-strong);
   background: var(--ground);
-  border: 1px solid var(--rule-strong);
+  display: flex;
+  flex-direction: column;
+  padding: 0.9rem 0.7rem;
   font-family: var(--font-mono);
   user-select: none;
   /* no blur, no shadow-glow — a real title block sits ON the sheet */
+}
+
+/* registration crosshair, drawn (SVG), top of the rail */
+.reg {
+  color: var(--ink-graphite);
+  opacity: 0.65;
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: none;
+}
+
+/* vertical set lettering rides the rail's upper reach */
+.setName {
+  writing-mode: vertical-rl;
+  margin-top: 1.1rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--ink-witness);
+}
+
+/* carriage telemetry — the instrument's live readout */
+.telemetry {
+  margin-top: auto;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--rule);
+}
+.telemetryHead {
+  font-size: 0.56rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-witness);
+}
+.telemetryLine {
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+  color: var(--ink-graphite);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.block {
+  border: 1px solid var(--rule-strong);
+  background: var(--ground);
 }
 
 .top {
@@ -53,9 +112,10 @@
   color: var(--ink-witness);
 }
 .sheetNo {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 .stateName {
   font-family: var(--font-display);
@@ -103,6 +163,29 @@
   background: var(--ink-graphite);
 }
 
+/* IN SERVICE line — the aggregate probe readout. The count is a measurement;
+   it renders red ONLY when at least one probe-verified site is up. */
+.service {
+  padding: 0.4rem 0.7rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-witness);
+  display: flex;
+  justify-content: space-between;
+}
+.service b {
+  font-weight: 400;
+  color: var(--ink-witness);
+}
+.service[data-lit='true'] b {
+  color: var(--accent-link);
+  font-weight: 600;
+}
+.serviceTotal {
+  color: var(--ink-witness);
+}
+
 .rev {
   padding: 0.4rem 0.7rem;
   border-top: 1px solid var(--rule);
@@ -113,9 +196,26 @@
   justify-content: space-between;
 }
 
-@media (max-width: 560px) {
+/* ---- collapse: below 900px the rail dies; the block is a bottom overlay ---- */
+@media (max-width: 900px) {
+  .rail {
+    top: auto;
+    width: auto;
+    left: var(--sheet-margin);
+    right: var(--sheet-margin);
+    bottom: 0.75rem;
+    border-left: none;
+    padding: 0;
+    background: none;
+  }
+  .reg,
+  .setName,
+  .telemetry {
+    display: none;
+  }
   .block {
-    width: calc(100vw - 2 * var(--sheet-margin));
-    max-width: 20rem;
+    width: 100%;
+    max-width: 22rem;
+    margin-left: auto;
   }
 }

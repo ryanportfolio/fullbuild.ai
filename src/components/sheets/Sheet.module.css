@@ -17,15 +17,33 @@
   flex-direction: column;
   border: 1px solid var(--rule-strong);
   padding: clamp(1rem, 2.5vw, 2rem);
-  /* keep centered content clear of the fixed title block (bottom-right) */
-  padding-bottom: clamp(3rem, 12vh, 7rem);
   background: transparent;
+}
+
+/* Below 900px the rail collapses to a bottom overlay — clear it. */
+@media (max-width: 900px) {
+  .frame {
+    padding-bottom: clamp(3rem, 12vh, 7rem);
+  }
 }
 
 /* The design sheet's linework inherits its container color, so one CSS rule
    flips every mark. LIGHT: deep cyanotype on vellum. */
 .sheet[data-ink='cyanotype'] .drawing :global(svg) {
   color: var(--ink-cyanotype);
+}
+
+/* A cyanotype is a NEGATIVE on any table: in light mode the drawing figure is
+   a true blueline print pinned INTO the vellum set — deep blue panel, pale
+   linework. (Dark mode inverts the whole sheet below; same concept, night
+   table.) The two grounds still rule the page; the blue is a document ON them. */
+.sheet[data-ink='cyanotype'][data-negative='true'] .drawing {
+  background: var(--cyanotype-deep);
+  padding: clamp(1rem, 2.2vw, 1.9rem);
+  color: var(--vellum);
+}
+.sheet[data-ink='cyanotype'][data-negative='true'] .drawing :global(svg) {
+  color: var(--vellum);
 }
 
 /* STATE 02 in DARK = true cyanotype negative: the deep blue becomes the ground

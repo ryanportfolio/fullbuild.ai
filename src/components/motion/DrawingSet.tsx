@@ -5,7 +5,9 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
 import { useWorkingSet, type PipelineState } from '@/lib/store';
+import { penBus, type PenInk } from '@/lib/penBus';
 import ExperienceIsland from '../experience/ExperienceIsland';
+import PenCarriage from './PenCarriage';
 import styles from './DrawingSet.module.css';
 
 /**
@@ -27,20 +29,21 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  // The pour backdrop belongs to STATE 04 (its home). Drive the layer opacity off
-  // how centred STATE 04 is in the viewport: it emerges as STATE 04 arrives, is
-  // full while it's read, and fades out both before it (STATE 03's own linework)
-  // and after it (the revision-log appendix) so the 3D never sits behind that copy.
+  // The band cell hosts the frame across its whole life: it assembles as
+  // graphite wireframe beside STATE 03 (engineering) and pours through STATE 04
+  // (shipped). Opacity ramps in as STATE 03 arrives and out after STATE 04
+  // hands off to the appendix — the 3D exists exactly where the story needs it.
   useEffect(() => {
     const el = canvasRef.current;
     if (!el) return;
     const apply = () => {
-      const sec = document.getElementById('state-04');
-      if (!sec) return;
-      const r = sec.getBoundingClientRect();
+      const s3 = document.getElementById('state-03');
+      const s4 = document.getElementById('state-04');
+      if (!s3 || !s4) return;
       const vh = window.innerHeight || 1;
-      const dist = Math.abs(r.top + r.height / 2 - vh / 2) / vh; // 0 = centred
-      el.style.opacity = String(smoothstep(0.78, 0.06, dist));
+      const enter = smoothstep(0.9, 0.35, s3.getBoundingClientRect().top / vh);
+      const exit = smoothstep(0.12, 0.55, s4.getBoundingClientRect().bottom / vh);
+      el.style.opacity = String(Math.min(enter, exit));
     };
     apply();
     return useWorkingSet.subscribe((s, p) => {
@@ -60,7 +63,9 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
       return n >= 1 && n <= 4 ? (n as PipelineState) : null;
     };
 
-    // Title-block state tracker — runs in ALL modes.
+    // Title-block state tracker — runs in ALL modes. A sheet is "current" when
+    // it crosses the viewport's centre band (NOT a visible-fraction threshold:
+    // the schedule sheet is taller than the viewport and would never reach 55%).
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
@@ -69,7 +74,9 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
           if (s) setState(s);
         });
       },
-      { threshold: 0.55 },
+      // Band sits at 40-45% so the chip flips as the incoming header crosses
+      // the upper-middle of the glass — never lagging a fully visible header.
+      { rootMargin: '-40% 0px -55% 0px', threshold: 0 },
     );
     sections.forEach((s) => io.observe(s));
 
@@ -123,8 +130,45 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
       (window as unknown as { __ws?: typeof useWorkingSet }).__ws = useWorkingSet;
     }
 
+    // --- THE PEN: helpers feeding the carriage from real stroke geometry ----
+    const inkOf = (sec: HTMLElement): PenInk => {
+      const v = sec.dataset.ink;
+      return v === 'cyanotype' || v === 'concrete' || v === 'live'
+        ? v
+        : 'graphite';
+    };
+    const dockPen = (ink: PenInk) => {
+      const rail = document.querySelector<HTMLElement>('[data-rail]');
+      if (!rail) return;
+      const r = rail.getBoundingClientRect();
+      penBus.set({
+        x: r.left + r.width / 2,
+        y: Math.min(r.top + 150, window.innerHeight * 0.3),
+        ink,
+        mode: 'dock',
+      });
+    };
+    const penToStroke = (el: SVGElement, p: number, ink: PenInk) => {
+      const geo = el as unknown as SVGGeometryElement;
+      if (typeof geo.getTotalLength !== 'function') return;
+      try {
+        const pt = geo.getPointAtLength(geo.getTotalLength() * Math.max(0, Math.min(1, p)));
+        const m = geo.getScreenCTM();
+        if (!m) return;
+        penBus.set({
+          x: m.a * pt.x + m.c * pt.y + m.e,
+          y: m.b * pt.x + m.d * pt.y + m.f,
+          ink,
+          mode: 'draw',
+        });
+      } catch {
+        /* detached node mid-teardown — skip the frame */
+      }
+    };
+
     const ctx = gsap.context(() => {
-      // DRAW — reveal strokes per sheet in authored order.
+      // DRAW — reveal strokes per sheet in authored order, the pen leading the
+      // newest stroke's tip (one instrument, one hand).
       sections.forEach((sec) => {
         const strokes = gsap.utils.toArray<SVGElement>(sec.querySelectorAll('.ws-draw'));
         if (!strokes.length) return;
@@ -132,12 +176,28 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
           (a, b) => Number(a.getAttribute('data-o') ?? 0) - Number(b.getAttribute('data-o') ?? 0),
         );
         gsap.set(strokes, { strokeDasharray: 1, strokeDashoffset: 1 });
-        gsap.to(strokes, {
-          strokeDashoffset: 0,
-          ease: 'power2.out',
-          duration: 0.9,
-          stagger: 0.03,
+        const ink = inkOf(sec);
+        let leader = -1;
+        const tl = gsap.timeline({
           scrollTrigger: { trigger: sec, start: 'top 78%', once: true },
+          onComplete: () => dockPen(ink),
+        });
+        strokes.forEach((el, i) => {
+          tl.to(
+            el,
+            {
+              strokeDashoffset: 0,
+              ease: 'power2.out',
+              duration: 0.9,
+              onStart: () => {
+                leader = i;
+              },
+              onUpdate() {
+                if (leader === i) penToStroke(el, this.progress(), ink);
+              },
+            },
+            i * 0.03,
+          );
         });
       });
 
@@ -174,7 +234,8 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
         onUpdate: (self) => setProgress(self.progress),
       });
 
-      // POUR — STATE 03 → 04 fill progress.
+      // POUR — STATE 03 → 04 fill progress. The pen rides the waterline while
+      // the schedule is actively pouring (concrete pen — red is never a pen).
       const shipped = document.getElementById('state-04');
       if (shipped) {
         ScrollTrigger.create({
@@ -182,7 +243,18 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
           start: 'top bottom',
           end: 'top top',
           scrub: true,
-          onUpdate: (self) => setPour(self.progress),
+          onUpdate: (self) => {
+            setPour(self.progress);
+            if (self.progress > 0.02 && self.progress < 0.985) {
+              const wl = document.querySelector<HTMLElement>('[data-waterline]');
+              if (wl) {
+                const r = wl.getBoundingClientRect();
+                penBus.set({ x: r.right - 6, y: r.bottom, ink: 'concrete', mode: 'pour' });
+              }
+            } else if (penBus.last?.mode === 'pour') {
+              dockPen('concrete');
+            }
+          },
         });
       }
     }, root);
@@ -212,6 +284,7 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
       <div ref={canvasRef} className={styles.canvasLayer} aria-hidden="true">
         <ExperienceIsland />
       </div>
+      <PenCarriage />
       <div ref={rootRef} className={styles.set}>
         {children}
       </div>

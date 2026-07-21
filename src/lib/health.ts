@@ -1,37 +1,41 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useWorkingSet } from './store';
+import { useWorkingSet, type HealthReading } from './store';
 import { LIVE_PROJECTS } from './projects';
 
 /**
- * Makes "red = live" self-enforcing rather than asserted. Throttled, off the
- * render loop. A project that fails de-ignites from revision-red to graphite in
- * the store, which the sheets + canvas read. Best-effort: cross-origin targets
- * return opaque responses, so a resolved fetch (even opaque) counts as up and
- * only a thrown network error counts as down — we never falsely down a site.
+ * Makes "red = live" self-enforcing rather than asserted. The server route
+ * /api/health probes every live project with a real request — actual status
+ * codes and measured latency, not the browser's opaque no-cors guess — and this
+ * hook feeds those readings into the store. A project that fails de-ignites
+ * from revision-red to graphite; the sheet also STAMPS the measurement
+ * (`host · 200 · 87ms`) beside each ignited row, so the accent is a printed
+ * measurement, not a decoration.
+ *
+ * Failure of the probe endpoint itself leaves readings absent (assume-live),
+ * never fabricates them.
  */
-async function probe(href: string): Promise<boolean> {
-  try {
-    await fetch(href, { mode: 'no-cors', cache: 'no-store', redirect: 'follow' });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export function useHealthProbe(intervalMs = 60_000): void {
   const setHealth = useWorkingSet((s) => s.setHealth);
 
   useEffect(() => {
+    if (LIVE_PROJECTS.length === 0) return;
     let cancelled = false;
-    const targets = LIVE_PROJECTS.map((p) => p.href);
-    if (targets.length === 0) return;
 
     const run = async () => {
-      for (const href of targets) {
-        const up = await probe(href);
-        if (!cancelled) setHealth(href, up);
+      try {
+        const res = await fetch('/api/health', { cache: 'no-store' });
+        if (!res.ok) return;
+        const readings = (await res.json()) as (HealthReading & { href: string })[];
+        if (cancelled || !Array.isArray(readings)) return;
+        for (const r of readings) {
+          if (r && typeof r.href === 'string') {
+            setHealth(r.href, { up: !!r.up, status: r.status ?? 0, ms: r.ms ?? 0, at: r.at ?? '' });
+          }
+        }
+      } catch {
+        /* endpoint unreachable — keep assume-live, never invent a reading */
       }
     };
 

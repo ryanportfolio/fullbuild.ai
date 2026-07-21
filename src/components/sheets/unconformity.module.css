@@ -68,15 +68,26 @@
 }
 .revRow {
   display: grid;
-  grid-template-columns: 2rem 1fr 5rem;
+  grid-template-columns: 4.6rem 1fr 5.8rem;
   gap: 1rem;
   padding: 0.55rem 0.4rem;
+  padding-left: 1.6rem;
   border-bottom: 1px solid var(--rule);
   position: relative;
+  font-size: 0.72rem;
 }
 .revRow[data-current='true'] {
   outline: 1.5px solid var(--ink-graphite);
   outline-offset: -1px;
+}
+.delta {
+  position: absolute;
+  left: 0.1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.1rem;
+  height: 1rem;
+  color: var(--ink-graphite);
 }
 .revTag {
   color: var(--ink-witness);
@@ -97,9 +108,15 @@
   margin-top: 0.75rem;
 }
 
+.sideCol {
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
 /* field-specimen contact tag */
 .specimen {
-  align-self: center;
   border: 1px solid var(--rule-strong);
   padding: 1.1rem 1.25rem;
 }
@@ -112,6 +129,7 @@
   padding-bottom: 0.7rem;
   margin-bottom: 0.85rem;
   border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
 }
 .fieldRow {
   display: grid;
@@ -139,6 +157,92 @@
 }
 .fieldVal a {
   border-bottom: 1px solid currentColor;
+}
+
+.revGap {
+  color: var(--ink-witness);
+}
+.revGap .revDesc {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-witness);
+}
+
+.revEmpty {
+  border-bottom: 1px dashed var(--rule-strong);
+  opacity: 0.5;
+  transform: translateY(-0.3em);
+}
+
+/* ISSUED FOR CONSTRUCTION stamp — double-ruled, canted like a real hand stamp.
+   Graphite until the probe licenses it; then, and only then, revision-red. */
+.stamp {
+  position: relative;
+  border: 2px solid var(--ink-graphite);
+  color: var(--ink-graphite);
+  padding: 0.8rem 1.1rem;
+  transform: rotate(-3.5deg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  max-width: 17rem;
+}
+/* A hand stamp never strikes twice in register: the outer ring sits at its own
+   slight cant, and one corner lands over-inked. Linework only, no blur. */
+.stamp::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border: 1px solid currentColor;
+  transform: rotate(1.4deg);
+  pointer-events: none;
+}
+.stamp::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: 1.6rem;
+  height: 0;
+  border-top: 3px solid currentColor;
+  transform: rotate(-1deg);
+  pointer-events: none;
+}
+.stampTotal {
+  opacity: 0.55;
+}
+.stamp[data-lit='true'] {
+  border-color: var(--accent-live);
+  outline-color: var(--accent-live);
+  color: var(--accent-link);
+}
+.stampTitle {
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.95rem;
+  line-height: 1.1;
+}
+.stampCount {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+}
+.stampNote {
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  opacity: 0.85;
+}
+
+.endOfSet {
+  margin-top: auto;
+  padding-top: 2rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  color: var(--ink-witness);
+  text-align: center;
 }
 
 @media (max-width: 820px) {

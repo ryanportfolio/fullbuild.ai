@@ -60,12 +60,14 @@ export interface Frame {
 }
 
 // --- deterministic grid constants (NOT seeded) ------------------------------
-const BAY_WIDTH = 2.4; // column-to-column span
-const BAY_PITCH = 3.4; // grid step along +x for tiled bays
+// Bents (portal frames) repeat along +z — the true anatomy of a framed shed:
+// one building, N identical bents receding in depth, erected front to back.
+const BAY_WIDTH = 2.4; // column-to-column span (x)
+const BAY_PITCH = 2.2; // bent-to-bent spacing along +z
 const EAVE_H = 2.4; // column top height
 const RIDGE_RISE = 0.7; // ridge above eave
-const THICK = 0.15; // nominal member cross-section
-const ORDER_STRIDE = 12; // order slots reserved per bay (base bays erect first)
+const THICK = 0.21; // nominal member cross-section
+const ORDER_STRIDE = 12; // order slots reserved per bent (front bents erect first)
 
 interface Seed {
   (): number;
@@ -80,7 +82,7 @@ function jitter(rng: Seed, amp: number): number {
  * geometry degrades cleanly to a single portal at N=1 and tiles for many.
  */
 export function buildFrame(
-  projects: ReadonlyArray<{ id: string; href: string }>,
+  projects: ReadonlyArray<{ id: string; href: string | null }>,
 ): Frame {
   const members: Member[] = [];
   const bays: Bay[] = [];
@@ -88,7 +90,7 @@ export function buildFrame(
   projects.forEach((project, bay) => {
     const rng = mulberry32(hashString(project.id));
     const base = bay * ORDER_STRIDE;
-    const bx = bay * BAY_PITCH; // bay origin along +x (deterministic)
+    const bz = -bay * BAY_PITCH; // bent origin along -z (recedes into depth)
 
     // Seeded secondary fabrication marks — lean, eave jitter, ridge offset.
     const leanL = jitter(rng, 0.1);
@@ -99,14 +101,14 @@ export function buildFrame(
     const riseJit = jitter(rng, 0.12);
     const tOf = () => THICK + jitter(rng, 0.02);
 
-    const L0: Vec3 = [bx - BAY_WIDTH / 2, 0, 0];
-    const R0: Vec3 = [bx + BAY_WIDTH / 2, 0, 0];
-    const EL: Vec3 = [L0[0] + leanL, EAVE_H + eaveJitL, 0];
-    const ER: Vec3 = [R0[0] + leanR, EAVE_H + eaveJitR, 0];
+    const L0: Vec3 = [-BAY_WIDTH / 2, 0, bz];
+    const R0: Vec3 = [BAY_WIDTH / 2, 0, bz];
+    const EL: Vec3 = [L0[0] + leanL, EAVE_H + eaveJitL, bz];
+    const ER: Vec3 = [R0[0] + leanR, EAVE_H + eaveJitR, bz];
     const A: Vec3 = [
       (EL[0] + ER[0]) / 2 + ridgeXOff,
       EAVE_H + RIDGE_RISE + riseJit,
-      0,
+      bz,
     ];
 
     const push = (
@@ -145,15 +147,15 @@ export function buildFrame(
       const yr = ER[1] * f;
       push(
         'tie',
-        [L0[0] - half, yl, 0],
-        [L0[0] + half, yl, 0],
+        [L0[0] - half, yl, bz],
+        [L0[0] + half, yl, bz],
         5 + i * 2,
         false,
       );
       push(
         'tie',
-        [R0[0] - half, yr, 0],
-        [R0[0] + half, yr, 0],
+        [R0[0] - half, yr, bz],
+        [R0[0] + half, yr, bz],
         6 + i * 2,
         false,
       );
@@ -161,12 +163,44 @@ export function buildFrame(
 
     bays.push({
       projectId: project.id,
-      href: project.href,
+      href: project.href ?? '',
       apex: A,
       ridgeOrder,
       ridgeStagger: 0, // filled below
     });
   });
+
+  // --- longitudinal members: ridge purlin + eave girts ----------------------
+  // What binds N bents into ONE building. Drawn linework (not clad): purlins
+  // land after both bents they connect, so the pour consumes them last.
+  for (let i = 1; i < bays.length; i++) {
+    const a = bays[i - 1].apex;
+    const b = bays[i].apex;
+    members.push({
+      id: `purlin:ridge:${i}`,
+      p0: a,
+      p1: b,
+      thickness: THICK * 0.7,
+      role: 'tie',
+      order: i * ORDER_STRIDE + 9,
+      stagger: 0,
+      clad: false,
+    });
+    // eave girts, both sides — connect column tops of consecutive bents
+    for (const side of [-1, 1] as const) {
+      const x = (side * BAY_WIDTH) / 2;
+      members.push({
+        id: `girt:${side}:${i}`,
+        p0: [x, EAVE_H, -(i - 1) * BAY_PITCH],
+        p1: [x, EAVE_H, -i * BAY_PITCH],
+        thickness: THICK * 0.7,
+        role: 'tie',
+        order: i * ORDER_STRIDE + 10,
+        stagger: 0,
+        clad: false,
+      });
+    }
+  }
 
   // --- erection-stagger normalisation --------------------------------------
   // Normalise by the max CLAD order so the visible columns->rafters->brace

@@ -1,3 +1,11 @@
+/* ============================================================================
+   STATE 04 — the drawing schedule + the DOM pour.
+   One custom property (--pour, written by the store) drives the waterline and
+   every row's ignition factor (--lit). No React re-render per scroll tick.
+   Fallback --pour = 1: without JS (and under reduced motion) the schedule
+   stands fully poured — the finished end-state, per the motion doctrine.
+   ========================================================================= */
+
 .sheet {
   position: relative;
   min-height: 100vh;
@@ -13,7 +21,6 @@
   flex-direction: column;
   border: 1px solid var(--rule-strong);
   padding: clamp(1rem, 2.5vw, 2rem);
-  padding-bottom: clamp(3rem, 12vh, 7rem);
 }
 
 .head {
@@ -28,14 +35,84 @@
   font-size: 0.7rem;
   color: var(--ink-witness);
 }
+/* Graphite, NOT red: a sheet header is not a live-in-production element. */
 .stateName {
   font-size: clamp(0.8rem, 1.6vw, 1rem);
-  color: var(--accent-live);
+  color: var(--ink-graphite);
 }
 .sheetNo {
   margin-left: auto;
   font-size: 0.7rem;
   color: var(--ink-witness);
+}
+
+/* The Margin Law body: copy column + the reserved band cell for the R3F pour. */
+.body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(1.5rem, 3vw, 3rem);
+}
+@media (min-width: 1024px) {
+  .body {
+    /* Column 2 aligns exactly to the fixed canvas band: band width minus the
+       page margin and frame padding that sit outside the body grid. */
+    grid-template-columns:
+      minmax(0, 1fr)
+      calc(var(--band-w) - var(--sheet-margin) - clamp(1rem, 2.5vw, 2rem));
+  }
+}
+/* The band cell: on wide grounds the fixed canvas band paints behind it (a
+   faint drawn border declares it as a real viewport cell); when the island
+   can't run, the StaticFloor SVG inside it stands instead. */
+@media (min-width: 1024px) {
+  .bandCell {
+    border-left: 1px dashed var(--rule);
+    padding-left: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-end;
+  }
+}
+.bandCell :global(svg) {
+  width: 100%;
+  height: auto;
+}
+
+/* pour report — inspector's tally at the band cell's foot */
+.pourReport {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .pourReport {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: flex-end;
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-witness);
+    border-top: 1px solid var(--rule);
+    padding-top: 0.6rem;
+    min-width: 11rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+}
+.pourReportLine[data-live='true'] {
+  color: var(--accent-link);
+}
+
+.kickerLive {
+  color: var(--ink-witness);
+  text-transform: none;
+  letter-spacing: 0.06em;
+}
+
+.copyCol {
+  min-width: 0;
 }
 
 .kicker {
@@ -48,11 +125,7 @@
 }
 
 .lead {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: clamp(1.5rem, 5vw, 4rem);
-  align-items: end;
-  margin-bottom: clamp(1.75rem, 5vh, 3.5rem);
+  margin-bottom: clamp(1.5rem, 4vh, 2.75rem);
 }
 .pour {
   font-family: var(--font-display);
@@ -61,37 +134,114 @@
   text-transform: uppercase;
   letter-spacing: 0.01em;
   line-height: 0.86;
-  font-size: clamp(2.6rem, 9vw, 6rem);
-  /* Graphite, NOT red — a section title is not a live-in-production element.
-     Red is reserved for marks in the ledger that resolve to a real URL. */
+  font-size: clamp(2.6rem, 7.5vw, 5.2rem);
+  /* Graphite, NOT red — a section title is not a live-in-production element. */
   color: var(--ink-graphite);
-  margin: 0;
+  margin: 0 0 0.9rem;
 }
 .leadNote {
-  font-size: 1rem;
+  font-size: 0.95rem;
   line-height: 1.6;
-  max-width: 42ch;
+  max-width: 52ch;
   opacity: 0.9;
 }
 
-/* the ledger of built elements */
-.ledger {
-  display: flex;
-  flex-direction: column;
+/* ---- the schedule + waterline --------------------------------------------- */
+.schedule {
+  position: relative;
   border-top: 1px solid var(--rule-strong);
 }
-.row {
-  display: grid;
-  grid-template-columns: 4.5rem minmax(0, 1fr) auto;
-  gap: clamp(1rem, 3vw, 2.5rem);
-  align-items: baseline;
-  padding: clamp(1rem, 2.5vh, 1.6rem) 0;
-  border-bottom: 1px solid var(--rule);
+
+/* Poured region: 45° poché hatch (hard-stop linework, same family as the
+   drafting grid) sweeping down as --pour rises; its bottom edge is the
+   waterline. Sits UNDER the text (z-index) and stays faint. */
+.waterline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: calc(var(--pour, 1) * 100%);
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--rule) 0,
+    var(--rule) 1px,
+    transparent 1px,
+    transparent 10px
+  );
+  opacity: 0.45;
+  border-bottom: 1px solid var(--rule-strong);
+  z-index: 0;
 }
+.waterTag {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  transform: translateY(50%);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  color: var(--ink-witness);
+  background: var(--ground);
+  padding: 0.05rem 0.4rem;
+  border: 1px solid var(--rule-strong);
+}
+
+/* ---- rows ------------------------------------------------------------------ */
+.row {
+  /* Ignition factor: 1 once the waterline has passed this row. The 0.45 offset
+     centres the flip inside the row's own band; 8 sharpens the transition. */
+  --lit: clamp(0, calc((var(--pour, 1) * var(--n, 11) - var(--i, 0) - 0.45) * 8), 1);
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 4.2rem minmax(0, 1fr);
+  gap: clamp(0.75rem, 2vw, 1.75rem);
+  align-items: start;
+  padding: clamp(0.8rem, 2vh, 1.2rem) 0;
+  border-bottom: 1px solid var(--rule);
+  opacity: calc(0.5 + var(--lit) * 0.5);
+}
+
 .rowSheet {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--ink-witness);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding-top: 0.2rem;
+}
+
+/* Revision diamond: outline while pending; fills when poured. Red ONLY on a
+   live, probe-passing row — and only via ignition, never before the line. */
+.diamond {
+  width: 0.62rem;
+  height: 0.62rem;
+  flex: none;
+}
+.diamond path {
+  fill: transparent;
+  stroke: var(--ink-graphite);
+  stroke-width: 1.1;
+}
+.row[data-live='false'] .diamond path {
+  fill: color-mix(in srgb, transparent calc((1 - var(--lit)) * 100%), var(--ink-graphite) calc(var(--lit) * 100%));
+}
+.row[data-live='true'] .diamond path {
+  stroke: color-mix(in srgb, var(--ink-graphite) calc((1 - var(--lit)) * 100%), var(--accent-live) calc(var(--lit) * 100%));
+  fill: color-mix(in srgb, transparent calc((1 - var(--lit)) * 100%), var(--accent-live) calc(var(--lit) * 100%));
+}
+
+.rowMain {
+  min-width: 0;
+}
+
+.titleLine {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+  flex-wrap: wrap;
 }
 .title {
   font-family: var(--font-display);
@@ -99,83 +249,98 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.01em;
-  font-size: clamp(1.3rem, 3.5vw, 2rem);
+  font-size: clamp(1.15rem, 2.4vw, 1.6rem);
   line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
   transition: opacity 0.2s var(--ease-draw);
-}
-/* LIVE = revision-red (large text passes 3:1). */
-.title[data-live='true'] {
-  color: var(--accent-live);
-}
-/* DOWN or not-shipped = graphite; red never lies. */
-.title[data-live='false'] {
   color: var(--ink-graphite);
+}
+/* LIVE + poured = revision-red (large text passes 3:1). Down or repo-only or
+   not-yet-poured = graphite; red never lies and never jumps the waterline. */
+.row[data-live='true'] .title {
+  color: color-mix(in srgb, var(--ink-graphite) calc((1 - var(--lit)) * 100%), var(--accent-live) calc(var(--lit) * 100%));
 }
 .title:hover {
   opacity: 0.7;
 }
-/* live dot — a filled registration marking a reachable element */
-.dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  background: currentColor;
-  flex: none;
+.repoLink {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-witness);
+  border-bottom: 1px dashed var(--rule-strong);
 }
-.title[data-live='false'] .dot {
-  background: none;
-  border: 1px solid currentColor;
+.repoLink:hover {
+  color: var(--ink-graphite);
+}
+.repoOnly {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-witness);
+}
+.year {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--ink-witness);
 }
 
 .role {
-  font-size: 0.9rem;
-  opacity: 0.75;
-  margin-top: 0.5rem;
-  max-width: 46ch;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  opacity: 0.8;
+  margin-top: 0.45rem;
+  max-width: 58ch;
+}
+.factLine {
+  margin-top: 0.4rem;
 }
 .stack {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   letter-spacing: 0.03em;
   color: var(--ink-witness);
-  margin-top: 0.5rem;
 }
 
-/* metrics as witness lines */
-.metrics {
-  display: flex;
-  gap: clamp(1rem, 3vw, 2.25rem);
-  text-align: right;
-}
-.metric {
+/* Metrics: one mono witness line; every value carries its source as a title
+   attribute — hover any number to see where it was measured. */
+.metricLine {
+  margin-top: 0.35rem;
   font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--ink-witness);
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 0.35rem;
+  row-gap: 0.15rem;
+  align-items: baseline;
+}
+.metric b {
+  font-weight: 600;
+  color: var(--ink-graphite);
   font-variant-numeric: tabular-nums;
 }
-.metricVal {
-  font-size: 1.15rem;
-  line-height: 1;
-}
-.metricVal[data-empty='true']::after {
-  content: '';
-  display: block;
-  width: 2.2rem;
-  margin-left: auto;
-  border-bottom: 1px dashed currentColor;
-  opacity: 0.5;
-}
-.metricLbl {
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ink-witness);
-  margin-top: 0.4rem;
+.metricSep {
+  opacity: 0.6;
 }
 
-/* Closing detail — anchors the sheet bottom so a short ledger reads as
-   composed, and scopes the falsifiable red rule to the ledger above. */
+/* The probe stamp: a real measurement, printed only once the row is poured.
+   Red only while the probe passes. */
+.probeStamp {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  opacity: var(--lit);
+  color: var(--ink-witness);
+  border: 1px solid var(--rule-strong);
+  padding: 0.08rem 0.42rem;
+}
+.probeStamp[data-up='true'] {
+  color: var(--accent-link);
+  border-color: currentColor;
+}
+
+/* Closing detail — anchors the sheet bottom. */
 .close {
   margin-top: auto;
   padding-top: clamp(1.5rem, 4vh, 3rem);
@@ -183,8 +348,6 @@
   align-items: flex-end;
   justify-content: flex-start;
   gap: clamp(1.5rem, 4vw, 3rem);
-  /* keep clear of the fixed title block in the bottom-right corner */
-  padding-right: var(--title-block-w);
 }
 .scalebar {
   color: var(--ink-witness);
@@ -202,7 +365,7 @@
   line-height: 1.6;
   letter-spacing: 0.02em;
   color: var(--ink-witness);
-  max-width: 34ch;
+  max-width: 44ch;
   text-align: left;
 }
 .closeNote b {
@@ -218,32 +381,18 @@
   padding: 2rem 0;
 }
 
-@media (max-width: 720px) {
-  .lead {
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
-  }
+@media (max-width: 900px) {
   .row {
-    grid-template-columns: 3.5rem 1fr;
+    grid-template-columns: 3.2rem minmax(0, 1fr);
   }
-  .metrics {
-    grid-column: 1 / -1;
-    justify-content: flex-start;
-    text-align: left;
-    margin-top: 0.75rem;
+  .year {
+    display: none;
   }
-  .metricVal[data-empty='true']::after {
-    margin-left: 0;
-  }
-  /* The fixed title block is a full-width bottom overlay here, not a corner
-     cartouche — so .close must NOT reserve its width, or the sheet stretches
-     wider than the viewport and the mono lines clip (overflow-x: clip). Stack
-     the closing row and clear the overlay with bottom padding instead. */
+  /* The title block is a bottom overlay here — clear it. */
   .close {
     flex-direction: column;
     align-items: flex-start;
     gap: 1.25rem;
-    padding-right: 0;
     padding-bottom: clamp(9rem, 30vh, 12rem);
   }
   .scalebar {

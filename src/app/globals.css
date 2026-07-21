@@ -35,6 +35,11 @@
   --vellum: #e9e3d6;
   --cyanotype-deep: #124b63; /* blueprint ground for the negative sheet — clearly blue */
 
+  /* Concrete as MATERIAL (the 3D pour), decoupled from concrete as TEXT INK:
+     one material family across both grounds so the pour reads as the same
+     stuff under day and night light — text ink stays theme-tuned for AA. */
+  --pour-concrete: #7a7263;
+
   /* Ground + paper structure */
   --ground: #e9e3d6; /* vellum */
   --ground-tint: #ded7c7; /* faint tonal block on vellum */
@@ -52,8 +57,18 @@
   --dur-draw: 1.9s;
 
   /* Fixed drafting scale — driftless */
-  --sheet-margin: clamp(1.25rem, 4vw, 3.5rem);
-  --title-block-w: clamp(15rem, 22vw, 19rem);
+  --sheet-margin: clamp(1.25rem, 3vw, 2.5rem);
+  --title-block-w: clamp(14rem, 18vw, 17rem);
+
+  /* THE MARGIN LAW. A real drawing set reserves a full-height title-block rail
+     on the sheet's right edge; nothing crosses it. Every sheet ends at the
+     rail's border line and the WebGL island renders inside its own dimensioned
+     band cell — so content/chrome/canvas occlusion is structurally impossible,
+     not patched. Below 900px the rail collapses and the title block becomes a
+     bottom overlay (sheets clear it with padding instead). */
+  --rail-w: calc(var(--title-block-w) + 1.25rem);
+  /* The drawing band: the one cell the R3F island may paint in (STATE 03→04). */
+  --band-w: clamp(20rem, 34vw, 37rem);
 
   color-scheme: light;
 }
@@ -70,6 +85,7 @@
   --ground-tint: #1b2023;
   --rule: rgba(216, 210, 196, 0.14);
   --rule-strong: rgba(216, 210, 196, 0.3);
+  --pour-concrete: #5d574d; /* same material, night light — not bone */
 
   color-scheme: dark;
 }

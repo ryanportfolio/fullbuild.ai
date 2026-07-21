@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useWorkingSet, type PipelineState } from '@/lib/store';
+import { useWorkingSet, isUp, type PipelineState } from '@/lib/store';
+import { LIVE_PROJECTS } from '@/lib/projects';
 import styles from './TitleBlock.module.css';
 
 const STATE_NAMES = ['Idea', 'Design', 'Engineering', 'Shipped'] as const;
@@ -15,8 +16,15 @@ function scrollTo(anchor: string) {
   else el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+/**
+ * THE RAIL — the Margin Law's visible edge. A fixed full-height title-block
+ * column: registration mark, vertical set lettering, per-sheet ticker, and the
+ * title block itself at the bottom. The IN SERVICE line is a live aggregate of
+ * the health probe — a measurement, so it may spend the accent.
+ */
 export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
   const state = useWorkingSet((s) => s.state);
+  const health = useWorkingSet((s) => s.health);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [mounted, setMounted] = useState(false);
 
@@ -38,48 +46,82 @@ export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
   };
 
   const nn = String(state).padStart(2, '0');
+  // Aggregate probe: count only once readings exist; missing = assume live.
+  const probed = Object.keys(health).length > 0;
+  const upCount = LIVE_PROJECTS.filter((p) => isUp(health, p.href)).length;
 
   return (
-    <aside className={styles.block} aria-label="Drawing set title block and navigation">
-      <div className={styles.top}>
-        <span className={styles.brand}>
-          <b>fullbuild</b>.ai
+    <aside className={styles.rail} data-rail aria-label="Drawing set title block and navigation">
+      <svg className={styles.reg} viewBox="0 0 16 16" aria-hidden="true">
+        <line x1="0" y1="8" x2="16" y2="8" stroke="currentColor" strokeWidth="1" />
+        <line x1="8" y1="0" x2="8" y2="16" stroke="currentColor" strokeWidth="1" />
+        <circle cx="8" cy="8" r="4.5" fill="none" stroke="currentColor" strokeWidth="1" />
+      </svg>
+      <span className={styles.setName}>The Working Set</span>
+
+      {/* Carriage telemetry — live readout of the one instrument. PenCarriage
+          writes these cells directly (real coords, real mode, no theater). */}
+      <div className={styles.telemetry} aria-hidden="true">
+        <span className={styles.telemetryHead}>Carriage</span>
+        <span id="pen-telemetry-mode" className={styles.telemetryLine}>
+          idle
         </span>
-        <button className={styles.themeBtn} onClick={toggleTheme} aria-label="Toggle drafting ground">
-          {mounted ? (theme === 'dark' ? 'Table' : 'Vellum') : 'Ground'}
-        </button>
+        <span id="pen-telemetry-xy" className={styles.telemetryLine}>
+          x ––– · y –––
+        </span>
       </div>
 
-      <div className={styles.mid}>
-        <span>
-          <span className={styles.sheetLabel}>Sheet</span>
-          <br />
-          <span className={styles.sheetNo}>{nn} / 04</span>
-        </span>
-        <span className={styles.stateName}>{STATE_NAMES[state - 1]}</span>
-      </div>
+      <div className={styles.block}>
+        <div className={styles.top}>
+          <span className={styles.brand}>
+            <b>fullbuild</b>.ai
+          </span>
+          <button className={styles.themeBtn} onClick={toggleTheme} aria-label="Toggle drafting ground">
+            {mounted ? (theme === 'dark' ? 'Table' : 'Vellum') : 'Ground'}
+          </button>
+        </div>
 
-      <nav className={styles.nav}>
-        {ANCHORS.map((anchor, i) => {
-          const active = state === ((i + 1) as PipelineState);
-          return (
-            <button
-              key={anchor}
-              className={styles.navBtn}
-              data-active={active ? 'true' : undefined}
-              onClick={() => scrollTo(anchor)}
-              aria-label={`Go to state ${i + 1}, ${STATE_NAMES[i]}`}
-              aria-current={active ? 'true' : undefined}
-            >
-              {String(i + 1).padStart(2, '0')}
-            </button>
-          );
-        })}
-      </nav>
+        <div className={styles.mid}>
+          <span>
+            <span className={styles.sheetLabel}>Sheet</span>
+            <br />
+            <span className={styles.sheetNo}>{nn} / 04</span>
+          </span>
+          <span className={styles.stateName}>{STATE_NAMES[state - 1]}</span>
+        </div>
 
-      <div className={styles.rev}>
-        <span>REV {rev}</span>
-        <span>{sha}</span>
+        <nav className={styles.nav}>
+          {ANCHORS.map((anchor, i) => {
+            const active = state === ((i + 1) as PipelineState);
+            return (
+              <button
+                key={anchor}
+                className={styles.navBtn}
+                data-active={active ? 'true' : undefined}
+                onClick={() => scrollTo(anchor)}
+                aria-label={`Go to state ${i + 1}, ${STATE_NAMES[i]}`}
+                aria-current={active ? 'true' : undefined}
+              >
+                {String(i + 1).padStart(2, '0')}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className={styles.service} data-lit={probed && upCount > 0 ? 'true' : undefined}>
+          <span>IN SERVICE</span>
+          <span>
+            {/* red is spent on the measured numerator only — the total is not
+                a probe-verified fact, so it stays in witness ink */}
+            <b>{probed ? upCount : '—'}</b>
+            <span className={styles.serviceTotal}>/{LIVE_PROJECTS.length}</span>
+          </span>
+        </div>
+
+        <div className={styles.rev}>
+          <span>REV {rev}</span>
+          <span>{sha}</span>
+        </div>
       </div>
     </aside>
   );

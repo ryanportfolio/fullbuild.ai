@@ -14,7 +14,9 @@
   text-transform: lowercase;
   letter-spacing: -0.01em;
   line-height: 0.92;
-  font-size: clamp(2.4rem, 7vw, 4.6rem);
+  /* Sized to its column: the wordmark must never bleed across the border into
+     the cover program (Margin Law applies to type too). */
+  font-size: clamp(2.2rem, 4.6vw, 3.7rem);
   margin-bottom: 1.1rem;
 }
 
@@ -38,8 +40,10 @@
 .tagline .s3 {
   color: var(--ink-concrete);
 }
+/* "shipped" stays graphite here: the tagline is a legend, not a probe-verified
+   live element. Red is never spent on a word. */
 .tagline .s4 {
-  color: var(--accent-link);
+  color: var(--ink-graphite);
   font-weight: 600;
 }
 
@@ -73,7 +77,7 @@
 }
 .specRow {
   display: grid;
-  grid-template-columns: 8.5rem 1fr;
+  grid-template-columns: minmax(6rem, 8.5rem) 1fr;
   gap: 1rem;
   padding: 0.5rem 0;
   border-bottom: 1px solid var(--rule);
@@ -87,6 +91,18 @@
 .specVal {
   text-align: right;
 }
+/* drawing title beneath a figure — mono, drafting register, inherits the
+   figure's ink (pale on a cyanotype panel, graphite on vellum) */
+.drawingCaption {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  margin-top: 0.9rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid currentColor;
+  opacity: 0.8;
+}
+
 /* honest empty witness value */
 .specVal[data-empty='true']::after {
   content: '';

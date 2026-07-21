@@ -52,9 +52,9 @@ import { PocheMaterial, type PocheColors } from './pour/PocheMaterial';
 const BLOOM_LAYER = 11;
 const STAGGER_SPAN = 0.7; // vertical lag (world units) between first + last member
 const DAMP_TIME = 0.12;
-const CAM_AZ = (20 * Math.PI) / 180; // axonometric azimuth
-const CAM_TILT = (15 * Math.PI) / 180; // axonometric tilt (sectioned axon)
-const FRAME_MARGIN = 1.95; // zoom out so the frame is compact and clears the copy
+const CAM_AZ = (28 * Math.PI) / 180; // axonometric azimuth
+const CAM_TILT = (18 * Math.PI) / 180; // axonometric tilt (sectioned axon)
+const FRAME_MARGIN = 1.22; // fill the band cell, clearing the sheet header rules
 const UP = new Vector3(0, 1, 0);
 
 // Bloom membership + composer-mount thresholds, measured on the diamond's ACTUAL
@@ -89,7 +89,9 @@ function readPalette(): Palette {
     return new Color(raw && raw.length > 0 ? raw : fallback);
   };
   const graphite = read('--ink-graphite', dark ? '#d8d2c4' : '#211f1c');
-  const concrete = read('--ink-concrete', dark ? '#8c8579' : '#675f52');
+  // Concrete-as-material (decoupled from concrete-as-text-ink) so the pour
+  // reads as ONE material family under both grounds.
+  const concrete = read('--pour-concrete', dark ? '#5d574d' : '#7a7263');
   const live = read('--accent-live', dark ? '#ff5138' : '#cb3a26');
   // Hatch a hair off the fill: lighter toward vellum on dark, darker toward ink on light.
   const hatch = concrete.clone().lerp(dark ? read('--vellum', '#e9e3d6') : graphite, 0.35);
@@ -122,7 +124,10 @@ interface MemberViz {
 
 interface DiamondViz {
   mesh: Mesh;
+  /** Hollow outline — the "not in service" state, rhyming with the index dots. */
+  edge: LineSegments;
   material: MeshBasicMaterial;
+  edgeMaterial: LineBasicMaterial;
   href: string;
   ridgeY: number;
   bias: number;
@@ -181,17 +186,32 @@ function buildScene(frame: Frame, pal: Palette): Built {
     const planeSolid = new Plane(new Vector3(0, -1, 0), 0); // keeps y <= c
     const planeWire = new Plane(new Vector3(0, 1, 0), 0); // keeps y >= c
 
-    // Graphite wireframe (EdgesGeometry of the swept tube), consumed from beneath.
+    // Graphite wireframe (EdgesGeometry of the swept tube), consumed from
+    // beneath. Non-structural linework (ties/purlins/girts) draws as a single
+    // clean segment instead of a boxed tube — a drafted tick, not a member.
     const wireMat = track(
       new LineBasicMaterial({
         color: pal.graphite.clone(),
         clippingPlanes: [planeWire],
       }),
     );
-    const wire = new LineSegments(edgesGeo, wireMat);
-    wire.position.copy(tmpMid);
-    wire.quaternion.setFromUnitVectors(zAxis, dir);
-    wire.scale.set(member.thickness, member.thickness, len);
+    let wire: LineSegments;
+    if (member.clad) {
+      wire = new LineSegments(edgesGeo, wireMat);
+      wire.position.copy(tmpMid);
+      wire.quaternion.setFromUnitVectors(zAxis, dir);
+      wire.scale.set(member.thickness, member.thickness, len);
+    } else {
+      const seg = track(new BufferGeometry());
+      seg.setAttribute(
+        'position',
+        new Float32BufferAttribute([...member.p0, ...member.p1], 3),
+      );
+      wire = new LineSegments(seg, wireMat);
+    }
+    // Members start unbuilt: the erection sequence reveals them in authored
+    // order as STATE 03 arrives (Pour drives visibility per frame).
+    wire.visible = false;
     group.add(wire);
 
     let solid: Mesh | null = null;
@@ -273,6 +293,7 @@ function buildScene(frame: Frame, pal: Palette): Built {
   });
 
   // Revision diamonds — one per live bay, at the ridge/keystone node.
+  const octaEdges = track(new EdgesGeometry(octaGeo));
   const diamonds: DiamondViz[] = frame.bays.map((bay) => {
     const material = track(
       new MeshBasicMaterial({
@@ -289,12 +310,31 @@ function buildScene(frame: Frame, pal: Palette): Built {
     // Perch it just proud of the ridge so it sits above the joint, not inside it.
     mesh.position.set(bay.apex[0], bay.apex[1] + 0.12, bay.apex[2]);
     mesh.renderOrder = 10;
+    mesh.visible = false; // revealed by the erection sequence
     // Bloom-layer membership is toggled per frame by ignition strength (below),
     // so a graphite (not-yet-lit / health-failed) diamond is never on the layer.
     group.add(mesh);
+
+    // Hollow outline twin: an unlit keystone reads as an EMPTY diamond (same
+    // vocabulary as the sheet-index dots), never as a solid dark mass.
+    const edgeMaterial = track(
+      new LineBasicMaterial({
+        color: pal.graphite.clone(),
+        depthTest: false,
+        depthWrite: false,
+      }),
+    );
+    const edge = new LineSegments(octaEdges, edgeMaterial);
+    edge.position.copy(mesh.position);
+    edge.renderOrder = 10;
+    edge.visible = false;
+    group.add(edge);
+
     return {
       mesh,
+      edge,
       material,
+      edgeMaterial,
       href: bay.href,
       ridgeY: bay.apex[1],
       bias: bay.ridgeStagger * STAGGER_SPAN,
@@ -320,21 +360,44 @@ function CameraRig({ frame }: { frame: Frame }) {
     const cam = camRef.current;
     if (!cam) return;
     const aspect = size.width / Math.max(1, size.height);
-    const [sx, sy, sz] = frame.bounds.size;
-    // Conservative half-extent so the axon stays framed at any aspect / N.
-    const ext = 0.62 * Math.hypot(sx, sy, sz) * FRAME_MARGIN;
-    let halfW = ext;
-    let halfH = ext;
-    if (aspect >= 1) halfW = ext * aspect;
-    else halfH = ext / aspect;
 
-    // Camera-space pan: shift the frustum window so the centred model renders in
-    // the lower part of the sheet (clear of the large heading + lead note), a hair
-    // left-of-centre. Panning the frustum (not the model) keeps world coords — and
-    // the world-space pour clip planes — intact. Scaled by the frustum extent so it
-    // pans a consistent fraction at any viewport size.
-    const panY = 0.34 * halfH; // +down on screen
-    const panX = -0.12 * halfW; // slightly right on screen
+    // Exact fit: project the 8 bounding-box corners into camera space and take
+    // the max extents. (The old hypot-based bound over-shot badly for the long
+    // multi-bent shed and rendered it tiny in its cell.)
+    const { min, max } = frame.bounds;
+    const c = frame.bounds.center;
+    const center = new Vector3(c[0], c[1], c[2]);
+    const dir = new Vector3(
+      Math.sin(CAM_AZ) * Math.cos(CAM_TILT),
+      Math.sin(CAM_TILT),
+      Math.cos(CAM_AZ) * Math.cos(CAM_TILT),
+    );
+    const right = new Vector3().crossVectors(dir, UP).normalize();
+    const camUp = new Vector3().crossVectors(right, dir).normalize();
+    let needW = 0;
+    let needH = 0;
+    const corner = new Vector3();
+    for (const x of [min[0], max[0]])
+      for (const y of [min[1], max[1]])
+        for (const z of [min[2], max[2]]) {
+          corner.set(x, y, z).sub(center);
+          needW = Math.max(needW, Math.abs(corner.dot(right)));
+          needH = Math.max(needH, Math.abs(corner.dot(camUp)));
+        }
+    needW *= FRAME_MARGIN;
+    needH *= FRAME_MARGIN;
+    // Respect the canvas aspect: widen whichever axis is slack.
+    let halfW = needW;
+    let halfH = needH;
+    if (halfW / halfH > aspect) halfH = halfW / aspect;
+    else halfW = halfH * aspect;
+
+    // Camera-space pan: the canvas IS the band cell now (Margin Law), so the
+    // frame owns its room — just a hair of downward bias so the ridge clears the
+    // sheet header line. Panning the frustum (not the model) keeps world coords —
+    // and the world-space pour clip planes — intact.
+    const panY = 0.06 * halfH; // +down on screen
+    const panX = 0;
     cam.left = -halfW + panX;
     cam.right = halfW + panX;
     cam.top = halfH + panY;
@@ -343,13 +406,6 @@ function CameraRig({ frame }: { frame: Frame }) {
     cam.far = 500;
     cam.zoom = 1;
 
-    const c = frame.bounds.center;
-    const center = new Vector3(c[0], c[1], c[2]);
-    const dir = new Vector3(
-      Math.sin(CAM_AZ) * Math.cos(CAM_TILT),
-      Math.sin(CAM_TILT),
-      Math.cos(CAM_AZ) * Math.cos(CAM_TILT),
-    );
     cam.position.copy(center).addScaledVector(dir, 120);
     cam.up.copy(UP);
     cam.lookAt(center);
@@ -378,6 +434,9 @@ function Pour({
   const built = useMemo(() => buildScene(frame, paletteRef.current), [frame]);
   const hRef = useRef(frame.baseY);
   const litRef = useRef(false);
+  // Erection clock: 0 = bare site, 1 = fully framed. Rises when STATE 03
+  // arrives; members become visible in authored order along the way.
+  const erectRef = useRef(0);
 
   // --- store subscription: wake the demand loop on pour/state/health -------
   // NOT progress: progress is the whole-set scroll value and is never read in
@@ -412,7 +471,10 @@ function Pour({
         if (mv.cap) (mv.cap.material as PocheMaterial).setColors(pal.poche);
       }
       // Diamond base (unlit) colour follows graphite; ignition recolours per frame.
-      for (const d of built.diamonds) d.material.color.copy(pal.graphite);
+      for (const d of built.diamonds) {
+        d.material.color.copy(pal.graphite);
+        d.edgeMaterial.color.copy(pal.graphite);
+      }
       invalidate();
     };
     const obs = new MutationObserver(applyTheme);
@@ -440,14 +502,23 @@ function Pour({
 
   useFrame((_, dt) => {
     const s = useWorkingSet.getState();
-    // IDLE GUARD: STATE 04 off-screen and nothing poured -> do nothing at all.
+    // IDLE GUARD: STATE 03/04 off-screen and nothing built -> do nothing at all.
     // (Ensure the bloom pass is torn down if we idle while it was still lit.)
-    if (s.state < 3 && s.pour === 0) {
+    if (s.state < 3 && s.pour === 0 && erectRef.current === 0) {
       if (litRef.current) {
         litRef.current = false;
         onLitChange(false);
       }
       return;
+    }
+
+    // ERECTION — the frame assembles member by member (authored order) as
+    // STATE 03 arrives, and strikes if the visitor scrolls back above it.
+    const erectTarget = s.state >= 3 || s.pour > 0 ? 1 : 0;
+    const erecting = damp(erectRef, 'current', erectTarget, 0.45, dt);
+    const e = erectRef.current;
+    for (const mv of built.members) {
+      mv.wire.visible = e > mv.member.stagger * 0.96;
     }
 
     const eased = easeInOutCubic(clamp01(s.pour));
@@ -492,13 +563,18 @@ function Pour({
     const pal = paletteRef.current;
     let maxStrength = 0;
     for (const d of built.diamonds) {
+      const erected = e > (d.bias / STAGGER_SPAN) * 0.96 || e > 0.96;
       const effApex = h - d.bias;
       const igniteT = smoothstep(d.ridgeY - 0.22, d.ridgeY + 0.02, effApex);
-      const gate = s.health[d.href] === false ? 0 : 1; // missing => assume live
+      const gate = s.health[d.href]?.up === false ? 0 : 1; // missing => assume live
       const strength = igniteT * gate;
+      // Unlit / health-failed keystone = hollow outline; ignition fills it.
+      d.edge.visible = erected;
+      d.mesh.visible = erected && strength > 0.15;
       litColor.copy(pal.graphite).lerp(pal.live, strength);
       if (strength > 0) litColor.multiplyScalar(1 + strength * 1.6); // HDR for bloom
       d.material.color.copy(litColor);
+      d.edgeMaterial.color.copy(strength > 0.15 ? litColor : pal.graphite);
       if (strength >= BLOOM_IN) d.mesh.layers.enable(BLOOM_LAYER);
       else d.mesh.layers.disable(BLOOM_LAYER);
       if (strength > maxStrength) maxStrength = strength;
@@ -510,8 +586,8 @@ function Pour({
       onLitChange(litNow);
     }
 
-    // Keep the demand loop alive only while the section is still settling.
-    if (animating || Math.abs(h - target) > 1e-4) invalidate();
+    // Keep the demand loop alive only while something is still settling.
+    if (animating || erecting || Math.abs(h - target) > 1e-4) invalidate();
   });
 
   // Ensure clipping is live even if the gl prop was not honoured.

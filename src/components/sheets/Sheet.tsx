@@ -39,7 +39,7 @@ export default function Sheet({
         <header className={styles.head}>
           <span className={`${styles.stateNo} u-mono`}>STATE&nbsp;{n}</span>
           <span className={`${styles.stateName} u-label`}>{state}</span>
-          <span className={`${styles.sheetNo} u-mono`}>S-{n} / 4</span>
+          <span className={`${styles.sheetNo} u-mono`}>S-{n} / 04</span>
         </header>
 
         <div className={styles.body}>
