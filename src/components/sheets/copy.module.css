@@ -74,6 +74,12 @@
   margin-bottom: 1rem;
 }
 
+.headingGoal {
+  display: block;
+  font-size: clamp(2.6rem, 7.5vw, 5.2rem);
+  line-height: 0.86;
+}
+
 .prose {
   font-size: 1rem;
   line-height: 1.65;

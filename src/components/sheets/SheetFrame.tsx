@@ -40,7 +40,10 @@ export default function SheetFrame() {
         <div className={s.body}>
           <div className={s.copyCol}>
             <p className={copy.eyebrow}>Sheet S-03 · structure · erection sequence</p>
-            <h2 className={copy.heading}>Intent Verification Loop</h2>
+            <h2 className={copy.heading}>
+              <span className={copy.headingGoal}>Goal</span>
+              Verification Loop
+            </h2>
             <p className={copy.lede}>
               Building with AI in a safe, maintainable, and request-aligned way
             </p>
