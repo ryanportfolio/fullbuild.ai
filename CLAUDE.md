@@ -42,6 +42,12 @@ Defaults until configured:
 ## Subagents: direct-by-default, never Haiku
 
 - Model floor: Sonnet or Opus only. NEVER pass `model: 'haiku'`. Omitting `model` (inherit session) is fine; subagent Sonnet low-High thinking for bulk/mechanical work, based on task.
+- Workflow scripts: define this preamble const and prepend it to every free-text `agent()` prompt. Skip it for schema-constrained calls (`{schema}` already forces compact output).
+
+  ```js
+  const CAVEMAN = "Output style: ultra-terse. Drop articles/filler/hedging; fragments OK; arrows for causality (X → Y). Never drop a fact, number, or caveat to save tokens. Code, symbols, file paths, API names, and error strings stay verbatim.\n\n"
+  // usage: agent(CAVEMAN + task, {...})
+  ```
 
 ## Git: push on completion
 
