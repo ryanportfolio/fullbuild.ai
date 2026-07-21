@@ -19,6 +19,7 @@ const nextConfig = {
       { source: '/prototype/fault-line', destination: '/prototype/fault-line/index.html' },
       { source: '/prototype/assembly-line', destination: '/prototype/assembly-line/index.html' },
       { source: '/prototype/burn-in', destination: '/prototype/burn-in/index.html' },
+      { source: '/prototype/quench', destination: '/prototype/quench/index.html' },
     ];
   },
   // Old prototype URLs that have been linked or shipped before the rename.
