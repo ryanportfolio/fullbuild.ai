@@ -27,7 +27,7 @@ export default function SheetUnconformity() {
 
         <div className={u.body}>
           <div>
-            <h2 className={u.heading}>Every sheet was redrawn to get here</h2>
+            <h2 className={u.heading}>Workflows</h2>
             <p className={u.intro}>
               Faster <FasterGlyph /> stronger <StrongerGlyph /> secure{' '}
               <SecureGlyph /> sustainable
