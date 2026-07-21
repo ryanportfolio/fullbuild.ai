@@ -16,14 +16,24 @@
   letter-spacing: -0.03em;
   line-height: 0.9;
   /* The drawing TITLE spans the sheet's full measure, margin -> rail border.
-     This clamp is the no-JS fallback; MastheadPlot fits the rendered word to
-     the band's exact width before plotting (Margin Law still holds — the band
-     ends at the rail). */
-  font-size: clamp(2.6rem, 11vw, 14rem);
+     This is the no-JS fallback; MastheadPlot fits the rendered word to the
+     band's exact width before plotting (Margin Law still holds — the band ends
+     at the rail). The calc tracks the fit's own math — (band width) / (word
+     aspect ~5.57) with band = 100vw - rail - margins ≈ 100vw - 22.8rem — so
+     the hydration refit moves the title ~1px, not a visible jump. */
+  font-size: clamp(2.6rem, 17.9vw - 4.1rem, 14rem);
   /* Optical margin alignment: the f's left side-bearing would float the stem
      off the margin line at this scale — hang it back onto the margin. */
   margin-left: -0.045em;
   white-space: nowrap;
+}
+
+/* Below 900px the rail collapses to a bottom overlay, so the band is the full
+   viewport minus sheet margins — same aspect math, no rail term. */
+@media (max-width: 900px) {
+  .masthead {
+    font-size: clamp(2.2rem, 18vw - 1rem, 14rem);
+  }
 }
 
 .tagline {
