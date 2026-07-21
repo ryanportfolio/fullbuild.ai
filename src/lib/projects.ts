@@ -246,23 +246,7 @@ export const PROJECTS: Project[] = [
     role: 'author + editor — curriculum, site, pipeline',
     year: "'26",
     stack: ['Astro', 'MDX', 'TypeScript', 'no accounts'],
-    metrics: [
-      { label: 'guides published', value: '18', source: 'corewise.academy catalog page' },
-      { label: 'catalog reading', value: '133 min', source: 'corewise.academy: "18 published guides, about 133 minutes of reading in total"' },
-      { label: 'commits', value: '327', source: 'GitHub API, commit pagination (private repo)' },
-    ],
-    note: 'Free course catalog on working with AI: 18 guides across 5 layers at 3 depth levels, each with objectives, exercises, and self-checks. No accounts, no fees — the whole catalog reads in about 133 minutes.',
-  },
-  {
-    id: 'corewise-academy',
-    sheet: 'S-04.11',
-    title: 'CoreWise Academy',
-    href: 'https://corewise.academy',
-    repo: null, // source is private — the live site is the artifact
-    live: true,
-    role: 'author + editor — curriculum, site, pipeline',
-    year: "'26",
-    stack: ['Astro', 'MDX', 'TypeScript', 'no accounts'],
+    langs: ['JavaScript', 'HTML', 'TypeScript'],
     metrics: [
       { label: 'guides published', value: '18', source: 'corewise.academy catalog page' },
       { label: 'catalog reading', value: '133 min', source: 'corewise.academy: "18 published guides, about 133 minutes of reading in total"' },
