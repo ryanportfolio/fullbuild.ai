@@ -158,7 +158,7 @@ export const PROJECTS: Project[] = [
       { label: 'tokens saved', value: '19.7M', source: 'per-command before/after logs, refreshed daily' },
       { label: 'commits', value: '55', source: 'GitHub API, commit pagination' },
     ],
-    note: 'Token-saving techniques published as a component datasheet: every figure is measured from 95,821 logged commands or printed grey with a tilde; a verify script fails the build on a stale number.',
+    note: 'Usage optimization guide; every figure measured from logged commands and updated to site automatically.',
   },
   {
     id: 'whisper-ptt',
