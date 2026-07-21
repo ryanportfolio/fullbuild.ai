@@ -336,7 +336,7 @@ export default function SheetTransmittal() {
     if (!val('message')) return setStatus({ text: 'the message block is empty', fault: true });
 
     setBusy(true);
-    setStatus({ text: 'transmitting ···', fault: false });
+    setStatus({ text: 'sending ···', fault: false });
     try {
       const res = await fetch('/api/transmit', {
         method: 'POST',
@@ -352,7 +352,7 @@ export default function SheetTransmittal() {
       const data = (await res.json().catch(() => null)) as { ok?: boolean; rfi?: string; error?: string } | null;
       if (!res.ok || !data?.ok || !data.rfi) {
         setBusy(false);
-        setStatus({ text: `transmission refused: ${data?.error ?? res.status}`, fault: true });
+        setStatus({ text: `send refused: ${data?.error ?? res.status}`, fault: true });
         return;
       }
       setRfi(data.rfi);
@@ -361,7 +361,7 @@ export default function SheetTransmittal() {
       fold();
     } catch {
       setBusy(false);
-      setStatus({ text: 'transmission failed: the line is down, try mailto:hi@fullbuild.ai', fault: true });
+      setStatus({ text: 'send failed: the line is down, try mailto:hi@fullbuild.ai', fault: true });
     }
   };
 
@@ -498,12 +498,12 @@ export default function SheetTransmittal() {
       data-state="t01"
       data-ink="graphite"
       className={s.sheet}
-      aria-label="Sheet T-01, transmittal, contact"
+      aria-label="Sheet T-01, dispatch, contact"
     >
       <div ref={frameRef} className={s.frame} data-hand={hand ? 'true' : undefined}>
         <header className={s.head}>
           <span className={`${s.stateNo} u-mono`}>T-01</span>
-          <span className={`${s.stateName} u-label`}>Transmittal</span>
+          <span className={`${s.stateName} u-label`}>Dispatch</span>
           <span className={`${s.sheetNo} u-mono`}>{rfi ?? 'RFI ····'}</span>
         </header>
 
@@ -641,7 +641,7 @@ export default function SheetTransmittal() {
 
               <div className={s.actions}>
                 <button type="submit" className={s.transmit} disabled={busy}>
-                  Transmit
+                  Send
                 </button>
                 <span className={s.status} data-fault={status.fault ? 'true' : undefined} role="status">
                   {status.text}
@@ -653,7 +653,7 @@ export default function SheetTransmittal() {
               <div className={s.notesHead}>General notes</div>
               <ol>
                 <li>Print in ink</li>
-                <li>One subject per transmittal</li>
+                <li>One subject per dispatch</li>
               </ol>
             </aside>
           </form>
@@ -676,7 +676,7 @@ export default function SheetTransmittal() {
                 </text>
               </svg>
               <div ref={stampRef} className={s.stamp}>
-                <span className={s.stampTitle}>Transmitted</span>
+                <span className={s.stampTitle}>Sent</span>
                 <span className={s.stampNo}>{rfi ?? ''}</span>
               </div>
             </div>

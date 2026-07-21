@@ -46,7 +46,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as TransmitBody;
   } catch {
-    return NextResponse.json({ ok: false, error: 'unreadable transmittal' }, { status: 400 });
+    return NextResponse.json({ ok: false, error: 'unreadable dispatch' }, { status: 400 });
   }
 
   const field = (k: keyof TransmitBody): string =>
@@ -62,7 +62,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const message = field('message');
   const signed = field('signed');
   if (!from || !message) {
-    return NextResponse.json({ ok: false, error: 'incomplete transmittal' }, { status: 422 });
+    return NextResponse.json({ ok: false, error: 'incomplete dispatch' }, { status: 422 });
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(from)) {
     return NextResponse.json({ ok: false, error: 'from address unreadable' }, { status: 422 });
@@ -88,7 +88,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (key) {
     // Plain-text body only: visitor input never renders as HTML anywhere.
     const text = [
-      `${rfi} lodged via T-01`,
+      `${rfi} dispatched via T-01`,
       `From: ${from}`,
       `Signed: ${signed || 'unsigned'}`,
       '',
@@ -99,10 +99,10 @@ export async function POST(req: Request): Promise<NextResponse> {
         method: 'POST',
         headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
         body: JSON.stringify({
-          from: process.env.TRANSMIT_FROM ?? 'T-01 Transmittal <transmit@fullbuild.ai>',
+          from: process.env.TRANSMIT_FROM ?? 'T-01 Dispatch <dispatch@fullbuild.ai>',
           to: [process.env.TRANSMIT_TO ?? 'hi@fullbuild.ai'],
           reply_to: from,
-          subject: `${rfi} · transmittal from ${from}`,
+          subject: `${rfi} · dispatch from ${from}`,
           text,
         }),
       });

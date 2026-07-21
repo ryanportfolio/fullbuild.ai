@@ -3,9 +3,9 @@ import SheetTransmittal from '@/components/sheets/SheetTransmittal';
 import DrawingSet from '@/components/motion/DrawingSet';
 
 export const metadata: Metadata = {
-  title: 'contact · T-01 transmittal',
+  title: 'contact · T-01 dispatch',
   description:
-    'Countersign the working set. Sheet T-01 is the transmittal: letter your side of the correspondence and the carriage signs it with you.',
+    'Countersign the working set. Sheet T-01 is the dispatch: letter your side of the correspondence and the carriage signs it with you.',
 };
 
 /**
