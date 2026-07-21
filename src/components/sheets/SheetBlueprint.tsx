@@ -1,5 +1,6 @@
 import Sheet from './Sheet';
 import { Line, Path, Dim } from '../drafting/Marks';
+import { IgnitionGlyph } from './SheetGlyphs';
 import copy from './copy.module.css';
 
 /**
@@ -25,8 +26,8 @@ export default function SheetBlueprint() {
     >
       <p className={copy.eyebrow}>Sheet S-02 · design intent</p>
       <h2 className={copy.heading}>Resolved, dimensioned, spec&#8209;locked</h2>
-      <p className={copy.prose}>
-        Imagination machine, on.
+      <p className={copy.lede}>
+        Imagination machine <IgnitionGlyph />
       </p>
       <dl className={copy.spec}>
         <SpecRow k="Type family" v="Archivo / Martian Mono" />

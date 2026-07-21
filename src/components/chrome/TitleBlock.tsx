@@ -7,6 +7,54 @@ import RailLogo from './RailLogo';
 import RailSketch from './RailSketch';
 import styles from './TitleBlock.module.css';
 
+/**
+ * Day/night glyphs for the ground toggle — drawn, not iconed: the sun is a
+ * drafting circle with eight witness rays, the moon a crescent cut by a second
+ * circle. Each glows via its CSS class (layered drop-shadows + a slow breath).
+ */
+function SunGlyph() {
+  return (
+    <svg className={styles.sunGlyph} viewBox="0 0 16 16" aria-hidden="true">
+      <circle cx="8" cy="8" r="3.1" fill="currentColor" />
+      {Array.from({ length: 8 }).map((_, i) => {
+        const a = (i * Math.PI) / 4;
+        const x1 = 8 + Math.cos(a) * 4.6;
+        const y1 = 8 + Math.sin(a) * 4.6;
+        const x2 = 8 + Math.cos(a) * 6.6;
+        const y2 = 8 + Math.sin(a) * 6.6;
+        return (
+          <line
+            key={i}
+            x1={x1}
+            y1={y1}
+            x2={x2}
+            y2={y2}
+            stroke="currentColor"
+            strokeWidth="1.1"
+            strokeLinecap="round"
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
+function MoonGlyph() {
+  return (
+    <svg className={styles.moonGlyph} viewBox="0 0 16 16" aria-hidden="true">
+      {/* crescent: full disc minus an offset disc, via even-odd-ish mask */}
+      <mask id="ws-moon-cut">
+        <rect width="16" height="16" fill="white" />
+        <circle cx="10.6" cy="6.2" r="4.6" fill="black" />
+      </mask>
+      <circle cx="8" cy="8" r="5.2" fill="currentColor" mask="url(#ws-moon-cut)" />
+      {/* two witness stars */}
+      <circle cx="12.4" cy="3.4" r="0.7" fill="currentColor" />
+      <circle cx="13.6" cy="6.8" r="0.45" fill="currentColor" />
+    </svg>
+  );
+}
+
 const STATE_NAMES = ['Idea', 'Design', 'Engineering', 'Shipped'] as const;
 const ANCHORS = ['state-01', 'state-02', 'state-03', 'state-04'] as const;
 
@@ -106,11 +154,29 @@ export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
 
       <div className={styles.block}>
         <div className={styles.top}>
-          <span className={styles.brand}>
-            <b>fullbuild</b>.ai
-          </span>
-          <button className={styles.themeBtn} onClick={toggleTheme} aria-label="Toggle drafting ground">
-            {mounted ? (theme === 'dark' ? 'Night' : 'Vellum') : 'Ground'}
+          <a href="/contact" className={styles.brand} aria-label="Contact — hi@fullbuild.ai">
+            hi@<b>fullbuild</b>.ai
+          </a>
+          <button
+            className={styles.themeBtn}
+            onClick={toggleTheme}
+            aria-label={
+              mounted && theme === 'dark' ? 'Switch to day table' : 'Switch to night table'
+            }
+          >
+            {!mounted ? (
+              'Ground'
+            ) : theme === 'dark' ? (
+              <>
+                <MoonGlyph />
+                Night
+              </>
+            ) : (
+              <>
+                <SunGlyph />
+                Day
+              </>
+            )}
           </button>
         </div>
 

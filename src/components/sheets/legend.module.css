@@ -43,6 +43,7 @@
 }
 .name {
   font-size: 8px;
+  font-weight: 700;
   letter-spacing: 0.03em;
   fill: var(--ink-graphite);
 }
@@ -96,8 +97,23 @@
   display: inline-block;
   margin-right: 0.35em;
 }
+/* Touch screens have no hover — swap the affordance copy to the tap gesture. */
+.affordCoarse {
+  display: none;
+}
+@media (hover: none) {
+  .affordFine {
+    display: none;
+  }
+  .affordCoarse {
+    display: inline;
+  }
+}
 
-/* ── DETAIL callout — absolute overlay, zero layout shift ────────────────── */
+/* ── DETAIL callout — absolute overlay, zero layout shift ──────────────────
+   Narrow (stacked) sheets: drops below the legend, full width.
+   Wide sheets: sits to the RIGHT of the legend, beside the rows it details,
+   so the reader's eye never has to leave the schedule to find it. */
 .callout {
   position: absolute;
   top: 100%;
@@ -105,8 +121,6 @@
   right: 0;
   z-index: 5;
   margin-top: 0.45rem;
-  max-height: 44vh;
-  overflow-y: auto;
   padding: 0.7rem 0.8rem 0.8rem;
   background: var(--ground);
   border: 1px solid var(--rule-strong);
@@ -133,6 +147,24 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-witness);
+}
+/* close control — appears only when the callout is pinned open by a click */
+.calloutClose {
+  margin: -0.2rem -0.2rem -0.2rem 0;
+  padding: 0.1rem 0.3rem;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  line-height: 1;
+  color: var(--ink-witness);
+  transition: color 0.15s ease;
+}
+.calloutClose:hover,
+.calloutClose:focus-visible {
+  color: var(--accent-live);
+  outline: none;
 }
 
 .asmList {
@@ -175,8 +207,43 @@
   text-wrap: pretty;
 }
 
+/* Narrow (stacked) sheets: the callout joins the FLOW as an accordion panel
+   under the legend. An absolute overlay here would scroll behind the fixed
+   bottom title-block strip (the sheet's 3D hinge makes a stacking context, so
+   no z-index inside it can win) — in flow it behaves like every other block on
+   the page. The tap target just pressed sits directly above it; the shift is
+   the expected expand gesture on touch. */
+@media (max-width: 860px) {
+  .callout {
+    position: static;
+  }
+}
+
+/* Wide sheets (two-column layout, matches Sheet.module.css's 860px break):
+   callout beside the legend, top-aligned with it. Overlays the sheet gutter /
+   drawing edge — it is a pinned detail slip, background + border keep it
+   legible over anything beneath. */
+@media (min-width: 861px) {
+  .callout {
+    /* bottom-aligned with the legend: the legend sits low in the centred copy
+       column, so a tall assembly (TypeScript) grows UP into free sheet space
+       instead of past the fold below */
+    top: auto;
+    bottom: 0;
+    left: calc(100% + 1rem);
+    right: auto;
+    width: min(24rem, 40vw);
+    margin-top: 0;
+    animation-name: calloutInSide;
+  }
+}
+
 @keyframes calloutIn {
   from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes calloutInSide {
+  from { opacity: 0; transform: translateX(-8px); }
   to { opacity: 1; transform: none; }
 }
 @keyframes asmIn {

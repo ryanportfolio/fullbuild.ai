@@ -41,8 +41,8 @@ export default function SheetFrame() {
           <div className={s.copyCol}>
             <p className={copy.eyebrow}>Sheet S-03 · structure · erection sequence</p>
             <h2 className={copy.heading}>The frame holds the whole load</h2>
-            <p className={copy.prose}>
-              Building with AI in a safe, maintainable, and request-aligned way.
+            <p className={copy.lede}>
+              Building with AI in a safe, maintainable, and request-aligned way
             </p>
 
             <dl className={copy.spec} aria-label="Member schedule — computed from the erected geometry">
