@@ -139,6 +139,7 @@ export default function MastheadPlot({ text }: { text: string }) {
     setDimPhase('hidden');
 
     let raf = 0;
+    let resolveTimeout = 0;
     let cancelled = false;
     let started = false;
 
@@ -327,14 +328,25 @@ export default function MastheadPlot({ text }: { text: string }) {
         }
 
         if (idx >= modules.length) {
-          // handoff: the full canvas is now pixel-aligned with the real <h1>
-          // (same font, expanded width, baseline, letter-spacing), so swap
-          // instantly — no crossfade, no snap, no opacity dip.
-          h1.style.transition = 'none';
+          // RESOLVE: the canvas is pixel-aligned with the real <h1> (same font,
+          // expanded width, baseline, letter-spacing), so nothing moves — but
+          // the plot is module-quantised and the type is crisp, and an instant
+          // swap of those two textures reads as a pop. Crossfade instead: the
+          // crisp word breathes in beneath while the blocky plot lifts off it —
+          // the title "develops" into ink. Deceleration curve, no overshoot.
+          h1.style.transition = 'opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1)';
           h1.style.opacity = '1';
-          canvas.style.display = 'none';
+          canvas.style.transition = 'opacity 1.05s cubic-bezier(0.22, 1, 0.36, 1) 0.12s';
+          canvas.style.opacity = '0';
           pen.style.display = 'none';
           settle();
+          resolveTimeout = window.setTimeout(() => {
+            // transition props cleared so theme flips / future writes stay instant
+            canvas.style.display = 'none';
+            canvas.style.transition = '';
+            canvas.style.opacity = '';
+            h1.style.transition = '';
+          }, 1300);
           return;
         }
         raf = requestAnimationFrame(frame);
@@ -348,9 +360,13 @@ export default function MastheadPlot({ text }: { text: string }) {
       cancelled = true;
       ro?.disconnect();
       window.clearTimeout(timeout);
+      window.clearTimeout(resolveTimeout);
       if (raf) cancelAnimationFrame(raf);
-      // leave the h1 visible if we tear down mid-plot
-      if (h1) h1.style.opacity = '';
+      // leave the h1 visible if we tear down mid-plot or mid-resolve
+      if (h1) {
+        h1.style.transition = '';
+        h1.style.opacity = '';
+      }
     };
   }, [text]);
 
