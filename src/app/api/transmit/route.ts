@@ -18,7 +18,6 @@ interface TransmitBody {
   from: string;
   reply: string;
   re: string;
-  due: string;
   message: string;
   /** 'drawn' when the SGN box holds pointer strokes; 'typed:<name>' fallback. */
   signed: string;
@@ -33,7 +32,6 @@ const LIMITS: Record<string, number> = {
   from: 120,
   reply: 200,
   re: 200,
-  due: 60,
   message: 4_000,
   signed: 160,
 };
@@ -85,7 +83,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // Phase 1: the correspondence lives in the server log, verbatim.
   console.log(
-    `[transmit] ${rfi} from=${JSON.stringify(from)} reply=${JSON.stringify(reply)} re=${JSON.stringify(field('re'))} due=${JSON.stringify(field('due'))} signed=${JSON.stringify(signed)} message=${JSON.stringify(message)}`,
+    `[transmit] ${rfi} from=${JSON.stringify(from)} reply=${JSON.stringify(reply)} re=${JSON.stringify(field('re'))} signed=${JSON.stringify(signed)} message=${JSON.stringify(message)}`,
   );
 
   return NextResponse.json({ ok: true, rfi });

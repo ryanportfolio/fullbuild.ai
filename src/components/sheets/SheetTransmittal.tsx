@@ -259,7 +259,6 @@ export default function SheetTransmittal() {
           from: val('from'),
           reply: val('reply'),
           re: val('re'),
-          due: val('due'),
           message: val('message'),
           signed,
           firm: val('firm'),
@@ -438,17 +437,6 @@ export default function SheetTransmittal() {
                   </svg>
                 </div>
                 <canvas ref={setEcho('re')} className={s.echo} aria-hidden="true" />
-              </div>
-
-              <div className={s.row}>
-                <label className={s.rowLabel} htmlFor="t01-due">Response required by</label>
-                <div className={s.rowField}>
-                  <input id="t01-due" name="due" className={s.input} placeholder="YYYY-MM-DD, if it matters" maxLength={60} onInput={echo('due')} />
-                  <svg className={s.rule} viewBox="0 0 100 2" preserveAspectRatio="none" aria-hidden="true">
-                    <Line x1={0} y1={1} x2={100} y2={1} w={1.1} o={4} />
-                  </svg>
-                </div>
-                <canvas ref={setEcho('due')} className={s.echo} aria-hidden="true" />
               </div>
 
               <div className={`${s.row} ${s.rowTop}`}>
