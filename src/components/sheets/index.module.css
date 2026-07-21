@@ -1,0 +1,86 @@
+/* SHEET INDEX — mono, leader-dotted, drafting-table register. */
+
+.index {
+  margin-top: clamp(1rem, 2.5vh, 1.75rem);
+  border-top: 1px solid var(--rule-strong);
+  font-family: var(--font-mono);
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-witness);
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  padding: 0.28rem 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.72rem;
+  color: var(--ink-graphite);
+  transition: opacity 0.15s var(--ease-draw);
+}
+.row:hover {
+  opacity: 0.65;
+}
+
+.no {
+  color: var(--ink-witness);
+  font-size: 0.62rem;
+  width: 3.4rem;
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.name {
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* drafting leader dots filling the register line */
+.leader {
+  flex: 1;
+  border-bottom: 1px dotted var(--rule-strong);
+  transform: translateY(-0.22em);
+  min-width: 1.5rem;
+}
+
+/* The dot: filled revision-red ONLY for live + probe-passing; else a drawn
+   outline. The one accent, spent on the one semantic. */
+.dot,
+.dotSample {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex: none;
+  align-self: center;
+  border-radius: 50%;
+  border: 1px solid var(--ink-graphite);
+  background: transparent;
+}
+.dot[data-live='true'],
+.dotSample[data-live='true'] {
+  border-color: var(--accent-live);
+  background: var(--accent-live);
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-top: 0.4rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-witness);
+}
+.dotSample {
+  display: inline-block;
+  width: 0.42rem;
+  height: 0.42rem;
+}

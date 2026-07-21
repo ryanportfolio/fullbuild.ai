@@ -1,0 +1,38 @@
+.set {
+  position: relative;
+  z-index: 1;
+  /* HINGE reads as turning a sheet on the table — needs depth. */
+  perspective: 2200px;
+  perspective-origin: 50% 40%;
+}
+
+/* THE MARGIN LAW: every sheet ends at the rail's border line. */
+@media (min-width: 901px) {
+  .set {
+    padding-right: var(--rail-w);
+  }
+}
+
+/* The WebGL island paints ONLY inside its dimensioned band cell — a fixed
+   viewport column butted against the rail. DOM content on STATE 03/04 reserves
+   the same band via their sheet grids, so canvas/copy occlusion is impossible
+   by construction (the Margin Law, applied to the machine's cell too). */
+.canvasLayer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  right: var(--rail-w);
+  width: var(--band-w);
+  z-index: 0;
+  pointer-events: none;
+  /* Starts hidden; DrawingSet ramps opacity over the STATE 03 → 04 reach so
+     the frame assembles as wireframe beside the engineering sheet and pours
+     through the shipped schedule. */
+  opacity: 0;
+}
+
+@media (max-width: 1023px) {
+  .canvasLayer {
+    display: none;
+  }
+}

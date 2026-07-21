@@ -46,3 +46,50 @@ Prevention protocol (run every time before trusting a preview):
    the edited sources.
 4. Staleness persists after 1–2 → hard reload, unregister service workers, or
    use a fresh browser profile.
+
+## Screenshots time out on RAF-driven pages (2026-07-20)
+
+Symptom: `chrome-devtools take_screenshot` (and the preview pane) fail with
+`Page.captureScreenshot timed out`. Cause: Lenis' scroll loop + GSAP's ticker
+call `requestAnimationFrame` continuously — the page never reaches an idle
+frame, so the CDP capture waits behind the rAF queue past its `protocolTimeout`.
+A `frameloop="always"` R3F canvas makes it worse (continuous GPU commits).
+
+Fixes, in order of preference:
+
+1. **Don't render when idle.** R3F island uses `frameloop="demand"` +
+   `invalidate()` on store change → 0 frames at rest → captures need no freeze.
+2. **Freeze handle for GSAP/Lenis.** `DrawingSet` exposes a dev-only global:
+   `window.__capture.freeze()` = `gsap.ticker.sleep()` (halts the ticker, and
+   Lenis whose `raf` runs on it); `window.__capture.thaw()` = `gsap.ticker.wake()`.
+   Restartable, no reload. Capture flow: `__capture.freeze()` → screenshot →
+   `__capture.thaw()`. Prod-stripped via `NODE_ENV`.
+3. **Library-agnostic last resort** (no app handle available): override
+   `window.requestAnimationFrame = () => 0` to starve every rAF loop after one
+   frame — but this leaves the libs dead until a reload, so prefer (2).
+
+Note: `chrome-devtools emulate` supports `colorScheme` (use it for light/dark
+theme shots) but NOT `prefers-reduced-motion`, so you can't force the static
+reduced-motion path for capture that way.
+
+## Screenshots of a frameloop="demand" WebGL layer capture STALE (2026-07-20)
+
+Symptom: after a state change, `getComputedStyle`/pixel readback of the canvas
+shows the NEW frame, but `chrome-devtools take_screenshot` shows the PREVIOUS
+one (e.g. a diamond that is red in the buffer renders black in the screenshot).
+Cause: CDP `Page.captureScreenshot` grabs the compositor SURFACE, and an R3F
+`frameloop="demand"` canvas only commits a new surface when it actually renders;
+after an on-demand render the compositor copy can lag. `preserveDrawingBuffer`
+lets `canvas.drawImage`/readback see the true latest buffer, but does NOT fix the
+screenshot.
+
+Fixes:
+1. Force a fresh compositor commit right before capture by nudging the canvas
+   layer: `layer.style.opacity = '0.985'` (any tiny style change works). Reliable
+   and does NOT disturb app state.
+2. Do NOT use `resize_page` for this if you're holding manual store state — a
+   resize fires ScrollTrigger.refresh and overwrites scroll-derived values
+   (e.g. `pour` jumps back to its scroll position).
+3. Authoritative check regardless of the screenshot: read pixels via
+   `ctx.drawImage(canvas,0,0)` + `getImageData` (needs `preserveDrawingBuffer`),
+   or sample store/uniform values directly.
