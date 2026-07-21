@@ -93,3 +93,26 @@ Fixes:
 3. Authoritative check regardless of the screenshot: read pixels via
    `ctx.drawImage(canvas,0,0)` + `getImageData` (needs `preserveDrawingBuffer`),
    or sample store/uniform values directly.
+
+## Embedded preview browser loads with the gsap ticker ASLEEP (2026-07-20)
+
+Symptom: on a fresh page load in the Claude Code Browser pane, every
+time-based GSAP animation is dead — DRAW timelines sit at progress 0 while
+`paused()` is false and their ScrollTriggers report active. Direct-write
+paths (ScrollTrigger onUpdate scrubs, IntersectionObserver-driven state) may
+also fire erratically or not at all. Reproduces on the UNMODIFIED branch, so
+do not chase it as a regression in your diff.
+
+Cause: the pane's renderer starts with rAF suspended/throttled, and the gsap
+ticker never wakes. `window.__capture.thaw()` (= `gsap.ticker.wake()`)
+revives it, but with `lagSmoothing(0)` the whole accumulated delta applies in
+one tick — timelines jump straight to their end, so pacing cannot be observed
+there.
+
+Verification that actually works: run `scripts/capture.mjs` (Playwright with
+background-throttling disabled) against a live dev server. It yields real
+timing, working IntersectionObserver state flips, live pen telemetry, and
+screenshots. The script hardcodes `localhost:3117` — that port may be held by
+a STALE orphan server from an earlier session (sentinel-check the HTML before
+trusting it); copy the script to `.tmp/` with the port swapped to your own
+dev server instead.
