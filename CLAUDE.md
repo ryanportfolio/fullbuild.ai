@@ -71,6 +71,7 @@ Topical reference lives in `.claude/reference/`. Consult BEFORE non-trivial work
 | `architecture.md` | System flow, auth, state |
 | `pitfalls.md` | Accumulated gotchas |
 | `commands.md` | Build / dev / test commands |
+| `figma.md` | Figma plugin: access, skill-before-tool rule, workflows, seed file |
 | `tech-stack.md` | Non-default picks + why |
 | `deployment.md` | Deploy target, artifacts |
 
