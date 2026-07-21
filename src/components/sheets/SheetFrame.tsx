@@ -32,7 +32,7 @@ export default function SheetFrame() {
     <section id="state-03" data-state="03" data-ink="concrete" className={s.sheet} aria-label="Sheet 03 of 4 — Engineering">
       <div className={s.frame}>
         <header className={s.head}>
-          <span className={`${s.stateNo} u-mono`}>STATE&nbsp;03</span>
+          <span className={`${s.stateNo} u-mono`}>STAGE&nbsp;03</span>
           <span className={`${s.stateName} u-label`}>Engineering</span>
           <span className={`${s.sheetNo} u-mono`}>S-03 / 04</span>
         </header>

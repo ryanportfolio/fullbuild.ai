@@ -7,11 +7,12 @@ import { LIVE_PROJECTS } from '@/lib/projects';
 import copy from './copy.module.css';
 
 /**
- * STATE 01 — IDEA. Doubles as the set's cover: wordmark plots itself under the
- * pen, and the right column is a REAL cover-sheet program — a long-shed
- * elevation of the exact structure STATE 04 pours (one bent per live project),
- * then the SHEET INDEX listing every drawing in the schedule. The payload is
- * on the table from the first viewport; DRAW previews POUR.
+ * STAGE 01 — IDEA. Doubles as the set's cover: the wordmark is the drawing
+ * TITLE, plotted at full sheet measure across its own band (clear zone — no
+ * program element touches the letterforms), then dimensioned like any other
+ * drawing on the set. Below it the cover program: a long-shed elevation of the
+ * exact structure STAGE 04 pours (one bent per live project), then the SHEET
+ * INDEX listing every drawing in the schedule. DRAW previews POUR.
  */
 export default function SheetElevation() {
   return (
@@ -20,6 +21,12 @@ export default function SheetElevation() {
       state="Idea"
       ink="graphite"
       drawingSide="right"
+      masthead={
+        <>
+          <p className={copy.eyebrow}>Working drawing set · rev&#8209;controlled</p>
+          <MastheadPlot text="fullbuild.ai" />
+        </>
+      }
       drawing={
         <div>
           <Elevation />
@@ -27,8 +34,6 @@ export default function SheetElevation() {
         </div>
       }
     >
-      <p className={copy.eyebrow}>Working drawing set · rev&#8209;controlled</p>
-      <MastheadPlot text="fullbuild.ai" />
       <p className={copy.tagline}>
         <span className={copy.s1}>idea</span> →{' '}
         <span className={copy.s2}>design</span> →{' '}

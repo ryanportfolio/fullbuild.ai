@@ -65,10 +65,11 @@
   border-bottom: 1px solid var(--rule);
 }
 
+/* Annotation tier — de-emphasis is the witness TOKEN, not opacity, so the
+   composited contrast stays knowable (and AA-verified). */
 .stateNo {
   font-size: 0.7rem;
-  color: var(--ink-graphite);
-  opacity: 0.75;
+  color: var(--ink-witness);
 }
 
 .stateName {
@@ -79,7 +80,19 @@
 .sheetNo {
   margin-left: auto;
   font-size: 0.7rem;
-  opacity: 0.6;
+  color: var(--ink-witness);
+}
+
+/* Cover masthead band — the drawing TITLE owns the sheet's full measure
+   (margin -> rail border). Clear zone: nothing overlaps the letterforms. */
+.masthead {
+  margin-bottom: clamp(1.25rem, 4vh, 3rem);
+}
+
+/* The cover stacks title-over-program; its columns read from the top like a
+   real cover sheet, not vertically centered like the interior spreads. */
+.frame[data-cover='true'] .body {
+  align-items: start;
 }
 
 .body {

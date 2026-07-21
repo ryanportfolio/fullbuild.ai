@@ -1,0 +1,41 @@
+/* ============================================================================
+   L-101 · PLANTING PLAN — drawn flowerbeds under the STAGE 04 pour.
+   One custom property per flower (--fg, written by the growth driver) gates
+   the bloom-center dot exactly like the row diamonds gate on --lit.
+   Fallback --fg = 1: without JS (and under reduced motion) the bed stands
+   fully bloomed — the finished end-state, per the motion doctrine.
+   ========================================================================= */
+
+/* Below 1024px the fixed canvas band is hidden and the band cell is unstyled —
+   the spatial premise is gone, so the bed hides with it. */
+.plate {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .plate {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+}
+
+/* All plant linework is graphite (idea ink) via currentColor — dark theme
+   retokens for free. Ignition factor: same clamp pattern as the row diamonds
+   (shipped.module.css), driven by growth (--fg) instead of pour (--lit). */
+.flower {
+  color: var(--ink-graphite);
+  --dot: clamp(0, calc((var(--fg, 1) - 0.85) * 8), 1);
+}
+
+/* Bloom-center dot: transparent until the flower is nearly finished. Red ONLY
+   on a live, probe-passing project — and only via ignition, never before. */
+.bloomDot {
+  stroke: none;
+  fill: transparent;
+}
+.flower[data-live='true'] .bloomDot {
+  fill: color-mix(in srgb, transparent calc((1 - var(--dot)) * 100%), var(--accent-live) calc(var(--dot) * 100%));
+}
+.flower[data-live='false'] .bloomDot {
+  fill: color-mix(in srgb, transparent calc((1 - var(--dot)) * 100%), var(--ink-graphite) calc(var(--dot) * 100%));
+}

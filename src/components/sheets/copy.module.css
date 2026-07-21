@@ -12,12 +12,18 @@
   font-stretch: 125%;
   font-weight: 700;
   text-transform: lowercase;
-  letter-spacing: -0.01em;
-  line-height: 0.92;
-  /* Sized to its column: the wordmark must never bleed across the border into
-     the cover program (Margin Law applies to type too). */
-  font-size: clamp(2.2rem, 4.6vw, 3.7rem);
-  margin-bottom: 1.1rem;
+  /* Display-scale tracking: at title size the default fit reads loose. */
+  letter-spacing: -0.03em;
+  line-height: 0.9;
+  /* The drawing TITLE spans the sheet's full measure, margin -> rail border.
+     This clamp is the no-JS fallback; MastheadPlot fits the rendered word to
+     the band's exact width before plotting (Margin Law still holds — the band
+     ends at the rail). */
+  font-size: clamp(2.6rem, 11vw, 14rem);
+  /* Optical margin alignment: the f's left side-bearing would float the stem
+     off the margin line at this scale — hang it back onto the margin. */
+  margin-left: -0.045em;
+  white-space: nowrap;
 }
 
 .tagline {
