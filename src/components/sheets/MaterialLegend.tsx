@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PROJECTS } from '@/lib/projects';
 import styles from './legend.module.css';
 
@@ -81,10 +81,54 @@ const svgLabel =
 
 export default function MaterialLegend() {
   const [active, setActive] = useState<string | null>(null);
+  // Pinned = kept open by a click, so the reader can move onto the callout (and
+  // read all of it) without the pointer leaving a row and dismissing it. Hover
+  // only previews; a pinned selection ignores hover so crossing other rows on
+  // the way to the callout never swaps the content out from under the cursor.
+  const [pinned, setPinned] = useState(false);
+  const closeTimer = useRef<number | undefined>(undefined);
   const activeRow = rows.find((r) => r.lang === active) ?? null;
 
+  const cancelClose = () => {
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    closeTimer.current = undefined;
+  };
+  const scheduleClose = () => {
+    if (pinned) return;
+    cancelClose();
+    closeTimer.current = window.setTimeout(() => setActive(null), 160);
+  };
+  const preview = (lang: string) => {
+    cancelClose();
+    if (!pinned) setActive(lang);
+  };
+  const focusLang = (lang: string) => {
+    cancelClose();
+    setActive(lang);
+  };
+  const toggle = (lang: string) => {
+    cancelClose();
+    if (pinned && active === lang) {
+      setPinned(false);
+      setActive(null);
+    } else {
+      setActive(lang);
+      setPinned(true);
+    }
+  };
+  const close = () => {
+    cancelClose();
+    setPinned(false);
+    setActive(null);
+  };
+  useEffect(() => cancelClose, []);
+
   return (
-    <figure className={styles.wrap} onMouseLeave={() => setActive(null)}>
+    <figure
+      className={styles.wrap}
+      onMouseEnter={cancelClose}
+      onMouseLeave={scheduleClose}
+    >
       <div className={styles.board}>
         <svg
           viewBox={`0 0 ${W} ${H}`}
@@ -121,9 +165,6 @@ export default function MaterialLegend() {
 
           {/* title block */}
           <text x={SW_X} y={12} className={styles.title}>MATERIALS LEGEND</text>
-          <text x={SW_X} y={23} className={styles.sub}>
-            languages · one hatch each · columns are the {COLS} drawings
-          </text>
 
           {/* column heads: drawing number 1…11, over the matrix */}
           {PROJECTS.map((p, j) => (
@@ -187,29 +228,43 @@ export default function MaterialLegend() {
               type="button"
               className={styles.hit}
               style={{ top: `${((ROWS_TOP + i * RP) / H) * 100}%`, height: `${(RP / H) * 100}%` }}
-              onMouseEnter={() => setActive(r.lang)}
-              onFocus={() => setActive(r.lang)}
-              onClick={() => setActive((a) => (a === r.lang ? null : r.lang))}
+              onMouseEnter={() => preview(r.lang)}
+              onFocus={() => focusLang(r.lang)}
+              onClick={() => toggle(r.lang)}
               aria-label={`${r.lang} — full assembly of ${r.count} drawing${r.count === 1 ? '' : 's'}`}
               aria-expanded={active === r.lang}
+              aria-pressed={pinned && active === r.lang}
             />
           ))}
         </div>
       </div>
 
       <p className={styles.afford} aria-hidden="true">
-        <span className={styles.afford_mark}>▸</span> hover a material for its full assembly
+        <span className={styles.afford_mark}>▸</span> hover to preview · click to keep open
       </p>
 
-      {/* DETAIL callout — absolute overlay, no layout shift. Re-keyed on the
-          active language so the draw-in animation retriggers each time. */}
+      {/* DETAIL callout — absolute overlay, no layout shift, no inner scroll (the
+          whole assembly is shown). Hovering the callout keeps it alive; a click
+          on a row pins it so the pointer can travel here without dismissing it.
+          Re-keyed on the active language so the draw-in animation retriggers. */}
       {activeRow && (
-        <div className={styles.callout} key={activeRow.lang} role="status">
+        <div
+          className={styles.callout}
+          key={activeRow.lang}
+          role="status"
+          onMouseEnter={cancelClose}
+          onMouseLeave={scheduleClose}
+        >
           <div className={styles.calloutHead}>
             <span className={styles.calloutLang}>{activeRow.lang}</span>
             <span className={styles.calloutMeta}>
               base of {activeRow.count} · full assembly
             </span>
+            {pinned && (
+              <button type="button" className={styles.calloutClose} onClick={close} aria-label="close">
+                ✕
+              </button>
+            )}
           </div>
           <ul className={styles.asmList}>
             {activeRow.assembly.map((a, k) => (
