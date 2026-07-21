@@ -163,7 +163,7 @@ export const PROJECTS: Project[] = [
   {
     id: 'whisper-ptt',
     sheet: 'S-04.7',
-    title: 'whisper-ptt',
+    title: 'Local PTT',
     href: null,
     repo: 'https://github.com/ryanportfolio/Local-CPU-only-PTT',
     live: false,

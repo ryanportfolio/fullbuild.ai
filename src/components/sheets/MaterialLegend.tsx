@@ -16,8 +16,11 @@ import styles from './legend.module.css';
  * Hover / focus / tap a material row and a DETAIL callout draws the full
  * assembly built on that language — the frameworks and libraries the legend
  * deliberately omits (React, Next.js, Astro…), each drawing's real `stack`.
- * The callout is an absolute overlay so the vertically-centred copy column
- * never shifts; the row highlights, the rest dim.
+ * On wide sheets the callout is an absolute overlay to the RIGHT of the
+ * legend (beside the rows it details, bottom-aligned) so the copy column
+ * never shifts. On narrow, stacked sheets it expands IN FLOW below the legend
+ * like an accordion — an overlay there would scroll behind the fixed bottom
+ * title-block strip. The row highlights, the rest dim.
  */
 
 // Material palette — order fixed by prominence / first appearance, each a
@@ -96,7 +99,9 @@ export default function MaterialLegend() {
   const scheduleClose = () => {
     if (pinned) return;
     cancelClose();
-    closeTimer.current = window.setTimeout(() => setActive(null), 160);
+    // 240ms grace: on wide sheets the callout sits to the RIGHT of the legend,
+    // so the pointer crosses a real gap to reach it — enough time not to lose it.
+    closeTimer.current = window.setTimeout(() => setActive(null), 240);
   };
   const preview = (lang: string) => {
     cancelClose();
@@ -240,7 +245,9 @@ export default function MaterialLegend() {
       </div>
 
       <p className={styles.afford} aria-hidden="true">
-        <span className={styles.afford_mark}>▸</span> hover to preview · click to keep open
+        <span className={styles.afford_mark}>▸</span>
+        <span className={styles.affordFine}>hover to preview · click to keep open</span>
+        <span className={styles.affordCoarse}>tap a material for its full assembly</span>
       </p>
 
       {/* DETAIL callout — absolute overlay, no layout shift, no inner scroll (the
