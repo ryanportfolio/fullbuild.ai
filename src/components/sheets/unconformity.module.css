@@ -49,7 +49,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  font-size: clamp(1.4rem, 3vw, 2.1rem);
+  font-size: clamp(2.6rem, 7.5vw, 5.2rem);
   margin-bottom: 1rem;
 }
 .intro {
