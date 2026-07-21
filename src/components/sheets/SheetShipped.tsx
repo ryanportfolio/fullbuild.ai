@@ -59,7 +59,7 @@ export default function SheetShipped() {
               Sheet S-04 · drawing schedule · {n} entries
             </p>
             <div className={s.lead}>
-              <h2 className={s.pour}>Made&nbsp;Real</h2>
+              <h2 className={s.pour}>Made</h2>
               <p className={s.leadNote}>
                 Judgment, mission, management, relationships, and growth still
                 need human agency
