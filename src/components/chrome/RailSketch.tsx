@@ -33,6 +33,26 @@ function S({ d, w = 1, o }: { d: string; w?: number; o: number }) {
   );
 }
 
+/* Correspondence strokes: NOT scroll-scrubbed. The panel stays hidden until a
+   transmittal actually leaves the table (SheetTransmittal reveals it and draws
+   these in order) — the log never records mail that was never sent. */
+function T({ d, w = 1, o }: { d: string; w?: number; o: number }) {
+  return (
+    <path
+      d={d}
+      className="ws-post"
+      data-o={o}
+      pathLength={1}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={w}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      vectorEffect="non-scaling-stroke"
+    />
+  );
+}
+
 function Panel({ viewBox, children }: { viewBox: string; children: React.ReactNode }) {
   return (
     <svg viewBox={viewBox} preserveAspectRatio="xMidYMid meet" aria-hidden="true">
@@ -162,6 +182,25 @@ export default function RailSketch({ className }: { className?: string }) {
           <S d="M20 81 l4 6 M88 81 l4 6" w={0.5} o={75} />
         </g>
       </Panel>
+
+      {/* — 7 · correspondence: an envelope leaves the table. Hidden until the
+             visitor's T-01 transmittal is actually lodged. — */}
+      <svg
+        id="ws-rail-post"
+        viewBox="0 22 110 70"
+        preserveAspectRatio="xMidYMid meet"
+        aria-hidden="true"
+        data-posted="false"
+      >
+        <g transform="rotate(1.6 55 57)">
+          <T d="M12 38 h72 v38 h-72 Z" w={1.1} o={0} />
+          <T d="M12 38 L48 62 L84 38" w={0.8} o={1} />
+          <T d="M12 76 L38 56 M84 76 L58 56" w={0.5} o={2} />
+          <T d="M90 50 l12 0" w={0.8} o={3} />
+          <T d="M98 45 l6 5 l-6 5" w={0.8} o={4} />
+          <T d="M20 86 H76" w={0.5} o={5} />
+        </g>
+      </svg>
     </div>
   );
 }

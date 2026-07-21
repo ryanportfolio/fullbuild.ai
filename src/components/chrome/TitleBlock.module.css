@@ -98,6 +98,10 @@
   height: 100%;
   min-height: 0;
 }
+/* the correspondence panel stays off the log until a transmittal is lodged */
+.sketch svg[data-posted='false'] {
+  display: none;
+}
 /* short scene (small windows): go three-up so panels stay legible-large */
 @container (max-height: 260px) {
   .sketch {

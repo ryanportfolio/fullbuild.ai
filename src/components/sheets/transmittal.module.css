@@ -1,0 +1,425 @@
+/* ============================================================================
+   T-01 TRANSMITTAL — the countersign sheet. Same drafting frame vocabulary as
+   the appendix; every rule the visitor writes on is a drawn stroke, the form
+   controls are transparent overlays sitting on that linework. Graphite only:
+   correspondence is not live-in-production, so red is never spent here.
+   ========================================================================= */
+
+.sheet {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  padding: var(--sheet-margin);
+}
+.frame {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--rule-strong);
+  padding: clamp(1rem, 2.5vw, 2rem);
+  padding-bottom: clamp(3rem, 10vh, 6rem);
+}
+/* The handoff: while the visitor holds the instrument, the native cursor
+   yields to the carriage everywhere on the sheet. */
+.frame[data-hand='true'],
+.frame[data-hand='true'] input,
+.frame[data-hand='true'] textarea,
+.frame[data-hand='true'] button,
+.frame[data-hand='true'] svg {
+  cursor: none;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(0.75rem, 2vw, 1.75rem);
+  padding-bottom: 0.85rem;
+  margin-bottom: clamp(1.2rem, 3.5vh, 2.2rem);
+  border-bottom: 1px solid var(--rule);
+}
+.stateNo {
+  font-size: 0.7rem;
+  color: var(--ink-witness);
+}
+.stateName {
+  font-size: clamp(0.8rem, 1.6vw, 1rem);
+}
+.sheetNo {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--ink-witness);
+}
+
+.heading {
+  font-family: var(--font-display);
+  font-stretch: 112%;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: clamp(2rem, 5.5vw, 3.6rem);
+  line-height: 0.95;
+  margin-bottom: 0.9rem;
+}
+.intro {
+  font-size: 1.05rem;
+  line-height: 1.55;
+  max-width: 44ch;
+  opacity: 0.9;
+  margin-bottom: clamp(1.4rem, 4vh, 2.4rem);
+}
+
+/* stage — holds the form and, after transmission, the envelope. Local
+   perspective so the fold has real depth regardless of the sheet's own
+   composited state. */
+.stage {
+  position: relative;
+  flex: 1;
+  perspective: 1400px;
+}
+.stage[data-phase='sent'] .form {
+  display: none;
+}
+.stage[data-phase='form'] .envelope {
+  display: none;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: start;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+/* one written line of the RFI: label · writing surface · echo plot */
+.row {
+  display: grid;
+  grid-template-columns: 8rem minmax(0, 1fr) clamp(5rem, 24%, 11rem);
+  gap: 0.9rem;
+  align-items: end;
+}
+.rowLabel {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-witness);
+  padding-bottom: 0.35rem;
+}
+.rowField {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.input {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  color: var(--ink-graphite);
+  background: none;
+  border: none;
+  padding: 0.15rem 0.1rem 0.3rem;
+  width: 100%;
+}
+.input::placeholder {
+  color: var(--ink-witness);
+  opacity: 0.55;
+}
+.toVal {
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  padding: 0.15rem 0.1rem 0.3rem;
+}
+/* a drawn witness rule under each writing surface */
+.rule {
+  width: 100%;
+  height: 2px;
+  color: var(--ink-graphite);
+  opacity: 0.75;
+}
+
+/* the keystroke echo — the carriage replots what the visitor letters,
+   masthead-module style, in the row's margin */
+.echo {
+  width: 100%;
+  height: 1.35rem;
+  align-self: end;
+  margin-bottom: 0.25rem;
+  font-family: var(--font-mono);
+  color: var(--ink-graphite);
+  opacity: 0.82;
+}
+
+/* message block — six drawn rules, transparent textarea over them */
+.msgWrap {
+  --msg-lh: 1.9rem;
+  position: relative;
+}
+.msg {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  line-height: var(--msg-lh);
+  color: var(--ink-graphite);
+  background: none;
+  border: none;
+  padding: 0 0.1rem;
+  width: 100%;
+  height: calc(var(--msg-lh) * 6);
+  resize: none;
+  overflow: hidden;
+  display: block;
+}
+.msg::placeholder {
+  color: var(--ink-witness);
+  opacity: 0.55;
+}
+.msgRule {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  color: var(--ink-graphite);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* SGN box — the countersign itself */
+.sgnRow {
+  display: grid;
+  grid-template-columns: 8rem minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: start;
+  margin-top: 0.4rem;
+}
+.sgnBox {
+  width: 100%;
+  max-width: 19rem;
+  color: var(--ink-graphite);
+  touch-action: none;
+}
+.sgnMeta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+  margin-top: 0.4rem;
+}
+.sgnTyped {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-graphite);
+  background: none;
+  border: none;
+  border-bottom: 1px dashed var(--rule-strong);
+  padding: 0.15rem 0.1rem;
+}
+.sgnTyped::placeholder {
+  color: var(--ink-witness);
+  opacity: 0.55;
+}
+.sgnClear {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: none;
+  border: 1px solid var(--rule-strong);
+  color: var(--ink-witness);
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+}
+.sgnClear:hover {
+  color: var(--ink-graphite);
+  border-color: var(--ink-graphite);
+}
+
+/* transmit row */
+.actions {
+  display: flex;
+  align-items: baseline;
+  gap: 1.1rem;
+  margin-top: 1.2rem;
+}
+.transmit {
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.8rem;
+  color: var(--ink-graphite);
+  background: none;
+  border: 2px solid var(--ink-graphite);
+  padding: 0.55rem 1.4rem;
+  cursor: pointer;
+}
+.transmit:hover:not(:disabled) {
+  background: var(--ink-graphite);
+  color: var(--ground);
+}
+.transmit:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+/* status stays in the measured voice; faults letter in concrete, never red */
+.status {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-witness);
+}
+.status[data-fault='true'] {
+  color: var(--ink-concrete);
+}
+
+/* honeypot — off the sheet entirely for humans, present for the harvest */
+.trap {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* general notes — the side column, standard RFI margin lettering */
+.notes {
+  border: 1px solid var(--rule-strong);
+  padding: 1rem 1.15rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  line-height: 1.7;
+  color: var(--ink-witness);
+}
+.notesHead {
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.7rem;
+  border-bottom: 1px solid var(--rule);
+}
+.notes ol {
+  list-style: none;
+  counter-reset: gn;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.notes li {
+  counter-increment: gn;
+  display: grid;
+  grid-template-columns: 1.4rem 1fr;
+  gap: 0.4rem;
+}
+.notes li::before {
+  content: counter(gn) '.';
+  color: var(--ink-witness);
+}
+
+/* ---- the envelope ------------------------------------------------------- */
+.envelope {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.4rem;
+}
+.envArt {
+  position: relative;
+  width: min(24rem, 78%);
+}
+.envSvg {
+  width: 100%;
+  color: var(--ink-graphite);
+}
+/* TRANSMITTED stamp — double-ruled hand stamp, graphite: a sent letter is
+   correspondence, not a live system */
+.stamp {
+  position: absolute;
+  top: -1.4rem;
+  left: -1.6rem;
+  border: 2px solid var(--ink-graphite);
+  color: var(--ink-graphite);
+  background: var(--ground);
+  padding: 0.55rem 0.85rem;
+  transform: rotate(-3.5deg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.stamp::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border: 1px solid currentColor;
+  transform: rotate(1.4deg);
+  pointer-events: none;
+}
+.stampTitle {
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.85rem;
+  line-height: 1.1;
+}
+.stampNo {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+}
+.receipt {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  color: var(--ink-witness);
+  text-align: center;
+  line-height: 1.8;
+}
+.receipt b {
+  font-weight: 600;
+  color: var(--ink-graphite);
+}
+
+/* ---- collapse ----------------------------------------------------------- */
+@media (max-width: 900px) {
+  .form {
+    grid-template-columns: 1fr;
+    gap: 1.6rem;
+  }
+  .row,
+  .sgnRow {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+  .echo {
+    display: none;
+  }
+  .rowLabel {
+    padding-bottom: 0.1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .head {
+    flex-wrap: wrap;
+    row-gap: 0.3rem;
+  }
+  .sheetNo {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+}

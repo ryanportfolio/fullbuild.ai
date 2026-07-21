@@ -3,6 +3,7 @@ import SheetBlueprint from '@/components/sheets/SheetBlueprint';
 import SheetFrame from '@/components/sheets/SheetFrame';
 import SheetShipped from '@/components/sheets/SheetShipped';
 import SheetUnconformity from '@/components/sheets/SheetUnconformity';
+import SheetTransmittal from '@/components/sheets/SheetTransmittal';
 import DrawingSet from '@/components/motion/DrawingSet';
 
 /**
@@ -20,6 +21,7 @@ export default function Home() {
       <SheetFrame />
       <SheetShipped />
       <SheetUnconformity />
+      <SheetTransmittal />
     </DrawingSet>
   );
 }

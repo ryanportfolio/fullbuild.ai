@@ -1,6 +1,7 @@
 import { GIT } from '@/lib/git';
 import IfcStamp from './IfcStamp';
 import { FasterGlyph, StrongerGlyph, SecureGlyph } from './SheetGlyphs';
+import { EmailRow, CheckedByRow } from './ContactTriggers';
 import u from './unconformity.module.css';
 
 /**
@@ -97,11 +98,12 @@ export default function SheetUnconformity() {
             <div className={u.specimen}>
               <div className={u.specimenHead}>Title block · contact</div>
               <ContactRow k="Drawn by" v={null} />
-              <ContactRow k="Email" v={null} />
+              <EmailRow />
               <ContactRow k="Based" v={null} />
               <ContactRow k="Résumé" v={null} />
-              {/* The one deliberate null: this drawing awaits its checker. */}
-              <ContactRow k="Checked by" v={null} />
+              {/* Still the deliberate null — but now it is the hook into
+                  THE COUNTERSIGN: click it and go sign the set on T-01. */}
+              <CheckedByRow />
             </div>
             <IfcStamp />
           </aside>

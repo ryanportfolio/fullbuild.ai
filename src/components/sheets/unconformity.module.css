@@ -158,6 +158,23 @@
 .fieldVal a {
   border-bottom: 1px solid currentColor;
 }
+/* CHECKED BY — still the deliberate null, but now it is the hook: an empty
+   witness line you can click to go countersign the set. */
+.fieldVal a.checkedBy {
+  display: inline-block;
+  width: 100%;
+  min-width: 3rem;
+  border-bottom: 1px dashed currentColor;
+  opacity: 0.5;
+  vertical-align: middle;
+  height: 0.9em;
+  cursor: pointer;
+  transition: opacity 0.2s var(--ease-draw);
+}
+.checkedBy:hover,
+.checkedBy:focus-visible {
+  opacity: 1;
+}
 
 .revGap {
   color: var(--ink-witness);
