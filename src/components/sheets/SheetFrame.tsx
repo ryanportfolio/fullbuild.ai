@@ -39,7 +39,7 @@ export default function SheetFrame() {
 
         <div className={s.body}>
           <div className={s.copyCol}>
-            <p className={copy.eyebrow}>Sheet S-03 · structure · erection sequence</p>
+            <p className={copy.eyebrow}>Sheet S-03 · structure</p>
             <h2 className={copy.heading}>
               <span className={copy.headingGoal}>Goal</span>
               Verification Loop
