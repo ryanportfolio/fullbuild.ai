@@ -26,7 +26,7 @@ export default function SheetElevation() {
         </div>
       }
     >
-      <p className={copy.eyebrow}>Working drawing set · rev-controlled</p>
+      <p className={copy.eyebrow}>Working drawing set · rev&#8209;controlled</p>
       <MastheadPlot text="fullbuild.ai" />
       <p className={copy.tagline}>
         <span className={copy.s1}>idea</span> →{' '}

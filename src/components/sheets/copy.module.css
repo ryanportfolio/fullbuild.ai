@@ -90,6 +90,8 @@
 }
 .specVal {
   text-align: right;
+  font-size: 0.72rem;
+  text-wrap: balance;
 }
 /* drawing title beneath a figure — mono, drafting register, inherits the
    figure's ink (pale on a cyanotype panel, graphite on vellum) */

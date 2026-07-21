@@ -86,6 +86,10 @@
 }
 @media (min-width: 1024px) {
   .pourReport {
+    /* Sticky within the tall band cell: the tally rides the viewport foot
+       while the schedule scrolls, always in frame beside the pour. */
+    position: sticky;
+    bottom: 1.6rem;
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
@@ -107,7 +111,6 @@
 
 .kickerLive {
   color: var(--ink-witness);
-  text-transform: none;
   letter-spacing: 0.06em;
 }
 
@@ -311,17 +314,23 @@
   color: var(--ink-witness);
   display: flex;
   flex-wrap: wrap;
-  column-gap: 0.35rem;
-  row-gap: 0.15rem;
+  column-gap: 0.7rem;
+  row-gap: 0.2rem;
   align-items: baseline;
+}
+/* Each metric is an unbreakable unit; a hairline witness tick separates
+   neighbours and survives wrapping cleanly (no dangling joiner glyphs). */
+.metric {
+  white-space: nowrap;
+}
+.metric + .metric {
+  border-left: 1px solid var(--rule-strong);
+  padding-left: 0.7rem;
 }
 .metric b {
   font-weight: 600;
   color: var(--ink-graphite);
   font-variant-numeric: tabular-nums;
-}
-.metricSep {
-  opacity: 0.6;
 }
 
 /* The probe stamp: a real measurement, printed only once the row is poured.

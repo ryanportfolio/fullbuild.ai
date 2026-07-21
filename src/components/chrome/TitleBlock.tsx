@@ -59,6 +59,28 @@ export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
       </svg>
       <span className={styles.setName}>The Working Set</span>
 
+      {/* Rail rule: a drafting station ruler running the rail's reach — ticks
+          at the drafting module, majors numbered. Structure, not noise. */}
+      <svg className={styles.ruler} viewBox="0 0 24 400" preserveAspectRatio="none" aria-hidden="true">
+        {Array.from({ length: 41 }).map((_, i) => {
+          const y = (i / 40) * 400;
+          const major = i % 5 === 0;
+          return (
+            <line
+              key={i}
+              x1="0"
+              y1={y}
+              x2={major ? 10 : 5}
+              y2={y}
+              stroke="currentColor"
+              strokeWidth="1"
+              vectorEffect="non-scaling-stroke"
+            />
+          );
+        })}
+        <line x1="0" y1="0" x2="0" y2="400" stroke="currentColor" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+      </svg>
+
       {/* Carriage telemetry — live readout of the one instrument. PenCarriage
           writes these cells directly (real coords, real mode, no theater). */}
       <div className={styles.telemetry} aria-hidden="true">
@@ -77,7 +99,7 @@ export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
             <b>fullbuild</b>.ai
           </span>
           <button className={styles.themeBtn} onClick={toggleTheme} aria-label="Toggle drafting ground">
-            {mounted ? (theme === 'dark' ? 'Table' : 'Vellum') : 'Ground'}
+            {mounted ? (theme === 'dark' ? 'Night' : 'Vellum') : 'Ground'}
           </button>
         </div>
 

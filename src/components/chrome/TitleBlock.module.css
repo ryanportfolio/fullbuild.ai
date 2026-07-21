@@ -41,6 +41,17 @@
   color: var(--ink-witness);
 }
 
+/* rail station ruler — fills the rail's reach with drafted structure */
+.ruler {
+  flex: 1;
+  width: 0.7rem;
+  min-height: 3rem;
+  margin: 0.9rem 0 0.4rem;
+  color: var(--ink-graphite);
+  opacity: 0.4;
+  align-self: flex-start;
+}
+
 /* carriage telemetry — the instrument's live readout */
 .telemetry {
   margin-top: auto;
@@ -210,6 +221,7 @@
   }
   .reg,
   .setName,
+  .ruler,
   .telemetry {
     display: none;
   }

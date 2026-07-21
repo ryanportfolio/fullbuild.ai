@@ -118,9 +118,8 @@ export default function SheetShipped() {
                         <span className={s.stack}>{p.stack.join(' · ')}</span>
                       </p>
                       <p className={s.metricLine}>
-                        {p.metrics.map((m, k) => (
+                        {p.metrics.map((m) => (
                           <span className={s.metric} key={m.label} title={m.source}>
-                            {k > 0 && <span className={s.metricSep}> · </span>}
                             <b>{m.value ?? '––––'}</b> {m.label}
                           </span>
                         ))}

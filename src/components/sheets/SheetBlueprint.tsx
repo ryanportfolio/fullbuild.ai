@@ -34,7 +34,7 @@ export default function SheetBlueprint() {
         <SpecRow k="Type family" v="Archivo / Martian Mono" />
         <SpecRow k="Ink budget" v="4 (1 accent)" />
         <SpecRow k="Base grid" v="2.25 rem" />
-        <SpecRow k="Motion verbs" v="draw · hinge · pour" />
+        <SpecRow k="Motion verbs" v={'draw · hinge · pour'} />
         <SpecRow k="Contrast floor" v="WCAG AA" />
       </dl>
     </Sheet>

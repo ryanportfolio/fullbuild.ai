@@ -91,7 +91,7 @@ export const PROJECTS: Project[] = [
     live: true,
     role: 'solo build — scoring engine, SSRF guard, site',
     year: "'26",
-    stack: ['TypeScript strict', 'Node 20', 'Astro', '0 runtime deps'],
+    stack: ['TypeScript strict', 'Node 20', 'Astro', 'SSE'],
     metrics: [
       { label: 'tests passing', value: '152', source: 'README badge' },
       { label: 'runtime deps', value: '0', source: 'package.json' },
