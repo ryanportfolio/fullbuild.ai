@@ -383,7 +383,12 @@
 
 @media (max-width: 900px) {
   .row {
-    grid-template-columns: 3.2rem minmax(0, 1fr);
+    grid-template-columns: 4.2rem minmax(0, 1fr);
+    gap: 0.6rem;
+  }
+  .rowSheet {
+    white-space: nowrap;
+    font-size: 0.64rem;
   }
   .year {
     display: none;

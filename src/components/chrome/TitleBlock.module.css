@@ -218,4 +218,19 @@
     max-width: 22rem;
     margin-left: auto;
   }
+  /* Compact strip: the big sheet number yields; nav + one meta line remain. */
+  .mid {
+    display: none;
+  }
+  .top {
+    padding: 0.35rem 0.6rem;
+  }
+  .navBtn {
+    padding: 0.3rem 0;
+  }
+  .service,
+  .rev {
+    padding: 0.28rem 0.6rem;
+    font-size: 0.55rem;
+  }
 }

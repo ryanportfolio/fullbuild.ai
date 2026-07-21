@@ -132,7 +132,10 @@
     grid-template-columns: 1fr;
     gap: clamp(1.25rem, 5vw, 2rem);
   }
+  /* Stacked flow leads with the LETTERED voice (wordmark, prose) — the cover
+     program (index, figures) follows. A right-side drawing never jumps the
+     masthead on a narrow sheet. */
   .frame[data-side='right'] .drawing {
-    order: 0;
+    order: 2;
   }
 }

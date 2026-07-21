@@ -29,6 +29,12 @@ export default function SheetShipped() {
   useEffect(() => {
     const el = scheduleRef.current;
     if (!el) return;
+    // Reduced motion: the schedule stands fully poured (the finished end-state
+    // is the spec) — never let the scroll-scrubbed store value dim it.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.style.setProperty('--pour', '1');
+      return;
+    }
     const apply = (p: number) => el.style.setProperty('--pour', p.toFixed(4));
     apply(useWorkingSet.getState().pour);
     return useWorkingSet.subscribe((st, prev) => {

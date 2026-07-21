@@ -68,7 +68,7 @@
 }
 .revRow {
   display: grid;
-  grid-template-columns: 4.6rem 1fr 5.8rem;
+  grid-template-columns: 4.6rem minmax(0, 1fr) 5.8rem;
   gap: 1rem;
   padding: 0.55rem 0.4rem;
   padding-left: 1.6rem;
@@ -249,5 +249,27 @@
   .body {
     grid-template-columns: 1fr;
     gap: 2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .head {
+    flex-wrap: wrap;
+    row-gap: 0.3rem;
+  }
+  .sheetNo {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+  .revRow {
+    grid-template-columns: 4.2rem minmax(0, 1fr);
+    font-size: 0.68rem;
+  }
+  .revWhen {
+    grid-column: 2;
+    text-align: left;
+  }
+  .stamp {
+    max-width: 100%;
   }
 }

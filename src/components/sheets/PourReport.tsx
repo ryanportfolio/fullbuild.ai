@@ -14,13 +14,16 @@ export default function PourReport() {
   const health = useWorkingSet((st) => st.health);
   const [pour, setPour] = useState(() => useWorkingSet.getState().pour);
 
-  useEffect(
-    () =>
-      useWorkingSet.subscribe((st, prev) => {
-        if (st.pour !== prev.pour) setPour(st.pour);
-      }),
-    [],
-  );
+  useEffect(() => {
+    // Reduced motion: report the finished end-state, matching the schedule.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setPour(1);
+      return;
+    }
+    return useWorkingSet.subscribe((st, prev) => {
+      if (st.pour !== prev.pour) setPour(st.pour);
+    });
+  }, []);
 
   const n = PROJECTS.length;
   // Same threshold family as the schedule rows' --lit computation.
