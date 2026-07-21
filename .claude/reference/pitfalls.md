@@ -116,3 +116,15 @@ screenshots. The script hardcodes `localhost:3117` — that port may be held by
 a STALE orphan server from an earlier session (sentinel-check the HTML before
 trusting it); copy the script to `.tmp/` with the port swapped to your own
 dev server instead.
+
+## pathLength=1 + GSAP autoRound = stroke DRAW never actually animated (2026-07-20)
+
+Symptom: dash-reveal strokes (`pathLength={1}`, tween `strokeDashoffset` 1 -> 0)
+pop on whole rather than drawing their travel; the "draw" reads as staggered
+popping. Cause: with pathLength=1 the entire sweep lives inside ONE CSS pixel,
+and GSAP CSSPlugin's default autoRound snaps every intermediate value to 1|0.
+The travel tween was binary from day one — the effect's motion was only ever
+the stagger. Fix: `autoRound: false` on the dashoffset tween (or use a larger
+pathLength scale). Detection that caught it: sample offsets mid-animation and
+count strokes in (0.01, 0.99) — zero partials at every instant means the tween
+is snapping.

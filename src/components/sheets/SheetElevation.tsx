@@ -72,9 +72,11 @@ function Elevation() {
       role="img"
       aria-label={`Elevation of the shipped structure — ${n} bents, one per live project`}
     >
-      {/* construction lines: eave + ridge datums */}
+      {/* construction lines: eave + ridge datums. Serpentine — the eave runs
+          left→right, the ridge returns right→left — so the pen sweeps back
+          instead of snapping across the sheet between datums. */}
       <Line x1={x0 - 18} y1={eaveY} x2={x1 + 18} y2={eaveY} ink="graphite" w={0.5} dash="2 4" o={0} />
-      <Line x1={x0 - 18} y1={ridgeY} x2={x1 + 18} y2={ridgeY} ink="graphite" w={0.5} dash="2 4" o={1} />
+      <Line x1={x1 + 18} y1={ridgeY} x2={x0 - 18} y2={ridgeY} ink="graphite" w={0.5} dash="2 4" o={1} />
 
       {/* ground line + hatch */}
       <Line x1={x0 - 26} y1={groundY} x2={x1 + 26} y2={groundY} ink="graphite" w={1.5} o={2} />

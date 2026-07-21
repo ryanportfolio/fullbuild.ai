@@ -46,10 +46,24 @@ export default function MastheadPlot({ text }: { text: string }) {
     const pen = penRef.current;
     if (!h1 || !canvas || !pen) return;
 
+    // One instrument, one hand: the carriage holds off on the cover drawing
+    // until the wordmark is done (or provably not plotting). This signal is
+    // how DrawingSet knows the plot is settled — fired on completion AND on
+    // every bail path, latched on window so a late subscriber still sees it.
+    const settle = () => {
+      const w = window as unknown as { __plotSettled?: boolean };
+      if (w.__plotSettled) return;
+      w.__plotSettled = true;
+      window.dispatchEvent(new Event('ws:plot-settled'));
+    };
+
     const reduce =
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) return; // <h1> already visible; nothing to do
+    if (reduce) {
+      settle();
+      return; // <h1> already visible; nothing to do
+    }
 
     // Hide the real text before first paint so there is no flash of the finished
     // word before the pen starts. Restored if we bail for any reason.
@@ -63,6 +77,7 @@ export default function MastheadPlot({ text }: { text: string }) {
       if (started) return;
       cancelled = true;
       h1.style.opacity = '';
+      settle();
     };
     const timeout = window.setTimeout(bail, FONT_TIMEOUT);
 
@@ -239,6 +254,7 @@ export default function MastheadPlot({ text }: { text: string }) {
           h1.style.opacity = '1';
           canvas.style.display = 'none';
           pen.style.display = 'none';
+          settle();
           return;
         }
         raf = requestAnimationFrame(frame);

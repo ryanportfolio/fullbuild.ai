@@ -173,6 +173,10 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
       }
     };
 
+    // Set by the crewed cover's plot gate below; called on teardown so a late
+    // settle event can't poke a reverted timeline.
+    let disarmCoverGate: (() => void) | null = null;
+
     const ctx = gsap.context(() => {
       // DRAW — reveal strokes per sheet in authored order, the pen leading the
       // newest stroke's tip (one instrument, one hand). Base pace lives here;
@@ -193,7 +197,14 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
         const crewed = Number(sec.dataset.state) === 1;
         let leader = -1;
         const tl = gsap.timeline({
-          scrollTrigger: { trigger: sec, start: 'top 78%', once: true },
+          // One hand: the crewed cover waits for the wordmark plot to settle
+          // before the carriage starts the drawing — two instruments never
+          // work the sheet at once. Gated below; other sheets start on their
+          // scroll trigger as usual.
+          paused: crewed,
+          scrollTrigger: crewed
+            ? undefined
+            : { trigger: sec, start: 'top 78%', once: true },
           onComplete: () => {
             if (!crewed) return;
             // A late completion (reader already scrolled past the cover) must
@@ -202,6 +213,27 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
             else hidePen();
           },
         });
+        if (crewed) {
+          let begun = false;
+          const begin = () => {
+            if (begun) return;
+            begun = true;
+            window.removeEventListener('ws:plot-settled', begin);
+            tl.play();
+          };
+          disarmCoverGate = () => {
+            begun = true;
+            window.removeEventListener('ws:plot-settled', begin);
+          };
+          if ((window as unknown as { __plotSettled?: boolean }).__plotSettled) {
+            begin();
+          } else {
+            window.addEventListener('ws:plot-settled', begin);
+            // Fallback: if the plot never signals (torn down mid-flight), the
+            // cover still draws — a beat after the plot's own font timeout.
+            window.setTimeout(begin, 2400);
+          }
+        }
         strokes.forEach((el, i) => {
           const speedAttr = (el.closest('[data-draw-speed]') as HTMLElement | null)
             ?.dataset.drawSpeed;
@@ -210,6 +242,10 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
             el,
             {
               strokeDashoffset: 0,
+              // pathLength=1 puts the whole sweep inside one CSS pixel;
+              // CSSPlugin's default autoRound snaps that to 1|0, which reduced
+              // every stroke to a binary pop. Unrounded, the travel is real.
+              autoRound: false,
               ease: 'power2.out',
               duration: BASE_DUR / speed,
               onStart: () => {
@@ -325,6 +361,7 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
     });
 
     return () => {
+      disarmCoverGate?.();
       unsubPen();
       io.disconnect();
       flatIO.disconnect();
