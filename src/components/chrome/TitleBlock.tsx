@@ -132,7 +132,7 @@ export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
                 className={styles.navBtn}
                 data-active={active ? 'true' : undefined}
                 onClick={() => scrollTo(anchor)}
-                aria-label={`Go to state ${i + 1}, ${STATE_NAMES[i]}`}
+                aria-label={`Go to stage ${i + 1}, ${STATE_NAMES[i]}`}
                 aria-current={active ? 'true' : undefined}
               >
                 {String(i + 1).padStart(2, '0')}

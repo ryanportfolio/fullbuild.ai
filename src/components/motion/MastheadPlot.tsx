@@ -14,7 +14,7 @@
    simply stands, no canvas, matching the static-set path.
    ========================================================================= */
 
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import copy from '../sheets/copy.module.css';
 import styles from './MastheadPlot.module.css';
 
@@ -35,22 +35,84 @@ interface Module {
   reveal: number; // ms
 }
 
+/**
+ * Fit the wordmark to its band's exact measure (margin -> rail border), like a
+ * drawing title blocked out to the sheet width. One pass is exact: tracking and
+ * the optical hang are em-based, so text width scales linearly with font-size.
+ * Returns the fitted text width in CSS px (for the dimension string).
+ */
+function fitToMeasure(h1: HTMLHeadingElement, wrap: HTMLElement): number {
+  h1.style.fontSize = ''; // remeasure from the CSS fallback size
+  const cs = getComputedStyle(h1);
+  const base = parseFloat(cs.fontSize);
+  const range = document.createRange();
+  range.selectNodeContents(h1);
+  const textW = range.getBoundingClientRect().width;
+  if (!base || !textW) return 0;
+  // The optical hang (negative margin-left) extends the usable measure.
+  const ml = parseFloat(cs.marginLeft) || 0;
+  const target = (wrap.clientWidth - ml) * 0.999;
+  const size = base * (target / textW);
+  h1.style.fontSize = `${size}px`;
+  range.selectNodeContents(h1);
+  const fitted = range.getBoundingClientRect().width;
+  range.detach();
+  return Math.round(fitted);
+}
+
 export default function MastheadPlot({ text }: { text: string }) {
+  const wrapRef = useRef<HTMLDivElement>(null);
   const h1Ref = useRef<HTMLHeadingElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const penRef = useRef<HTMLSpanElement>(null);
+  // Measured wordmark width (CSS px) — the dimension string under the title.
+  // null until the plot settles: the dim is drawn AFTER the word, like a real
+  // drafter titling first and dimensioning second.
+  const [dimW, setDimW] = useState<number | null>(null);
 
   useLayoutEffect(() => {
+    const wrap = wrapRef.current;
     const h1 = h1Ref.current;
     const canvas = canvasRef.current;
     const pen = penRef.current;
-    if (!h1 || !canvas || !pen) return;
+    if (!wrap || !h1 || !canvas || !pen) return;
+
+    // Fit before anything measures or plots; the canvas master renders at the
+    // fitted size, so the handoff stays pixel-aligned.
+    let fittedW = fitToMeasure(h1, wrap);
+    let plotting = false;
+    let settled = false;
+
+    // Refit on band resizes. Mid-plot refits are skipped (the canvas overlay is
+    // sized to the initial fit); after settle the crisp <h1> refits freely.
+    const ro =
+      typeof ResizeObserver === 'function'
+        ? new ResizeObserver(() => {
+            if (plotting && !settled) return;
+            fittedW = fitToMeasure(h1, wrap);
+            if (settled) setDimW(fittedW || null);
+          })
+        : null;
+    ro?.observe(wrap);
+
+    // Whichever path shows the plain <h1> (reduced motion, bail, font timeout),
+    // refit once the real face lands so the title still spans the measure. The
+    // plotting path does its own post-fonts refit inside run().
+    document.fonts?.ready
+      ?.then(() => {
+        if (cancelled || plotting) return;
+        fittedW = fitToMeasure(h1, wrap);
+        if (settled) setDimW(fittedW || null);
+      })
+      .catch(() => {});
 
     // One instrument, one hand: the carriage holds off on the cover drawing
     // until the wordmark is done (or provably not plotting). This signal is
     // how DrawingSet knows the plot is settled — fired on completion AND on
     // every bail path, latched on window so a late subscriber still sees it.
     const settle = () => {
+      settled = true;
+      setDimW(fittedW || null); // dimension the finished title
       const w = window as unknown as { __plotSettled?: boolean };
       if (w.__plotSettled) return;
       w.__plotSettled = true;
@@ -89,6 +151,10 @@ export default function MastheadPlot({ text }: { text: string }) {
            the h1 resolved to anyway */
       }
       if (cancelled) return;
+
+      // Refit with the real display face in: the first fit may have measured a
+      // fallback font, and the master must render at the final metrics.
+      fittedW = fitToMeasure(h1, wrap);
 
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const cs = getComputedStyle(h1);
@@ -181,6 +247,12 @@ export default function MastheadPlot({ text }: { text: string }) {
       canvas.height = master.height;
       canvas.style.width = `${wCss}px`;
       canvas.style.height = `${hCss}px`;
+      // The h1 hangs its optical margin (negative margin-left) outside the wrap
+      // origin — anchor the overlay to the h1's real box or the handoff drifts.
+      canvas.style.left = `${h1.offsetLeft}px`;
+      canvas.style.top = `${h1.offsetTop}px`;
+      pen.style.left = `${h1.offsetLeft}px`;
+      pen.style.top = `${h1.offsetTop}px`;
       const ctx = canvas.getContext('2d');
       if (!ctx) return bail();
       // pen line spans the text height; colour follows the ink
@@ -191,6 +263,7 @@ export default function MastheadPlot({ text }: { text: string }) {
       pen.style.display = 'block';
 
       started = true;
+      plotting = true;
       window.clearTimeout(timeout);
 
       let start = 0;
@@ -266,6 +339,7 @@ export default function MastheadPlot({ text }: { text: string }) {
 
     return () => {
       cancelled = true;
+      ro?.disconnect();
       window.clearTimeout(timeout);
       if (raf) cancelAnimationFrame(raf);
       // leave the h1 visible if we tear down mid-plot
@@ -274,12 +348,21 @@ export default function MastheadPlot({ text }: { text: string }) {
   }, [text]);
 
   return (
-    <div className={styles.wrap}>
+    <div ref={wrapRef} className={styles.wrap}>
       <h1 ref={h1Ref} className={copy.masthead}>
         {text}
       </h1>
       <canvas ref={canvasRef} className={styles.canvas} aria-hidden="true" />
       <span ref={penRef} className={styles.pen} aria-hidden="true" />
+      {dimW ? (
+        <div className={styles.dim} aria-hidden="true">
+          <i className={styles.dimTick} />
+          <i className={styles.dimLine} />
+          <span className={`${styles.dimVal} u-mono`}>{dimW}</span>
+          <i className={styles.dimLine} />
+          <i className={styles.dimTick} />
+        </div>
+      ) : null}
     </div>
   );
 }

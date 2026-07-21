@@ -15,6 +15,7 @@ export default function Sheet({
   ink,
   drawingSide = 'left',
   drawing,
+  masthead,
   children,
   negative = false,
 }: {
@@ -23,6 +24,9 @@ export default function Sheet({
   ink: SheetInk;
   drawingSide?: 'left' | 'right';
   drawing: ReactNode;
+  /** Full-width band between the head rule and the two-column body — the cover
+      sheet's drawing TITLE. Nothing else may share its horizontal reach. */
+  masthead?: ReactNode;
   children: ReactNode;
   negative?: boolean;
 }) {
@@ -35,12 +39,14 @@ export default function Sheet({
       className={styles.sheet}
       aria-label={`Sheet ${n} of 4 — ${state}`}
     >
-      <div className={styles.frame} data-side={drawingSide}>
+      <div className={styles.frame} data-side={drawingSide} data-cover={masthead ? 'true' : undefined}>
         <header className={styles.head}>
-          <span className={`${styles.stateNo} u-mono`}>STATE&nbsp;{n}</span>
+          <span className={`${styles.stateNo} u-mono`}>STAGE&nbsp;{n}</span>
           <span className={`${styles.stateName} u-label`}>{state}</span>
           <span className={`${styles.sheetNo} u-mono`}>S-{n} / 04</span>
         </header>
+
+        {masthead ? <div className={styles.masthead}>{masthead}</div> : null}
 
         <div className={styles.body}>
           <figure className={styles.drawing} aria-hidden="true">

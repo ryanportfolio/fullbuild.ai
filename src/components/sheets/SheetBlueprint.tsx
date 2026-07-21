@@ -19,7 +19,7 @@ export default function SheetBlueprint() {
       drawing={
         <>
           <Plan />
-          <p className={copy.drawingCaption}>PLAN · FOUR STATES · N.T.S.</p>
+          <p className={copy.drawingCaption}>PLAN · FOUR STAGES · N.T.S.</p>
         </>
       }
     >
