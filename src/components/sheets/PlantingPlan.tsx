@@ -40,9 +40,11 @@ export default function PlantingPlan() {
   const rootRef = useRef<SVGSVGElement>(null);
 
   // GROWTH DRIVER. Direct style writes only — no GSAP (sidesteps the
-  // pathLength=1 CSSPlugin autoRound trap), no rAF loop, no ScrollTrigger:
-  // the store subscription fires on pour deltas, and pour is already
-  // frame-locked to the 3D section plane and the DOM waterline.
+  // pathLength=1 CSSPlugin autoRound trap), no rAF loop, no ScrollTrigger.
+  // Clock: scroll progress THROUGH the schedule (section top entering the
+  // viewport -> section bottom reaching it), not the store's pour — pour
+  // saturates during the 03->04 reach, long before the reader has scrolled
+  // the schedule, which left the bed pre-bloomed before it entered frame.
   useEffect(() => {
     // Reduced motion FIRST, before any stroke is hidden: DrawingSet never
     // wires the pour trigger under reduce (pour stays 0), so the bed must
@@ -73,14 +75,13 @@ export default function PlantingPlan() {
 
     const n = flowers.length;
     // Monotonic front — growth is add-only (pencil only adds); seeding from
-    // the store handles mid-page scroll restoration.
+    // the current scroll handles mid-page restoration.
     let front = 0;
     const tick = () => {
       for (let i = 0; i < n; i++) {
-        // Starts ~0.8 row-heights before row i ignites (--lit flips at
-        // pour*n - i = 0.45), mid-growth at the ignition instant. Window 1.35
-        // keeps 3–4 flowers mid-growth at once AND lets flower n-1 reach
-        // g = 1 exactly at pour = 1 ((n - (n-1) + 0.35) / 1.35 = 1).
+        // Staggered window 1.35 keeps 3–4 flowers mid-growth at once AND lets
+        // flower n-1 reach g = 1 exactly at progress 1
+        // ((n - (n-1) + 0.35) / 1.35 = 1).
         const g = Math.min(1, Math.max(0, (front * n - i + 0.35) / 1.35));
         const f = flowers[i];
         f.g.style.setProperty('--fg', g.toFixed(3));
@@ -92,16 +93,38 @@ export default function PlantingPlan() {
         }
       }
     };
-    front = useWorkingSet.getState().pour;
-    tick();
-    const unsub = useWorkingSet.subscribe((st, prev) => {
-      if (st.pour !== prev.pour && st.pour > front) {
-        front = st.pour;
+    // Scroll clock: 0 when the schedule's top meets the viewport bottom, 1
+    // when its bottom does — the bed finishes with the last schedule rows.
+    const section = document.getElementById('state-04');
+    let top = 0;
+    let span = 1;
+    const measure = () => {
+      if (!section) return;
+      const r = section.getBoundingClientRect();
+      top = r.top + window.scrollY;
+      span = Math.max(1, r.height);
+    };
+    const progress = () =>
+      Math.min(1, Math.max(0, (window.scrollY + window.innerHeight - top) / span));
+    const onScroll = () => {
+      const p = progress();
+      if (p > front) {
+        front = p;
         tick();
       }
-    });
+    };
+    const onResize = () => {
+      measure();
+      onScroll();
+    };
+    measure();
+    front = progress();
+    tick();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize, { passive: true });
     return () => {
-      unsub();
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onResize);
       for (const f of flowers) {
         f.g.style.removeProperty('--fg');
         for (const el of f.strokes) {

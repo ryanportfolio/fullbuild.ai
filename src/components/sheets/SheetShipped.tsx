@@ -55,9 +55,7 @@ export default function SheetShipped() {
 
         <div className={s.body}>
           <div className={s.copyCol}>
-            <p className={s.kicker}>
-              Sheet S-04 · drawing schedule · {n} entries
-            </p>
+            <p className={s.kicker}>Sheet S-04</p>
             <div className={s.lead}>
               <h2 className={s.pour}>Made</h2>
               <p className={s.leadNote}>
@@ -143,9 +141,9 @@ export default function SheetShipped() {
           </div>
 
           {/* Band cell — reserved for the R3F pour (the Margin Law). The
-              L-101 planting plan grows at its base, in lockstep with the
-              waterline. Bare — NOT in StaticFloor: the bed coexists with the
-              running canvas. */}
+              L-101 planting plan rides the cell's viewport foot and grows as
+              the reader scrolls the schedule. Bare — NOT in StaticFloor: the
+              bed coexists with the running canvas. */}
           <div className={s.bandCell} aria-hidden="true">
             <PlantingPlan />
           </div>
