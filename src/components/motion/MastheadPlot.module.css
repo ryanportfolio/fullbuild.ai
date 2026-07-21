@@ -36,6 +36,15 @@
   gap: 0.55rem;
   margin-top: 0.7rem;
   color: var(--ink-witness);
+  /* Height is reserved even while the value span is empty (ticks are only
+     0.55rem) — the post-plot reveal must never move the layout below. */
+  min-height: 0.62rem;
+}
+/* Plot in progress: the row keeps its box, only the ink is withheld. */
+.dim[data-phase='hidden'] {
+  opacity: 0;
+}
+.dim[data-phase='shown'] {
   animation: dim-in 0.4s var(--ease-draw) both;
 }
 .dimLine {
@@ -51,6 +60,7 @@
 }
 .dimVal {
   font-size: 0.62rem;
+  line-height: 1;
   letter-spacing: 0.08em;
 }
 
