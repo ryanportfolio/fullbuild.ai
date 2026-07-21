@@ -192,6 +192,13 @@
   align-items: start;
   margin-top: 0.4rem;
 }
+/* box and SEND share the register line — one row shorter sheet */
+.sgnFlex {
+  display: flex;
+  align-items: center;
+  gap: clamp(1.2rem, 4vw, 3rem);
+  flex-wrap: wrap;
+}
 .sgnBox {
   width: 100%;
   max-width: 19rem;
@@ -235,12 +242,12 @@
   border-color: var(--ink-graphite);
 }
 
-/* transmit row */
+/* transmit action — rides beside the SGN box; status letters underneath */
 .actions {
   display: flex;
-  align-items: baseline;
-  gap: 1.1rem;
-  margin-top: 1.2rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.7rem;
 }
 .transmit {
   font-family: var(--font-display);
