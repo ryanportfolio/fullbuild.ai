@@ -192,7 +192,18 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
         strokes.sort(
           (a, b) => Number(a.getAttribute('data-o') ?? 0) - Number(b.getAttribute('data-o') ?? 0),
         );
-        gsap.set(strokes, { strokeDasharray: 1, strokeDashoffset: 1 });
+        // Dash values MUST be SVG attributes, never CSS: gsap's CSS route
+        // serializes to px, and Chrome divides px dashes by the render scale
+        // before applying them against pathLength=1 — every stroke then paints
+        // only ~1/scale of itself, permanently (the truncated-building bug).
+        // Attributes are user units, normalized by pathLength, exact at any size.
+        // Authored dash patterns (construction datums) are stashed and restored
+        // per stroke when its reveal completes.
+        strokes.forEach((el) => {
+          const authored = el.getAttribute('stroke-dasharray');
+          if (authored) el.dataset.wsDash = authored;
+        });
+        gsap.set(strokes, { attr: { 'stroke-dasharray': '1 1', 'stroke-dashoffset': 1 } });
         const ink = inkOf(sec);
         const crewed = Number(sec.dataset.state) === 1;
         let leader = -1;
@@ -241,11 +252,7 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
           tl.to(
             el,
             {
-              strokeDashoffset: 0,
-              // pathLength=1 puts the whole sweep inside one CSS pixel;
-              // CSSPlugin's default autoRound snaps that to 1|0, which reduced
-              // every stroke to a binary pop. Unrounded, the travel is real.
-              autoRound: false,
+              attr: { 'stroke-dashoffset': 0 },
               ease: 'power2.out',
               duration: BASE_DUR / speed,
               onStart: () => {
@@ -253,6 +260,21 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
               },
               onUpdate() {
                 if (crewed && leader === i) penToStroke(el, this.progress(), ink);
+              },
+              onComplete: () => {
+                // Hand the finished stroke back to its authored presentation:
+                // datums get their dash pattern back (pathLength must go too —
+                // authored dashes are in viewBox units, and pathLength=1 would
+                // stretch them past the whole path, rendering solid), solid
+                // strokes drop the animation dash so nothing can mis-scale it.
+                const authored = el.dataset.wsDash;
+                if (authored) {
+                  el.setAttribute('stroke-dasharray', authored);
+                  el.removeAttribute('pathLength');
+                } else {
+                  el.removeAttribute('stroke-dasharray');
+                }
+                el.removeAttribute('stroke-dashoffset');
               },
             },
             // each stroke starts a beat after the previous one STARTS — the
@@ -296,7 +318,8 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
       sketch.sort(
         (a, b) => Number(a.getAttribute('data-o') ?? 0) - Number(b.getAttribute('data-o') ?? 0),
       );
-      if (sketch.length) gsap.set(sketch, { strokeDasharray: 1, strokeDashoffset: 1 });
+      // Attributes, not CSS — same px-mis-scale trap as the sheet strokes above.
+      if (sketch.length) gsap.set(sketch, { attr: { 'stroke-dasharray': '1 1', 'stroke-dashoffset': 1 } });
       const SKETCH_START = 0.03; // let the masthead hold the opening beat
       const SKETCH_END = 0.97; // last mark lands as the set bottoms out
       let sketchFront = 0;
@@ -308,7 +331,7 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
         sketchFront = front;
         sketch.forEach((el, i) => {
           const local = Math.min(1, Math.max(0, front - i));
-          el.style.strokeDashoffset = String(1 - local);
+          el.setAttribute('stroke-dashoffset', String(1 - local));
         });
       };
 
@@ -367,13 +390,15 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
       flatIO.disconnect();
       ctx.revert();
       // HINGE sets inline transforms directly (not via gsap), so clear them
-      // here; the rail sketch writes stroke-dashoffset directly the same way.
+      // here; the rail sketch writes the stroke-dashoffset ATTRIBUTE directly
+      // the same way. (The .ws-draw strokes clean themselves per-tween; their
+      // gsap-set attrs are reverted by ctx.revert() above.)
       sections.forEach((s) => {
         s.style.transform = '';
         s.style.transformStyle = '';
       });
       document.querySelectorAll<SVGElement>('.ws-scrub').forEach((s) => {
-        s.style.strokeDashoffset = '';
+        s.removeAttribute('stroke-dashoffset');
       });
       gsap.ticker.remove(tick);
       lenis.destroy();
