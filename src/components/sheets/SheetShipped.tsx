@@ -4,12 +4,13 @@ import { useEffect, useRef } from 'react';
 import { PROJECTS } from '@/lib/projects';
 import { useWorkingSet, isUp } from '@/lib/store';
 import { useHealthProbe } from '@/lib/health';
+import PlantingPlan from './PlantingPlan';
 import s from './shipped.module.css';
 
 /* ============================================================================
    STATE 04 — SHIPPED. The drawing schedule.
 
-   Eleven real rows — every figure verified against the GitHub API, README
+   Twelve real rows — every figure verified against the GitHub API, README
    claims, or the live site itself (sources ship as title attributes). The DOM
    pour: the same store value that drives the 3D section plane sweeps a poché
    waterline down this schedule; a row is "poured" when the line passes it, and
@@ -130,8 +131,13 @@ export default function SheetShipped() {
             </div>
           </div>
 
-          {/* Band cell — reserved for the R3F pour (the Margin Law). */}
-          <div className={s.bandCell} aria-hidden="true" />
+          {/* Band cell — reserved for the R3F pour (the Margin Law). The
+              L-101 planting plan grows at its base, in lockstep with the
+              waterline. Bare — NOT in StaticFloor: the bed coexists with the
+              running canvas. */}
+          <div className={s.bandCell} aria-hidden="true">
+            <PlantingPlan />
+          </div>
         </div>
 
         <div className={s.close}>
