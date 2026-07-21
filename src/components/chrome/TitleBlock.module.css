@@ -308,6 +308,27 @@
   color: var(--ink-witness);
 }
 
+/* DRAFTS row — the CTA into /prototype. Same witness-ink register as the
+   meta rows; the count picks up the accent on hover, like a live link. */
+.drafts {
+  padding: 0.4rem 0.7rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-witness);
+  display: flex;
+  justify-content: space-between;
+  text-decoration: none;
+}
+.drafts:hover,
+.drafts:focus-visible {
+  color: var(--ink-graphite);
+}
+.drafts:hover span:last-child,
+.drafts:focus-visible span:last-child {
+  color: var(--accent-link);
+}
+
 .rev {
   padding: 0.4rem 0.7rem;
   border-top: 1px solid var(--rule);
@@ -352,6 +373,7 @@
     padding: 0.3rem 0;
   }
   .service,
+  .drafts,
   .rev {
     padding: 0.28rem 0.6rem;
     font-size: 0.55rem;

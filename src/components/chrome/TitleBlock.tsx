@@ -217,6 +217,15 @@ export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
           </span>
         </div>
 
+        <a
+          href="/prototype"
+          className={styles.drafts}
+          aria-label="View design prototypes, 2 on file"
+        >
+          <span>PROTOTYPES</span>
+          <span>02 →</span>
+        </a>
+
         <div className={styles.rev}>
           <span>REV {rev}</span>
           <span>{sha}</span>
