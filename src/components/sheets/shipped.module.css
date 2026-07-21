@@ -80,35 +80,6 @@
   height: auto;
 }
 
-/* pour report — inspector's tally at the band cell's foot */
-.pourReport {
-  display: none;
-}
-@media (min-width: 1024px) {
-  .pourReport {
-    /* Sticky within the tall band cell: the tally rides the viewport foot
-       while the schedule scrolls, always in frame beside the pour. */
-    position: sticky;
-    bottom: 1.6rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    align-items: flex-end;
-    font-family: var(--font-mono);
-    font-size: 0.64rem;
-    letter-spacing: 0.08em;
-    color: var(--ink-witness);
-    border-top: 1px solid var(--rule);
-    padding-top: 0.6rem;
-    min-width: 11rem;
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-  }
-}
-.pourReportLine[data-live='true'] {
-  color: var(--accent-link);
-}
-
 .kickerLive {
   color: var(--ink-witness);
   letter-spacing: 0.06em;

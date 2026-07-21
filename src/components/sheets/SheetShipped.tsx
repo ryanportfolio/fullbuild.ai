@@ -4,13 +4,13 @@ import { useEffect, useRef } from 'react';
 import { PROJECTS } from '@/lib/projects';
 import { useWorkingSet, isUp } from '@/lib/store';
 import { useHealthProbe } from '@/lib/health';
-import PourReport from './PourReport';
+import PlantingPlan from './PlantingPlan';
 import s from './shipped.module.css';
 
 /* ============================================================================
    STATE 04 — SHIPPED. The drawing schedule.
 
-   Eleven real rows — every figure verified against the GitHub API, README
+   Twelve real rows — every figure verified against the GitHub API, README
    claims, or the live site itself (sources ship as title attributes). The DOM
    pour: the same store value that drives the 3D section plane sweeps a poché
    waterline down this schedule; a row is "poured" when the line passes it, and
@@ -48,7 +48,7 @@ export default function SheetShipped() {
     <section id="state-04" data-state="04" data-ink="live" className={s.sheet} aria-label="Sheet 04 of 4 · Shipped">
       <div className={s.frame}>
         <header className={s.head}>
-          <span className={`${s.stateNo} u-mono`}>STATE&nbsp;04</span>
+          <span className={`${s.stateNo} u-mono`}>STAGE&nbsp;04</span>
           <span className={`${s.stateName} u-label`}>Shipped</span>
           <span className={`${s.sheetNo} u-mono`}>S-04 / 04</span>
         </header>
@@ -142,10 +142,12 @@ export default function SheetShipped() {
             </div>
           </div>
 
-          {/* Band cell — reserved for the R3F pour (the Margin Law); the pour
-              report anchors its foot with the live tally. */}
+          {/* Band cell — reserved for the R3F pour (the Margin Law). The
+              L-101 planting plan grows at its base, in lockstep with the
+              waterline. Bare — NOT in StaticFloor: the bed coexists with the
+              running canvas. */}
           <div className={s.bandCell} aria-hidden="true">
-            <PourReport />
+            <PlantingPlan />
           </div>
         </div>
 

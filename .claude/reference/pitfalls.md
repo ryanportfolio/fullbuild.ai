@@ -128,3 +128,21 @@ the stagger. Fix: `autoRound: false` on the dashoffset tween (or use a larger
 pathLength scale). Detection that caught it: sample offsets mid-animation and
 count strokes in (0.01, 0.99) — zero partials at every instant means the tween
 is snapping.
+
+## GSAP CSS px dash + pathLength=1 = every stroke permanently truncated (2026-07-21)
+
+Symptom: every `.ws-draw` stroke finishes its reveal drawn to only ~80% of its
+length and stays that way (cover elevation: columns never reach the roof,
+ridge/ground lines cut short). Worse on larger windows. Cause: GSAP's CSSPlugin
+serializes `strokeDasharray`/`strokeDashoffset` to **px**, and Chrome divides
+px dash values by the render scale before applying them against `pathLength=1`
+— at a 472px render of a 380-unit viewBox only 1/1.243 ≈ 80.4% of each stroke
+paints. Fix (DrawingSet.tsx): set/animate dash values as SVG **attributes**
+(`attr: { 'stroke-dasharray': '1 1', 'stroke-dashoffset': 1 }`) — user units,
+pathLength-normalized, exact at any size. On stroke completion remove the
+animation dash and restore any authored dash pattern, dropping `pathLength`
+there (authored dashes like "2 4" are viewBox units; against pathLength=1 they
+exceed the whole path and render solid). This also supersedes the autoRound
+entry above: the attr plugin doesn't round, so `autoRound: false` is gone.
+Detection: compare a stroke's painted extent against its geometry (zoomed
+screenshot), or check `getComputedStyle(stroke).strokeDasharray` for px units.

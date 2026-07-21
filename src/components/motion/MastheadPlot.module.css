@@ -26,3 +26,49 @@
   transform: translateX(-1px);
   will-change: transform;
 }
+
+/* Dimension string under the title — the giant name IS the drawing, so it gets
+   dimensioned like one: witness ticks, dim line, measured value (real CSS px
+   from the fit, not decoration). Witness ink; appears after the plot settles. */
+.dim {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.7rem;
+  color: var(--ink-witness);
+  /* Height is reserved even while the value span is empty (ticks are only
+     0.55rem) — the post-plot reveal must never move the layout below. */
+  min-height: 0.62rem;
+}
+/* Plot in progress: the row keeps its box, only the ink is withheld. */
+.dim[data-phase='hidden'] {
+  opacity: 0;
+}
+.dim[data-phase='shown'] {
+  animation: dim-in 0.4s var(--ease-draw) both;
+}
+.dimLine {
+  flex: 1;
+  border-top: 1px solid currentColor;
+}
+/* Oblique drafting tick at each end of the dim line. */
+.dimTick {
+  width: 1px;
+  height: 0.55rem;
+  background: currentColor;
+  transform: rotate(-45deg);
+}
+.dimVal {
+  font-size: 0.62rem;
+  line-height: 1;
+  letter-spacing: 0.08em;
+}
+
+@keyframes dim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
