@@ -22,6 +22,13 @@ interface WorkingSetStore {
   progress: number;
   /** POUR progress specifically (STATE 03 -> 04), 0..1. */
   pour: number;
+  /**
+   * GROWTH clock for the L-101 overgrowth: scroll progress THROUGH the whole
+   * STATE 04 sheet (top entering the viewport bottom -> section bottom
+   * reaching it). Raw scrubbed value — monotonicity + catch-up damping live
+   * scene-side (the vine only ever adds).
+   */
+  grow: number;
   /** Live-health readings keyed by project href. Missing = assume live until probed. */
   health: Record<string, HealthReading>;
   /** True once the WebGL island has mounted (used to tune the DOM layer). */
@@ -29,6 +36,7 @@ interface WorkingSetStore {
   setState: (s: PipelineState) => void;
   setProgress: (p: number) => void;
   setPour: (p: number) => void;
+  setGrow: (p: number) => void;
   setHealth: (href: string, reading: HealthReading) => void;
   setWebglActive: (v: boolean) => void;
 }
@@ -47,11 +55,13 @@ export const useWorkingSet = create<WorkingSetStore>((set) => ({
   state: 1,
   progress: 0,
   pour: 0,
+  grow: 0,
   health: {},
   webglActive: false,
   setState: (s) => set((cur) => (cur.state === s ? cur : { state: s })),
   setProgress: (p) => set({ progress: p }),
   setPour: (p) => set({ pour: p }),
+  setGrow: (p) => set({ grow: p }),
   setHealth: (href, reading) =>
     set((cur) => ({ health: { ...cur.health, [href]: reading } })),
   setWebglActive: (v) => set({ webglActive: v }),

@@ -5,6 +5,7 @@ import { PROJECTS } from '@/lib/projects';
 import { useWorkingSet, isUp } from '@/lib/store';
 import { useHealthProbe } from '@/lib/health';
 import PlantingPlan from './PlantingPlan';
+import StaticFloor from './StaticFloor';
 import s from './shipped.module.css';
 
 /* ============================================================================
@@ -140,12 +141,14 @@ export default function SheetShipped() {
             </div>
           </div>
 
-          {/* Band cell — reserved for the R3F pour (the Margin Law). The
-              L-101 planting plan rides the cell's viewport foot and grows as
-              the reader scrolls the schedule. Bare — NOT in StaticFloor: the
-              bed coexists with the running canvas. */}
+          {/* Band cell — reserved for the R3F pour (the Margin Law). When the
+              island runs, the L-101 overgrowth grows IN the scene (vines on
+              the poured structure, Scene.tsx) and this cell stays bare; where
+              it can't, the static finished flowerbed stands instead. */}
           <div className={s.bandCell} aria-hidden="true">
-            <PlantingPlan />
+            <StaticFloor>
+              <PlantingPlan />
+            </StaticFloor>
           </div>
         </div>
 

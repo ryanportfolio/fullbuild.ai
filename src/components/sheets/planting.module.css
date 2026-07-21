@@ -1,9 +1,8 @@
 /* ============================================================================
-   L-101 · PLANTING PLAN — drawn flowerbeds under the STAGE 04 pour.
-   One custom property per flower (--fg, written by the growth driver) gates
-   the bloom-center dot exactly like the row diamonds gate on --lit.
-   Fallback --fg = 1: without JS (and under reduced motion) the bed stands
-   fully bloomed — the finished end-state, per the motion doctrine.
+   L-101 · PLANTING PLAN — the STATIC flowerbed floor. Stands only where the
+   R3F island can't run (reduced motion / no WebGL); the live path grows the
+   in-scene overgrowth instead (Scene.tsx). Always the finished end-state —
+   no growth driver, no dash state, nothing to flash before hydration.
    ========================================================================= */
 
 /* Below 1024px the fixed canvas band is hidden and the band cell is unstyled —
@@ -25,22 +24,17 @@
 }
 
 /* All plant linework is graphite (idea ink) via currentColor — dark theme
-   retokens for free. Ignition factor: same clamp pattern as the row diamonds
-   (shipped.module.css), driven by growth (--fg) instead of pour (--lit). */
+   retokens for free. */
 .flower {
   color: var(--ink-graphite);
-  --dot: clamp(0, calc((var(--fg, 1) - 0.85) * 8), 1);
 }
 
-/* Bloom-center dot: transparent until the flower is nearly finished. Red ONLY
-   on a live, probe-passing project — and only via ignition, never before. */
+/* Bloom-center dot, finished state. Red ONLY on a live, probe-passing
+   project; a closed bud (or a down project) fills graphite. */
 .bloomDot {
   stroke: none;
-  fill: transparent;
+  fill: var(--ink-graphite);
 }
 .flower[data-live='true'] .bloomDot {
-  fill: color-mix(in srgb, transparent calc((1 - var(--dot)) * 100%), var(--accent-live) calc(var(--dot) * 100%));
-}
-.flower[data-live='false'] .bloomDot {
-  fill: color-mix(in srgb, transparent calc((1 - var(--dot)) * 100%), var(--ink-graphite) calc(var(--dot) * 100%));
+  fill: var(--accent-live);
 }
