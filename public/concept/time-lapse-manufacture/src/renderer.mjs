@@ -464,7 +464,9 @@ export function createWorkshopRenderer(canvas, { maxDevicePixelRatio = 1.75 } = 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     const aspect = width / height;
-    const projection = perspective(Math.PI / 5, aspect, 0.1, 30);
+    // Far plane covers the smallest hop scale: distance = 4.6 / scale can
+    // reach ~37 when the artifact hops down the shop rules at scale ~0.125.
+    const projection = perspective(Math.PI / 5, aspect, 0.1, 60);
     const distance = 4.6 / state.scale;
     const translate = (x, y, z) => new Float32Array([
       1, 0, 0, 0,

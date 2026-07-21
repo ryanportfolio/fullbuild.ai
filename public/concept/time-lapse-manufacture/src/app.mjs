@@ -14,6 +14,8 @@ const panels = Array.from(document.querySelectorAll("[data-stage-panel]"));
 const revealTargets = Array.from(document.querySelectorAll(".future-case, .principles article, .case-zero__receipt p"));
 const statusPhase = document.querySelector("[data-status-phase]");
 const track = document.querySelector("[data-lifecycle-track]");
+const principlesSection = document.querySelector(".principles");
+const stairs = Array.from(document.querySelectorAll(".principles__list article"));
 const site = JSON.parse(dataNode.textContent);
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const forcedColors = matchMedia("(forced-colors: active)").matches;
@@ -30,6 +32,7 @@ let renderer = null;
 let releaseTimer = 0;
 let rafId = 0;
 let scrollOwnsTime = false;
+let hopOwnsTime = false;
 let controlTarget = initialIndex;
 
 const setPhaseVariables = (tokens) => {
@@ -100,7 +103,7 @@ const applyPhase = (state) => {
   releaseTimer = window.setTimeout(() => arrival.classList.remove("is-changing"), reducedMotion ? 0 : 900);
 
   controlTarget = state.index;
-  if (!scrollOwnsTime) tweenTo(state.index);
+  if (!scrollOwnsTime && !hopOwnsTime) tweenTo(state.index);
 };
 
 const machine = createStageMachine({
@@ -227,8 +230,7 @@ if (renderer && !reducedMotion) {
   arrival.addEventListener("pointercancel", release);
 }
 
-const fitView = () => {
-  if (!renderer || renderer.isLost()) return;
+const stageViews = () => {
   const width = window.innerWidth;
   const tier = width <= 760 ? "narrow" : width <= 1080 ? "mid" : "wide";
   const views = {
@@ -243,7 +245,88 @@ const fitView = () => {
   if (tier === "mid" && window.innerHeight <= 760) {
     views.mid.free = { offsetX: 0.8, offsetY: -1.45, scale: 0.29 };
   }
-  renderer.set(scrollOwnsTime ? views[tier].spine : views[tier].free);
+  return views[tier];
+};
+
+const fitView = () => {
+  if (!renderer || renderer.isLost()) return;
+  const views = stageViews();
+  renderer.set(scrollOwnsTime ? views.spine : views.free);
+};
+
+// End-of-track handoff: the artifact shrinks and hops down the shop-rules
+// stagger, landing on each rule's top border, instead of cutting out.
+// Screen px <-> renderer offsets via the same perspective the renderer uses:
+// FOV pi/5, camera distance 4.6 / scale, object radius ~1.1.
+const HOP_F = 1 / Math.tan(Math.PI / 10);
+const hopHalfPx = (scale, height) => ((HOP_F * 1.1 * scale) / 4.6) * (height / 2);
+
+const hopAnchors = () => {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const aspect = width / height;
+  const spine = stageViews().spine;
+  const spineDistance = 4.6 / spine.scale;
+  const start = {
+    x: (((spine.offsetX * HOP_F) / (aspect * spineDistance)) + 1) / 2 * width,
+    y: ((1 - (spine.offsetY * HOP_F) / spineDistance) / 2) * height,
+    scale: spine.scale,
+  };
+  const ladder = [0.5, 0.38, 0.28];
+  return [start, ...stairs.map((stair, index) => {
+    const rect = stair.getBoundingClientRect();
+    const scale = spine.scale * ladder[index];
+    const half = hopHalfPx(scale, height);
+    // Land on the right end of each rule's top border: the copy sits under
+    // the left side, so the right end is clear air on every stagger step.
+    return { x: rect.right - half - 12, y: rect.top - half + 2, scale };
+  })];
+};
+
+const hopActive = (trackRect, viewport) => {
+  if (!renderer || renderer.isLost() || reducedMotion) return false;
+  if (!principlesSection || stairs.length < 3 || window.innerWidth <= 760) return false;
+  if (trackRect.bottom > viewport - 2) return false;
+  // Once the last stair has scrolled well past the top, hand back to docking.
+  return stairs[2].getBoundingClientRect().top > -viewport * 0.2;
+};
+
+const renderHop = () => {
+  if (!renderer || renderer.isLost()) return;
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const sectionTop = principlesSection.getBoundingClientRect().top;
+  const p = Math.min(1, Math.max(0, (height - sectionTop) / (height * 0.85)));
+  const anchors = hopAnchors();
+  const bounds = [[0, 0.4], [0.4, 0.72], [0.72, 1]];
+  const seg = p < 0.4 ? 0 : p < 0.72 ? 1 : 2;
+  const [segStart, segEnd] = bounds[seg];
+  const u = (p - segStart) / (segEnd - segStart);
+  const eased = u * u * (3 - 2 * u);
+  const from = anchors[seg];
+  const to = anchors[seg + 1];
+  const arc = [120, 85, 60][seg] * 4 * u * (1 - u);
+  const x = from.x + (to.x - from.x) * eased;
+  const y = from.y + (to.y - from.y) * eased - arc;
+  const scale = from.scale + (to.scale - from.scale) * eased;
+
+  cancelAnimationFrame(rafId);
+  const tokens = resolvePhase(3);
+  live.time = 3;
+  live.scatter = tokens.scatter;
+  live.heat = tokens.heat;
+  live.spin = -0.55 + p * 1.4;
+  if (clock) clock.textContent = "t+3.00";
+  const distance = 4.6 / scale;
+  renderer.set({
+    time: 3,
+    scatter: live.scatter,
+    heat: live.heat,
+    spin: live.spin,
+    offsetX: (((x / width) * 2 - 1) * distance * (width / height)) / HOP_F,
+    offsetY: ((1 - (y / height) * 2) * distance) / HOP_F,
+    scale,
+  });
 };
 
 // Scroll = time through the manufacture spine; controls own time elsewhere.
@@ -257,6 +340,17 @@ if (track) {
       const rect = track.getBoundingClientRect();
       const viewport = window.innerHeight;
       const inside = rect.top < viewport * 0.5 && rect.bottom > viewport - 2;
+      const wasHopping = hopOwnsTime;
+      hopOwnsTime = hopActive(rect, viewport);
+      if (wasHopping !== hopOwnsTime) {
+        document.documentElement.classList.toggle("is-hopping", hopOwnsTime);
+        // Hop released away from the track (deep link, fast jump): restore the
+        // committed stage instantly while the canvas is docked out of sight.
+        if (!hopOwnsTime && !(inside && !reducedMotion)) {
+          fitView();
+          tweenTo(machine.getState().index, { duration: 0 });
+        }
+      }
       if (inside && !reducedMotion) {
         if (!scrollOwnsTime) {
           scrollOwnsTime = true;
@@ -288,12 +382,15 @@ if (track) {
           const state = machine.getState();
           panels.forEach((panel, index) => panel.toggleAttribute("data-active", index === state.index));
           document.documentElement.dataset.activePhase = resolvePhase(state.index).id;
-          tweenTo(controlTarget);
+          // The hop keeps the fused artifact on screen past the track; do not
+          // morph it back mid-descent.
+          if (!hopOwnsTime) tweenTo(controlTarget);
         }
       }
+      if (hopOwnsTime) renderHop();
       const nearTrack = rect.top < viewport * 0.9 && rect.bottom > viewport - 2;
       const nearArrival = window.scrollY < viewport * 0.6;
-      document.documentElement.classList.toggle("workshop-docked", !(nearTrack || nearArrival));
+      document.documentElement.classList.toggle("workshop-docked", !(nearTrack || nearArrival || hopOwnsTime));
     });
   };
   window.addEventListener("scroll", onScroll, { passive: true });
@@ -312,6 +409,10 @@ if (track) {
 }
 
 window.addEventListener("resize", () => {
+  if (hopOwnsTime) {
+    renderHop();
+    return;
+  }
   fitView();
   renderFrame();
 });
