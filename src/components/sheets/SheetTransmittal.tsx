@@ -618,8 +618,6 @@ export default function SheetTransmittal() {
               <ol>
                 <li>Print in ink</li>
                 <li>One subject per transmittal</li>
-                <li>Responses issued in order received</li>
-                <li>The carriage is the only instrument on this table</li>
               </ol>
             </aside>
           </form>

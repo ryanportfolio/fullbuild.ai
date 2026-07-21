@@ -160,6 +160,12 @@
 .msgWrap {
   --msg-lh: 1.9rem;
   position: relative;
+  /* The one place T-01 spends revision-red on purpose: the message box wears
+     the accent permanently (the same box the focus ring draws), a live drop
+     slot rather than a dormant field. Owner-directed 2026-07-21 — a deliberate
+     exception to the red = live-in-production rule. */
+  outline: 2px solid var(--accent-live);
+  outline-offset: 3px;
 }
 .msg {
   font-family: var(--font-mono);
