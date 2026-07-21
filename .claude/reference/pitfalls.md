@@ -128,3 +128,25 @@ the stagger. Fix: `autoRound: false` on the dashoffset tween (or use a larger
 pathLength scale). Detection that caught it: sample offsets mid-animation and
 count strokes in (0.01, 0.99) — zero partials at every instant means the tween
 is snapping.
+
+## `next build` clobbers a running `next dev` server (2026-07-20)
+
+Symptom: the dev server (preview pane / localhost:3000) suddenly serves raw
+UNSTYLED HTML or 404s every `/_next/static/**` chunk — CSS `<link>` 404, JS
+chunks 404 — even though the server process is up and returns 200 for the
+page itself. Bit this session twice.
+
+Cause: `next dev` and `next build` share the same `.next/` output dir.
+Running `npm run build` while `npm run dev` is live overwrites the dev
+server's chunks with production-hashed ones; the already-served HTML still
+references the old hashes, so every asset 404s. A hard reload alone does NOT
+fix it — the server is serving a poisoned `.next`.
+
+Fix: stop the dev server, `rm -rf .next`, restart dev. Then hard-reload the
+tab (CSS chunk goes 404 -> 200).
+
+Prevention: never run `next build` against the live checkout while a dev
+server is running on it. To verify a production build, either stop the dev
+server first, or build/serve from a separate throwaway copy. For runtime
+motion verification prefer the dev server + Playwright harness (no build
+needed).
