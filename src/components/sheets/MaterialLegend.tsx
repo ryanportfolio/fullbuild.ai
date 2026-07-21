@@ -29,7 +29,7 @@ const HATCH = [
   { lang: 'GLSL', id: 'h-glsl' },
 ] as const;
 
-const KNOWN = new Set(HATCH.map((h) => h.lang));
+const KNOWN = new Set<string>(HATCH.map((h) => h.lang));
 for (const lang of new Set(PROJECTS.flatMap((p) => p.langs))) {
   if (!KNOWN.has(lang)) {
     throw new Error(
