@@ -66,9 +66,12 @@ export default function MastheadPlot({ text }: { text: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const penRef = useRef<HTMLSpanElement>(null);
   // Measured wordmark width (CSS px) — the dimension string under the title.
-  // null until the plot settles: the dim is drawn AFTER the word, like a real
-  // drafter titling first and dimensioning second.
+  // The dim ROW is always in the layout (its height is reserved from first
+  // paint, so revealing it never pushes the sheet down); only its ink fades in
+  // once the plot settles — the drafter titles first, dimensions second.
+  // 'static' = SSR/no-JS finished state (visible, value pending measurement).
   const [dimW, setDimW] = useState<number | null>(null);
+  const [dimPhase, setDimPhase] = useState<'static' | 'hidden' | 'shown'>('static');
 
   useLayoutEffect(() => {
     const wrap = wrapRef.current;
@@ -113,6 +116,7 @@ export default function MastheadPlot({ text }: { text: string }) {
     const settle = () => {
       settled = true;
       setDimW(fittedW || null); // dimension the finished title
+      setDimPhase('shown');
       const w = window as unknown as { __plotSettled?: boolean };
       if (w.__plotSettled) return;
       w.__plotSettled = true;
@@ -128,8 +132,11 @@ export default function MastheadPlot({ text }: { text: string }) {
     }
 
     // Hide the real text before first paint so there is no flash of the finished
-    // word before the pen starts. Restored if we bail for any reason.
+    // word before the pen starts. Restored if we bail for any reason. The dim
+    // row keeps its layout box (visibility-style hide via CSS) so the reveal
+    // after settle never shifts anything below the band.
     h1.style.opacity = '0';
+    setDimPhase('hidden');
 
     let raf = 0;
     let cancelled = false;
@@ -354,15 +361,15 @@ export default function MastheadPlot({ text }: { text: string }) {
       </h1>
       <canvas ref={canvasRef} className={styles.canvas} aria-hidden="true" />
       <span ref={penRef} className={styles.pen} aria-hidden="true" />
-      {dimW ? (
-        <div className={styles.dim} aria-hidden="true">
-          <i className={styles.dimTick} />
-          <i className={styles.dimLine} />
-          <span className={`${styles.dimVal} u-mono`}>{dimW}</span>
-          <i className={styles.dimLine} />
-          <i className={styles.dimTick} />
-        </div>
-      ) : null}
+      {/* Always in flow — the row's height is reserved from first paint so the
+          post-plot reveal never pushes the sheet down. Only the ink toggles. */}
+      <div className={styles.dim} aria-hidden="true" data-phase={dimPhase}>
+        <i className={styles.dimTick} />
+        <i className={styles.dimLine} />
+        <span className={`${styles.dimVal} u-mono`}>{dimW ?? ''}</span>
+        <i className={styles.dimLine} />
+        <i className={styles.dimTick} />
+      </div>
     </div>
   );
 }
