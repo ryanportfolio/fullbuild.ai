@@ -56,14 +56,13 @@ export default function SheetShipped() {
         <div className={s.body}>
           <div className={s.copyCol}>
             <p className={s.kicker}>
-              Sheet S-04 · drawing schedule · {n} entries ·{' '}
-              <span className={s.kickerLive}>latencies measured from your session, not cached</span>
+              Sheet S-04 · drawing schedule · {n} entries
             </p>
             <div className={s.lead}>
               <h2 className={s.pour}>The&nbsp;Pour</h2>
               <p className={s.leadNote}>
                 Judgment, mission, management, relationships, and growth still
-                need human agency.
+                need human agency
               </p>
             </div>
 
@@ -74,7 +73,6 @@ export default function SheetShipped() {
               </div>
 
               {PROJECTS.map((p, i) => {
-                const reading = p.href ? health[p.href] : undefined;
                 const up = isUp(health, p.href);
                 const live = p.live && up;
                 const primaryHref = p.href ?? p.repo ?? '#';
@@ -113,15 +111,28 @@ export default function SheetShipped() {
                         <span className={s.stack}>{p.stack.join(' · ')}</span>
                       </p>
                       <p className={s.metricLine}>
-                        {p.metrics.map((m) => (
-                          <span className={s.metric} key={m.label} title={m.source}>
-                            <b>{m.value ?? '––––'}</b> {m.label}
-                          </span>
-                        ))}
-                        {reading && (
-                          <span className={s.probeStamp} data-up={reading.up ? 'true' : 'false'}>
-                            {new URL(p.href as string).host} · {reading.status || 'ERR'} · {reading.ms}ms
-                          </span>
+                        {p.metrics.map((m) => {
+                          const isEmail = !!m.value && m.value.includes('@');
+                          return isEmail ? (
+                            <a className={s.contact} key={m.value} href={`mailto:${m.value}`}>
+                              <b>{m.value}</b>
+                            </a>
+                          ) : (
+                            <span className={s.metric} key={m.label || m.value} title={m.source}>
+                              <b>{m.value ?? '––––'}</b> {m.label}
+                            </span>
+                          );
+                        })}
+                        {p.href && (
+                          <a
+                            className={s.urlLink}
+                            href={p.href}
+                            target="_blank"
+                            rel="noreferrer"
+                            data-live={live ? 'true' : 'false'}
+                          >
+                            <span className={s.urlText}>{new URL(p.href).host}</span>
+                          </a>
                         )}
                       </p>
                     </div>

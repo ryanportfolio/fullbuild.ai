@@ -68,6 +68,15 @@
   margin-top: 0.85rem;
 }
 
+/* Thesis lede — a short standalone statement, set 25% larger than body prose.
+   May carry inline drafting glyphs (see SheetGlyphs), so line-height leaves them room. */
+.lede {
+  font-size: 1.25rem;
+  line-height: 1.5;
+  max-width: 34ch;
+  opacity: 0.95;
+}
+
 /* Measured voice — a spec block that reads like a real drawing's schedule. */
 .spec {
   margin-top: 1.6rem;

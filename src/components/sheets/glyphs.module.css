@@ -1,0 +1,25 @@
+/* Inline sheet glyphs — sized to the surrounding text, inheriting its ink. */
+.glyph {
+  display: inline-block;
+  height: 0.82em;
+  width: auto;
+  vertical-align: -0.08em;
+  margin: 0 0.16em;
+  color: inherit;
+}
+
+/* the imagination machine, turning over */
+.cog {
+  transform-origin: 50% 50%;
+  animation: cogspin 7s linear infinite;
+}
+@keyframes cogspin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cog {
+    animation: none;
+  }
+}

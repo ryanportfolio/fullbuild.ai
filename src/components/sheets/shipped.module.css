@@ -143,9 +143,9 @@
   margin: 0 0 0.9rem;
 }
 .leadNote {
-  font-size: 0.95rem;
-  line-height: 1.6;
-  max-width: 52ch;
+  font-size: 1.19rem;
+  line-height: 1.55;
+  max-width: 46ch;
   opacity: 0.9;
 }
 
@@ -347,6 +347,83 @@
 .probeStamp[data-up='true'] {
   color: var(--accent-link);
   border-color: currentColor;
+}
+
+/* Contact email — the one place a value is a call to action, not a figure. */
+.contact {
+  text-decoration: none;
+  color: var(--ink-graphite);
+  transition: color 0.2s ease;
+}
+.contact b {
+  font-weight: 600;
+  color: var(--ink-graphite);
+  transition: color 0.2s ease;
+}
+.contact:hover b,
+.contact:focus-visible b {
+  color: var(--accent-live);
+}
+
+/* The live URL — a link with a drafted hover: the domain shifts to revision-red
+   (the live semantic), a dimension underline draws left→right, and a plotted ↗
+   slides in. One accent, spent on a reachable production site. */
+.urlLink {
+  margin-left: auto;
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.32rem;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.03em;
+  color: var(--ink-witness);
+  text-decoration: none;
+  transition: color 0.22s ease, letter-spacing 0.22s var(--ease-draw, ease);
+}
+.urlText {
+  position: relative;
+}
+.urlText::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -3px;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.3s var(--ease-draw, ease);
+}
+.urlLink::after {
+  content: '↗';
+  font-size: 0.92em;
+  opacity: 0;
+  transform: translateX(-3px);
+  transition: opacity 0.24s ease, transform 0.24s var(--ease-draw, ease);
+}
+.urlLink:hover,
+.urlLink:focus-visible {
+  color: var(--accent-live);
+  letter-spacing: 0.05em;
+  outline: none;
+}
+.urlLink:hover .urlText::after,
+.urlLink:focus-visible .urlText::after {
+  transform: scaleX(1);
+}
+.urlLink:hover::after,
+.urlLink:focus-visible::after {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .urlText::after,
+  .urlLink,
+  .urlLink::after {
+    transition: opacity 0.15s ease, color 0.15s ease;
+  }
 }
 
 /* Closing detail — anchors the sheet bottom. */
