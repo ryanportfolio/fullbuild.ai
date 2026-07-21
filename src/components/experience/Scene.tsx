@@ -17,7 +17,7 @@
    idles when STATE 04 is off-screen, disposes everything on unmount.
    ========================================================================= */
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrthographicCamera } from '@react-three/drei';
 import { EffectComposer, SelectiveBloom } from '@react-three/postprocessing';
@@ -842,10 +842,52 @@ function Overgrowth({ frame }: { frame: Frame }) {
 }
 
 // ---------------------------------------------------------------------------
+// Adaptive resolution — the recovery path the capability gate can't provide.
+// The gate reads cores/RAM but not the GPU, so an integrated-graphics desktop
+// passes and then drowns in fill rate (dpr 1.75 + MSAA + bloom). Measure real
+// frame times and step the dpr ceiling down 1.75 → 1.5 → 1.25 → 1, one-way:
+// a machine holding budget never demotes, so fidelity there is untouched.
+//
+// Hand-rolled instead of drei's <PerformanceMonitor>: frameloop="demand"
+// leaves long idle gaps between invalidation bursts, and a wall-clock fps
+// monitor reads each gap as dropped frames — demoting healthy machines.
+// Filtering on per-frame delta samples only frames rendered back-to-back.
+// (A genuine frame slower than IDLE_GAP is indistinguishable from a gap and
+// never sampled; hardware that slow is a software renderer, culled at the gate.)
+// ---------------------------------------------------------------------------
+const DPR_MAX = 1.75;
+const DPR_FLOOR = 1;
+const DPR_STEP = 0.25;
+const FRAME_BUDGET = 1 / 36; // demote when the sustained average is worse than ~36fps
+const SAMPLE_FRAMES = 60; // ~1-2s of continuous animation per verdict
+const IDLE_GAP = 0.25; // deltas above this are demand-loop gaps, not frame cost
+
+function AdaptiveDpr({ demote }: { demote: () => void }) {
+  const acc = useRef({ time: 0, frames: 0 });
+  useFrame((_, dt) => {
+    if (dt <= 0 || dt > IDLE_GAP) return;
+    const a = acc.current;
+    a.time += dt;
+    a.frames += 1;
+    if (a.frames < SAMPLE_FRAMES) return;
+    const avg = a.time / a.frames;
+    a.time = 0;
+    a.frames = 0;
+    if (avg > FRAME_BUDGET) demote();
+  });
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // Scene root — Canvas + fixed camera + pour + gated selective bloom.
 // ---------------------------------------------------------------------------
 export default function Scene() {
   const [lit, setLit] = useState(false);
+  const [dprMax, setDprMax] = useState(DPR_MAX);
+  const demote = useCallback(
+    () => setDprMax((d) => Math.max(DPR_FLOOR, d - DPR_STEP)),
+    [],
+  );
   const frame = useMemo(
     () => buildFrame(LIVE_PROJECTS.map((p) => ({ id: p.id, href: p.href }))),
     [],
@@ -855,10 +897,17 @@ export default function Scene() {
     <Canvas
       orthographic
       frameloop="demand"
-      dpr={[1, 1.75]}
-      gl={{ localClippingEnabled: true, antialias: true }}
+      dpr={[1, dprMax]}
+      gl={{
+        localClippingEnabled: true,
+        antialias: true,
+        // On hybrid laptops this requests the discrete adapter; a no-op on
+        // single-GPU machines. Zero visual change either way.
+        powerPreference: 'high-performance',
+      }}
       style={{ width: '100%', height: '100%' }}
     >
+      {dprMax > DPR_FLOOR && <AdaptiveDpr demote={demote} />}
       <CameraRig frame={frame} />
       <Pour frame={frame} onLitChange={setLit} />
       <Overgrowth frame={frame} />
