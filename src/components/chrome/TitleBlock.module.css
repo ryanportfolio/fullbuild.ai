@@ -31,10 +31,27 @@
   flex: none;
 }
 
+/* upper reach — the mark beside the vertical set lettering */
+.upper {
+  display: flex;
+  align-items: center;
+  margin-top: 1.1rem;
+}
+
+/* the mark: half-drawn, half-poured. Tuned in the logo lab. */
+.logo {
+  flex: 1;
+  width: 96px;
+  max-width: 96px;
+  height: 96px;
+  margin: 0 auto;
+  color: var(--ink-graphite);
+  overflow: visible;
+}
+
 /* vertical set lettering rides the rail's upper reach */
 .setName {
   writing-mode: vertical-rl;
-  margin-top: 1.1rem;
   font-size: 0.62rem;
   letter-spacing: 0.32em;
   text-transform: uppercase;
@@ -256,7 +273,7 @@
     background: none;
   }
   .reg,
-  .setName,
+  .upper,
   .scene,
   .telemetry {
     display: none;
