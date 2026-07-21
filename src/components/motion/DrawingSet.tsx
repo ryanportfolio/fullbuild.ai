@@ -234,6 +234,14 @@ export default function DrawingSet({
               return;
             }
             if (!crewed) return;
+            // The cover is done: tell any follower (the MARGIN STUDY vignette)
+            // the carriage has finished its pass. Latched on window like
+            // ws:plot-settled so a late subscriber still sees it.
+            const w = window as unknown as { __coverDrawn?: boolean };
+            if (!w.__coverDrawn) {
+              w.__coverDrawn = true;
+              window.dispatchEvent(new Event('ws:cover-drawn'));
+            }
             // A late completion (reader already scrolled past the cover) must
             // not resurrect a parked pen — dock only while STATE 01 is current.
             if (useWorkingSet.getState().state === 1) dockPen(ink);
