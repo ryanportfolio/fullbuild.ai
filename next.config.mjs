@@ -11,7 +11,16 @@ const nextConfig = {
   async rewrites() {
     return [
       { source: '/prototype', destination: '/prototype/index.html' },
-      { source: '/prototype/build-seam', destination: '/prototype/build-seam/index.html' },
+      { source: '/prototype/fault-line', destination: '/prototype/fault-line/index.html' },
+      { source: '/prototype/assembly-line', destination: '/prototype/assembly-line/index.html' },
+    ];
+  },
+  // Old prototype URLs that have been linked or shipped before the rename.
+  async redirects() {
+    return [
+      { source: '/concept', destination: '/prototype', permanent: true },
+      { source: '/concept/time-lapse-manufacture', destination: '/prototype/assembly-line', permanent: true },
+      { source: '/prototype/build-seam', destination: '/prototype/fault-line', permanent: true },
     ];
   },
 };
