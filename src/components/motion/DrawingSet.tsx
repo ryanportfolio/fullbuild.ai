@@ -148,6 +148,13 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
         mode: 'dock',
       });
     };
+    // Park the instrument off-stage. Position carries over from the last
+    // target so the fade happens in place, not after a streak.
+    const hidePen = () => {
+      const last = penBus.last;
+      if (!last || last.mode === 'hide') return;
+      penBus.set({ ...last, mode: 'hide' });
+    };
     const penToStroke = (el: SVGElement, p: number, ink: PenInk) => {
       const geo = el as unknown as SVGGeometryElement;
       if (typeof geo.getTotalLength !== 'function') return;
@@ -168,7 +175,13 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
 
     const ctx = gsap.context(() => {
       // DRAW — reveal strokes per sheet in authored order, the pen leading the
-      // newest stroke's tip (one instrument, one hand).
+      // newest stroke's tip (one instrument, one hand). Base pace lives here;
+      // any stroke ancestor may slow its own region via data-draw-speed
+      // (0.75 = three-quarter speed). Only STATE 01 is crewed: the pen works
+      // the cover in full view, parks through the middle sheets (their strokes
+      // still draw), and returns for the pour.
+      const BASE_DUR = 0.9;
+      const BASE_STAGGER = 0.06;
       sections.forEach((sec) => {
         const strokes = gsap.utils.toArray<SVGElement>(sec.querySelectorAll('.ws-draw'));
         if (!strokes.length) return;
@@ -177,26 +190,39 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
         );
         gsap.set(strokes, { strokeDasharray: 1, strokeDashoffset: 1 });
         const ink = inkOf(sec);
+        const crewed = Number(sec.dataset.state) === 1;
         let leader = -1;
         const tl = gsap.timeline({
           scrollTrigger: { trigger: sec, start: 'top 78%', once: true },
-          onComplete: () => dockPen(ink),
+          onComplete: () => {
+            if (!crewed) return;
+            // A late completion (reader already scrolled past the cover) must
+            // not resurrect a parked pen — dock only while STATE 01 is current.
+            if (useWorkingSet.getState().state === 1) dockPen(ink);
+            else hidePen();
+          },
         });
         strokes.forEach((el, i) => {
+          const speedAttr = (el.closest('[data-draw-speed]') as HTMLElement | null)
+            ?.dataset.drawSpeed;
+          const speed = Number(speedAttr) > 0 ? Number(speedAttr) : 1;
           tl.to(
             el,
             {
               strokeDashoffset: 0,
               ease: 'power2.out',
-              duration: 0.9,
+              duration: BASE_DUR / speed,
               onStart: () => {
                 leader = i;
               },
               onUpdate() {
-                if (leader === i) penToStroke(el, this.progress(), ink);
+                if (crewed && leader === i) penToStroke(el, this.progress(), ink);
               },
             },
-            i * 0.03,
+            // each stroke starts a beat after the previous one STARTS — the
+            // beat stretches with the region's speed, so a slowed drawing also
+            // paces its hand, not just its stroke travel
+            i === 0 ? 0 : `<${(BASE_STAGGER / speed).toFixed(4)}`,
           );
         });
       });
@@ -226,12 +252,39 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
         });
       });
 
-      // Overall progress (feeds the 3D camera).
+      // RAIL SKETCH — the site log. One long pencil record in the margin,
+      // scrubbed by overall set progress: survey → footings → bents → roof →
+      // AS BUILT, finishing as the set runs out. Monotonic by design — the
+      // pencil only ever ADDS; scrolling back up never un-draws a mark.
+      const sketch = gsap.utils.toArray<SVGElement>(document.querySelectorAll('.ws-scrub'));
+      sketch.sort(
+        (a, b) => Number(a.getAttribute('data-o') ?? 0) - Number(b.getAttribute('data-o') ?? 0),
+      );
+      if (sketch.length) gsap.set(sketch, { strokeDasharray: 1, strokeDashoffset: 1 });
+      const SKETCH_START = 0.03; // let the masthead hold the opening beat
+      const SKETCH_END = 0.97; // last mark lands as the set bottoms out
+      let sketchFront = 0;
+      const applySketch = (p: number) => {
+        if (!sketch.length) return;
+        const t = Math.min(1, Math.max(0, (p - SKETCH_START) / (SKETCH_END - SKETCH_START)));
+        const front = t * sketch.length;
+        if (front <= sketchFront) return;
+        sketchFront = front;
+        sketch.forEach((el, i) => {
+          const local = Math.min(1, Math.max(0, front - i));
+          el.style.strokeDashoffset = String(1 - local);
+        });
+      };
+
+      // Overall progress (feeds the 3D camera + the rail sketch).
       ScrollTrigger.create({
         trigger: root,
         start: 'top top',
         end: 'bottom bottom',
-        onUpdate: (self) => setProgress(self.progress),
+        onUpdate: (self) => {
+          setProgress(self.progress);
+          applySketch(self.progress);
+        },
       });
 
       // POUR — STATE 03 → 04 fill progress. The pen rides the waterline while
@@ -252,21 +305,38 @@ export default function DrawingSet({ children }: { children: ReactNode }) {
                 penBus.set({ x: r.right - 6, y: r.bottom, ink: 'concrete', mode: 'pour' });
               }
             } else if (penBus.last?.mode === 'pour') {
-              dockPen('concrete');
+              // The pour is the pen's only mid-set appearance — either side of
+              // it, the instrument parks off-stage rather than trailing the
+              // reader down the page.
+              hidePen();
             }
           },
         });
       }
     }, root);
 
+    // The pen's beat sheet, cued by the state tracker: crewed on the cover,
+    // parked through the middle sheets, back on for the pour (handled above).
+    // Returning to the cover un-parks it onto the rail dock.
+    const unsubPen = useWorkingSet.subscribe((s, p) => {
+      if (s.state === p.state) return;
+      if (s.state >= 2 && penBus.last && penBus.last.mode !== 'pour') hidePen();
+      else if (s.state === 1 && penBus.last?.mode === 'hide') dockPen('graphite');
+    });
+
     return () => {
+      unsubPen();
       io.disconnect();
       flatIO.disconnect();
       ctx.revert();
-      // HINGE sets inline transforms directly (not via gsap), so clear them here.
+      // HINGE sets inline transforms directly (not via gsap), so clear them
+      // here; the rail sketch writes stroke-dashoffset directly the same way.
       sections.forEach((s) => {
         s.style.transform = '';
         s.style.transformStyle = '';
+      });
+      document.querySelectorAll<SVGElement>('.ws-scrub').forEach((s) => {
+        s.style.strokeDashoffset = '';
       });
       gsap.ticker.remove(tick);
       lenis.destroy();

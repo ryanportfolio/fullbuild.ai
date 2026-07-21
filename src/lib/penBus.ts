@@ -15,8 +15,8 @@ export interface PenTarget {
   y: number;
   ink: PenInk;
   /** draw = nib down following a stroke; pour = riding the waterline;
-      dock = parked on the rail. */
-  mode: 'draw' | 'pour' | 'dock';
+      dock = parked on the rail; hide = off-stage (fades out in place). */
+  mode: 'draw' | 'pour' | 'dock' | 'hide';
 }
 
 type Listener = (t: PenTarget) => void;

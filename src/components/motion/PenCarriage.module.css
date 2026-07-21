@@ -21,3 +21,11 @@
 .pen[data-mode='dock'] {
   opacity: 0.55 !important;
 }
+
+/* Parked off-stage. CSS owns this fade (transition applies on ENTERING the
+   state), and !important guarantees no interrupted tween can strand a ghost
+   carriage mid-page; leaving the state hands opacity back to the JS fade-in. */
+.pen[data-mode='hide'] {
+  opacity: 0 !important;
+  transition: opacity 0.35s var(--ease-draw);
+}

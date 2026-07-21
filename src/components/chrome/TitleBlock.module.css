@@ -41,15 +41,30 @@
   color: var(--ink-witness);
 }
 
-/* rail station ruler — fills the rail's reach with drafted structure */
-.ruler {
+/* rail scene — the middle reach: station ruler + site-log pencil record */
+.scene {
   flex: 1;
-  width: 0.7rem;
   min-height: 3rem;
   margin: 0.9rem 0 0.4rem;
+  display: flex;
+  gap: 0.55rem;
+  overflow: hidden;
+}
+
+/* rail station ruler — keeps time on the scene's left edge */
+.ruler {
+  flex: none;
+  width: 0.7rem;
   color: var(--ink-graphite);
   opacity: 0.4;
-  align-self: flex-start;
+}
+
+/* the site log — drawn on by DrawingSet as the set advances */
+.sketch {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink-graphite);
+  opacity: 0.55;
 }
 
 /* carriage telemetry — the instrument's live readout */
@@ -221,7 +236,7 @@
   }
   .reg,
   .setName,
-  .ruler,
+  .scene,
   .telemetry {
     display: none;
   }

@@ -30,18 +30,43 @@ export default function PenCarriage() {
     const nib = nibRef.current;
     if (!el || !nib) return;
 
-    const xTo = gsap.quickTo(el, 'x', { duration: 0.22, ease: 'power3.out' });
-    const yTo = gsap.quickTo(el, 'y', { duration: 0.22, ease: 'power3.out' });
+    // 0.32s lerp: long enough that stroke-to-stroke hops read as one hand
+    // travelling, short enough to stay on the newest stroke's tip.
+    const xTo = gsap.quickTo(el, 'x', { duration: 0.32, ease: 'power3.out' });
+    const yTo = gsap.quickTo(el, 'y', { duration: 0.32, ease: 'power3.out' });
     let shown = false;
     let curInk: PenInk | null = null;
     let curMode = '';
     // Rail telemetry cells — real coords, throttled to readable rate.
     const telMode = document.getElementById('pen-telemetry-mode');
     const telXY = document.getElementById('pen-telemetry-xy');
-    const MODE_TEXT = { draw: 'plotting', pour: 'riding the pour', dock: 'docked' } as const;
+    const MODE_TEXT = {
+      draw: 'plotting',
+      pour: 'riding the pour',
+      dock: 'docked',
+      hide: 'parked',
+    } as const;
     let lastTel = 0;
 
     const unsub = penBus.subscribe((t) => {
+      // Off-stage: the [data-mode='hide'] CSS rule fades it out in place
+      // (see module.css); forget the position so the next appearance
+      // materialises at its target instead of streaking across.
+      if (t.mode === 'hide') {
+        if (shown) {
+          gsap.killTweensOf(el, 'opacity');
+          // park the inline value at 0 too, so the eventual re-show fades in
+          // from transparent instead of popping at full ink
+          gsap.set(el, { opacity: 0 });
+          shown = false;
+        }
+        if (t.mode !== curMode) {
+          curMode = t.mode;
+          el.dataset.mode = t.mode;
+          if (telMode) telMode.textContent = MODE_TEXT.hide;
+        }
+        return;
+      }
       if (!shown) {
         // first target: appear in place, no cross-screen streak
         gsap.set(el, { x: t.x, y: t.y });

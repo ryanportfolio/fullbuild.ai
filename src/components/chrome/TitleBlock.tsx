@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useWorkingSet, isUp, type PipelineState } from '@/lib/store';
 import { LIVE_PROJECTS } from '@/lib/projects';
+import RailSketch from './RailSketch';
 import styles from './TitleBlock.module.css';
 
 const STATE_NAMES = ['Idea', 'Design', 'Engineering', 'Shipped'] as const;
@@ -59,27 +60,31 @@ export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
       </svg>
       <span className={styles.setName}>The Working Set</span>
 
-      {/* Rail rule: a drafting station ruler running the rail's reach — ticks
-          at the drafting module, majors numbered. Structure, not noise. */}
-      <svg className={styles.ruler} viewBox="0 0 24 400" preserveAspectRatio="none" aria-hidden="true">
-        {Array.from({ length: 41 }).map((_, i) => {
-          const y = (i / 40) * 400;
-          const major = i % 5 === 0;
-          return (
-            <line
-              key={i}
-              x1="0"
-              y1={y}
-              x2={major ? 10 : 5}
-              y2={y}
-              stroke="currentColor"
-              strokeWidth="1"
-              vectorEffect="non-scaling-stroke"
-            />
-          );
-        })}
-        <line x1="0" y1="0" x2="0" y2="400" stroke="currentColor" strokeWidth="1" vectorEffect="non-scaling-stroke" />
-      </svg>
+      {/* Rail rule + site log share the rail's middle reach: the station ruler
+          keeps time on the left; beside it, the site-log pencil record draws
+          itself as the reader advances the set. */}
+      <div className={styles.scene} aria-hidden="true">
+        <svg className={styles.ruler} viewBox="0 0 24 400" preserveAspectRatio="none">
+          {Array.from({ length: 41 }).map((_, i) => {
+            const y = (i / 40) * 400;
+            const major = i % 5 === 0;
+            return (
+              <line
+                key={i}
+                x1="0"
+                y1={y}
+                x2={major ? 10 : 5}
+                y2={y}
+                stroke="currentColor"
+                strokeWidth="1"
+                vectorEffect="non-scaling-stroke"
+              />
+            );
+          })}
+          <line x1="0" y1="0" x2="0" y2="400" stroke="currentColor" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+        </svg>
+        <RailSketch className={styles.sketch} />
+      </div>
 
       {/* Carriage telemetry — live readout of the one instrument. PenCarriage
           writes these cells directly (real coords, real mode, no theater). */}

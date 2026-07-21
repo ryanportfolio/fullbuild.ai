@@ -63,8 +63,12 @@ function Elevation() {
   const pitch = (x1 - x0) / n;
 
   return (
+    // data-draw-speed 0.75: stroke travel AND the beat between strokes both
+    // stretch by 1/0.75, roughly doubling the elevation's total plot time
+    // against the old fixed stagger — the cover drawing draws at half pace.
     <svg
       viewBox="0 0 380 168"
+      data-draw-speed="0.75"
       role="img"
       aria-label={`Elevation of the shipped structure — ${n} bents, one per live project`}
     >
