@@ -25,7 +25,7 @@ export function EmailRow() {
     <div className={`${u.fieldRow} ${u.fieldStack}`}>
       <span className={u.fieldKey}>Email</span>
       <span className={u.fieldVal}>
-        <a href="mailto:hi@fullbuild.ai" onClick={glideToT01} aria-label="Contact, open the transmittal sheet">
+        <a href="mailto:hi@fullbuild.ai" onClick={glideToT01} aria-label="Contact, open the dispatch sheet">
           hi@fullbuild.ai
         </a>
       </span>
