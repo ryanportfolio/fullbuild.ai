@@ -28,10 +28,8 @@ export default function SheetUnconformity() {
           <div>
             <h2 className={u.heading}>Every sheet was redrawn to get here</h2>
             <p className={u.intro}>
-              A drawing that hides its revisions is hiding something. This ledger
-              is not staged — it is the working tree&apos;s own git log, printed
-              at build time. The clouded row is the exact commit this page was
-              built from.
+              Faster building increases the need for stronger checks; secure,
+              sustainable, and aligned with the original intent.
             </p>
 
             {log.length === 0 ? (

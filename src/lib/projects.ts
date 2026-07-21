@@ -42,6 +42,14 @@ export interface Project {
   /** Short year / ship marker, mono-rendered. */
   year: string;
   stack: string[];
+  /**
+   * Real source languages — the "materials" this drawing set is built from.
+   * Markup (HTML) and shader (GLSL) count; runtimes/frameworks/libraries do not.
+   * The cover's MATERIALS LEGEND is generated from this field and every count it
+   * prints is derived here, so a number on the drawing can never drift from the
+   * data. Verified against each repo's source on 2026-07-20.
+   */
+  langs: string[];
   metrics: Metric[];
   /** One-line drafted description. Real, specific — no marketing filler. */
   note: string;
@@ -58,6 +66,7 @@ export const PROJECTS: Project[] = [
     role: 'solo build — retrieval, gating, evals',
     year: "'26",
     stack: ['TypeScript', 'React', 'PostgreSQL + pgvector', 'Cohere rerank'],
+    langs: ['TypeScript'],
     metrics: [
       { label: 'commits', value: '466', source: 'GitHub API, commit pagination' },
       { label: 'CodeQL baselined', value: '51', source: 'README: safe baseline accounts for all 51 retained results' },
@@ -75,6 +84,7 @@ export const PROJECTS: Project[] = [
     role: 'solo build — client, server, DB, AI orchestration',
     year: "'25",
     stack: ['TypeScript', 'React', 'Express', 'Drizzle ORM'],
+    langs: ['TypeScript'],
     metrics: [
       { label: 'commits', value: '14,879', source: 'GitHub API, commit pagination (private repo)' },
       { label: 'models per council', value: '6', source: 'corewise.video landing page' },
@@ -92,6 +102,7 @@ export const PROJECTS: Project[] = [
     role: 'solo build — scoring engine, SSRF guard, site',
     year: "'26",
     stack: ['TypeScript strict', 'Node 20', 'Astro', 'SSE'],
+    langs: ['TypeScript'],
     metrics: [
       { label: 'tests passing', value: '152', source: 'README badge' },
       { label: 'runtime deps', value: '0', source: 'package.json' },
@@ -109,6 +120,7 @@ export const PROJECTS: Project[] = [
     role: 'solo build — owner of every merge gate',
     year: "'26",
     stack: ['TypeScript', 'Node 20', 'GitHub API', 'GitHub Actions'],
+    langs: ['TypeScript'],
     metrics: [
       { label: 'repos audited', value: '9', source: 'live scoreboard at audit.corewise.academy' },
       { label: 'gated commits', value: '62', source: 'GitHub API, commit pagination' },
@@ -126,6 +138,7 @@ export const PROJECTS: Project[] = [
     role: 'solo build — tasks, grader, dashboard',
     year: "'26",
     stack: ['Python', 'TypeScript', 'React', 'GitHub Actions'],
+    langs: ['Python', 'TypeScript'],
     metrics: [
       { label: 'transcripts', value: '108', source: 'live dashboard run list' },
       { label: 'correction gap', value: '0.96 / 0.81', source: 'dashboard: claude-sonnet-5 vs gpt-5.6-sol, N=3 per task' },
@@ -143,6 +156,7 @@ export const PROJECTS: Project[] = [
     role: 'solo build — data pipeline + datasheet site',
     year: "'26",
     stack: ['HTML', 'Node scripts', 'PowerShell', 'no build step'],
+    langs: ['HTML', 'JavaScript', 'PowerShell'],
     metrics: [
       { label: 'tokens filtered', value: '79.5%', source: 'measured — rtk gain log over 95,821 commands' },
       { label: 'tokens saved', value: '19.7M', source: 'per-command before/after logs, refreshed daily' },
@@ -160,6 +174,7 @@ export const PROJECTS: Project[] = [
     role: 'solo build — hotkey daemon, model guard, CI release',
     year: "'26",
     stack: ['Python 3.11', 'faster-whisper', 'CTranslate2', 'PyInstaller'],
+    langs: ['Python'],
     metrics: [
       { label: 'model footprint', value: '~75MB int8', source: 'README: base.en int8, CPU-only real-time' },
       { label: 'releases', value: '3', source: 'GitHub releases API, latest v0.2.3' },
@@ -177,6 +192,7 @@ export const PROJECTS: Project[] = [
     role: 'maintainer — derivative of TinyWall 3.5.1',
     year: "'26",
     stack: ['C#', '.NET 4.8', 'Windows Filtering Platform', 'WiX'],
+    langs: ['C#'],
     metrics: [
       { label: 'installers', value: '3 MSI', source: 'GitHub releases: x64 / arm64 / x86 + SHA-256 manifest' },
       { label: 'C# codebase', value: '1.3MB', source: 'GitHub languages API' },
@@ -194,6 +210,7 @@ export const PROJECTS: Project[] = [
     role: 'solo build — extraction engine + shell integration',
     year: "'26",
     stack: ['C#', '.NET Framework', 'Windows Shell', '0 deps'],
+    langs: ['C#'],
     metrics: [
       { label: 'bomb guards', value: '1000:1 cap', source: 'README: 1 GiB/file, 4 GiB total, ratio cap' },
       { label: 'releases', value: '2', source: 'GitHub releases API: v1.0.0, v1.1.0' },
@@ -211,12 +228,30 @@ export const PROJECTS: Project[] = [
     role: 'author — kernel rules, skills, sync scripts',
     year: "'26",
     stack: ['PowerShell', 'JavaScript', 'Markdown skills', '2 runtimes'],
+    langs: ['PowerShell', 'JavaScript'],
     metrics: [
       { label: 'bundled skills', value: '34', source: 'repo description' },
       { label: 'commits', value: '56', source: 'GitHub API, commit pagination' },
       { label: 'agent runtimes', value: '2', source: 'README: Claude Code + Codex from one canonical source' },
     ],
-    note: 'Self-syncing project template for AI coding agents: rule kernel, 34 skills, committed memory — improvements flow both ways between the template and the projects it spawns.',
+    note: 'Self-syncing project template for AI coding agents. Instant repo creation with a built in rule kernel, 34 skills, efficient & durable memory. Super optimized token usage.',
+  },
+  {
+    id: 'corewise-academy',
+    sheet: 'S-04.11',
+    title: 'CoreWise Academy',
+    href: 'https://corewise.academy',
+    repo: null, // source is private — the live site is the artifact
+    live: true,
+    role: 'author + editor — curriculum, site, pipeline',
+    year: "'26",
+    stack: ['Astro', 'MDX', 'TypeScript', 'no accounts'],
+    metrics: [
+      { label: 'guides published', value: '18', source: 'corewise.academy catalog page' },
+      { label: 'catalog reading', value: '133 min', source: 'corewise.academy: "18 published guides, about 133 minutes of reading in total"' },
+      { label: 'commits', value: '327', source: 'GitHub API, commit pagination (private repo)' },
+    ],
+    note: 'Free course catalog on working with AI: 18 guides across 5 layers at 3 depth levels, each with objectives, exercises, and self-checks. No accounts, no fees — the whole catalog reads in about 133 minutes.',
   },
   {
     id: 'corewise-academy',
@@ -247,12 +282,13 @@ export const PROJECTS: Project[] = [
     role: 'idea → design → engineering → shipped',
     year: "'26",
     stack: ['Next.js', 'React Three Fiber', 'GLSL', 'GSAP'],
+    langs: ['TypeScript', 'GLSL'],
     metrics: [
       { label: 'grounds', value: '2', source: 'this stylesheet' },
       { label: 'motion verbs', value: '3', source: 'DrawingSet.tsx' },
       { label: 'accent color', value: '1', source: 'this stylesheet' },
     ],
-    note: 'This sheet is the drawing set you are reading. It logs its own construction — the revision ledger below is the real git history of this page.',
+    note: 'The revision ledger below is the real git history of this page.',
   },
 ];
 

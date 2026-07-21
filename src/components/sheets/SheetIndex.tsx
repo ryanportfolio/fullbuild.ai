@@ -32,7 +32,7 @@ export default function SheetIndex() {
         );
       })}
       <p className={x.legend}>
-        <span className={x.dotSample} data-live="true" /> live · probe-verified&nbsp;&nbsp;
+        <span className={x.dotSample} data-live="true" /> website&nbsp;&nbsp;
         <span className={x.dotSample} data-live="false" /> repo only
       </p>
     </div>

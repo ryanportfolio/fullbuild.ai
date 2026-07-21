@@ -42,10 +42,7 @@ export default function SheetFrame() {
             <p className={copy.eyebrow}>Sheet S-03 · structure · erection sequence</p>
             <h2 className={copy.heading}>The frame holds the whole load</h2>
             <p className={copy.prose}>
-              Engineering is the part nobody sees and everybody stands on. In the
-              cell beside this note, the actual structure is being erected —
-              {' '}{frame.bays.length} bents, one per live build, columns first,
-              then rafters, brace, ties — the same geometry the next sheet pours.
+              Building with AI in a safe, maintainable, and request-aligned way.
             </p>
 
             <dl className={copy.spec} aria-label="Member schedule — computed from the erected geometry">

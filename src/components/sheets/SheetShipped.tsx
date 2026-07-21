@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { PROJECTS, LIVE_PROJECTS } from '@/lib/projects';
+import { PROJECTS } from '@/lib/projects';
 import { useWorkingSet, isUp } from '@/lib/store';
 import { useHealthProbe } from '@/lib/health';
 import PourReport from './PourReport';
@@ -42,8 +42,6 @@ export default function SheetShipped() {
     });
   }, []);
 
-  const probed = Object.keys(health).length > 0;
-  const upCount = LIVE_PROJECTS.filter((p) => isUp(health, p.href)).length;
   const n = PROJECTS.length;
 
   return (
@@ -64,10 +62,8 @@ export default function SheetShipped() {
             <div className={s.lead}>
               <h2 className={s.pour}>The&nbsp;Pour</h2>
               <p className={s.leadNote}>
-                The frame you watched assemble now fills, bent by bent — and this
-                schedule pours with it. A row earns revision-red only while the
-                production probe can actually reach it: the stamp beside each
-                ignited row is the measurement, not a decoration.
+                Judgment, mission, management, relationships, and growth still
+                need human agency.
               </p>
             </div>
 
@@ -111,7 +107,6 @@ export default function SheetShipped() {
                         {p.href && !p.repo && (
                           <span className={s.repoOnly}>source&nbsp;private</span>
                         )}
-                        <span className={s.year}>{p.year}</span>
                       </span>
                       <p className={s.role}>{p.note}</p>
                       <p className={s.factLine}>
@@ -148,10 +143,9 @@ export default function SheetShipped() {
             <ScaleBar />
           </div>
           <p className={s.closeNote}>
-            Revision&#8209;red is spent on one semantic: <b>live in production,
-            probe&#8209;verified</b>. {probed ? `${upCount}/${LIVE_PROJECTS.length} in service at last probe.` : 'Awaiting first probe.'}{' '}
-            A project that goes down falls back to graphite — the accent never
-            asserts what it can&apos;t reach.
+            Creating verification loops before scaling AI-generated work. Every
+            serious AI workflow needs checks for correctness, security,
+            durability, and fit with the original goal.
           </p>
         </div>
       </div>

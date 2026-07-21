@@ -1,8 +1,9 @@
 import Sheet from './Sheet';
-import { Line, Path, Dim, Registration } from '../drafting/Marks';
+import { Line, Path, Registration } from '../drafting/Marks';
 import MastheadPlot from '../motion/MastheadPlot';
 import SheetIndex from './SheetIndex';
-import { PROJECTS, LIVE_PROJECTS } from '@/lib/projects';
+import MaterialLegend from './MaterialLegend';
+import { LIVE_PROJECTS } from '@/lib/projects';
 import copy from './copy.module.css';
 
 /**
@@ -34,16 +35,7 @@ export default function SheetElevation() {
         <span className={copy.s3}>engineering</span> →{' '}
         <span className={copy.s4}>shipped</span>
       </p>
-      <p className={copy.prose}>
-        One hand carries {PROJECTS.length} real builds through every stage of
-        making. This is not a page you scroll — it is a drawing set you advance,
-        and it draws itself as you go.
-      </p>
-      <p className={copy.prose}>
-        {LIVE_PROJECTS.length} of these drawings are production sites. The set
-        probes each one while you read; a red mark is only ever a passing
-        probe. The red never lies.
-      </p>
+      <MaterialLegend />
     </Sheet>
   );
 }
@@ -108,9 +100,6 @@ function Elevation() {
         w={1}
         o={8 + n}
       />
-
-      {/* dimension: bent count (one clean string, slash terminators both ends) */}
-      <Dim x1={x0} y1={groundY + 22} x2={x1} y2={groundY + 22} value={`${n} BENTS · 1 PER LIVE BUILD`} ink="graphite" o={9 + n} />
     </svg>
   );
 }
