@@ -64,7 +64,7 @@
   flex: 1;
   min-width: 0;
   color: var(--ink-graphite);
-  opacity: 0.55;
+  opacity: 0.68;
 }
 
 /* carriage telemetry — the instrument's live readout */

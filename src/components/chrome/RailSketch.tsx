@@ -1,14 +1,15 @@
 /* ============================================================================
    RAIL SKETCH — the site log. A pencil record living in the rail's middle
    reach, drawn stroke-by-stroke as the reader advances the set (DrawingSet
-   scrubs `.ws-scrub` by overall progress, monotonically). It records the build
-   the set narrates, as five little panels read left-right, top-bottom:
-   survey → excavation → footings → the frame raised → AS BUILT stamp.
+   scrubs `.ws-scrub` by overall progress, monotonically). Six little panels,
+   read left-right top-bottom, telling the build the set narrates:
+
+     survey → excavation → footings poured → frame raised → clad → AS BUILT
 
    Pure server-renderable SVG. Without JS (and under reduced motion) every
    stroke is fully drawn — the finished record, same floor rule as the sheets.
-   Panel groups position/scale authored geometry; strokes keep non-scaling
-   widths, so every mark stays pencil-weight.
+   Each panel sits a degree or two off-square (a hand drew it); strokes keep
+   non-scaling widths so every mark stays pencil-weight.
    ========================================================================= */
 
 function S({ d, w = 1, o }: { d: string; w?: number; o: number }) {
@@ -36,82 +37,111 @@ export default function RailSketch({ className }: { className?: string }) {
       preserveAspectRatio="xMidYMin meet"
       aria-hidden="true"
     >
-      {/* — survey: benchmark, datum, stakes, sight line — */}
-      <g transform="translate(0,-6) scale(0.8)">
-        <S d="M10 20 H22" w={0.8} o={0} />
-        <S d="M16 14 V26" w={0.8} o={1} />
-        <S d="M8 52 H142" w={0.6} o={2} />
-        <S d="M30 96 V72 l6 3 l-6 3" w={0.8} o={3} />
-        <S d="M75 96 V72 l6 3 l-6 3" w={0.8} o={4} />
-        <S d="M120 96 V72 l6 3 l-6 3" w={0.8} o={5} />
-        <S d="M16 26 L120 88" w={0.6} o={6} />
+      {/* — 1 · survey: benchmark, north arrow, datums, staked line, sights — */}
+      <g transform="translate(4,2) rotate(-1 55 55)">
+        <S d="M8 10 H20" w={0.8} o={0} />
+        <S d="M14 4 V16" w={0.8} o={1} />
+        <S d="M17 10 a3 3 0 1 1 -6 0 a3 3 0 1 1 6 0" w={0.6} o={2} />
+        <S d="M96 22 V6" w={0.7} o={3} />
+        <S d="M92 13 L96 6 L100 13" w={0.7} o={4} />
+        <S d="M91 30 V22 L99 30 V22" w={0.6} o={5} />
+        <S d="M4 40 H104" w={0.5} o={6} />
+        <S d="M10 52 H98" w={0.5} o={7} />
+        <S d="M22 92 V66 l7 4 l-7 4" w={0.8} o={8} />
+        <S d="M54 92 V66 l7 4 l-7 4" w={0.8} o={9} />
+        <S d="M86 92 V66 l7 4 l-7 4" w={0.8} o={10} />
+        <S d="M14 16 L86 66" w={0.4} o={11} />
+        <S d="M14 16 L52 68" w={0.4} o={12} />
+        <S d="M22 102 H86" w={0.5} o={13} />
+        <S d="M19 99 l6 6 M83 99 l6 6" w={0.5} o={14} />
       </g>
 
-      {/* — excavation: trench cut + spoil hatch + depth witness — */}
-      <g transform="translate(116,-94) scale(0.8)">
-        <S d="M12 168 H44 L52 190 H98 L106 168 H138" w={1.1} o={7} />
-        <S d="M56 190 l-8 12" w={0.6} o={8} />
-        <S d="M70 190 l-8 12" w={0.6} o={9} />
-        <S d="M84 190 l-8 12" w={0.6} o={10} />
-        <S d="M98 190 l-8 12" w={0.6} o={11} />
-        <S d="M142 168 V190" w={0.7} o={12} />
+      {/* — 2 · excavation: grade, trench cut, spoil mound, ladder, witness — */}
+      <g transform="translate(126,2) rotate(1.2 55 55)">
+        <S d="M2 46 H106" w={0.8} o={15} />
+        <S d="M10 46 H34 L44 74 H72 L82 46 H104" w={1.1} o={16} />
+        <S d="M6 40 q11 -12 24 0" w={0.7} o={17} />
+        <S d="M12 36 l-4 6 M19 33 l-4 6 M26 36 l-4 6" w={0.5} o={18} />
+        <S d="M48 74 l-6 9 M58 74 l-6 9 M68 74 l-6 9" w={0.5} o={19} />
+        <S d="M37 50 V72 M42 50 V72" w={0.7} o={20} />
+        <S d="M37 55 H42 M37 61 H42 M37 67 H42" w={0.5} o={21} />
+        <S d="M96 46 V74" w={0.5} o={22} />
+        <S d="M92 60 H100" w={0.5} o={23} />
       </g>
 
-      {/* — footings: grade line, three pads, hatch — */}
-      <g transform="translate(-3,-43) scale(0.8)">
-        <S d="M12 296 H138" w={0.8} o={13} />
-        <S d="M20 280 h24 v16 h-24 Z" w={1.1} o={14} />
-        <S d="M26 296 l7 -12 M36 296 l7 -12" w={0.6} o={15} />
-        <S d="M63 280 h24 v16 h-24 Z" w={1.1} o={16} />
-        <S d="M69 296 l7 -12 M79 296 l7 -12" w={0.6} o={17} />
-        <S d="M106 280 h24 v16 h-24 Z" w={1.1} o={18} />
-        <S d="M112 296 l7 -12 M122 296 l7 -12" w={0.6} o={19} />
+      {/* — 3 · footings poured: pads, pour hatch, rebar dowels, dim string — */}
+      <g transform="translate(4,128) rotate(-0.8 55 55)">
+        <S d="M2 78 H106" w={0.8} o={24} />
+        <S d="M12 62 h22 v16 h-22 Z" w={1.1} o={25} />
+        <S d="M17 78 l7 -13 M26 78 l7 -13" w={0.5} o={26} />
+        <S d="M18 62 V50 M28 62 V52" w={0.7} o={27} />
+        <S d="M44 62 h22 v16 h-22 Z" w={1.1} o={28} />
+        <S d="M49 78 l7 -13 M58 78 l7 -13" w={0.5} o={29} />
+        <S d="M50 62 V50 M60 62 V52" w={0.7} o={30} />
+        <S d="M76 62 h22 v16 h-22 Z" w={1.1} o={31} />
+        <S d="M81 78 l7 -13 M90 78 l7 -13" w={0.5} o={32} />
+        <S d="M82 62 V50 M92 62 V52" w={0.7} o={33} />
+        <S d="M23 44 V84" w={0.4} o={34} />
+        <S d="M87 44 V84" w={0.4} o={35} />
+        <S d="M12 92 H98" w={0.5} o={36} />
+        <S d="M9 89 l6 6 M95 89 l6 6" w={0.5} o={37} />
       </g>
 
-      {/* — the frame raised: columns, gables, ridge, braces, roof, ground — */}
-      <g transform="translate(130,-110) scale(0.65)">
-        <S d="M32 540 V420" w={1.2} o={20} />
-        <S d="M75 540 V420" w={1.2} o={21} />
-        <S d="M118 540 V420" w={1.2} o={22} />
-        <S d="M32 420 L53.5 380 L75 420" w={1.1} o={23} />
-        <S d="M75 420 L96.5 380 L118 420" w={1.1} o={24} />
-        <S d="M53.5 380 H96.5" w={0.9} o={25} />
-        <S d="M20 420 H130" w={0.6} o={26} />
-        <S d="M53.5 370 l4 4 l-4 4 l-4 -4 Z" w={1} o={27} />
-        <S d="M32 470 L52 430" w={0.8} o={28} />
-        <S d="M118 470 L98 430" w={0.8} o={29} />
-        <S d="M38 410 l8 -5" w={0.6} o={30} />
-        <S d="M48 392 l8 -5" w={0.6} o={31} />
-        <S d="M82 410 l8 -5" w={0.6} o={32} />
-        <S d="M92 392 l8 -5" w={0.6} o={33} />
-        <S d="M12 540 H138" w={1.4} o={34} />
-        <S d="M28 540 l-8 10" w={0.6} o={35} />
-        <S d="M58 540 l-8 10" w={0.6} o={36} />
-        <S d="M88 540 l-8 10" w={0.6} o={37} />
-        <S d="M118 540 l-8 10" w={0.6} o={38} />
+      {/* — 4 · frame raised: bents up, ridge, braces, raising line, keystone — */}
+      <g transform="translate(126,128) rotate(0.8 55 55)">
+        <S d="M2 96 H106" w={0.9} o={38} />
+        <S d="M14 96 l-7 9 M40 96 l-7 9 M66 96 l-7 9 M92 96 l-7 9" w={0.5} o={39} />
+        <S d="M20 96 V40" w={1.2} o={40} />
+        <S d="M54 96 V40" w={1.2} o={41} />
+        <S d="M88 96 V40" w={1.2} o={42} />
+        <S d="M12 40 H96" w={0.4} o={43} />
+        <S d="M20 40 L37 22 L54 40" w={1} o={44} />
+        <S d="M54 40 L71 22 L88 40" w={1} o={45} />
+        <S d="M37 22 H71" w={0.8} o={46} />
+        <S d="M20 62 L34 44" w={0.6} o={47} />
+        <S d="M88 62 L74 44" w={0.6} o={48} />
+        <S d="M71 22 L98 8" w={0.4} o={49} />
+        <S d="M98 8 l-1 5 M98 8 l-5 1" w={0.4} o={50} />
+        <S d="M37 16 l4 4 l-4 4 l-4 -4 Z" w={0.9} o={51} />
       </g>
 
-      {/* — the record closes: stamp box, plotter-lettered AS BUILT, rule — */}
-      <g transform="translate(49,-326) scale(0.95)">
-        <S d="M22 640 h106 v60 h-106 Z" w={1.1} o={39} />
+      {/* — 5 · clad: the finished long shed, door, roof ticks, ground — */}
+      <g transform="translate(4,254) rotate(-1 55 55)">
+        <S d="M2 88 H106" w={0.9} o={52} />
+        <S d="M12 88 l-6 8 M38 88 l-6 8 M64 88 l-6 8 M90 88 l-6 8" w={0.5} o={53} />
+        <S d="M14 88 V56" w={1} o={54} />
+        <S d="M40 88 V56" w={1} o={55} />
+        <S d="M66 88 V56" w={1} o={56} />
+        <S d="M92 88 V56" w={1} o={57} />
+        <S d="M14 56 L27 42 L40 56 L53 42 L66 56 L79 42 L92 56" w={1} o={58} />
+        <S d="M20 52 l6 -5 M46 52 l6 -5 M72 52 l6 -5" w={0.5} o={59} />
+        <S d="M48 88 V70 h12 V88" w={0.8} o={60} />
+        <S d="M27 36 l3 3 l-3 3 l-3 -3 Z" w={0.8} o={61} />
+      </g>
+
+      {/* — 6 · the record closes: double-border stamp, AS BUILT, date rule — */}
+      <g transform="translate(126,254) rotate(-2.5 55 55)">
+        <S d="M8 30 h96 v44 h-96 Z" w={1.1} o={62} />
+        <S d="M12 34 h88 v36 h-88 Z" w={0.5} o={63} />
         {/* A */}
-        <S d="M30 682 L35 666 L40 682" w={0.9} o={40} />
-        <S d="M32.5 676 h5" w={0.9} o={41} />
+        <S d="M16 62 L20 48 L24 62" w={0.9} o={64} />
+        <S d="M18 57 h4" w={0.9} o={65} />
         {/* S */}
-        <S d="M54 666 H44 V674 H54 V682 H44" w={0.9} o={42} />
-        {/* B */}
-        <S d="M62 666 V682" w={0.9} o={43} />
-        <S d="M62 666 H70 V674 H62 M62 674 H71 V682 H62" w={0.9} o={44} />
+        <S d="M36 48 H28 V55 H36 V62 H28" w={0.9} o={66} />
+        {/* B — word gap sits before it: AS · BUILT */}
+        <S d="M46 48 V62" w={0.9} o={67} />
+        <S d="M46 48 H52 V55 H46 M46 55 H53 V62 H46" w={0.9} o={68} />
         {/* U */}
-        <S d="M76 666 V679 L79 682 H85 L88 679 V666" w={0.9} o={45} />
+        <S d="M56 48 V59 L58 62 H62 L64 59 V48" w={0.9} o={69} />
         {/* I */}
-        <S d="M95 666 V682" w={0.9} o={46} />
+        <S d="M70 48 V62" w={0.9} o={70} />
         {/* L */}
-        <S d="M102 666 V682 H111" w={0.9} o={47} />
+        <S d="M76 48 V62 H84" w={0.9} o={71} />
         {/* T */}
-        <S d="M116 666 H126" w={0.9} o={48} />
-        <S d="M121 666 V682" w={0.9} o={49} />
-        <S d="M30 716 H120" w={0.7} o={50} />
+        <S d="M88 48 H96" w={0.9} o={72} />
+        <S d="M92 48 V62" w={0.9} o={73} />
+        <S d="M16 84 H96" w={0.6} o={74} />
+        <S d="M20 81 l4 6 M88 81 l4 6" w={0.5} o={75} />
       </g>
     </svg>
   );
