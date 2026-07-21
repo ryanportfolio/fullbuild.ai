@@ -14,11 +14,9 @@
         (native cursor hidden over the sheet, telemetry reads
         `plotting · visitor`). Coordinates clamp to the frame: the Margin Law
         holds even for the visitor's hand.
-     2. ECHO — keystrokes replot beside each field in the masthead's
-        module-quantised style.
-     3. SGN — pointer strokes lay real SVG polylines; a typed name is the
+     2. SGN — pointer strokes lay real SVG polylines; a typed name is the
         fallback mark.
-     4. TRANSMIT — POST /api/transmit (stub: validates, logs, issues an RFI
+     3. TRANSMIT — POST /api/transmit (stub: validates, logs, issues an RFI
         number), the sheet folds into a drawn envelope, the TRANSMITTED stamp
         lands, the pen docks, and the rail site log gains its correspondence
         panel.
@@ -51,61 +49,6 @@ function hidePenLocal() {
   penBus.set({ ...last, mode: 'hide' });
 }
 
-/* --- keystroke echo: quantise the typed text into drafting modules --------- */
-const ECHO_CELL = 3; // css px, finer than the masthead's 5 (the echo is small)
-const ECHO_ALPHA = 64;
-function plotEcho(canvas: HTMLCanvasElement | null, text: string) {
-  if (!canvas) return;
-  const cssW = canvas.clientWidth;
-  const cssH = canvas.clientHeight;
-  if (!cssW || !cssH) return;
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const w = Math.ceil(cssW * dpr);
-  const h = Math.ceil(cssH * dpr);
-  if (canvas.width !== w || canvas.height !== h) {
-    canvas.width = w;
-    canvas.height = h;
-  }
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-  ctx.clearRect(0, 0, w, h);
-  if (!text) return;
-
-  const cs = getComputedStyle(canvas);
-  const master = document.createElement('canvas');
-  const mctx = master.getContext('2d');
-  if (!mctx) return;
-  const font = `${12 * dpr}px ${cs.fontFamily}`;
-  mctx.font = font;
-  const textW = Math.ceil(mctx.measureText(text).width) + 2;
-  master.width = Math.max(1, textW);
-  master.height = h;
-  mctx.font = font; // canvas resize resets state
-  mctx.textBaseline = 'middle';
-  mctx.fillStyle = cs.color;
-  mctx.fillText(text, 0, h / 2);
-
-  let data: Uint8ClampedArray;
-  try {
-    data = mctx.getImageData(0, 0, master.width, master.height).data;
-  } catch {
-    return;
-  }
-  const cell = Math.max(2, Math.round(ECHO_CELL * dpr));
-  // keep the newest characters in frame: slide the master left once it overruns
-  const ox = Math.min(0, w - master.width);
-  for (let y = 0; y < master.height; y += cell) {
-    for (let x = 0; x < master.width; x += cell) {
-      const sx = Math.min(master.width - 1, x + (cell >> 1));
-      const sy = Math.min(master.height - 1, y + (cell >> 1));
-      if (data[(sy * master.width + sx) * 4 + 3] < ECHO_ALPHA) continue;
-      const dw = Math.min(cell, master.width - x);
-      const dh = Math.min(cell, master.height - y);
-      ctx.drawImage(master, x, y, dw, dh, x + ox, y, dw, dh);
-    }
-  }
-}
-
 /* --- the sheet ------------------------------------------------------------- */
 const SGN_W = 300;
 const SGN_H = 120;
@@ -134,7 +77,6 @@ export default function SheetTransmittal() {
   const receiptRef = useRef<HTMLParagraphElement>(null);
   const sgnRef = useRef<SVGSVGElement>(null);
   const livePolyRef = useRef<SVGPolylineElement>(null);
-  const echoRefs = useRef<Record<string, HTMLCanvasElement | null>>({});
   const t0 = useRef(0);
   const phaseRef = useRef<'form' | 'sending' | 'sent'>('form');
 
@@ -483,15 +425,6 @@ export default function SheetTransmittal() {
     });
   };
 
-  const echo = (name: string) => (e: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const v = e.currentTarget.value;
-    const tail = name === 'message' ? (v.split('\n').pop() ?? '').slice(-42) : v;
-    plotEcho(echoRefs.current[name] ?? null, tail);
-  };
-  const setEcho = (name: string) => (el: HTMLCanvasElement | null) => {
-    echoRefs.current[name] = el;
-  };
-
   return (
     <section
       id="t-01"
@@ -520,24 +453,22 @@ export default function SheetTransmittal() {
                     <Line x1={0} y1={1} x2={100} y2={1} w={1.1} o={0} />
                   </svg>
                 </div>
-                <span aria-hidden="true" />
               </div>
 
               <div className={s.row}>
                 <label className={s.rowLabel} htmlFor="t01-from">From</label>
                 <div className={s.rowField}>
-                  <input id="t01-from" name="from" type="email" className={s.input} placeholder="you@practice.tld" maxLength={200} autoComplete="email" onInput={echo('from')} />
+                  <input id="t01-from" name="from" type="email" className={s.input} placeholder="you@practice.tld" maxLength={200} autoComplete="email" />
                   <svg className={s.rule} viewBox="0 0 100 2" preserveAspectRatio="none" aria-hidden="true">
                     <Line x1={0} y1={1} x2={100} y2={1} w={1.1} o={1} />
                   </svg>
                 </div>
-                <canvas ref={setEcho('from')} className={s.echo} aria-hidden="true" />
               </div>
 
               <div className={`${s.row} ${s.rowTop}`}>
                 <label className={s.rowLabel} htmlFor="t01-message">Message</label>
                 <div className={`${s.rowField} ${s.msgWrap}`}>
-                  {[0, 1, 2, 3, 4, 5].map((n) => (
+                  {[0, 1, 2, 3].map((n) => (
                     <svg
                       key={n}
                       className={s.msgRule}
@@ -549,9 +480,8 @@ export default function SheetTransmittal() {
                       <Line x1={0} y1={1} x2={100} y2={1} w={1} o={5 + n} />
                     </svg>
                   ))}
-                  <textarea id="t01-message" name="message" className={s.msg} maxLength={4000} placeholder={GHOST_STATIC} onInput={echo('message')} />
+                  <textarea id="t01-message" name="message" className={s.msg} maxLength={4000} placeholder={GHOST_STATIC} />
                 </div>
-                <canvas ref={setEcho('message')} className={s.echo} aria-hidden="true" />
               </div>
 
               <div className={s.sgnRow}>

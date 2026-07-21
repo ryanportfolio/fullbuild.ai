@@ -93,10 +93,10 @@
   gap: 0.9rem;
 }
 
-/* one written line of the RFI: label · writing surface · echo plot */
+/* one written line of the RFI: label · writing surface */
 .row {
   display: grid;
-  grid-template-columns: 6.5rem minmax(0, 1fr) clamp(4.5rem, 14%, 7rem);
+  grid-template-columns: 6.5rem minmax(0, 1fr);
   gap: 0.9rem;
   align-items: end;
 }
@@ -144,19 +144,7 @@
   opacity: 0.75;
 }
 
-/* the keystroke echo — the carriage replots what the visitor letters,
-   masthead-module style, in the row's margin */
-.echo {
-  width: 100%;
-  height: 1.35rem;
-  align-self: end;
-  margin-bottom: 0.25rem;
-  font-family: var(--font-mono);
-  color: var(--ink-graphite);
-  opacity: 0.82;
-}
-
-/* message block — six drawn rules, transparent textarea over them */
+/* message block — four drawn rules, transparent textarea over them */
 .msgWrap {
   --msg-lh: 1.9rem;
   position: relative;
@@ -177,7 +165,7 @@
   border: none;
   padding: 0 0.1rem;
   width: 100%;
-  height: calc(var(--msg-lh) * 6);
+  height: calc(var(--msg-lh) * 4);
   resize: none;
   overflow: hidden;
   display: block;
@@ -409,9 +397,6 @@
   .sgnRow {
     grid-template-columns: 1fr;
     gap: 0.15rem;
-  }
-  .echo {
-    display: none;
   }
   .rowLabel {
     padding-bottom: 0.1rem;

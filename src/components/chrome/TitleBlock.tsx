@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { useWorkingSet, isUp, type PipelineState } from '@/lib/store';
 import { LIVE_PROJECTS } from '@/lib/projects';
 import RailLogo from './RailLogo';
@@ -75,6 +76,10 @@ function scrollTo(anchor: string) {
 export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
   const state = useWorkingSet((s) => s.state);
   const health = useWorkingSet((s) => s.health);
+  // On the standalone dispatch sheet the set's sheet counter, stage nav, and
+  // service rows have nothing to point at; the block carries one instruction
+  // home instead.
+  const onContact = usePathname() === '/contact';
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [mounted, setMounted] = useState(false);
 
@@ -182,6 +187,15 @@ export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
           </button>
         </div>
 
+        {onContact ? (
+          /* Dispatch sheet: one instruction, letter-large, back to the cover. */
+          <a href="/" className={styles.homeCta}>
+            <span className={styles.homeCtaLabel}>Return to</span>
+            <span className={styles.homeCtaWord}>Homepage</span>
+            <span className={styles.homeCtaArrow} aria-hidden="true">←</span>
+          </a>
+        ) : (
+          <>
         <div className={styles.mid}>
           <span>
             <span className={styles.sheetLabel}>Sheet</span>
@@ -227,6 +241,8 @@ export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
           <span>PROTOTYPES</span>
           <span>02 →</span>
         </a>
+          </>
+        )}
 
         <div className={styles.rev}>
           <span>REV {rev}</span>

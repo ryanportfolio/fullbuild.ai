@@ -340,6 +340,50 @@
   color: var(--accent-link);
 }
 
+/* HOME CTA — on the standalone dispatch sheet the whole middle of the block
+   folds to one instruction: back to the cover. Witness label, lettered word,
+   the arrow walks home on hover (accent only on hover, like the drafts row). */
+.homeCta {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  row-gap: 0.2rem;
+  column-gap: 0.6rem;
+  padding: 0.8rem 0.7rem;
+  border-top: 1px solid var(--rule);
+  text-decoration: none;
+  color: var(--ink-graphite);
+}
+.homeCtaLabel {
+  grid-column: 1 / -1;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-witness);
+}
+.homeCtaWord {
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  font-size: 1.45rem;
+  line-height: 1;
+}
+.homeCtaArrow {
+  font-size: 1.05rem;
+  line-height: 1;
+  color: var(--ink-witness);
+  transition:
+    transform 0.2s var(--ease-draw),
+    color 0.2s var(--ease-draw);
+}
+.homeCta:hover .homeCtaArrow,
+.homeCta:focus-visible .homeCtaArrow {
+  transform: translateX(-0.3rem);
+  color: var(--accent-link);
+}
+
 .rev {
   padding: 0.4rem 0.7rem;
   border-top: 1px solid var(--rule);
