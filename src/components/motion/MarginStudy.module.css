@@ -1,0 +1,41 @@
+/* MARGIN STUDY — decorative plotter exercise under the Materials Legend.
+   Graphite + witness only; mono lettering matches the legend's register. */
+
+.wrap {
+  margin: clamp(0.9rem, 2.5vh, 1.6rem) 0 0;
+  max-width: 42ch; /* column-aligns with the legend's figure */
+  /* Never intercept the legend's absolute right-side callout or its 240ms
+     hover-grace path — this figure is furniture, not a hit target. */
+  pointer-events: none;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.svg text {
+  font-family: var(--font-mono);
+}
+
+/* Same sizes as legend.module.css's title / foot voices. */
+.title {
+  font-size: 8.5px;
+  letter-spacing: 0.16em;
+  fill: var(--ink-graphite);
+}
+.foot {
+  font-size: 6.5px;
+  letter-spacing: 0.1em;
+  fill: var(--ink-witness);
+}
+
+/* Stacked sheets (matches Sheet.module.css's break): the margin has no slack
+   to fill, and the legend's in-flow accordion callout owns this space. */
+@media (max-width: 860px) {
+  .wrap {
+    display: none;
+  }
+}
