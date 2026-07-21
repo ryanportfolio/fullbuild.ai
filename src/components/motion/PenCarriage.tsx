@@ -37,6 +37,9 @@ export default function PenCarriage() {
     let shown = false;
     let curInk: PenInk | null = null;
     let curMode = '';
+    // mode + ink + hand together drive the telemetry line, so a hand swap
+    // (site -> visitor) re-letters the cell even when the mode holds steady
+    let curTel = '';
     // Rail telemetry cells — real coords, throttled to readable rate.
     const telMode = document.getElementById('pen-telemetry-mode');
     const telXY = document.getElementById('pen-telemetry-xy');
@@ -63,6 +66,7 @@ export default function PenCarriage() {
         if (t.mode !== curMode) {
           curMode = t.mode;
           el.dataset.mode = t.mode;
+          curTel = MODE_TEXT.hide;
           if (telMode) telMode.textContent = MODE_TEXT.hide;
         }
         return;
@@ -85,7 +89,11 @@ export default function PenCarriage() {
       if (t.mode !== curMode) {
         curMode = t.mode;
         el.dataset.mode = t.mode;
-        if (telMode) telMode.textContent = `${MODE_TEXT[t.mode]} · ${t.ink}`;
+      }
+      const tel = `${MODE_TEXT[t.mode]} · ${t.hand ?? t.ink}`;
+      if (tel !== curTel) {
+        curTel = tel;
+        if (telMode) telMode.textContent = tel;
       }
       const now = performance.now();
       if (telXY && now - lastTel > 90) {

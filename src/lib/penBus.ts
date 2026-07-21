@@ -17,6 +17,10 @@ export interface PenTarget {
   /** draw = nib down following a stroke; pour = riding the waterline;
       dock = parked on the rail; hide = off-stage (fades out in place). */
   mode: 'draw' | 'pour' | 'dock' | 'hide';
+  /** Who is holding the instrument, when it is not the site itself — shown in
+      the rail telemetry in place of the ink (e.g. 'visitor' during the T-01
+      cursor handoff). Omitted = the carriage plots on its own. */
+  hand?: string;
 }
 
 type Listener = (t: PenTarget) => void;
