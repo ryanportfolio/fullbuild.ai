@@ -39,8 +39,15 @@
 }
 
 /* the mark: half-drawn, half-poured. Tuned in the logo lab. */
-.logo {
+.logoLink {
   flex: 1;
+  display: flex;
+  justify-content: center;
+  color: inherit;
+  text-decoration: none;
+}
+
+.logo {
   width: 96px;
   max-width: 96px;
   height: 96px;

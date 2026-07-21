@@ -31,6 +31,14 @@ export default function SheetIndex() {
           </a>
         );
       })}
+      {/* Not a shipped drawing — a link off the cover to the draft designs.
+          Internal nav, so no target/probe dot; an arrow marks it as a page. */}
+      <a className={x.row} href="/prototype">
+        <span className={x.no}>P-01</span>
+        <span className={x.name}>Prototypes</span>
+        <span className={x.leader} aria-hidden="true" />
+        <span className={x.arrow} aria-hidden="true">→</span>
+      </a>
       <p className={x.legend}>
         <span className={x.dotSample} data-live="true" /> website&nbsp;&nbsp;
         <span className={x.dotSample} data-live="false" /> repo only
