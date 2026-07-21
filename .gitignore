@@ -14,6 +14,11 @@ node_modules/
 dist/
 build/
 
+# Visual-tools run output (keep __snapshots__ baselines, drop the rest)
+tools/visual/.artifacts/
+tools/visual/.report/
+tools/visual/test-results/
+
 # OS noise
 Thumbs.db
 .DS_Store

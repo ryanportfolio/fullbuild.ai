@@ -1,0 +1,18 @@
+{
+  "name": "@fullbuild/visual-tools",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Isolated Playwright devtooling: cross-browser screenshots, visual-diff baselines, motion capture. Not part of the portfolio app.",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "diff": "playwright test",
+    "diff:update": "playwright test --update-snapshots",
+    "capture": "playwright test --grep @capture",
+    "report": "playwright show-report",
+    "browsers": "playwright install chromium webkit firefox"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  }
+}
