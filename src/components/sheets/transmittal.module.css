@@ -87,7 +87,7 @@
 
 .form {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.5fr);
   gap: clamp(1.5rem, 4vw, 3.5rem);
   align-items: start;
 }
@@ -101,9 +101,13 @@
 /* one written line of the RFI: label · writing surface · echo plot */
 .row {
   display: grid;
-  grid-template-columns: 8rem minmax(0, 1fr) clamp(5rem, 24%, 11rem);
+  grid-template-columns: 6.5rem minmax(0, 1fr) clamp(4.5rem, 14%, 7rem);
   gap: 0.9rem;
   align-items: end;
+}
+/* the message block letters its label at the top edge, like a real RFI */
+.rowTop {
+  align-items: start;
 }
 .rowLabel {
   font-family: var(--font-mono);
@@ -194,7 +198,7 @@
 /* SGN box — the countersign itself */
 .sgnRow {
   display: grid;
-  grid-template-columns: 8rem minmax(0, 1fr);
+  grid-template-columns: 6.5rem minmax(0, 1fr);
   gap: 0.9rem;
   align-items: start;
   margin-top: 0.4rem;

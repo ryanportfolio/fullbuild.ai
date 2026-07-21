@@ -22,7 +22,7 @@ function glideToT01(e: MouseEvent<HTMLAnchorElement>) {
 
 export function EmailRow() {
   return (
-    <div className={u.fieldRow}>
+    <div className={`${u.fieldRow} ${u.fieldStack}`}>
       <span className={u.fieldKey}>Email</span>
       <span className={u.fieldVal}>
         <a href="mailto:hi@fullbuild.ai" onClick={glideToT01} aria-label="Contact, open the transmittal sheet">

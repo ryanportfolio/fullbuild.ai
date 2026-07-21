@@ -339,7 +339,10 @@ export default function SheetTransmittal() {
       }
       if (receiptRef.current) tl.to(receiptRef.current, { autoAlpha: 1, duration: 0.5 }, '-=0.05');
       tl.call(() => {
-        dockPenLocal();
+        // The dock geometry belongs to the full-height rail; on the collapsed
+        // (bottom-overlay) rail the instrument parks off-stage instead.
+        if (window.matchMedia('(min-width: 901px)').matches) dockPenLocal();
+        else hidePenLocal();
         revealRailPost(false);
       });
     });
@@ -396,7 +399,7 @@ export default function SheetTransmittal() {
               <div className={s.row}>
                 <span className={s.rowLabel} id="t01-to-label">To</span>
                 <div className={s.rowField} aria-labelledby="t01-to-label">
-                  <span className={`${s.toVal} u-mono`}>fullbuild.ai · hi@fullbuild.ai</span>
+                  <span className={`${s.toVal} u-mono`}>fullbuild.ai</span>
                   <svg className={s.rule} viewBox="0 0 100 2" preserveAspectRatio="none" aria-hidden="true">
                     <Line x1={0} y1={1} x2={100} y2={1} w={1.1} o={0} />
                   </svg>
@@ -448,7 +451,7 @@ export default function SheetTransmittal() {
                 <canvas ref={setEcho('due')} className={s.echo} aria-hidden="true" />
               </div>
 
-              <div className={s.row}>
+              <div className={`${s.row} ${s.rowTop}`}>
                 <label className={s.rowLabel} htmlFor="t01-message">Message</label>
                 <div className={`${s.rowField} ${s.msgWrap}`}>
                   {[0, 1, 2, 3, 4, 5].map((n) => (
@@ -483,6 +486,10 @@ export default function SheetTransmittal() {
                     onPointerUp={onSgnUp}
                     onPointerCancel={onSgnUp}
                   >
+                    {/* blank paper must still take the nib: an unpainted svg
+                        area is not a hit target, so this rect catches strokes
+                        started anywhere inside the box */}
+                    <rect width={SGN_W} height={SGN_H} fill="none" pointerEvents="fill" />
                     <Path d={`M1.5 1.5 H${SGN_W - 1.5} V${SGN_H - 1.5} H1.5 Z`} w={1.2} o={11} />
                     <Line x1={16} y1={SGN_H - 26} x2={SGN_W - 16} y2={SGN_H - 26} w={0.9} o={12} dash="2 3" />
                     {marks.map((pts, i) => (
