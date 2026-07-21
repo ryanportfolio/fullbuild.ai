@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en" data-case-status="engineering" data-deployment-verified="false">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>fullbuild.ai · prototype 04 · quench</title>
+  <meta name="description" content="A fullbuild.ai design prototype. Liquid metal that hardens as you scroll: idea, design, engineering, and a shipped state that refuses to set.">
+  <meta name="theme-color" content="#050608">
+  <meta name="color-scheme" content="dark">
+  <meta property="og:title" content="fullbuild.ai · prototype 04 · quench">
+  <meta property="og:description" content="A fullbuild.ai design prototype. Liquid metal that hardens as you scroll: idea, design, engineering, and a shipped state that refuses to set.">
+  <link rel="icon" type="image/svg+xml" href="/prototype/quench/assets/favicon.svg">
+  <link rel="stylesheet" href="/prototype/quench/src/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#work">skip to the work</a>
+
+  <canvas id="metal" aria-hidden="true"></canvas>
+
+  <header class="site-head">
+    <a class="wordmark" href="/">fullbuild.ai</a>
+    <nav aria-label="Sections">
+      <a href="#case-00">Case 00</a>
+      <a href="#lifecycle">Phase change</a>
+      <a href="#future">Future work</a>
+      <a href="#exit">Contact</a>
+    </nav>
+    <a class="proto-link" href="/prototype">prototype 04</a>
+    <span class="status-pill">build / engineering<i class="status-dot" aria-hidden="true"></i></span>
+  </header>
+
+  <main id="work">
+
+    <section id="hero" data-molten="hero" data-sculpt="tagline" aria-labelledby="tagline">
+      <p class="kicker">Independent AI product builder</p>
+      <div class="molten-anchor" data-molten-anchor>
+        <h1 id="tagline" class="tagline"><span class="tagline-line">From maybe</span> <span class="tagline-line">to made</span></h1>
+      </div>
+      <div class="hero-foot">
+        <p class="lede">I turn uncertain ideas into working products: design, engineering, and the decisions between them.</p>
+        <p class="hero-hint">scroll cools the metal · the cursor pulls it</p>
+        <a class="hero-cta" href="#lifecycle">watch it harden ↓</a>
+      </div>
+    </section>
+
+    <section id="lifecycle" aria-labelledby="lifecycle-h">
+      <div class="section-head rv">
+        <p class="section-label">Phase change</p>
+        <h2 id="lifecycle-h">The same metal, four states</h2>
+        <p class="section-lede">Scroll runs the cooling. Each state holds more shape than the last.</p>
+      </div>
+
+      <article id="stage-idea" class="stage" data-molten="idea" data-sculpt="orb">
+        <div class="stage-meta">
+          <span class="stage-index">01</span>
+          <h3 class="stage-name">idea</h3>
+          <span class="stage-state">molten</span>
+        </div>
+        <div class="stage-visual">
+          <div class="molten-anchor" data-molten-anchor></div>
+          <figure class="fallback-figure" aria-hidden="true">
+            <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="chrome-idea" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#F6F8FB"/>
+                  <stop offset="0.45" stop-color="#B9C0CF"/>
+                  <stop offset="0.55" stop-color="#4C515E"/>
+                  <stop offset="1" stop-color="#DFE4EE"/>
+                </linearGradient>
+              </defs>
+              <text x="200" y="300" text-anchor="middle" font-family="QuenchDisplay, 'Arial Black', Arial, sans-serif" font-weight="900" font-size="280" fill="url(#chrome-idea)">?</text>
+              <circle cx="92" cy="330" r="14" fill="url(#chrome-idea)"/>
+              <circle cx="304" cy="84" r="9" fill="url(#chrome-idea)"/>
+              <circle cx="326" cy="314" r="18" fill="url(#chrome-idea)"/>
+              <ellipse cx="150" cy="106" rx="58" ry="16" fill="#F6F8FB" opacity="0.1"/>
+            </svg>
+          </figure>
+        </div>
+        <div class="scrim">
+          <p class="stage-copy">Everything is still molten. The only solid thing is the brief: a portfolio where every claim can be checked.</p>
+        </div>
+      </article>
+
+      <article id="stage-design" class="stage" data-molten="design" data-sculpt="lens">
+        <div class="stage-meta">
+          <span class="stage-index">02</span>
+          <h3 class="stage-name">design</h3>
+          <span class="stage-state">cooling</span>
+        </div>
+        <div class="stage-visual">
+          <div class="molten-anchor" data-molten-anchor></div>
+          <figure class="fallback-figure" aria-hidden="true">
+            <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="chrome-design" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#F6F8FB"/>
+                  <stop offset="0.45" stop-color="#B9C0CF"/>
+                  <stop offset="0.55" stop-color="#4C515E"/>
+                  <stop offset="1" stop-color="#DFE4EE"/>
+                </linearGradient>
+              </defs>
+              <line x1="40" y1="360" x2="360" y2="40" stroke="url(#chrome-design)" stroke-width="1.5" opacity="0.55"/>
+              <ellipse cx="200" cy="200" rx="150" ry="88" fill="none" stroke="url(#chrome-design)" stroke-width="6"/>
+              <ellipse cx="150" cy="164" rx="52" ry="14" fill="#F6F8FB" opacity="0.12"/>
+            </svg>
+          </figure>
+        </div>
+        <div class="scrim">
+          <p class="stage-copy">The surface starts to cool. Three directions were tested and one held its shape under pressure.</p>
+        </div>
+      </article>
+
+      <article id="stage-engineering" class="stage" data-molten="engineering" data-sculpt="ingot">
+        <div class="stage-meta">
+          <span class="stage-index">03</span>
+          <h3 class="stage-name">engineering</h3>
+          <span class="stage-state">set</span>
+        </div>
+        <div class="stage-visual">
+          <div class="molten-anchor" data-molten-anchor></div>
+          <figure class="fallback-figure" aria-hidden="true">
+            <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="chrome-ingot" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#F6F8FB"/>
+                  <stop offset="0.45" stop-color="#B9C0CF"/>
+                  <stop offset="0.55" stop-color="#4C515E"/>
+                  <stop offset="1" stop-color="#DFE4EE"/>
+                </linearGradient>
+              </defs>
+              <rect x="60" y="152" width="280" height="118" rx="14" fill="url(#chrome-ingot)"/>
+              <rect x="118" y="152" width="44" height="22" fill="#050608"/>
+              <rect x="238" y="152" width="44" height="22" fill="#050608"/>
+              <ellipse cx="150" cy="186" rx="60" ry="10" fill="#F6F8FB" opacity="0.16"/>
+            </svg>
+          </figure>
+        </div>
+        <div class="scrim">
+          <p class="stage-copy">Hard set. Dependency free DOM and CSS, one raw WebGL2 surface, and every word readable without it.</p>
+        </div>
+      </article>
+
+      <article id="stage-shipped" class="stage" data-molten="shipped" data-sculpt="ghost">
+        <div class="stage-meta">
+          <span class="stage-index">04</span>
+          <h3 class="stage-name">shipped</h3>
+          <span class="stage-state">will not set</span>
+        </div>
+        <div class="stage-visual">
+          <div class="molten-anchor" data-molten-anchor></div>
+          <figure class="fallback-figure" aria-hidden="true">
+            <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="chrome-ghost" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#F6F8FB"/>
+                  <stop offset="0.45" stop-color="#B9C0CF"/>
+                  <stop offset="0.55" stop-color="#4C515E"/>
+                  <stop offset="1" stop-color="#DFE4EE"/>
+                </linearGradient>
+              </defs>
+              <g fill="none" stroke="url(#chrome-ghost)" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+                <path d="M200 96 L294 148 L200 200 L106 148 Z"/>
+                <path d="M106 148 L106 266"/>
+                <path d="M294 148 L294 266"/>
+                <path d="M200 200 L200 316"/>
+                <path d="M106 266 q24 16 48 20 q26 6 46 30"/>
+                <path d="M294 266 q-18 24 -44 26 q-28 2 -50 24"/>
+              </g>
+            </svg>
+          </figure>
+          <span class="stamp" aria-hidden="false">PROOF PENDING</span>
+        </div>
+        <div class="scrim">
+          <p class="stage-copy">This state will not set. No production build exists, so the metal stays liquid until proof does.</p>
+        </div>
+      </article>
+    </section>
+
+    <section id="case-00" data-molten="case00" data-sculpt="device" aria-labelledby="case-h">
+      <p class="section-label">Case 00</p>
+      <h2 id="case-h">The first build is this site</h2>
+      <p class="case-body">fullbuild.ai is built in public: concept, interface, code, every decision.</p>
+      <div class="case-visual">
+        <div class="molten-anchor" data-molten-anchor></div>
+        <figure class="fallback-figure" aria-hidden="true">
+          <svg viewBox="0 0 640 400" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="chrome-case" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#F6F8FB"/>
+                <stop offset="0.45" stop-color="#B9C0CF"/>
+                <stop offset="0.55" stop-color="#4C515E"/>
+                <stop offset="1" stop-color="#DFE4EE"/>
+              </linearGradient>
+              <mask id="case-mask">
+                <rect x="40" y="50" width="560" height="300" rx="24" fill="#fff"/>
+                <text x="320" y="262" text-anchor="middle" font-family="QuenchDisplay, 'Arial Black', Arial, sans-serif" font-weight="900" font-size="170" fill="#000">00</text>
+                <polygon points="600,350 468,350 600,232" fill="#000"/>
+              </mask>
+            </defs>
+            <rect x="40" y="50" width="560" height="300" rx="24" fill="url(#chrome-case)" mask="url(#case-mask)"/>
+            <circle cx="556" cy="328" r="16" fill="url(#chrome-case)"/>
+            <circle cx="592" cy="292" r="10" fill="url(#chrome-case)"/>
+            <circle cx="520" cy="356" r="8" fill="url(#chrome-case)"/>
+            <ellipse cx="210" cy="96" rx="120" ry="18" fill="#F6F8FB" opacity="0.08"/>
+          </svg>
+        </figure>
+      </div>
+      <dl class="receipt">
+        <div class="receipt-cell"><dt>brief</dt><dd>portfolio for complete product creation</dd></div>
+        <div class="receipt-cell"><dt>state</dt><dd>engineering / local build</dd></div>
+        <div class="receipt-cell"><dt>promise</dt><dd>one person, no handoff gap</dd></div>
+        <div class="receipt-cell"><dt>ship gate</dt><dd class="pending">production proof pending</dd></div>
+      </dl>
+      <p class="caption">One corner of the device stays liquid until the ship gate opens.</p>
+    </section>
+
+    <section id="future" data-molten="future" data-sculpt="pools" aria-labelledby="future-h">
+      <div class="section-head rv">
+        <p class="section-label">Future work</p>
+        <h2 id="future-h">Three pools, nothing cast</h2>
+        <p class="section-lede">Real work slots in without faking a shape.</p>
+      </div>
+      <div class="molten-anchor" data-molten-anchor></div>
+      <ol class="slots">
+        <li class="slot scrim rv">
+          <h3>Future product</h3>
+          <p class="slot-title">Title pending</p>
+          <p>A product story: unresolved need to working release.</p>
+          <span class="chip">pending</span>
+        </li>
+        <li class="slot scrim rv">
+          <h3>Future research</h3>
+          <p class="slot-title">Question pending</p>
+          <p>Research that ends in a product decision.</p>
+          <span class="chip">pending</span>
+        </li>
+        <li class="slot scrim rv">
+          <h3>Future experiment</h3>
+          <p class="slot-title">Hypothesis pending</p>
+          <p>An experiment, failure included.</p>
+          <span class="chip">pending</span>
+        </li>
+      </ol>
+    </section>
+
+    <section id="principles" aria-labelledby="principles-h">
+      <div class="section-head rv">
+        <p class="section-label">Constants</p>
+        <h2 id="principles-h">What the metal obeys</h2>
+      </div>
+      <ol class="constants">
+        <li>
+          <span class="constant-index">01</span>
+          <h3>One intent, four behaviors</h3>
+          <p>The same intent behaves differently at each state.</p>
+        </li>
+        <li>
+          <span class="constant-index">02</span>
+          <h3>No invented proof</h3>
+          <p>Unshipped work stays visibly liquid.</p>
+        </li>
+        <li>
+          <span class="constant-index">03</span>
+          <h3>Mobile gets the whole idea</h3>
+          <p>Everything essential fits the first phone screen.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section id="exit" data-molten="exit" data-sculpt="mirror" aria-labelledby="exit-h">
+      <p class="section-label">Next</p>
+      <div class="exit-head">
+        <h2 id="exit-h">Let's build the whole thing</h2>
+        <div class="gate scrim">
+          <span class="chip">Contact pending</span>
+          <p>Contact lands here once a real channel exists. The pool stays mirror still, not set.</p>
+        </div>
+      </div>
+      <div class="molten-anchor" data-molten-anchor></div>
+      <p class="tagline-run">idea → design → engineering → shipped</p>
+      <div class="big-wordmark" aria-hidden="true">fullbuild.ai</div>
+    </section>
+
+  </main>
+
+  <footer class="site-foot">
+    <noscript><p>Everything reads without JavaScript. The metal is presentation; the words are the product.</p></noscript>
+    <p class="foot-line">fullbuild.ai · prototype 04</p>
+  </footer>
+
+  <script id="site-data" type="application/json">
+  {
+    "brand": "fullbuild.ai",
+    "prototype": "04",
+    "name": "quench",
+    "hero": {
+      "kicker": "Independent AI product builder",
+      "title": "From maybe to made",
+      "lede": "I turn uncertain ideas into working products: design, engineering, and the decisions between them."
+    },
+    "caseStudy": {
+      "title": "The first build is this site",
+      "status": "engineering",
+      "facts": {
+        "brief": "portfolio for complete product creation",
+        "state": "engineering / local build",
+        "promise": "one person, no handoff gap",
+        "shipGate": "production proof pending"
+      }
+    },
+    "deployment": { "verified": false, "url": null },
+    "stages": [
+      { "id": "idea", "state": "molten", "cap": 0.78 },
+      { "id": "design", "state": "cooling", "cap": 0.85 },
+      { "id": "engineering", "state": "set", "cap": 1 },
+      { "id": "shipped", "state": "will not set", "cap": 0.68, "locked": true }
+    ],
+    "futures": ["product", "research", "experiment"],
+    "principles": ["One intent, four behaviors", "No invented proof", "Mobile gets the whole idea"],
+    "contact": { "pending": true }
+  }
+  </script>
+  <script type="module" src="/prototype/quench/src/reveal.mjs"></script>
+  <script type="module" src="/prototype/quench/src/app.mjs"></script>
+</body>
+</html>

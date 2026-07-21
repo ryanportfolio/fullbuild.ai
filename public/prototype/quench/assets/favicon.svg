@@ -1,0 +1,13 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F6F8FB"/>
+      <stop offset="0.45" stop-color="#B9C0CF"/>
+      <stop offset="0.55" stop-color="#4C515E"/>
+      <stop offset="1" stop-color="#DFE4EE"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#050608"/>
+  <path d="M32 12 C38 22 46 29 46 38 A14 14 0 0 1 18 38 C18 29 26 22 32 12 Z" fill="url(#chrome)"/>
+  <ellipse cx="26" cy="32" rx="5" ry="8" fill="#F6F8FB" opacity="0.55" transform="rotate(-18 26 32)"/>
+</svg>
