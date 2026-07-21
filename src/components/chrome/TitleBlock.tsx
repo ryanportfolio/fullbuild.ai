@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useWorkingSet, isUp, type PipelineState } from '@/lib/store';
 import { LIVE_PROJECTS } from '@/lib/projects';
+import RailLogo from './RailLogo';
 import RailSketch from './RailSketch';
 import styles from './TitleBlock.module.css';
 
@@ -58,7 +59,12 @@ export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
         <line x1="8" y1="0" x2="8" y2="16" stroke="currentColor" strokeWidth="1" />
         <circle cx="8" cy="8" r="4.5" fill="none" stroke="currentColor" strokeWidth="1" />
       </svg>
-      <span className={styles.setName}>The Working Set</span>
+      {/* Upper reach: the mark holds the space beside the vertical lettering —
+          half pencil, half poured, drawn after the wordmark settles. */}
+      <div className={styles.upper}>
+        <RailLogo className={styles.logo} />
+        <span className={styles.setName}>The Working Set</span>
+      </div>
 
       {/* Rail rule + site log share the rail's middle reach: the station ruler
           keeps time on the left; beside it, the site-log pencil record draws
