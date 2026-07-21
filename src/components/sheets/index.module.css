@@ -91,6 +91,15 @@
   background: var(--accent-live);
 }
 
+/* page pointer (prototypes) — takes the dot's slot, marks an internal page */
+.arrow {
+  flex: none;
+  align-self: center;
+  font-size: 0.72rem;
+  line-height: 1;
+  color: var(--ink-witness);
+}
+
 .legend {
   display: flex;
   align-items: center;

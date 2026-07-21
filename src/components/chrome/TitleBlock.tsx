@@ -110,7 +110,9 @@ export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
       {/* Upper reach: the mark holds the space beside the vertical lettering —
           half pencil, half poured, drawn after the wordmark settles. */}
       <div className={styles.upper}>
-        <RailLogo className={styles.logo} />
+        <a href="/" className={styles.logoLink} aria-label="The Working Set — home">
+          <RailLogo className={styles.logo} />
+        </a>
         <span className={styles.setName}>The Working Set</span>
       </div>
 
