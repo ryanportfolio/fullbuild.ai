@@ -52,24 +52,19 @@
   color: var(--ink-witness);
 }
 
+/* Matches the STATE 04 "Made" header (.pour): same drafting display weight and
+   scale, so the plan sheet's title reads at the set's section-title size. PLAN
+   is short, so 7.5vw never starves its column the way WORKFLOWS did. */
 .heading {
   font-family: var(--font-display);
-  font-stretch: 112%;
-  font-weight: 600;
+  font-stretch: 125%;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
-  font-size: clamp(2rem, 5.5vw, 3.6rem);
-  line-height: 0.95;
-  margin-bottom: 0.9rem;
-}
-.intro {
-  font-size: 1.05rem;
-  line-height: 1.55;
-  max-width: 44ch;
-  opacity: 0.9;
+  letter-spacing: 0.01em;
+  line-height: 0.86;
+  font-size: clamp(2.6rem, 7.5vw, 5.2rem);
   margin-bottom: clamp(1.4rem, 4vh, 2.4rem);
 }
-
 /* stage — holds the form and, after transmission, the envelope. Local
    perspective so the fold has real depth regardless of the sheet's own
    composited state. */

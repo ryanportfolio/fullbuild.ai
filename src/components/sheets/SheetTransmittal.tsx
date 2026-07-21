@@ -383,11 +383,7 @@ export default function SheetTransmittal() {
           <span className={`${s.sheetNo} u-mono`}>{rfi ?? 'RFI ····'}</span>
         </header>
 
-        <h2 className={s.heading}>The Countersign</h2>
-        <p className={s.intro}>
-          The set above is drawn but unsigned. Letter your side of the correspondence and the
-          carriage will countersign it with you: one instrument, your hand on it.
-        </p>
+        <h2 className={s.heading}>Plan</h2>
 
         <div className={s.stage} data-phase={phase}>
           <form ref={formRef} className={s.form} onSubmit={onSubmit} noValidate>
