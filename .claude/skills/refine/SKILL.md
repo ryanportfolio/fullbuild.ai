@@ -1,5 +1,5 @@
 ---
-description: Iterative design critique-and-refine loop for an existing page or screen. Screenshots the current state, names concrete defects with root causes, plans and applies fixes, then re-screenshots and compares until the result is verifiably better and more intentional than the starting point, asking "what do I wish this had?" each round. Use when the user says /design-refine, asks to critique or de-slop a page, polish a prototype or draft design, or make a design "look intentional".
+description: Iterative design critique-and-refine loop for an existing page or screen. Screenshots the current state, names concrete defects with root causes, plans and applies fixes, then re-screenshots and compares until the result is verifiably better and more intentional than the starting point, asking "what do I wish this had?" each round. Use when the user says /refine, asks to critique or de-slop a page, polish a prototype or draft design, or make a design "look intentional".
 ---
 
 # Design refine — critique, fix, prove it improved
