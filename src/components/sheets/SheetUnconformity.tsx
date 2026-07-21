@@ -1,5 +1,6 @@
 import { GIT } from '@/lib/git';
 import IfcStamp from './IfcStamp';
+import { FasterGlyph, StrongerGlyph, SecureGlyph } from './SheetGlyphs';
 import u from './unconformity.module.css';
 
 /**
@@ -28,8 +29,8 @@ export default function SheetUnconformity() {
           <div>
             <h2 className={u.heading}>Every sheet was redrawn to get here</h2>
             <p className={u.intro}>
-              Faster building increases the need for stronger checks; secure,
-              sustainable, and aligned with the original intent.
+              Faster <FasterGlyph /> stronger <StrongerGlyph /> secure{' '}
+              <SecureGlyph /> sustainable
             </p>
 
             {log.length === 0 ? (

@@ -24,9 +24,6 @@ export default function IfcStamp() {
         {probed ? upCount : '—'}
         <span className={u.stampTotal}>/{LIVE_PROJECTS.length}</span> IN SERVICE
       </span>
-      <span className={`${u.stampNote} u-mono`}>
-        {lit ? 'probe passing · red licensed' : 'probe not passing · red withheld'}
-      </span>
     </div>
   );
 }

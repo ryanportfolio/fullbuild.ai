@@ -87,8 +87,6 @@ export const PROJECTS: Project[] = [
     langs: ['TypeScript'],
     metrics: [
       { label: 'commits', value: '14,879', source: 'GitHub API, commit pagination (private repo)' },
-      { label: 'models per council', value: '6', source: 'corewise.video landing page' },
-      { label: 'guest runs free', value: '3', source: 'corewise.video landing page' },
     ],
     note: 'Full-stack multi-model video-analysis product in production since Dec ’25; a six-model council answers over extracted transcripts.',
   },
@@ -124,7 +122,6 @@ export const PROJECTS: Project[] = [
     metrics: [
       { label: 'repos audited', value: '9', source: 'live scoreboard at audit.corewise.academy' },
       { label: 'gated commits', value: '62', source: 'GitHub API, commit pagination' },
-      { label: 'own score', value: '78/100', source: 'self-scored by the deterministic tool' },
     ],
     note: 'Scores AI-agent development discipline from GitHub metadata — deterministic, no LLM — and was built entirely through the plan → agent build → adversarial review → CI gate → human merge pipeline it documents.',
   },
@@ -142,7 +139,6 @@ export const PROJECTS: Project[] = [
     metrics: [
       { label: 'transcripts', value: '108', source: 'live dashboard run list' },
       { label: 'correction gap', value: '0.96 / 0.81', source: 'dashboard: claude-sonnet-5 vs gpt-5.6-sol, N=3 per task' },
-      { label: 'task families', value: '2 of 4', source: 'README roadmap — 18 tasks published' },
     ],
     note: 'Replayable evals harvested from my own failed agent sessions: does the agent verify claims, own mistakes, self-correct? Deterministic grading, every transcript committed, CI re-scores to prove zero drift.',
   },
@@ -155,7 +151,7 @@ export const PROJECTS: Project[] = [
     live: true,
     role: 'solo build — data pipeline + datasheet site',
     year: "'26",
-    stack: ['HTML', 'Node scripts', 'PowerShell', 'no build step'],
+    stack: ['HTML', 'Node scripts', 'PowerShell'],
     langs: ['HTML', 'JavaScript', 'PowerShell'],
     metrics: [
       { label: 'tokens filtered', value: '79.5%', source: 'measured — rtk gain log over 95,821 commands' },
@@ -177,8 +173,7 @@ export const PROJECTS: Project[] = [
     langs: ['Python'],
     metrics: [
       { label: 'model footprint', value: '~75MB int8', source: 'README: base.en int8, CPU-only real-time' },
-      { label: 'releases', value: '3', source: 'GitHub releases API, latest v0.2.3' },
-      { label: 'cloud calls', value: '0', source: 'offline-first model guard, README' },
+      { label: 'local', value: 'fully', source: 'offline-first model guard, README — zero cloud calls' },
     ],
     note: 'Offline push-to-talk dictation for Windows: global hotkey, int8 Whisper on CPU in real time, transcript pasted into the focused window. No network, by design.',
   },
@@ -196,7 +191,6 @@ export const PROJECTS: Project[] = [
     metrics: [
       { label: 'installers', value: '3 MSI', source: 'GitHub releases: x64 / arm64 / x86 + SHA-256 manifest' },
       { label: 'C# codebase', value: '1.3MB', source: 'GitHub languages API' },
-      { label: 'test matrix', value: 'VM, real WFP', source: 'README: VM-based real-firewall test matrix' },
     ],
     note: 'Windows default-deny firewall keeping TinyWall’s service-owned WFP enforcement, adding one tightly scoped outbound-block prompt with a token-based permanent-allow flow.',
   },
@@ -211,11 +205,7 @@ export const PROJECTS: Project[] = [
     year: "'26",
     stack: ['C#', '.NET Framework', 'Windows Shell', '0 deps'],
     langs: ['C#'],
-    metrics: [
-      { label: 'bomb guards', value: '1000:1 cap', source: 'README: 1 GiB/file, 4 GiB total, ratio cap' },
-      { label: 'releases', value: '2', source: 'GitHub releases API: v1.0.0, v1.1.0' },
-      { label: 'third-party deps', value: '0', source: 'README: built-in .NET Framework only' },
-    ],
+    metrics: [],
     note: 'Double-click a ZIP and get the folder — transactionally: CRC-32 validated, path traversal / ADS / reparse points blocked before the source archive is ever recycled.',
   },
   {
@@ -232,7 +222,6 @@ export const PROJECTS: Project[] = [
     metrics: [
       { label: 'bundled skills', value: '34', source: 'repo description' },
       { label: 'commits', value: '56', source: 'GitHub API, commit pagination' },
-      { label: 'agent runtimes', value: '2', source: 'README: Claude Code + Codex from one canonical source' },
     ],
     note: 'Self-syncing project template for AI coding agents. Instant repo creation with a built in rule kernel, 34 skills, efficient & durable memory. Super optimized token usage.',
   },
@@ -245,7 +234,7 @@ export const PROJECTS: Project[] = [
     live: true,
     role: 'author + editor — curriculum, site, pipeline',
     year: "'26",
-    stack: ['Astro', 'MDX', 'TypeScript', 'no accounts'],
+    stack: ['Astro', 'MDX', 'TypeScript'],
     langs: ['JavaScript', 'HTML', 'TypeScript'],
     metrics: [
       { label: 'guides published', value: '18', source: 'corewise.academy catalog page' },
@@ -267,11 +256,7 @@ export const PROJECTS: Project[] = [
     year: "'26",
     stack: ['Next.js', 'React Three Fiber', 'GLSL', 'GSAP'],
     langs: ['TypeScript', 'GLSL'],
-    metrics: [
-      { label: 'grounds', value: '2', source: 'this stylesheet' },
-      { label: 'motion verbs', value: '3', source: 'DrawingSet.tsx' },
-      { label: 'accent color', value: '1', source: 'this stylesheet' },
-    ],
+    metrics: [{ label: '', value: 'hi@fullbuild.ai' }],
     note: 'The revision ledger below is the real git history of this page.',
   },
 ];
