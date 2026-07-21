@@ -110,6 +110,22 @@ function plotEcho(canvas: HTMLCanvasElement | null, text: string) {
 const SGN_W = 300;
 const SGN_H = 120;
 
+/* Ghost correspondence: sample requests that type themselves onto the message
+   block's placeholder, backspace, and try again — shuffled per visit. Killed
+   for good the moment the visitor touches the block. */
+const GHOST_STATIC = 'state the request in full';
+const GHOSTS = [
+  'We have one idea and two weeks. Draw it, build it, ship it',
+  'Take our napkin sketch through design, engineering, shipped. One hand',
+  'Audit our agent pipeline the way tracebench grades yours',
+  'Build us a site that proves its own figures',
+  'Idea: a drawing set that builds itself as you scroll. Oh. This one',
+  'Pitch: replayable evals for our support-bot transcripts',
+  'What would an honest metrics sheet for our product look like?',
+  'RFI: is the pen ever off duty?',
+  'Request: one more sheet in the set',
+];
+
 export default function SheetTransmittal() {
   const frameRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -196,6 +212,78 @@ export default function SheetTransmittal() {
       window.removeEventListener('pointermove', track);
       io.disconnect();
       if (engaged && penBus.last?.hand === 'visitor') hidePenLocal();
+    };
+  }, []);
+
+  /* GHOST TYPING — after the form is drawn, sample requests letter themselves
+     onto the message block's placeholder: typed, held, backspaced, next, in a
+     per-visit shuffle. Runs on gsap's ticker so the dev capture freeze halts
+     it with everything else. The first focus or keystroke in the block kills
+     the cycle and restores the static prompt. Reduced motion: static only. */
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const ta = document.getElementById('t01-message') as HTMLTextAreaElement | null;
+    if (!ta) return;
+
+    const order = [...GHOSTS];
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+
+    let idx = 0;
+    let pos = 0;
+    let phase: 'type' | 'hold' | 'del' = 'type';
+    let wait = 0;
+    let running = false;
+
+    const tick = (time: number) => {
+      if (phaseRef.current !== 'form') return stop();
+      if (time < wait) return;
+      const phrase = order[idx];
+      if (phase === 'type') {
+        pos++;
+        ta.placeholder = phrase.slice(0, pos);
+        if (pos >= phrase.length) {
+          phase = 'hold';
+          wait = time + 1.8;
+        } else {
+          wait = time + 0.032 + Math.random() * 0.028;
+        }
+      } else if (phase === 'hold') {
+        phase = 'del';
+        wait = time;
+      } else {
+        pos--;
+        ta.placeholder = phrase.slice(0, pos);
+        if (pos <= 0) {
+          idx = (idx + 1) % order.length;
+          phase = 'type';
+          wait = time + 0.45;
+        } else {
+          wait = time + 0.014;
+        }
+      }
+    };
+    const start = () => {
+      if (running) return;
+      running = true;
+      gsap.ticker.add(tick);
+    };
+    const stop = () => {
+      if (!running) return;
+      running = false;
+      gsap.ticker.remove(tick);
+      ta.placeholder = GHOST_STATIC;
+    };
+    window.addEventListener('ws:t01-drawn', start);
+    ta.addEventListener('focus', stop);
+    ta.addEventListener('input', stop);
+    return () => {
+      window.removeEventListener('ws:t01-drawn', start);
+      ta.removeEventListener('focus', stop);
+      ta.removeEventListener('input', stop);
+      stop();
     };
   }, []);
 
@@ -425,7 +513,7 @@ export default function SheetTransmittal() {
                       <Line x1={0} y1={1} x2={100} y2={1} w={1} o={5 + n} />
                     </svg>
                   ))}
-                  <textarea id="t01-message" name="message" className={s.msg} maxLength={4000} placeholder="state the request in full" onInput={echo('message')} />
+                  <textarea id="t01-message" name="message" className={s.msg} maxLength={4000} placeholder={GHOST_STATIC} onInput={echo('message')} />
                 </div>
                 <canvas ref={setEcho('message')} className={s.echo} aria-hidden="true" />
               </div>
