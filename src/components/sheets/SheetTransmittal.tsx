@@ -334,7 +334,6 @@ export default function SheetTransmittal() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val('from')))
       return setStatus({ text: 'FROM needs a reachable address', fault: true });
     if (!val('message')) return setStatus({ text: 'the message block is empty', fault: true });
-    if (!signed) return setStatus({ text: 'countersign the sheet: draw your mark or letter your name', fault: true });
 
     setBusy(true);
     setStatus({ text: 'transmitting ···', fault: false });
@@ -395,7 +394,25 @@ export default function SheetTransmittal() {
       if (stampRef.current) gsap.set(stampRef.current, { autoAlpha: 0 });
       if (receiptRef.current) gsap.set(receiptRef.current, { autoAlpha: 0 });
 
-      const tl = gsap.timeline({ onComplete: () => setPhase('sent') });
+      // A finished stroke must shed its animation dash: Chrome mis-scales a
+      // lingering dasharray against pathLength=1 under non-scaling-stroke and
+      // paints only part of the path forever (same trap DrawingSet documents
+      // on the sheet strokes).
+      const solidify = (el: SVGElement) => {
+        el.removeAttribute('stroke-dasharray');
+        el.removeAttribute('stroke-dashoffset');
+      };
+      const tl = gsap.timeline({
+        onComplete: () => {
+          // Land everything at its final state no matter what the ticker did
+          // mid-flight: the sent envelope must never hold a part-drawn line.
+          strokes.forEach(solidify);
+          gsap.set(lettering, { autoAlpha: 1 });
+          if (stampRef.current) gsap.set(stampRef.current, { autoAlpha: 1, scale: 1, rotation: -3.5 });
+          if (receiptRef.current) gsap.set(receiptRef.current, { autoAlpha: 1 });
+          setPhase('sent');
+        },
+      });
       tl.to(formEl, {
         rotationX: 56,
         yPercent: 10,
@@ -408,7 +425,12 @@ export default function SheetTransmittal() {
       strokes.forEach((el, i) => {
         tl.to(
           el,
-          { attr: { 'stroke-dashoffset': 0 }, duration: 0.5, ease: 'power2.out' },
+          {
+            attr: { 'stroke-dashoffset': 0 },
+            duration: 0.5,
+            ease: 'power2.out',
+            onComplete: () => solidify(el),
+          },
           i === 0 ? '-=0.3' : '<0.06',
         );
       });
@@ -443,7 +465,21 @@ export default function SheetTransmittal() {
     gsap.set(strokes, { attr: { 'stroke-dasharray': '1 1', 'stroke-dashoffset': 1 } });
     const tl = gsap.timeline();
     strokes.forEach((el, i) => {
-      tl.to(el, { attr: { 'stroke-dashoffset': 0 }, duration: 0.6, ease: 'power2.out' }, i === 0 ? 0 : '<0.08');
+      tl.to(
+        el,
+        {
+          attr: { 'stroke-dashoffset': 0 },
+          duration: 0.6,
+          ease: 'power2.out',
+          // same Chrome dash-mis-scale trap as the envelope: a finished
+          // stroke sheds its animation dash or it renders part-drawn forever
+          onComplete: () => {
+            el.removeAttribute('stroke-dasharray');
+            el.removeAttribute('stroke-dashoffset');
+          },
+        },
+        i === 0 ? 0 : '<0.08',
+      );
     });
   };
 
@@ -627,15 +663,15 @@ export default function SheetTransmittal() {
               <svg className={s.envSvg} viewBox="0 0 340 210" aria-hidden="true">
                 <path className="tx-env" data-o={0} pathLength={1} d="M6 6 H334 V204 H6 Z" fill="none" stroke="currentColor" strokeWidth={1.4} strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
                 <path className="tx-env" data-o={1} pathLength={1} d="M6 6 L170 118 L334 6" fill="none" stroke="currentColor" strokeWidth={1} vectorEffect="non-scaling-stroke" />
-                <path className="tx-env" data-o={2} pathLength={1} d="M6 204 L128 96" fill="none" stroke="currentColor" strokeWidth={0.7} vectorEffect="non-scaling-stroke" />
-                <path className="tx-env" data-o={3} pathLength={1} d="M334 204 L212 96" fill="none" stroke="currentColor" strokeWidth={0.7} vectorEffect="non-scaling-stroke" />
-                <path className="tx-env" data-o={4} pathLength={1} d="M292 20 h30 v38 h-30 Z" fill="none" stroke="currentColor" strokeWidth={0.9} vectorEffect="non-scaling-stroke" />
-                <path className="tx-env" data-o={5} pathLength={1} d="M110 152 H230" fill="none" stroke="currentColor" strokeWidth={0.9} vectorEffect="non-scaling-stroke" />
-                <path className="tx-env" data-o={6} pathLength={1} d="M124 168 H216" fill="none" stroke="currentColor" strokeWidth={0.9} vectorEffect="non-scaling-stroke" />
+                {/* postage box sits fully below the flap line (flap y at x 292
+                    is ~35): no stroke crosses another off-vertex */}
+                <path className="tx-env" data-o={2} pathLength={1} d="M292 42 h30 v38 h-30 Z" fill="none" stroke="currentColor" strokeWidth={0.9} vectorEffect="non-scaling-stroke" />
+                <path className="tx-env" data-o={3} pathLength={1} d="M110 152 H230" fill="none" stroke="currentColor" strokeWidth={0.9} vectorEffect="non-scaling-stroke" />
+                <path className="tx-env" data-o={4} pathLength={1} d="M124 168 H216" fill="none" stroke="currentColor" strokeWidth={0.9} vectorEffect="non-scaling-stroke" />
                 <text className="tx-envtext" x={170} y={147} textAnchor="middle" fontFamily="var(--font-mono)" fontSize={11} fill="currentColor">
                   hi@fullbuild.ai
                 </text>
-                <text className="tx-envtext" x={307} y={43} textAnchor="middle" fontFamily="var(--font-mono)" fontSize={8} fill="currentColor">
+                <text className="tx-envtext" x={307} y={65} textAnchor="middle" fontFamily="var(--font-mono)" fontSize={8} fill="currentColor">
                   T-01
                 </text>
               </svg>
