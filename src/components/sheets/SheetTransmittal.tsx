@@ -486,6 +486,9 @@ export default function SheetTransmittal() {
 
               <div className={s.sgnRow}>
                 <span className={s.rowLabel} id="t01-sgn-label">Sgn</span>
+                {/* the box and the SEND action share the register line: signing
+                    and dispatching sit side by side, one row shorter sheet */}
+                <div className={s.sgnFlex}>
                 <div>
                   <svg
                     ref={sgnRef}
@@ -561,21 +564,21 @@ export default function SheetTransmittal() {
                     </button>
                   </div>
                 </div>
+                <div className={s.actions}>
+                  <button type="submit" className={s.transmit} disabled={busy}>
+                    Send
+                  </button>
+                  <span className={s.status} data-fault={status.fault ? 'true' : undefined} role="status">
+                    {status.text}
+                  </span>
+                </div>
+                </div>
               </div>
 
               {/* honeypot: no human ever sees this field */}
               <div className={s.trap} aria-hidden="true">
                 <label htmlFor="t01-firm">Firm</label>
                 <input id="t01-firm" name="firm" tabIndex={-1} autoComplete="off" />
-              </div>
-
-              <div className={s.actions}>
-                <button type="submit" className={s.transmit} disabled={busy}>
-                  Send
-                </button>
-                <span className={s.status} data-fault={status.fault ? 'true' : undefined} role="status">
-                  {status.text}
-                </span>
               </div>
             </div>
 
