@@ -206,7 +206,7 @@ export const PROJECTS: Project[] = [
     stack: ['C#', '.NET Framework', 'Windows Shell', '0 deps'],
     langs: ['C#'],
     metrics: [],
-    note: 'Double-click a ZIP and get the folder, transactionally: CRC-32 validated, path traversal / ADS / reparse points blocked before the source archive is ever recycled.',
+    note: 'Double click ZIP → get unzipped folder → zip gets deleted.',
   },
   {
     id: 'agent-firmware',
