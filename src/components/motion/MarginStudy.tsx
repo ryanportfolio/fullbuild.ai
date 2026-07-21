@@ -24,9 +24,9 @@
    - Strokes are classed `ms-stroke`, NEVER `ws-draw`: DrawingSet's crewed
      STATE 01 timeline claims every .ws-draw in the section, and adopting
      these would drag the site pen into the figure and clobber the dash attrs.
-   - One instrument, one hand: nothing runs until ws:plot-settled plus a 6s
-     delayedCall — the crewed cover elevation (~3.5-4s at 0.75 speed) is long
-     clear. The moving instrument is a nib INSIDE the viewBox, an order of
+   - One instrument, one hand: nothing runs until ws:cover-drawn — the
+     carriage's own completion signal for the crewed cover — plus a short
+     breath. The moving instrument is a nib INSIDE the viewBox, an order of
      magnitude smaller than the DOM PenCarriage; penBus is never touched.
    - prefers-reduced-motion / SSR / no-JS: the finished cycle-0 study simply
      stands — no dash attrs are authored in markup, so it paints complete.
@@ -69,10 +69,12 @@ const DRAW_AT = 1.7; // strokes re-plot in order
 const STROKE_DUR = 0.5;
 const HOLD_END = 9.2; // finished study rests until the cycle repeats
 const NIB_FADE = 0.2;
-const ARM_DELAY = 6; // seconds after ws:plot-settled before the first retract
-// DrawingSet's own settle-fallback is 2400ms; mirror its hygiene so a torn-
-// down masthead plot can never leave the margin study armed-but-waiting.
-const SETTLE_FALLBACK_MS = 2400;
+const ARM_DELAY = 1.5; // seconds of breath after ws:cover-drawn before the first retract
+// Generous fallback: a torn-down cover (or one that never completes) must
+// still let the vignette live. The wordmark plot settles by ~2.4s worst case
+// and the crewed elevation draws in ~4s, so 12s clears the whole opening
+// performance with margin before the fallback fires.
+const COVER_FALLBACK_MS = 12000;
 
 const STATIC_APEX = apexAt(PITCHES[0]);
 
@@ -195,34 +197,35 @@ export default function MarginStudy({ className }: { className?: string }) {
       document.addEventListener('visibilitychange', sync);
       cleanupVisibility = () => document.removeEventListener('visibilitychange', sync);
 
-      // sync, not an unconditional play: if the tab went hidden during the 6s
+      // sync, not an unconditional play: if the tab went hidden during the
       // arm window the loop must stay paused until visibility returns (the
       // observers can't deliver while hidden, so check document.hidden now).
       sync();
     };
     let cleanupVisibility: (() => void) | null = null;
 
-    // Start gate: ws:plot-settled (latch first, DrawingSet's pattern) plus a
-    // 6s delayedCall — the crewed cover elevation is clear with margin, and
-    // delayedCall lives on the ticker so __capture.freeze() halts the countdown.
+    // Start gate: ws:cover-drawn — the carriage's real completion signal for
+    // the crewed cover (latch first, DrawingSet's pattern) — then a short
+    // breath. The delayedCall lives on the ticker so __capture.freeze()
+    // halts the countdown too.
     let gated = false;
     const arm = () => {
       if (gated) return;
       gated = true;
-      window.removeEventListener('ws:plot-settled', arm);
+      window.removeEventListener('ws:cover-drawn', arm);
       window.clearTimeout(fallbackId);
       armed = gsap.delayedCall(ARM_DELAY, start);
     };
-    if ((window as unknown as { __plotSettled?: boolean }).__plotSettled) {
+    if ((window as unknown as { __coverDrawn?: boolean }).__coverDrawn) {
       arm();
     } else {
-      window.addEventListener('ws:plot-settled', arm);
-      fallbackId = window.setTimeout(arm, SETTLE_FALLBACK_MS);
+      window.addEventListener('ws:cover-drawn', arm);
+      fallbackId = window.setTimeout(arm, COVER_FALLBACK_MS);
     }
 
     return () => {
       gated = true;
-      window.removeEventListener('ws:plot-settled', arm);
+      window.removeEventListener('ws:cover-drawn', arm);
       window.clearTimeout(fallbackId);
       armed?.kill();
       tl?.kill();
