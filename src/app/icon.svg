@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- the mark, finished: half-drawn half-poured shed on vellum -->
+  <rect width="100" height="100" fill="#e9e3d6"/>
+  <g stroke="#211f1c" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M8 82 H92" stroke-width="4"/>
+    <path d="M18 82 V48 L35 32 L52 48 V82" stroke-width="4.5"/>
+    <path d="M52 48 H82 V82" stroke-width="4.5"/>
+    <path d="M52 48 L68 32 L82 46" stroke-width="4.5"/>
+    <path d="M25 76 l12 -12 M25 66 l9 -9" stroke-width="2.5"/>
+  </g>
+  <path d="M52 48 H82 V82 H52 Z" fill="#211f1c"/>
+</svg>

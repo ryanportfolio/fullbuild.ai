@@ -31,10 +31,27 @@
   flex: none;
 }
 
+/* upper reach — the mark beside the vertical set lettering */
+.upper {
+  display: flex;
+  align-items: center;
+  margin-top: 1.1rem;
+}
+
+/* the mark: half-drawn, half-poured. Tuned in the logo lab. */
+.logo {
+  flex: 1;
+  width: 96px;
+  max-width: 96px;
+  height: 96px;
+  margin: 0 auto;
+  color: var(--ink-graphite);
+  overflow: visible;
+}
+
 /* vertical set lettering rides the rail's upper reach */
 .setName {
   writing-mode: vertical-rl;
-  margin-top: 1.1rem;
   font-size: 0.62rem;
   letter-spacing: 0.32em;
   text-transform: uppercase;
@@ -49,6 +66,8 @@
   display: flex;
   gap: 0.55rem;
   overflow: hidden;
+  /* size container so the sketch grid can reflow by the scene's real height */
+  container-type: size;
 }
 
 /* rail station ruler — keeps time on the scene's left edge */
@@ -59,12 +78,31 @@
   opacity: 0.4;
 }
 
-/* the site log — drawn on by DrawingSet as the set advances */
+/* the site log — drawn on by DrawingSet as the set advances. A grid of six
+   vignette cells; each panel SVG scales to fill its own cell, so the record
+   uses the scene's full width instead of hanging small inside one tall box. */
 .sketch {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   color: var(--ink-graphite);
   opacity: 0.68;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: 1fr;
+  gap: 0.5rem 0.6rem;
+  align-items: center;
+}
+.sketch svg {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+/* short scene (small windows): go three-up so panels stay legible-large */
+@container (max-height: 260px) {
+  .sketch {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 /* carriage telemetry — the instrument's live readout */
@@ -235,7 +273,7 @@
     background: none;
   }
   .reg,
-  .setName,
+  .upper,
   .scene,
   .telemetry {
     display: none;
