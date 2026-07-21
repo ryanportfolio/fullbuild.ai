@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en" data-case-status="engineering" data-deployment-verified="false">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An early design prototype of fullbuild.ai: one seam, four phases, nothing invented.">
+  <meta name="theme-color" content="#F3F0E8">
+  <title>fullbuild.ai · prototype 01 · build seam</title>
+  <link rel="icon" href="/prototype/build-seam/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/prototype/build-seam/src/styles.css">
+  <script type="module" src="/prototype/build-seam/src/app.mjs"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">skip to the work</a>
+  <header class="site-header">
+    <a class="wordmark" href="#top" aria-label="fullbuild.ai, back to top">fullbuild.ai</a>
+    <nav aria-label="Primary">
+      <a href="#case-00">Case 00</a>
+      <a href="#lifecycle">How it moves</a>
+      <a href="#next">Next slots</a>
+      <a class="nav-proto" href="/prototype">prototype 01</a>
+    </nav>
+    <a class="header-status" href="#exit"><i aria-hidden="true"></i><span>build / </span>engineering</a>
+  </header>
+
+  <main id="main">
+    <section class="arrival" id="top" data-build-seam data-phase="engineering" aria-labelledby="hero-title">
+      <div class="phase-worlds">
+        <div class="phase-world phase-world--idea" data-phase-world="idea" aria-hidden="true">
+    <span class="phase-world__number">01</span>
+    <div class="matter matter--fluid"><i></i><i></i><i></i><b>?</b></div>
+    <span class="phase-world__word">idea</span>
+  </div><div class="phase-world phase-world--design" data-phase-world="design" aria-hidden="true">
+    <span class="phase-world__number">02</span>
+    <div class="matter matter--planar"><i></i><i></i><b>choose</b><em>align</em></div>
+    <span class="phase-world__word">design</span>
+  </div><div class="phase-world phase-world--engineering" data-phase-world="engineering" aria-hidden="true">
+    <span class="phase-world__number">03</span>
+    <div class="matter matter--articulated"><i></i><i></i><i></i><b>build</b><em>test</em></div>
+    <span class="phase-world__word">engineering</span>
+  </div><div class="phase-world phase-world--shipped" data-phase-world="shipped" aria-hidden="true">
+    <span class="phase-world__number">04</span>
+    <div class="matter matter--fused"><i></i><b>release</b><em>proof pending</em></div>
+    <span class="phase-world__word">shipped</span>
+  </div>
+      </div>
+      <div class="build-seam" aria-hidden="true">
+        <span class="build-seam__edge"></span>
+        <span class="build-seam__core">full / build / full / build /</span>
+      </div>
+      <div class="arrival__copy">
+        <p class="kicker">Independent AI product builder</p>
+        <h1 id="hero-title"><span>From maybe</span><span>to made</span></h1>
+        <p class="arrival__lede">Uncertain idea in. Working product out.</p>
+      </div>
+      <div class="arrival__promise">
+        <p>idea → design → engineering → shipped</p>
+        <a href="#case-00">cross the seam <span aria-hidden="true">↓</span></a>
+      </div>
+      <div class="phase-console" role="group" aria-label="Change lifecycle phase">
+        <button type="button" data-phase-control="idea" data-phase-index="0" aria-current="false"><span>01</span>idea</button><button type="button" data-phase-control="design" data-phase-index="1" aria-current="false"><span>02</span>design</button><button type="button" data-phase-control="engineering" data-phase-index="2" aria-current="step"><span>03</span>engineering</button><button type="button" data-phase-control="shipped" data-phase-index="3" aria-current="false" aria-disabled="true"><span>04</span>shipped</button>
+      </div>
+      <p class="phase-readout" aria-live="polite"><span>phase</span><strong data-phase-readout>engineering</strong></p>
+    </section>
+
+    <section class="case-zero" id="case-00" aria-labelledby="case-title">
+      <div class="case-zero__index" aria-hidden="true"><span>CASE</span>00</div>
+      <div class="case-zero__copy">
+        <p class="section-label">Current build</p>
+        <h2 id="case-title">This site, built in public</h2>
+      </div>
+      <div class="case-zero__receipt">
+        <p><span>brief</span>portfolio for full product builds</p>
+        <p><span>state</span>engineering / local build</p>
+        <p><span>promise</span>one person, no handoffs</p>
+        <p><span>ship gate</span>production proof pending</p>
+      </div>
+    </section>
+
+    <section class="lifecycle" id="lifecycle" aria-labelledby="lifecycle-title">
+      <div class="lifecycle__intro">
+        <p class="section-label">How it moves</p>
+        <h2 id="lifecycle-title">Uncertainty acquires structure</h2>
+      </div>
+      <div class="lifecycle__stages">
+
+  <article class="lifecycle-stage lifecycle-stage--idea" id="stage-idea" data-stage-panel="idea">
+    <div class="lifecycle-stage__mark" aria-hidden="true">
+      <span>01</span>
+      <i></i>
+    </div>
+    <div class="lifecycle-stage__heading">
+      <p>phase</p>
+      <h3>idea</h3>
+    </div>
+    <div class="lifecycle-stage__body">
+      <p class="stage-artifact">The brief: a portfolio where every claim can be checked.</p>
+    </div>
+  </article>
+  <article class="lifecycle-stage lifecycle-stage--design" id="stage-design" data-stage-panel="design">
+    <div class="lifecycle-stage__mark" aria-hidden="true">
+      <span>02</span>
+      <i></i>
+    </div>
+    <div class="lifecycle-stage__heading">
+      <p>phase</p>
+      <h3>design</h3>
+    </div>
+    <div class="lifecycle-stage__body">
+      <p class="stage-artifact">Three directions competed. The seam won.</p>
+    </div>
+  </article>
+  <article class="lifecycle-stage lifecycle-stage--engineering" id="stage-engineering" data-stage-panel="engineering">
+    <div class="lifecycle-stage__mark" aria-hidden="true">
+      <span>03</span>
+      <i></i>
+    </div>
+    <div class="lifecycle-stage__heading">
+      <p>phase</p>
+      <h3>engineering</h3>
+    </div>
+    <div class="lifecycle-stage__body">
+      <p class="stage-artifact">No dependencies. Everything still reads without JavaScript or motion.</p>
+    </div>
+  </article>
+  <article class="lifecycle-stage lifecycle-stage--shipped" id="stage-shipped" data-stage-panel="shipped" data-locked="true">
+    <div class="lifecycle-stage__mark" aria-hidden="true">
+      <span>04</span>
+      <i></i>
+    </div>
+    <div class="lifecycle-stage__heading">
+      <p>gate closed</p>
+      <h3>shipped</h3>
+    </div>
+    <div class="lifecycle-stage__body">
+      <p class="stage-artifact">Nothing claimed yet. The gate stays locked until production proof exists.</p>
+    </div>
+  </article>
+      </div>
+    </section>
+
+    <section class="principles" aria-labelledby="principles-title">
+      <div class="principles__title">
+        <p class="section-label">Rules</p>
+        <h2 id="principles-title">The seam is a test</h2>
+      </div>
+      <div class="principles__list">
+        <article><span>01</span><h3>Four phases, one object</h3><p>The same object gains abilities each phase.</p></article><article><span>02</span><h3>No invented proof</h3><p>Unfinished work says so.</p></article><article><span>03</span><h3>Mobile gets the whole idea</h3><p>Everything lands in the first small screen.</p></article>
+      </div>
+    </section>
+
+    <section class="next-worlds" id="next" aria-labelledby="next-title">
+      <div class="next-worlds__intro">
+        <p class="section-label">Future work / nothing invented</p>
+        <h2 id="next-title">Three empty slots, already designed</h2>
+      </div>
+      <div class="future-cases">
+
+  <article class="future-case future-case--portal" data-placeholder-case data-placeholder-form="portal">
+    <div class="future-case__object" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="future-case__copy">
+      <p>Future product / 01</p>
+      <h3>Title pending</h3>
+      <p>A full product story.</p>
+    </div>
+  </article>
+  <article class="future-case future-case--fold" data-placeholder-case data-placeholder-form="fold">
+    <div class="future-case__object" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="future-case__copy">
+      <p>Future research / 02</p>
+      <h3>Question pending</h3>
+      <p>Research that ends in a decision.</p>
+    </div>
+  </article>
+  <article class="future-case future-case--stack" data-placeholder-case data-placeholder-form="stack">
+    <div class="future-case__object" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="future-case__copy">
+      <p>Future experiment / 03</p>
+      <h3>Hypothesis pending</h3>
+      <p>A runnable experiment, failure included.</p>
+    </div>
+  </article>
+      </div>
+    </section>
+
+    <section class="exit" id="exit" aria-labelledby="exit-title">
+      <p class="section-label">Next</p>
+      <h2 id="exit-title">Let's build the whole thing</h2>
+      <div class="exit__gate">
+        <p>Channel pending</p>
+        <span>Contact lands here once it's real.</span>
+      </div>
+      <p class="exit__tagline">idea → design → engineering → shipped</p>
+      <p class="exit__wordmark">fullbuild.ai</p>
+    </section>
+  </main>
+
+  <script id="site-data" type="application/json">{"caseStudy":{"status":"engineering"},"deployment":{"verified":false,"url":null},"stages":[{"id":"idea"},{"id":"design"},{"id":"engineering"},{"id":"shipped","locked":true}]}</script>
+  <noscript><p class="noscript-note">Everything above stays readable without JavaScript.</p></noscript>
+</body>
+</html>
