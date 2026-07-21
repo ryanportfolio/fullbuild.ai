@@ -79,7 +79,7 @@ const rows = HATCH.map((h) => ({
 const totalMarks = PROJECTS.reduce((n, p) => n + p.langs.length, 0);
 
 const svgLabel =
-  `Materials legend — ${HATCH.length} languages across ${COLS} drawings. ` +
+  `Materials legend: ${HATCH.length} languages across ${COLS} drawings. ` +
   rows.map((r) => `${r.lang} in ${r.count}`).join(', ') + '.';
 
 export default function MaterialLegend() {
@@ -236,7 +236,7 @@ export default function MaterialLegend() {
               onMouseEnter={() => preview(r.lang)}
               onFocus={() => focusLang(r.lang)}
               onClick={() => toggle(r.lang)}
-              aria-label={`${r.lang} — full assembly of ${r.count} drawing${r.count === 1 ? '' : 's'}`}
+              aria-label={`${r.lang}: full assembly of ${r.count} drawing${r.count === 1 ? '' : 's'}`}
               aria-expanded={active === r.lang}
               aria-pressed={pinned && active === r.lang}
             />

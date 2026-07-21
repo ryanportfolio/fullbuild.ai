@@ -29,7 +29,7 @@ export default function SheetFrame() {
   const girts = frame.members.filter((m) => m.id.startsWith('girt')).length;
 
   return (
-    <section id="state-03" data-state="03" data-ink="concrete" className={s.sheet} aria-label="Sheet 03 of 4 — Engineering">
+    <section id="state-03" data-state="03" data-ink="concrete" className={s.sheet} aria-label="Sheet 03 of 4 · Engineering">
       <div className={s.frame}>
         <header className={s.head}>
           <span className={`${s.stateNo} u-mono`}>STAGE&nbsp;03</span>
@@ -45,7 +45,7 @@ export default function SheetFrame() {
               Building with AI in a safe, maintainable, and request-aligned way
             </p>
 
-            <dl className={copy.spec} aria-label="Member schedule — computed from the erected geometry">
+            <dl className={copy.spec} aria-label="Member schedule: computed from the erected geometry">
               <div className={copy.specRow}>
                 <span className={copy.specKey}>Bents</span>
                 <span className={copy.specVal}>{frame.bays.length}</span>

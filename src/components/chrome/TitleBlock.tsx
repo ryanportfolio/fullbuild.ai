@@ -212,7 +212,7 @@ export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
           <span>
             {/* red is spent on the measured numerator only — the total is not
                 a probe-verified fact, so it stays in witness ink */}
-            <b>{probed ? upCount : '—'}</b>
+            <b>{probed ? upCount : '·'}</b>
             <span className={styles.serviceTotal}>/{LIVE_PROJECTS.length}</span>
           </span>
         </div>
