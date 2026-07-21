@@ -174,3 +174,17 @@ Detection: `elementFromPoint` at the element's center, or compare
 - Blank areas of an SVG are not hit targets: an interactive svg (the SGN box)
   needs a transparent `<rect pointerEvents="fill">` catcher or strokes can
   only start on painted geometry.
+
+## WebGL persistence atlases go blank on font reflow / resize (2026-07-21)
+
+Symptom (burn-in prototype, applies to any accumulate-into-FBO design): a
+`prefers-reduced-motion` or on-demand render path that bakes into a persistence
+framebuffer once, then only re-presents, shows black scopes after the webfont
+finishes loading or the window resizes. Cause: element rects change, the atlas
+allocator sees a new signature and recreates its textures cleared to zero, and
+the present-only path never re-accumulates. Fix pattern: the render core
+returns `atlasRebuilt`; present-only callers must re-bake when it is true, and
+the initial bake should also re-run on `document.fonts.ready`. Capture scripts:
+`window.__burnin.freeze()/step(ms)` gives deterministic frames for screenshots
+(occluded Playwright windows throttle rAF to ~1fps, which is a capture
+artifact, not a page bug).
