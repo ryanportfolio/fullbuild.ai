@@ -175,7 +175,7 @@ export const PROJECTS: Project[] = [
       { label: 'model footprint', value: '~75MB int8', source: 'README: base.en int8, CPU-only real-time' },
       { label: 'local', value: 'fully', source: 'offline-first model guard, README: zero cloud calls' },
     ],
-    note: 'Offline push-to-talk dictation for Windows: global hotkey, int8 Whisper on CPU in real time, transcript pasted into the focused window. No network, by design.',
+    note: 'Offline PTT for Windows: global hotkey, int8 Whisper on CPU in real time, transcript pasted into the focused window. No network.',
   },
   {
     id: 'securewall',
