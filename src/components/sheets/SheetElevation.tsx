@@ -3,6 +3,7 @@ import { Line, Path, Registration } from '../drafting/Marks';
 import MastheadPlot from '../motion/MastheadPlot';
 import SheetIndex from './SheetIndex';
 import MaterialLegend from './MaterialLegend';
+import MarginStudy from '../motion/MarginStudy';
 import { LIVE_PROJECTS } from '@/lib/projects';
 import copy from './copy.module.css';
 
@@ -41,6 +42,7 @@ export default function SheetElevation() {
         <span className={copy.s4}>shipped</span>
       </p>
       <MaterialLegend />
+      <MarginStudy />
     </Sheet>
   );
 }
