@@ -26,9 +26,7 @@ export default function SheetBlueprint() {
       <p className={copy.eyebrow}>Sheet S-02 · design intent</p>
       <h2 className={copy.heading}>Resolved, dimensioned, spec&#8209;locked</h2>
       <p className={copy.prose}>
-        Design is where the loose line gets a number. Every ink means one thing,
-        every measure is drawn once. This sheet is dimensioned against the exact
-        system the site is built from — nothing decorative survives the tolerance.
+        Imagination machine, on.
       </p>
       <dl className={copy.spec}>
         <SpecRow k="Type family" v="Archivo / Martian Mono" />

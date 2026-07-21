@@ -1,0 +1,55 @@
+/* MATERIALS LEGEND — drafting schedule register. Mono throughout, graphite +
+   witness only (no accent: red is the live probe's, never the legend's). */
+
+.wrap {
+  margin: 0;
+  margin-top: 0.4rem;
+  max-width: 42ch;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* SVG text is set in the drafting mono, tabular figures for the counts. */
+.svg text {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.title {
+  font-size: 8.5px;
+  letter-spacing: 0.16em;
+  fill: var(--ink-graphite);
+}
+.sub {
+  font-size: 6px;
+  letter-spacing: 0.08em;
+  fill: var(--ink-witness);
+}
+.colno {
+  font-size: 6px;
+  fill: var(--ink-witness);
+}
+.name {
+  font-size: 8px;
+  letter-spacing: 0.03em;
+  fill: var(--ink-graphite);
+}
+.count {
+  font-size: 9px;
+  fill: var(--ink-graphite);
+}
+.foot {
+  font-size: 6.5px;
+  letter-spacing: 0.1em;
+  fill: var(--ink-witness);
+}
+.footKey {
+  font-size: 6px;
+  letter-spacing: 0.08em;
+  fill: var(--ink-witness);
+}
