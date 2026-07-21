@@ -23,11 +23,11 @@ const martian = Martian_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL('https://fullbuild.ai'),
   title: {
-    default: 'fullbuild.ai — idea → design → engineering → shipped',
-    template: '%s — fullbuild.ai',
+    default: 'fullbuild.ai · idea → design → engineering → shipped',
+    template: '%s · fullbuild.ai',
   },
   description:
-    'A working drawing set. One hand carries a single idea through design, engineering, and shipping — advance the sheet to watch it build.',
+    'A working drawing set. One hand carries a single idea through design, engineering, and shipping: advance the sheet to watch it build.',
   openGraph: {
     title: 'fullbuild.ai',
     description: 'idea → design → engineering → shipped',

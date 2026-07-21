@@ -45,7 +45,7 @@ export default function SheetShipped() {
   const n = PROJECTS.length;
 
   return (
-    <section id="state-04" data-state="04" data-ink="live" className={s.sheet} aria-label="Sheet 04 of 4 — Shipped">
+    <section id="state-04" data-state="04" data-ink="live" className={s.sheet} aria-label="Sheet 04 of 4 · Shipped">
       <div className={s.frame}>
         <header className={s.head}>
           <span className={`${s.stateNo} u-mono`}>STATE&nbsp;04</span>

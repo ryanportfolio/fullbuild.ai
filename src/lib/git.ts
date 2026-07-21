@@ -50,7 +50,7 @@ function readGit(): {
   } catch {
     // Vercel exposes the SHA via env when git isn't present in the runtime.
     const envSha = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7);
-    return { sha: envSha ?? '0000000', rev: '—', log: [], first: null, gap: 0 };
+    return { sha: envSha ?? '0000000', rev: '·', log: [], first: null, gap: 0 };
   }
 }
 

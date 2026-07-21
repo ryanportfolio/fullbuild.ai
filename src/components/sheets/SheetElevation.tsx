@@ -62,7 +62,7 @@ function Elevation() {
       viewBox="0 0 380 168"
       data-draw-speed="0.75"
       role="img"
-      aria-label={`Elevation of the shipped structure — ${n} bents, one per live project`}
+      aria-label={`Elevation of the shipped structure: ${n} bents, one per live project`}
     >
       {/* construction lines: eave + ridge datums. Serpentine — the eave runs
           left→right, the ridge returns right→left — so the pen sweeps back

@@ -21,7 +21,7 @@ export default function IfcStamp() {
     <div className={u.stamp} data-lit={lit ? 'true' : undefined} aria-label="Issue stamp">
       <span className={u.stampTitle}>Issued for construction</span>
       <span className={`${u.stampCount} u-mono`}>
-        {probed ? upCount : '—'}
+        {probed ? upCount : '·'}
         <span className={u.stampTotal}>/{LIVE_PROJECTS.length}</span> IN SERVICE
       </span>
     </div>

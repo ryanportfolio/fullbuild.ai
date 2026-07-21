@@ -54,7 +54,7 @@ const machine = createStageMachine({
 applyPhase(machine.getState());
 
 const announceLocked = () => {
-  readout.textContent = "shipped — production proof pending";
+  readout.textContent = "shipped / production proof pending";
   root.classList.remove("is-gated");
   requestAnimationFrame(() => root.classList.add("is-gated"));
   window.setTimeout(() => root.classList.remove("is-gated"), 3000);

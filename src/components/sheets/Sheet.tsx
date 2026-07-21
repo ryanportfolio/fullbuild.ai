@@ -33,7 +33,7 @@ export default function Sheet({
       data-ink={ink}
       data-negative={negative ? 'true' : undefined}
       className={styles.sheet}
-      aria-label={`Sheet ${n} of 4 — ${state}`}
+      aria-label={`Sheet ${n} of 4 · ${state}`}
     >
       <div className={styles.frame} data-side={drawingSide}>
         <header className={styles.head}>
