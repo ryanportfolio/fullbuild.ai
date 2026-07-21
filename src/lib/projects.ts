@@ -65,12 +65,10 @@ export const PROJECTS: Project[] = [
     live: true,
     role: 'solo build · retrieval, gating, evals',
     year: "'26",
-    stack: ['TypeScript', 'React', 'PostgreSQL + pgvector', 'Cohere rerank'],
+    stack: ['TypeScript', 'React', 'PostgreSQL + pgvector'],
     langs: ['TypeScript'],
     metrics: [
       { label: 'commits', value: '466', source: 'GitHub API, commit pagination' },
-      { label: 'CodeQL baselined', value: '51', source: 'README: safe baseline accounts for all 51 retained results' },
-      { label: 'TS share', value: '88%', source: 'GitHub languages API, 1.70M of 1.92M bytes' },
     ],
     note: 'Citation-first RAG for support teams: hybrid vector + full-text + trigram retrieval, a confidence gate that refuses before any LLM call, citation validation that rejects unknown chunks.',
   },
