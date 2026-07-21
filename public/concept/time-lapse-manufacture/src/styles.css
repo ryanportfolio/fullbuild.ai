@@ -212,6 +212,13 @@ a:focus-visible,
   opacity: 0;
 }
 
+/* Track handoff: while the artifact hops down the shop rules it rides above
+   the principles panel (z-index 2 + solid milk) instead of vanishing under it */
+.has-gl.is-hopping .workshop-canvas {
+  opacity: 1;
+  z-index: 6;
+}
+
 .arrival__fallback {
   position: absolute;
   right: clamp(4%, 12vw, 18%);
