@@ -246,6 +246,7 @@ export const PROJECTS: Project[] = [
     role: 'author + editor — curriculum, site, pipeline',
     year: "'26",
     stack: ['Astro', 'MDX', 'TypeScript', 'no accounts'],
+    langs: ['JavaScript', 'HTML', 'TypeScript'],
     metrics: [
       { label: 'guides published', value: '18', source: 'corewise.academy catalog page' },
       { label: 'catalog reading', value: '133 min', source: 'corewise.academy: "18 published guides, about 133 minutes of reading in total"' },
