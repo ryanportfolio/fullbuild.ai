@@ -243,9 +243,8 @@ export default function SheetTransmittal() {
     const val = (k: string) => String(fd.get(k) ?? '').trim();
     const signed = marks.length ? 'drawn' : typed.trim() ? `typed:${typed.trim()}` : '';
 
-    if (!val('from')) return setStatus({ text: 'FROM is required', fault: true });
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val('reply')))
-      return setStatus({ text: 'REPLY TO needs a reachable address', fault: true });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val('from')))
+      return setStatus({ text: 'FROM needs a reachable address', fault: true });
     if (!val('message')) return setStatus({ text: 'the message block is empty', fault: true });
     if (!signed) return setStatus({ text: 'countersign the sheet: draw your mark or letter your name', fault: true });
 
@@ -257,8 +256,6 @@ export default function SheetTransmittal() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           from: val('from'),
-          reply: val('reply'),
-          re: val('re'),
           message: val('message'),
           signed,
           firm: val('firm'),
@@ -409,34 +406,12 @@ export default function SheetTransmittal() {
               <div className={s.row}>
                 <label className={s.rowLabel} htmlFor="t01-from">From</label>
                 <div className={s.rowField}>
-                  <input id="t01-from" name="from" className={s.input} placeholder="name / practice" maxLength={120} autoComplete="name" onInput={echo('from')} />
+                  <input id="t01-from" name="from" type="email" className={s.input} placeholder="you@practice.tld" maxLength={200} autoComplete="email" onInput={echo('from')} />
                   <svg className={s.rule} viewBox="0 0 100 2" preserveAspectRatio="none" aria-hidden="true">
                     <Line x1={0} y1={1} x2={100} y2={1} w={1.1} o={1} />
                   </svg>
                 </div>
                 <canvas ref={setEcho('from')} className={s.echo} aria-hidden="true" />
-              </div>
-
-              <div className={s.row}>
-                <label className={s.rowLabel} htmlFor="t01-reply">Reply to</label>
-                <div className={s.rowField}>
-                  <input id="t01-reply" name="reply" type="email" className={s.input} placeholder="you@practice.tld" maxLength={200} autoComplete="email" onInput={echo('reply')} />
-                  <svg className={s.rule} viewBox="0 0 100 2" preserveAspectRatio="none" aria-hidden="true">
-                    <Line x1={0} y1={1} x2={100} y2={1} w={1.1} o={2} />
-                  </svg>
-                </div>
-                <canvas ref={setEcho('reply')} className={s.echo} aria-hidden="true" />
-              </div>
-
-              <div className={s.row}>
-                <label className={s.rowLabel} htmlFor="t01-re">Re</label>
-                <div className={s.rowField}>
-                  <input id="t01-re" name="re" className={s.input} placeholder="subject of the correspondence" maxLength={200} onInput={echo('re')} />
-                  <svg className={s.rule} viewBox="0 0 100 2" preserveAspectRatio="none" aria-hidden="true">
-                    <Line x1={0} y1={1} x2={100} y2={1} w={1.1} o={3} />
-                  </svg>
-                </div>
-                <canvas ref={setEcho('re')} className={s.echo} aria-hidden="true" />
               </div>
 
               <div className={`${s.row} ${s.rowTop}`}>

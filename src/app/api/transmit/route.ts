@@ -15,9 +15,8 @@ import { NextResponse } from 'next/server';
    ========================================================================= */
 
 interface TransmitBody {
+  /** The visitor's own email — both the identity and the reply address. */
   from: string;
-  reply: string;
-  re: string;
   message: string;
   /** 'drawn' when the SGN box holds pointer strokes; 'typed:<name>' fallback. */
   signed: string;
@@ -29,9 +28,7 @@ interface TransmitBody {
 
 const MIN_ELAPSED_MS = 4_000;
 const LIMITS: Record<string, number> = {
-  from: 120,
-  reply: 200,
-  re: 200,
+  from: 200,
   message: 4_000,
   signed: 160,
 };
@@ -60,14 +57,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   const from = field('from');
-  const reply = field('reply');
   const message = field('message');
   const signed = field('signed');
   if (!from || !message || !signed) {
     return NextResponse.json({ ok: false, error: 'incomplete transmittal' }, { status: 422 });
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reply)) {
-    return NextResponse.json({ ok: false, error: 'reply address unreadable' }, { status: 422 });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(from)) {
+    return NextResponse.json({ ok: false, error: 'from address unreadable' }, { status: 422 });
   }
 
   const rfi = issueRfi();
@@ -83,7 +79,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // Phase 1: the correspondence lives in the server log, verbatim.
   console.log(
-    `[transmit] ${rfi} from=${JSON.stringify(from)} reply=${JSON.stringify(reply)} re=${JSON.stringify(field('re'))} signed=${JSON.stringify(signed)} message=${JSON.stringify(message)}`,
+    `[transmit] ${rfi} from=${JSON.stringify(from)} signed=${JSON.stringify(signed)} message=${JSON.stringify(message)}`,
   );
 
   return NextResponse.json({ ok: true, rfi });
