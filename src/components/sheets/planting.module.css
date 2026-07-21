@@ -16,6 +16,11 @@
     display: block;
     width: 100%;
     height: auto;
+    /* Ride the viewport foot inside the tall band cell (the pour report's old
+       station): the bed stays in frame under the structure for the whole
+       schedule scroll instead of waiting at the cell's far bottom. */
+    position: sticky;
+    bottom: 1.4rem;
   }
 }
 
