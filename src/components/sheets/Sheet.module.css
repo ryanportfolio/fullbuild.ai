@@ -124,6 +124,12 @@
   max-width: 44ch;
 }
 
+/* S-02 (the only cyanotype sheet) sizes its enlarged heading against the copy
+   column via container query units — see copy.module.css .headingLarge. */
+.sheet[data-ink='cyanotype'] .copy {
+  container-type: inline-size;
+}
+
 /* Cyanotype-negative (DARK only) flips lettering to the paper ground for
    legibility while keeping the SAME meaning (design ink). In LIGHT the sheet is
    normal cyanotype-on-vellum, so no override. */
