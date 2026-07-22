@@ -12,9 +12,9 @@
 import { mulberry32, hashString } from './prng';
 import type { Project } from './projects';
 
-/* The salt string is the art-direction knob: bump to 'flowerbed-v2:' to
-   re-roll a bad composition without touching any other code. */
-const SALT = 'flowerbed:';
+/* The salt string is the art-direction knob: bump the version to re-roll a
+   bad composition without touching any other code. */
+const SALT = 'flowerbed-v2:';
 
 export const VIEW_W = 360;
 export const VIEW_H = 200;
@@ -58,33 +58,50 @@ const r2 = (v: number): number => Math.round(v * 100) / 100;
 /* ---- bloom archetypes ------------------------------------------------------
    Four hand-drafted archetypes. Each returns petal paths rooted at the bloom
    center; `open` (live project) splays them, closed (repo-only) converges the
-   SAME archetype to a bud tip — morphology never depends on runtime probes. */
+   SAME archetype to a bud tip — morphology never depends on runtime probes.
 
-function bloomSpline(rng: () => number, cx: number, cy: number, open: boolean): string[] {
-  const pl = 9 + rng() * 4;
-  if (open) {
-    return [-64, -24, 24, 64].map((sp) => {
-      const a = ((-90 + sp) * Math.PI) / 180;
-      const qa = ((-90 + sp * 1.6) * Math.PI) / 180;
-      const ex = cx + Math.cos(a) * pl;
-      const ey = cy + Math.sin(a) * pl;
-      const qx = cx + Math.cos(qa) * pl * 0.62;
-      const qy = cy + Math.sin(qa) * pl * 0.62;
-      return `M${r2(cx)} ${r2(cy)} Q${r2(qx)} ${r2(qy)} ${r2(ex)} ${r2(ey)}`;
-    });
-  }
-  const bud = pl * 0.78;
-  return [-9, -3, 3, 9].map(
-    (sp) =>
-      `M${r2(cx)} ${r2(cy)} Q${r2(cx + sp * 0.45)} ${r2(cy - bud * 0.55)} ${r2(cx)} ${r2(cy - bud)}`,
+   v2: petals are CLOSED LOOPS (out one flank, back the other), not single
+   rays — four lone strokes read as a pitchfork, a loop reads as a petal. */
+
+/** One petal: a closed teardrop from the bloom center toward `aDeg`. */
+function petalLoop(
+  cx: number,
+  cy: number,
+  aDeg: number,
+  len: number,
+  wid: number,
+): string {
+  const a = (aDeg * Math.PI) / 180;
+  const tx = cx + Math.cos(a) * len;
+  const ty = cy + Math.sin(a) * len;
+  const px = -Math.sin(a); // unit perpendicular
+  const py = Math.cos(a);
+  const bx = cx + Math.cos(a) * len * 0.48;
+  const by = cy + Math.sin(a) * len * 0.48;
+  return (
+    `M${r2(cx)} ${r2(cy)}` +
+    ` Q${r2(bx + px * wid)} ${r2(by + py * wid)} ${r2(tx)} ${r2(ty)}` +
+    ` Q${r2(bx - px * wid)} ${r2(by - py * wid)} ${r2(cx)} ${r2(cy)}`
   );
 }
 
+/** Daisy — six petal loops fanned over the top; bud: three tight upward loops. */
+function bloomDaisy(rng: () => number, cx: number, cy: number, open: boolean): string[] {
+  const pl = 10 + rng() * 3;
+  if (open) {
+    return [-170, -138, -106, -74, -42, -10].map((a) =>
+      petalLoop(cx, cy, a, pl, pl * 0.26),
+    );
+  }
+  return [-112, -90, -68].map((a) => petalLoop(cx, cy, a, pl * 0.55, pl * 0.13));
+}
+
+/** Umbel — rays ending in floret loops; bud: rays pulled tight to the axis. */
 function bloomUmbel(rng: () => number, cx: number, cy: number, open: boolean): string[] {
-  const rl = 8 + rng() * 4;
-  const spreads = open ? [-52, -18, 18, 52] : [-13, -4.5, 4.5, 13];
-  const len = open ? rl : rl * 0.7;
-  const fr = open ? 1.5 : 0.9; // floret loop radius at the ray tip
+  const rl = 9 + rng() * 3;
+  const spreads = open ? [-58, -29, 0, 29, 58] : [-15, -7.5, 0, 7.5, 15];
+  const len = open ? rl : rl * 0.62;
+  const fr = open ? 1.7 : 0.9; // floret loop radius at the ray tip
   return spreads.map((sp) => {
     const a = ((-90 + sp) * Math.PI) / 180;
     const ex = cx + Math.cos(a) * len;
@@ -93,7 +110,7 @@ function bloomUmbel(rng: () => number, cx: number, cy: number, open: boolean): s
   });
 }
 
-/** One zigzag stroke of florets riding the top 30% of the stem. */
+/** Spike / raceme — small alternating floret loops up the top of the stem. */
 function bloomSpike(
   sx: number,
   sy: number,
@@ -101,34 +118,35 @@ function bloomSpike(
   ty: number,
   open: boolean,
 ): string[] {
-  const steps = 6;
-  const amp = open ? 4.2 : 2.3;
-  let d = `M${r2(sx)} ${r2(sy)}`;
-  for (let n = 1; n <= steps; n++) {
+  const steps = open ? 6 : 5;
+  const len = open ? 4.6 : 2.6;
+  const wid = open ? 1.5 : 0.8;
+  const paths: string[] = [];
+  for (let n = 0; n <= steps; n++) {
     const px = sx + ((tx - sx) * n) / steps;
     const py = sy + ((ty - sy) * n) / steps;
-    const mx = sx + ((tx - sx) * (n - 0.5)) / steps;
-    const my = sy + ((ty - sy) * (n - 0.5)) / steps;
     const side = n % 2 === 0 ? 1 : -1;
-    d += ` Q${r2(mx + side * amp)} ${r2(my)} ${r2(px)} ${r2(py)}`;
+    // Florets angle upward as they climb; the crown floret points straight up.
+    const a = n === steps ? -90 : -90 + side * (open ? 62 : 30);
+    paths.push(petalLoop(px, py, a, len * (1 - n / (steps * 3.2)), wid));
   }
-  return [d];
+  return paths;
 }
 
-function bloomTri(rng: () => number, cx: number, cy: number, open: boolean): string[] {
-  const pl = 10 + rng() * 4;
+/** Tulip — three broad petal loops cupped upward; bud: one loop + a midrib. */
+function bloomTulip(rng: () => number, cx: number, cy: number, open: boolean): string[] {
+  const pl = 11 + rng() * 3;
   if (open) {
     return [
-      `M${r2(cx)} ${r2(cy)} C${r2(cx - pl * 0.55)} ${r2(cy - pl * 0.15)}, ${r2(cx - pl * 0.75)} ${r2(cy - pl * 0.7)}, ${r2(cx - pl * 0.35)} ${r2(cy - pl)}`,
-      `M${r2(cx)} ${r2(cy)} Q${r2(cx)} ${r2(cy - pl * 0.6)} ${r2(cx)} ${r2(cy - pl * 1.08)}`,
-      `M${r2(cx)} ${r2(cy)} C${r2(cx + pl * 0.55)} ${r2(cy - pl * 0.15)}, ${r2(cx + pl * 0.75)} ${r2(cy - pl * 0.7)}, ${r2(cx + pl * 0.35)} ${r2(cy - pl)}`,
+      petalLoop(cx, cy, -128, pl * 0.92, pl * 0.3),
+      petalLoop(cx, cy, -90, pl * 1.05, pl * 0.32),
+      petalLoop(cx, cy, -52, pl * 0.92, pl * 0.3),
     ];
   }
-  const bud = pl * 0.8;
+  const bud = pl * 0.7;
   return [
-    `M${r2(cx)} ${r2(cy)} Q${r2(cx - bud * 0.38)} ${r2(cy - bud * 0.5)} ${r2(cx)} ${r2(cy - bud)}`,
+    petalLoop(cx, cy, -90, bud, bud * 0.26),
     `M${r2(cx)} ${r2(cy)} L${r2(cx)} ${r2(cy - bud)}`,
-    `M${r2(cx)} ${r2(cy)} Q${r2(cx + bud * 0.38)} ${r2(cy - bud * 0.5)} ${r2(cx)} ${r2(cy - bud)}`,
   ];
 }
 
@@ -140,7 +158,8 @@ export function buildBed(projects: Project[]): Specimen[] {
   return projects.map((p, i) => {
     const rng = mulberry32(hashString(SALT + p.id));
     const x = 24 + i * (312 / Math.max(1, n - 1)) + (rng() - 0.5) * 7;
-    const h = 42 + rng() * 62;
+    // Tamer height band than v1 (42..104 made neighbours read as weeds).
+    const h = 54 + rng() * 40;
     const lean = (((rng() - 0.5) * 9) * Math.PI) / 180;
     const arch = Math.floor(rng() * 4);
     const dx = Math.tan(lean) * h;
@@ -174,10 +193,10 @@ export function buildBed(projects: Project[]): Specimen[] {
 
     // Bloom — open for live projects, closed bud for repo-only.
     let petals: string[];
-    if (arch === 0) petals = bloomSpline(rng, tx, ty, p.live);
+    if (arch === 0) petals = bloomDaisy(rng, tx, ty, p.live);
     else if (arch === 1) petals = bloomUmbel(rng, tx, ty, p.live);
     else if (arch === 2) petals = bloomSpike(x + dx * 0.7, GRADE_Y - h * 0.7, tx, ty, p.live);
-    else petals = bloomTri(rng, tx, ty, p.live);
+    else petals = bloomTulip(rng, tx, ty, p.live);
     petals.forEach((d, pi) => strokes.push({ d, w: pi === 0 && arch === 2 ? 1.0 : 0.95, k: 3 + pi }));
 
     return {
