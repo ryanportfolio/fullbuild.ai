@@ -219,7 +219,7 @@ export const PROJECTS: Project[] = [
     langs: ['PowerShell', 'JavaScript'],
     metrics: [
       { label: 'bundled skills', value: '34', source: 'repo description' },
-      { label: 'commits', value: '56', source: 'GitHub API, commit pagination' },
+      { label: 'Repo', value: 'Instant', source: 'spawns a ready-to-work repo in one step' },
     ],
     note: 'Self-syncing project template for AI coding agents. Instant repo creation with a built in rule kernel, 34 skills, efficient & durable memory. Super optimized token usage.',
   },

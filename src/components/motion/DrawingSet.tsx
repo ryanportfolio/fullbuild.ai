@@ -230,9 +230,12 @@ export default function DrawingSet({
           // work the sheet at once. Gated below; other sheets start on their
           // scroll trigger as usual.
           paused: crewed,
+          // The courier sheet waits until it holds half the stage: at 'top 78%'
+          // the pen drew the form while the sheet was a sliver at the fold, and
+          // a reader parked there saw the carriage darting at the viewport edge.
           scrollTrigger: crewed
             ? undefined
-            : { trigger: sec, start: 'top 78%', once: true },
+            : { trigger: sec, start: courier ? 'top 50%' : 'top 78%', once: true },
           onComplete: () => {
             if (courier) {
               window.dispatchEvent(new Event('ws:t01-drawn'));
