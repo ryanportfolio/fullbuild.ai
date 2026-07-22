@@ -82,6 +82,21 @@ The screenshots in this README come from the capture harness in
 port 3117, add `--dark` for night mode. It freezes the GSAP ticker before
 each shot so the plotter, hinge, and pour land on stable frames.
 
+## Built through RTK
+
+The quiet workhorse behind this repo is **RTK**, a Rust CLI proxy that sits
+between an AI agent and the terminal and strips the noise out of command
+output before the model ever reads it: `git status`, `git diff`, `rg`, test
+runs, all compressed to what actually matters. Same information, a fraction
+of the tokens, so every session spends its context on the work instead of on
+boilerplate.
+
+The savings are measured, not estimated. Across 95,821 logged commands RTK
+has filtered 79.5% of output tokens, 19.7 million tokens and counting, with
+per-command before/after logs refreshed daily.
+
+**See the running total at [savetokens.tips](https://savetokens.tips)**
+
 ## License
 
 [MIT](LICENSE)
