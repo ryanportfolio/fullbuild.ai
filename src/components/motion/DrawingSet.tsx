@@ -103,21 +103,33 @@ export default function DrawingSet({
     // read (>= half in view) is held FLAT (de-composited) and stays pixel-crisp;
     // only sheets entering or leaving carry the HINGE rotation, where the softness
     // is masked by motion and off-center position.
+    // Hysteresis is load-bearing, not polish: the HINGE below writes rotateY,
+    // which shifts the sheet's own intersectionRatio a hair. With a single
+    // threshold, a sheet that Lenis momentum parks right at that ratio would
+    // flip flat -> none -> (ratio moves) -> hinge -> rotateY -> (ratio moves) ->
+    // flat every frame — the tilt visibly buzzing back and forth for a beat.
+    // A dead band (enter flat at 0.45, only resume hinging below 0.30) is wider
+    // than any transform-induced ratio nudge, so one toggle can't cross back.
+    const FLAT_ON = 0.45;
+    const FLAT_OFF = 0.3;
     const flat = new Set<Element>();
     const flatIO = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
           const el = e.target as HTMLElement;
-          if (e.isIntersecting && e.intersectionRatio >= 0.45) {
+          if (e.intersectionRatio >= FLAT_ON) {
+            if (flat.has(el)) return;
             flat.add(el);
             el.style.transform = 'none';
             el.style.transformStyle = 'flat';
-          } else {
+          } else if (e.intersectionRatio < FLAT_OFF) {
             flat.delete(el);
           }
+          // In the dead band [FLAT_OFF, FLAT_ON) the sheet keeps whatever state
+          // it already had — no write, so no feedback into the ratio.
         });
       },
-      { threshold: [0, 0.45, 0.9] },
+      { threshold: [0, FLAT_OFF, FLAT_ON, 0.9] },
     );
     sections.forEach((s) => flatIO.observe(s));
 
