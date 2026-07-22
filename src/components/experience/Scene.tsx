@@ -191,10 +191,18 @@ function buildScene(frame: Frame, pal: Palette): Built {
     // Graphite wireframe (EdgesGeometry of the swept tube), consumed from
     // beneath. Non-structural linework (ties/purlins/girts) draws as a single
     // clean segment instead of a boxed tube — a drafted tick, not a member.
+    //
+    // Clip side differs by kind. Clad members keep their wireframe ABOVE the cut
+    // (concrete takes over below). Non-clad binders have NO concrete, so clipping
+    // them above the cut left a thin line floating over the structure that thinned
+    // out and vanished as the pour rose (and, being diagonal, could strand an
+    // isolated segment). Clip them BELOW the cut instead — the same side the
+    // concrete builds on: hidden until the pour reaches their level, then revealed
+    // as built linework and kept, never floating above.
     const wireMat = track(
       new LineBasicMaterial({
         color: pal.graphite.clone(),
-        clippingPlanes: [planeWire],
+        clippingPlanes: [member.clad ? planeWire : planeSolid],
       }),
     );
     let wire: LineSegments;

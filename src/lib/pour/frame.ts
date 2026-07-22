@@ -171,8 +171,9 @@ export function buildFrame(
   });
 
   // --- longitudinal members: ridge purlin + eave girts ----------------------
-  // What binds N bents into ONE building. Drawn linework (not clad): purlins
-  // land after both bents they connect, so the pour consumes them last.
+  // What binds N bents into ONE building. Drawn linework (not clad): they reveal
+  // as the pour front reaches their level and stay built — Scene clips non-clad
+  // members below the cut, so a binder never floats above the structure.
   for (let i = 1; i < bays.length; i++) {
     const a = bays[i - 1].apex;
     const b = bays[i].apex;

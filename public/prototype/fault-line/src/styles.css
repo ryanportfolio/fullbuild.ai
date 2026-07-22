@@ -526,6 +526,17 @@ p {
   background: var(--ink);
 }
 
+/* The core text rides forever, on its own, so the seam always reads as a live
+   build in progress — no drag required to see it move. Two identical copies
+   stacked; translating the track by exactly one copy (-50%) loops seamlessly. */
+.build-seam__marquee {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: seam-scroll 12s linear infinite;
+  will-change: transform;
+}
+
 .build-seam__core {
   font-size: 0.72rem;
   font-variation-settings: "wdth" 70, "wght" 850;
@@ -536,9 +547,24 @@ p {
   writing-mode: vertical-rl;
 }
 
+@keyframes seam-scroll {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 -50%;
+  }
+}
+
 .is-directing .build-seam {
   width: clamp(4rem, 7vw, 8rem);
   transition: width 180ms var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .build-seam__marquee {
+    animation: none;
+  }
 }
 
 .arrival__copy {

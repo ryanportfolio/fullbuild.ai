@@ -12,8 +12,15 @@ const stages = Array.from(document.querySelectorAll("[data-stage-panel]"));
 const revealTargets = Array.from(document.querySelectorAll(".lifecycle-stage, .future-case, .principles article"));
 const site = JSON.parse(dataNode.textContent);
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const initialIndex = Math.max(0, site.stages.findIndex(({ id }) => id === site.caseStudy.status));
+// The real current phase (the case's status). The hero opens on `idea` and
+// auto-advances to it, one phase at a time, so a first-time visitor watches the
+// object cross the seam idea -> design -> engineering instead of landing mid-lifecycle.
+const targetIndex = Math.max(0, site.stages.findIndex(({ id }) => id === site.caseStudy.status));
+const startIndex = reducedMotion ? targetIndex : 0;
+const INTRO_HOLD_MS = 620; // let `idea` read before the first advance
+const INTRO_STEP_MS = 1150; // spacing between phases (clears the 720ms clip-path settle)
 let releaseTimer = 0;
+let introTimer = 0;
 
 const setPhaseVariables = (phase) => {
   root.style.setProperty("--phase-width", phase.width);
@@ -47,11 +54,25 @@ const machine = createStageMachine({
   stages: site.stages,
   deploymentVerified: site.deployment.verified,
   reducedMotion,
-  initialIndex,
+  initialIndex: startIndex,
   onChange: applyPhase,
 });
 
 applyPhase(machine.getState());
+
+// Auto-intro: step from `idea` up to the real current phase, then stop. Any
+// user input (phase button, seam drag) cancels it so control returns instantly.
+const cancelIntro = () => clearTimeout(introTimer);
+const runIntro = () => {
+  const step = () => {
+    const at = machine.getState().index;
+    if (at >= targetIndex) return;
+    machine.set(at + 1);
+    if (machine.getState().index < targetIndex) introTimer = window.setTimeout(step, INTRO_STEP_MS);
+  };
+  introTimer = window.setTimeout(step, INTRO_HOLD_MS);
+};
+if (!reducedMotion && targetIndex > 0) runIntro();
 
 const announceLocked = () => {
   readout.textContent = "shipped / production proof pending";
@@ -62,6 +83,7 @@ const announceLocked = () => {
 
 controls.forEach((control, index) => {
   control.addEventListener("click", () => {
+    cancelIntro();
     if (!machine.set(index) && control.getAttribute("aria-disabled") === "true") announceLocked();
   });
 });
@@ -93,6 +115,7 @@ if (seam && !reducedMotion) {
   };
 
   seam.addEventListener("pointerdown", (event) => {
+    cancelIntro();
     dragging = true;
     seam.setPointerCapture(event.pointerId);
     root.classList.add("is-directing");
@@ -130,5 +153,6 @@ requestAnimationFrame(() => document.documentElement.classList.add("is-ready"));
 
 window.addEventListener("pagehide", () => {
   clearTimeout(releaseTimer);
+  cancelIntro();
   machine.destroy();
 }, { once: true });

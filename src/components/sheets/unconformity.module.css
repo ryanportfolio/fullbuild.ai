@@ -111,6 +111,13 @@
   color: var(--ink-witness);
   margin-top: 0.75rem;
 }
+/* The repository this sheet is a true readout of — bold, drawn as a link. */
+.repoLink {
+  font-weight: 700;
+  color: var(--ink-cyanotype);
+  border-bottom: 1px solid currentColor;
+  overflow-wrap: anywhere;
+}
 
 .sideCol {
   align-self: center;
@@ -191,6 +198,32 @@
 .checkedBy:hover,
 .checkedBy:focus-visible {
   opacity: 1;
+}
+
+/* LinkedIn — the one outbound contact mark. Graphite ink, cyanotype on hover
+   (a structural/link ink, never the reserved revision-red). */
+.linkedin {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 1.1rem;
+  color: var(--ink-graphite);
+  transition: color 0.2s var(--ease-draw);
+}
+.linkedinGlyph {
+  width: 2.9rem;
+  height: 2.9rem;
+  flex: none;
+}
+.linkedinLabel {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid currentColor;
+}
+.linkedin:hover,
+.linkedin:focus-visible {
+  color: var(--ink-cyanotype);
 }
 
 .revGap {

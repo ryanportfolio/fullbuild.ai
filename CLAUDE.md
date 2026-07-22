@@ -26,6 +26,7 @@ Defaults until configured:
 - Never claim visual/UI verification you didn't actually perform.
 - Can't run the authoritative check → flag the risk plainly, don't claim it passes.
 - When verification must happen elsewhere (CI, deploy, user's machine) → say so and stop.
+- Visual/UI checks: drive **Playwright** (headless, composites offscreen), never the in-app preview pane. The pane races this site's Lenis + GSAP + R3F rAF loop and returns blank or timed-out screenshots; Playwright renders and captures reliably. Thaw any `window.__capture.freeze()` first, then screenshot in Playwright.
 
 ## Core principles
 

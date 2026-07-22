@@ -49,17 +49,33 @@ export function proximity(sectionCenterY, viewportH) {
   return clamp01(1 - Math.abs(sectionCenterY - vh / 2) / (vh * 0.6));
 }
 
-// Hero set target: idle breathe while near the top, scroll-driven crest after,
-// then a full release so the word melts back to liquid before the stages.
-// breathe = 0.10 + 0.09 sin(t * 0.9), applied only while heroT < 0.3; the
-// idle swell stays below glyph legibility so the headline never doubles
-export function heroTarget(scrollY, heroHeight, t, breatheOn = true) {
+// Hero set target: an AUTONOMOUS crest while near the top, scroll-driven crest
+// after, then a full release so the word melts back to liquid before the stages.
+//
+// Autonomous cycle: with no scroll the metal slowly crests into the formed
+// headline and melts back to molten, forever (the "refuses to set" concept) —
+// so the transformation plays itself, no click/drag required. It fades out as
+// the reader scrolls into the hero (heroT rises), handing the crest to
+// scrollSet with no discontinuity. Long eased holds at each end keep it calm.
+const AUTO_PERIOD = 13; // seconds per molten -> formed -> molten cycle
+
+export function heroCrest(t) {
+  const p = ((t % AUTO_PERIOD) + AUTO_PERIOD) % AUTO_PERIOD / AUTO_PERIOD; // 0..1
+  if (p < 0.35) return smoothstep01(p / 0.35);            // rise into formed
+  if (p < 0.55) return 1;                                  // hold formed
+  if (p < 0.9) return 1 - smoothstep01((p - 0.55) / 0.35); // melt back
+  return 0;                                                // hold molten
+}
+
+export function heroTarget(scrollY, heroHeight, t, autoOn = true) {
   const hh = Math.max(1, heroHeight);
   const heroT = clamp01(scrollY / (hh * 0.85));
   const release = 1 - smoothstep01((heroT - 0.7) / 0.3);
   const scrollSet = smoothstep01((heroT - 0.05) / 0.5) * 0.9 * release;
-  const breathe = breatheOn && heroT < 0.3 ? 0.10 + 0.09 * Math.sin(t * 0.9) : 0;
-  return Math.max(breathe * release, scrollSet);
+  // Active only near the top; smoothly yields to scrollSet as the reader scrolls in.
+  const autoActive = autoOn ? 1 - smoothstep01((heroT - 0.12) / 0.2) : 0;
+  const autoSet = (0.12 + 0.74 * heroCrest(t)) * autoActive * release;
+  return Math.max(autoSet, scrollSet);
 }
 
 function zeroPair() {

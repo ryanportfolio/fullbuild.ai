@@ -157,9 +157,8 @@ export default function SheetShipped() {
             <ScaleBar />
           </div>
           <p className={s.closeNote}>
-            Create verification loops before scaling AI-generated work. Every
-            serious AI workflow needs checks for correctness, security,
-            durability, and fit with the original goal.
+            Every serious AI workflow needs checks for correctness, security,
+            durability, and alignment with the original goal.
           </p>
         </div>
       </div>
