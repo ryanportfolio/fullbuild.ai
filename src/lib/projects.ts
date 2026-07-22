@@ -154,7 +154,6 @@ export const PROJECTS: Project[] = [
     metrics: [
       { label: 'tokens filtered', value: '79.5%', source: 'measured: rtk gain log over 95,821 commands' },
       { label: 'tokens saved', value: '19.7M', source: 'per-command before/after logs, refreshed daily' },
-      { label: 'commits', value: '55', source: 'GitHub API, commit pagination' },
     ],
     note: 'Usage optimization guide; every figure measured from logged commands and updated to site automatically.',
   },
@@ -187,7 +186,7 @@ export const PROJECTS: Project[] = [
     stack: ['C#', '.NET 4.8', 'Windows Filtering Platform'],
     langs: ['C#'],
     metrics: [
-      { label: 'installers', value: '3 MSI', source: 'GitHub releases: x64 / arm64 / x86 + SHA-256 manifest' },
+      { label: 'installer', value: 'MSI', source: 'GitHub releases: x64 / arm64 / x86 + SHA-256 manifest' },
       { label: 'C# codebase', value: '1.3MB', source: 'GitHub languages API' },
     ],
     note: 'Windows default-deny firewall keeping TinyWall’s service-owned WFP enforcement, adding one tightly scoped outbound-block prompt with a token-based permanent-allow flow.',
@@ -215,7 +214,7 @@ export const PROJECTS: Project[] = [
     live: false,
     role: 'author · kernel rules, skills, sync scripts',
     year: "'26",
-    stack: ['PowerShell', 'JavaScript', 'Markdown skills', '2 runtimes'],
+    stack: ['PowerShell', 'JavaScript'],
     langs: ['PowerShell', 'JavaScript'],
     metrics: [
       { label: 'bundled skills', value: '34', source: 'repo description' },
@@ -236,7 +235,6 @@ export const PROJECTS: Project[] = [
     langs: ['JavaScript', 'HTML', 'TypeScript'],
     metrics: [
       { label: 'guides published', value: '18', source: 'corewise.academy catalog page' },
-      { label: 'catalog reading', value: '133 min', source: 'corewise.academy: "18 published guides, about 133 minutes of reading in total"' },
       { label: 'commits', value: '327', source: 'GitHub API, commit pagination (private repo)' },
     ],
     note: 'Free course catalog on working with AI: 18 guides across 5 layers at 3 depth levels, each with objectives, exercises, and self-checks. No accounts, no fees: the whole catalog reads in about 133 minutes.',
@@ -253,8 +251,8 @@ export const PROJECTS: Project[] = [
     stack: ['Python', 'TypeScript', 'React', 'Vite'],
     langs: ['Python', 'TypeScript'],
     metrics: [
-      { label: 'index funds', value: '3', source: 'about page: SPY · QQQ · IWM, long only, end-of-day' },
-      { label: 'engine', value: 'v4.7', source: 'about page header: "SPY · QQQ · IWM · ENGINE V4.7 · END-OF-DAY · LONG ONLY"' },
+      { label: 'Python tools', value: '94', source: 'engine repo: git ls-files "*.py" minus test files' },
+      { label: 'tests', value: '513', source: 'engine repo: def test_ functions across 40 tracked test files' },
     ],
     note: 'A rules engine for buying and selling index funds. Python engine replays the full price history after every close, publishes plain data files, and every chart on the site benchmarks it against B&H.',
   },

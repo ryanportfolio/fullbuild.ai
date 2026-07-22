@@ -76,8 +76,6 @@ const rows = HATCH.map((h) => ({
     stack: p.stack,
   })),
 }));
-const totalMarks = PROJECTS.reduce((n, p) => n + p.langs.length, 0);
-
 const svgLabel =
   `Materials legend: ${HATCH.length} languages across ${COLS} drawings. ` +
   rows.map((r) => `${r.lang} in ${r.count}`).join(', ') + '.';
@@ -214,14 +212,6 @@ export default function MaterialLegend() {
             );
           })}
 
-          {/* footer schedule note — every figure derived from projects.ts */}
-          <line x1={SW_X} y1={H - 14} x2={MAT_X1} y2={H - 14} stroke="var(--rule-strong)" strokeWidth="0.8" />
-          <text x={SW_X} y={H - 3} className={styles.foot}>
-            {HATCH.length} MATERIALS · {totalMarks} SPECIFIED · {COLS} DRAWINGS
-          </text>
-          <text x={COUNT_X} y={H - 3} className={styles.footKey} textAnchor="end">
-            1 HATCH = 1 LANGUAGE
-          </text>
         </svg>
 
         {/* interaction layer: one hit-strip per material row, aligned to the
