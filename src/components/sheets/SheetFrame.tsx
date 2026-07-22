@@ -44,7 +44,7 @@ export default function SheetFrame() {
               <span className={copy.headingGoal}>Goal</span>
               Verification <span className={copy.headingMark}>Loop</span>
             </h2>
-            <p className={copy.lede}>
+            <p className={`${copy.lede} ${copy.ledeLarge}`}>
               Building with AI in a safe, maintainable, and request-aligned way
             </p>
 

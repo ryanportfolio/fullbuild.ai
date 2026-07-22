@@ -60,8 +60,8 @@ export default function SheetShipped() {
             <div className={s.lead}>
               <h2 className={s.pour}>Made</h2>
               <p className={s.leadNote}>
-                Judgment, mission, management, relationships, and growth still
-                need human agency
+                Judgment, mission, management, and growth still need human
+                agency
               </p>
             </div>
 

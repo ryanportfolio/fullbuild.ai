@@ -110,6 +110,11 @@
   opacity: 0.95;
 }
 
+/* S-03 lede runs 25% larger than the base lede. */
+.ledeLarge {
+  font-size: 1.5625rem;
+}
+
 /* Measured voice — a spec block that reads like a real drawing's schedule. */
 .spec {
   margin-top: 1.6rem;
