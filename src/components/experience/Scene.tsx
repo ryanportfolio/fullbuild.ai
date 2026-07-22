@@ -54,6 +54,16 @@ import { PocheMaterial, type PocheColors } from './pour/PocheMaterial';
 const BLOOM_LAYER = 11;
 const STAGGER_SPAN = 0.7; // vertical lag (world units) between first + last member
 const DAMP_TIME = 0.12;
+// Erection clock runs LINEARLY (not damped): an exponential approach front-loads
+// the clock, flipping most of the stagger thresholds in the first few hundred ms
+// so the whole frame pops in at once. A constant-rate clock spends the same wall
+// time on every member, so the structure visibly assembles a few lines at a time.
+const ERECT_TIME = 2.6; // s, bare site -> fully framed
+const STRIKE_TIME = 1.0; // s, fully framed -> bare site (scrolling back up)
+// Share of the erection clock each member spends DRAWING its line (grown from its
+// start joint), rather than appearing fully formed. Staggers are compressed to
+// 1 - DRAW_WINDOW so the last member still finishes drawing exactly at e = 1.
+const DRAW_WINDOW = 0.14;
 const CAM_AZ = (28 * Math.PI) / 180; // axonometric azimuth
 const CAM_TILT = (18 * Math.PI) / 180; // axonometric tilt (sectioned axon)
 const FRAME_MARGIN = 1.22; // fill the band cell, clearing the sheet header rules
@@ -119,6 +129,11 @@ interface MemberViz {
   axis1: Vector3; // horizontal member direction (cap local X)
   axis2: Vector3; // horizontal perpendicular (cap local Y)
   bias: number; // erection-order lag subtracted from currentH
+  // Line-drawing basis for clad wires (null for non-clad single segments, which
+  // are pour-revealed via clip planes, not erection-drawn).
+  growLen: number;
+  growDir: Vector3 | null;
+  growP0: Vector3 | null;
   cross: boolean; // does the span change y (can it ever be cut?)
   capLen1: number;
   capLen2: number;
@@ -296,6 +311,9 @@ function buildScene(frame: Frame, pal: Palette): Built {
       axis1,
       axis2,
       bias: member.stagger * STAGGER_SPAN,
+      growLen: len,
+      growDir: member.clad ? dir : null,
+      growP0: member.clad ? p0.clone() : null,
       cross: Math.abs(p1.y - p0.y) > 1e-4,
       capLen1,
       capLen2: member.thickness,
@@ -524,11 +542,27 @@ function Pour({
 
     // ERECTION — the frame assembles member by member (authored order) as
     // STATE 03 arrives, and strikes if the visitor scrolls back above it.
+    // Constant-rate clock, then each clad member DRAWS its line from its start
+    // joint across its DRAW_WINDOW slice — no full-frame pop-in.
     const erectTarget = s.state >= 3 || s.pour > 0 ? 1 : 0;
-    const erecting = damp(erectRef, 'current', erectTarget, 0.45, dt);
-    const e = erectRef.current;
+    let e = erectRef.current;
+    if (e < erectTarget) e = Math.min(erectTarget, e + dt / ERECT_TIME);
+    else if (e > erectTarget) e = Math.max(erectTarget, e - dt / STRIKE_TIME);
+    erectRef.current = e;
+    const erecting = e !== erectTarget;
+    const staggerSpan = 1 - DRAW_WINDOW;
     for (const mv of built.members) {
-      mv.wire.visible = e > mv.member.stagger * 0.96;
+      if (mv.growDir && mv.growP0) {
+        const t = clamp01((e - mv.member.stagger * staggerSpan) / DRAW_WINDOW);
+        mv.wire.visible = t > 0;
+        if (t > 0) {
+          const drawn = Math.max(mv.growLen * t, 1e-3);
+          mv.wire.scale.z = drawn;
+          mv.wire.position.copy(mv.growP0).addScaledVector(mv.growDir, drawn / 2);
+        }
+      } else {
+        mv.wire.visible = e > mv.member.stagger * 0.96;
+      }
     }
 
     const eased = easeInOutCubic(clamp01(s.pour));
@@ -573,7 +607,11 @@ function Pour({
     const pal = paletteRef.current;
     let maxStrength = 0;
     for (const d of built.diamonds) {
-      const erected = e > (d.bias / STAGGER_SPAN) * 0.96 || e > 0.96;
+      // Keystone appears once its bay's roof line has finished drawing (the
+      // stagger axis is compressed by DRAW_WINDOW, matching the member loop).
+      const erected =
+        e > (d.bias / STAGGER_SPAN) * (1 - DRAW_WINDOW) + DRAW_WINDOW * 0.9 ||
+        e >= 1;
       const effApex = h - d.bias;
       const igniteT = smoothstep(d.ridgeY - 0.22, d.ridgeY + 0.02, effApex);
       const gate = s.health[d.href]?.up === false ? 0 : 1; // missing => assume live
