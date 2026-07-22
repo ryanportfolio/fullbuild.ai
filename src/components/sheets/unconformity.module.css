@@ -250,7 +250,13 @@
   border: 2px solid var(--ink-graphite);
   color: var(--ink-graphite);
   padding: 0.8rem 1.1rem;
-  transform: rotate(-3.5deg);
+  /* translateZ + backface-visibility pin the canted stamp (and its red ::before/
+     ::after rings, once the probe lights them) onto a stable compositor layer,
+     so scrolling TRANSLATES the layer instead of incrementally repainting a
+     rotated red box — the incremental repaint is what smears a vertical red
+     trail down the page in Firefox. */
+  transform: rotate(-3.5deg) translateZ(0);
+  backface-visibility: hidden;
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
