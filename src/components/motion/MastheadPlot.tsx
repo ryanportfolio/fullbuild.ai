@@ -24,6 +24,7 @@ const ALPHA_MIN = 64; // ink coverage threshold (0..255) for a module to exist
 const DURATION = 1400; // total plot time (ms)
 const SWEEP_FRAC = 0.82; // fraction of DURATION the pen takes to cross the word
 const JITTER = 170; // per-module reveal lag behind the pen (ms) — the "1 by 1" life
+const PLOT_LEAD = 350; // beat between overlay ready and the pen moving (ms)
 const OFFSET_Y = 0; // vertical nudge to align master baseline to the <h1> (css px)
 const FONT_TIMEOUT = 1600; // if fonts never settle, give up and show plain text
 
@@ -80,6 +81,16 @@ export default function MastheadPlot({ text }: { text: string }) {
     const pen = penRef.current;
     if (!wrap || !h1 || !canvas || !pen) return;
 
+    // The head inline script hid the wordmark pre-paint (data-plot-pending on
+    // <html>) so a slow hydration never flashes the finished word. Once this
+    // effect owns the hide — or provably is not plotting — hand back: clear the
+    // script's safety timer and lift the attribute. Idempotent.
+    const clearPending = () => {
+      const w = window as unknown as { __plotGuard?: number };
+      if (w.__plotGuard) window.clearTimeout(w.__plotGuard);
+      document.documentElement.removeAttribute('data-plot-pending');
+    };
+
     // Fit before anything measures or plots; the canvas master renders at the
     // fitted size, so the handoff stays pixel-aligned.
     let fittedW = fitToMeasure(h1, wrap);
@@ -127,6 +138,7 @@ export default function MastheadPlot({ text }: { text: string }) {
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce) {
+      clearPending(); // script skipped the hide, but clear any stale guard
       settle();
       return; // <h1> already visible; nothing to do
     }
@@ -137,6 +149,10 @@ export default function MastheadPlot({ text }: { text: string }) {
     // after settle never shifts anything below the band.
     h1.style.opacity = '0';
     setDimPhase('hidden');
+    // Inline styles now own the hide (same pre-paint frame — useLayoutEffect
+    // runs before the browser paints), so the attribute can go; every bail path
+    // below restores the inline opacity and the word stands.
+    clearPending();
 
     let raf = 0;
     let resolveTimeout = 0;
@@ -310,7 +326,9 @@ export default function MastheadPlot({ text }: { text: string }) {
       const frame = (t: number) => {
         if (cancelled) return;
         if (!start) start = t;
-        const e = t - start;
+        // Short settle beat before the pen moves — the sheet lands, then the
+        // plot begins, instead of ink appearing the same instant as paint.
+        const e = Math.max(0, t - start - PLOT_LEAD);
 
         // commit every module now due (incremental — canvas is never cleared)
         while (idx < modules.length && modules[idx].reveal <= e) {
@@ -358,6 +376,7 @@ export default function MastheadPlot({ text }: { text: string }) {
 
     return () => {
       cancelled = true;
+      clearPending(); // teardown mid-await must not leave the pre-paint hide up
       ro?.disconnect();
       window.clearTimeout(timeout);
       window.clearTimeout(resolveTimeout);

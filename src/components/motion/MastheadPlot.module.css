@@ -6,6 +6,17 @@
   display: block;
 }
 
+/* Pre-hydration hide: the head inline script stamps data-plot-pending on <html>
+   before first paint (skipped for reduced motion and no-JS), so the finished
+   word never flashes while the bundle loads. MastheadPlot lifts the attribute
+   once its effect owns the hide; a safety timer in the script lifts it if
+   hydration never arrives. The dim row joins the hide — its 'static' phase is
+   otherwise visible from SSR and would flash the same way. */
+:global([data-plot-pending]) .wrap h1,
+:global([data-plot-pending]) .dim {
+  opacity: 0;
+}
+
 /* The plot canvas + pen line sit exactly over the wordmark's text box. Hidden by
    default — the effect turns them on only when it actually starts plotting, so
    reduced-motion, the pre-font-load await, and any bail leave a clean <h1> with
