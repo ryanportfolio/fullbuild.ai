@@ -42,7 +42,7 @@ export default function SheetFrame() {
             <p className={copy.eyebrow}>Sheet S-03 · structure</p>
             <h2 className={copy.heading}>
               <span className={copy.headingGoal}>Goal</span>
-              Verification Loop
+              Verification <span className={copy.headingMark}>Loop</span>
             </h2>
             <p className={copy.lede}>
               Building with AI in a safe, maintainable, and request-aligned way

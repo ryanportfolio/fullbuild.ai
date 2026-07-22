@@ -76,8 +76,19 @@
 
 .headingGoal {
   display: block;
+  font-weight: 800;
   font-size: clamp(2.6rem, 7.5vw, 5.2rem);
   line-height: 0.86;
+}
+
+/* Highlighter pass — a live word marked in accent red, ink flipped to vellum.
+   box-decoration-break keeps the fill continuous if the word wraps. */
+.headingMark {
+  background: var(--accent-live);
+  color: var(--vellum);
+  padding: 0.02em 0.16em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 .prose {
