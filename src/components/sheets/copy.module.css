@@ -110,15 +110,19 @@
   opacity: 0.95;
 }
 
-/* S-02 heading runs 25% larger than the base heading. The long word
-   "BOTTLENECKS" cannot wrap, so the letterforms tighten (normal stretch, no
-   tracking) and a container-query cap shrinks the size just enough at pinched
-   mid viewports to keep the word inside the sheet frame instead of clipping
-   under the rail. 14.8cqw = (1.1 x column width) / word aspect at this style. */
-.headingLarge {
+/* S-02 stacked heading — FitHeading sizes each line's word flush to the end
+   of the copy measure, so the words own the column edge-to-edge. Zero tracking
+   keeps the fit exact (letter-spacing would trail past the last glyph). The
+   font-size here is only the no-JS fallback; the container-query term keeps
+   the unwrappable BOTTLENECKS inside the sheet frame before the fit runs. */
+.headingFit {
   font-stretch: 100%;
   letter-spacing: 0;
   font-size: min(clamp(1.875rem, 4vw, 2.875rem), 14.8cqw);
+  line-height: 1;
+}
+.headingFit span {
+  display: block;
 }
 
 /* S-03 lede runs 25% larger than the base lede. */
