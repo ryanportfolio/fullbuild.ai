@@ -17,7 +17,6 @@ export default function SheetIndex() {
     <div className={x.index}>
       <div className={x.head}>
         <span>Sheet index</span>
-        <span>{PROJECTS.length} drawings</span>
       </div>
       {PROJECTS.map((p) => {
         const live = p.live && isUp(health, p.href);

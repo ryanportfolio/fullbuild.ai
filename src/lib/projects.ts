@@ -256,7 +256,7 @@ export const PROJECTS: Project[] = [
       { label: 'index funds', value: '3', source: 'about page: SPY · QQQ · IWM, long only, end-of-day' },
       { label: 'engine', value: 'v4.7', source: 'about page header: "SPY · QQQ · IWM · ENGINE V4.7 · END-OF-DAY · LONG ONLY"' },
     ],
-    note: 'A rules engine over SPY, QQQ and IWM that buys fear sized to how afraid the market is, trims only into strength, and steps aside when SPY breaks its long-term protection line. End-of-day and long only, no shorts or leverage: a Python engine replays the full price history after every close, publishes plain data files, and every chart on the site benchmarks it against buy-and-hold.',
+    note: 'A rules engine for buying and selling index funds. Python engine replays the full price history after every close, publishes plain data files, and every chart on the site benchmarks it against B&H.',
   },
   {
     // The self-referential anchor, drawn last: this drawing set is itself a

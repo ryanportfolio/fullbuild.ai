@@ -1,7 +1,7 @@
 import { GIT } from '@/lib/git';
 import IfcStamp from './IfcStamp';
 import { FasterGlyph, StrongerGlyph, SecureGlyph } from './SheetGlyphs';
-import { EmailRow, CheckedByRow } from './ContactTriggers';
+import { EmailRow } from './ContactTriggers';
 import u from './unconformity.module.css';
 
 /**
@@ -90,20 +90,31 @@ export default function SheetUnconformity() {
               </div>
             )}
             <p className={u.cloudNote}>
-              Δ{GIT.rev} = the commit you are reading · {GIT.sha}
+              <a
+                className={u.repoLink}
+                href="https://github.com/ryanportfolio/fullbuild.ai"
+                target="_blank"
+                rel="noreferrer"
+              >
+                github.com/ryanportfolio/fullbuild.ai
+              </a>
             </p>
           </div>
 
           <aside className={u.sideCol}>
             <div className={u.specimen}>
               <div className={u.specimenHead}>Title block · contact</div>
-              <ContactRow k="Drawn by" v={null} />
               <EmailRow />
-              <ContactRow k="Based" v={null} />
-              <ContactRow k="Résumé" v={null} />
-              {/* Still the deliberate null — but now it is the hook into
-                  THE COUNTERSIGN: click it and go sign the set on T-01. */}
-              <CheckedByRow />
+              <a
+                className={u.linkedin}
+                href="https://www.linkedin.com/in/ryan-allen-d/"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="LinkedIn, ryan-allen-d"
+              >
+                <LinkedInMark />
+                <span className={u.linkedinLabel}>LinkedIn</span>
+              </a>
             </div>
             <IfcStamp />
           </aside>
@@ -117,14 +128,15 @@ export default function SheetUnconformity() {
   );
 }
 
-function ContactRow({ k, v }: { k: string; v: string | null }) {
+/** LinkedIn wordmark glyph, drawn as filled ink to match the set's linework. */
+function LinkedInMark() {
   return (
-    <div className={u.fieldRow}>
-      <span className={u.fieldKey}>{k}</span>
-      <span className={u.fieldVal} data-empty={v === null ? 'true' : undefined}>
-        {v}
-      </span>
-    </div>
+    <svg className={u.linkedinGlyph} viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"
+      />
+    </svg>
   );
 }
 
