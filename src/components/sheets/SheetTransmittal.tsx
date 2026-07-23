@@ -586,7 +586,7 @@ export default function SheetTransmittal() {
               <dl className={s.notesData}>
                 <div className={s.notesRow}>
                   <dt>Location</dt>
-                  <dd>Chesapeake, VA</dd>
+                  <dd>Virginia</dd>
                 </div>
                 <div className={s.notesRow}>
                   <dt>Response</dt>
