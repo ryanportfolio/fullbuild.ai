@@ -109,7 +109,45 @@ function sampleRun(
   return sweep;
 }
 
-/** Drawn leaf: stalk + two-arc blade outline + midrib. Six segments. */
+/**
+ * Sample a quadratic bezier a → ctrl → b into `steps` line segments. When a
+ * spawn array is given every segment gets the same spawn param `t`, so the
+ * whole curve reveals as one pen stroke.
+ */
+function pushQuad(
+  segs: number[],
+  a: Vec3,
+  ctrl: Vec3,
+  b: Vec3,
+  steps: number,
+  spawn?: number[],
+  t?: number,
+): void {
+  let px = a[0];
+  let py = a[1];
+  let pz = a[2];
+  for (let i = 1; i <= steps; i++) {
+    const s = i / steps;
+    const w0 = (1 - s) * (1 - s);
+    const w1 = 2 * (1 - s) * s;
+    const w2 = s * s;
+    const x = a[0] * w0 + ctrl[0] * w1 + b[0] * w2;
+    const y = a[1] * w0 + ctrl[1] * w1 + b[1] * w2;
+    const z = a[2] * w0 + ctrl[2] * w1 + b[2] * w2;
+    segs.push(px, py, pz, x, y, z);
+    if (spawn && t !== undefined) spawn.push(t);
+    px = x;
+    py = y;
+    pz = z;
+  }
+}
+
+/**
+ * Drawn leaf: stalk + curved blade outline (two bezier flanks) + midrib +
+ * a vein pair; roughly a third of the nodes also throw a coiling tendril.
+ * v2: blades roughly doubled and the flanks curved — the old straight-segment
+ * sprigs read as tacks nailed to the members, not foliage.
+ */
 function pushLeaf(
   segs: number[],
   spawn: number[],
@@ -126,28 +164,59 @@ function pushLeaf(
   const phi = (rng() - 0.5) * 1.1;
   const n2 = norm(add(mul(normal, Math.cos(phi)), mul(b, Math.sin(phi) * flip)));
   const b2 = norm(cross(tan, n2));
-  const stalk = 0.06 + rng() * 0.04;
-  const blade = 0.12 + rng() * 0.08;
+  const stalk = 0.07 + rng() * 0.05;
+  const blade = 0.2 + rng() * 0.14;
   const q = add(p, mul(n2, stalk));
-  const tip = add(q, add(mul(n2, blade), mul(tan, (rng() - 0.5) * 0.06)));
-  const s1 = add(q, add(mul(n2, blade * 0.45), mul(b2, blade * 0.3)));
-  const s2 = add(q, add(mul(n2, blade * 0.45), mul(b2, -blade * 0.3)));
-  const rib = add(q, mul(n2, blade * 0.72));
-  const pairs: [Vec3, Vec3][] = [
-    [p, q], // stalk
-    [q, s1],
-    [s1, tip], // blade side 1
-    [q, s2],
-    [s2, tip], // blade side 2
-    [q, rib], // midrib
-  ];
-  for (const [a, c] of pairs) {
-    segs.push(a[0], a[1], a[2], c[0], c[1], c[2]);
-    spawn.push(t);
+  const tip = add(q, add(mul(n2, blade), mul(tan, (rng() - 0.5) * 0.09)));
+  // Stalk.
+  segs.push(p[0], p[1], p[2], q[0], q[1], q[2]);
+  spawn.push(t);
+  // Blade outline: two curved flanks, widest ~45% up the blade.
+  const wid = blade * (0.36 + rng() * 0.12);
+  const belly = lerp3(q, tip, 0.45);
+  pushQuad(segs, q, add(belly, mul(b2, wid)), tip, 4, spawn, t);
+  pushQuad(segs, q, add(belly, mul(b2, -wid)), tip, 4, spawn, t);
+  // Midrib + one vein pair.
+  const rib = lerp3(q, tip, 0.8);
+  segs.push(q[0], q[1], q[2], rib[0], rib[1], rib[2]);
+  spawn.push(t);
+  const vroot = lerp3(q, tip, 0.3);
+  const vtip1 = add(lerp3(q, tip, 0.55), mul(b2, wid * 0.55));
+  const vtip2 = add(lerp3(q, tip, 0.55), mul(b2, -wid * 0.55));
+  segs.push(vroot[0], vroot[1], vroot[2], vtip1[0], vtip1[1], vtip1[2]);
+  spawn.push(t);
+  segs.push(vroot[0], vroot[1], vroot[2], vtip2[0], vtip2[1], vtip2[2]);
+  spawn.push(t);
+  // Coiling tendril off the node — the mark that sells "vine", not "sprig".
+  if (rng() < 0.34) {
+    const r0 = 0.09 + rng() * 0.05;
+    const turns = 1.4 + rng() * 0.9;
+    const a0 = rng() * Math.PI * 2;
+    const c = add(p, add(mul(n2, Math.cos(a0) * r0), mul(b2, Math.sin(a0) * r0)));
+    const steps = 14;
+    let prev: Vec3 = p;
+    for (let i = 1; i <= steps; i++) {
+      const s = i / steps;
+      const th = a0 + Math.PI + flip * s * turns * Math.PI * 2;
+      const rad = r0 * (1 - 0.78 * s);
+      const pt: Vec3 = add(
+        c,
+        add(mul(n2, Math.cos(th) * rad), mul(b2, Math.sin(th) * rad)),
+      );
+      segs.push(prev[0], prev[1], prev[2], pt[0], pt[1], pt[2]);
+      spawn.push(t);
+      prev = pt;
+    }
   }
 }
 
-/** Petal fan local to the flower center; open splays, bud converges. */
+/**
+ * Petal fan local to the flower center; open splays, bud converges.
+ * v2: petals are CLOSED LOOPS (out one flank, back the other — the same
+ * lesson flora.ts learned: lone rays read as a pitchfork). Open blooms get a
+ * double whorl (8 outer + 5 inner) plus a ring of stamens; buds stay a tight
+ * converged cluster with a midrib.
+ */
 function buildPetals(
   rng: () => number,
   outward: Vec3,
@@ -160,34 +229,57 @@ function buildPetals(
   if (len(b1) < 1e-4) b1 = cross(a, [1, 0, 0]);
   b1 = norm(b1);
   const b2 = norm(cross(a, b1));
-  const petals = open ? 5 : 4;
-  const L = open ? 0.24 + rng() * 0.08 : 0.14 + rng() * 0.05;
-  const lat = open ? 0.9 : 0.16;
-  const ax = open ? 0.7 : 1;
-  const phase0 = rng() * Math.PI * 2;
+  const ZERO: Vec3 = [0, 0, 0];
   const segs: number[] = [];
-  for (let k = 0; k < petals; k++) {
-    const al = phase0 + (k * Math.PI * 2) / petals;
-    const lateral = add(mul(b1, Math.cos(al)), mul(b2, Math.sin(al)));
-    const dir = norm(add(mul(a, ax), mul(lateral, lat)));
-    const ctrl = add(mul(dir, L * 0.55), mul(a, L * 0.18));
-    const tip = mul(dir, L);
-    // quadratic bezier 0 -> ctrl -> tip (petal roots at the bloom center)
-    let px = 0;
-    let py = 0;
-    let pz = 0;
-    for (let i = 1; i <= 4; i++) {
-      const s = i / 4;
-      const w1 = 2 * (1 - s) * s;
-      const w2 = s * s;
-      const x = ctrl[0] * w1 + tip[0] * w2;
-      const y = ctrl[1] * w1 + tip[1] * w2;
-      const z = ctrl[2] * w1 + tip[2] * w2;
-      segs.push(px, py, pz, x, y, z);
-      px = x;
-      py = y;
-      pz = z;
+
+  /** One whorl of closed petal loops around the flower axis. */
+  const whorl = (
+    count: number,
+    L: number,
+    lat: number,
+    ax: number,
+    widF: number,
+    phase: number,
+  ): void => {
+    for (let k = 0; k < count; k++) {
+      const al = phase + (k * Math.PI * 2) / count;
+      const lateral = add(mul(b1, Math.cos(al)), mul(b2, Math.sin(al)));
+      const dir = norm(add(mul(a, ax), mul(lateral, lat)));
+      let sv = cross(a, dir);
+      sv = len(sv) > 1e-3 ? norm(sv) : b1;
+      const tip = mul(dir, L);
+      const mid = add(mul(dir, L * 0.52), mul(a, L * 0.16));
+      const w = L * widF;
+      // Out one flank, back the other — a closed teardrop rooted at center.
+      pushQuad(segs, ZERO, add(mid, mul(sv, w)), tip, 4);
+      pushQuad(segs, tip, sub(mid, mul(sv, w)), ZERO, 4);
     }
+  };
+
+  const phase0 = rng() * Math.PI * 2;
+  if (open) {
+    const L = 0.34 + rng() * 0.1;
+    whorl(8, L, 0.95, 0.55, 0.2, phase0);
+    whorl(5, L * 0.62, 0.5, 1, 0.24, phase0 + Math.PI / 5);
+    // Stamens: short rays up the axis with a tick anther at each tip.
+    const sc = 6;
+    for (let k = 0; k < sc; k++) {
+      const al = phase0 + Math.PI / 6 + (k * Math.PI * 2) / sc;
+      const lateral = add(mul(b1, Math.cos(al)), mul(b2, Math.sin(al)));
+      const dir = norm(add(mul(a, 1), mul(lateral, 0.3)));
+      const tip = mul(dir, L * (0.42 + rng() * 0.12));
+      segs.push(0, 0, 0, tip[0], tip[1], tip[2]);
+      const sv = norm(cross(a, dir));
+      const t1 = add(tip, mul(sv, L * 0.05));
+      const t2 = sub(tip, mul(sv, L * 0.05));
+      segs.push(t1[0], t1[1], t1[2], t2[0], t2[1], t2[2]);
+    }
+  } else {
+    const L = 0.16 + rng() * 0.06;
+    whorl(5, L, 0.18, 1, 0.14, phase0);
+    // Midrib line up the bud axis.
+    const mtip = mul(a, L * 1.05);
+    segs.push(0, 0, 0, mtip[0], mtip[1], mtip[2]);
   }
   return segs;
 }
@@ -309,7 +401,7 @@ export function buildVines(
     const leafSegs: number[] = [];
     const leafSpawn: number[] = [];
     let acc = 0;
-    let nextAt = 0.5 + rng() * 0.3;
+    let nextAt = 0.42 + rng() * 0.26;
     let flip = rng() < 0.5 ? 1 : -1;
     for (let j = 1; j < count - 1; j++) {
       const dx = points[j * 3] - points[(j - 1) * 3];
@@ -318,7 +410,7 @@ export function buildVines(
       acc += Math.hypot(dx, dy, dz);
       if (acc < nextAt) continue;
       acc = 0;
-      nextAt = 0.38 + rng() * 0.34;
+      nextAt = 0.3 + rng() * 0.26;
       if (arcT[j] > 0.9) break; // leave the last reach for the flower
       const pnt: Vec3 = [points[j * 3], points[j * 3 + 1], points[j * 3 + 2]];
       const tangent: Vec3 = [
