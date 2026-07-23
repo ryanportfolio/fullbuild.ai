@@ -30,28 +30,6 @@ is actually live.
   material, and the one accent colour ignites on whatever is live in
   production right now.
 
-## The constraint contract
-
-Rules govern the design, not taste. Coherence reads as intent:
-
-- **Four inks, four meanings, never mixed.** Each pipeline stage owns one
-  colour.
-- **Revision red means exactly one thing:** live in production right now. A
-  runtime health probe ([`src/lib/health.ts`](src/lib/health.ts)) de-ignites
-  red back to graphite if a project goes down, so the accent can never assert
-  what it can't prove.
-- **The title-block `REV` field is the deployed commit**
-  ([`src/lib/git.ts`](src/lib/git.ts)). The sheet revision is the repository
-  revision.
-- **Unknown facts render as empty witness lines**, never invented numbers.
-- **No gradients, no glassmorphism, no backdrop blur.** Depth comes from
-  linework and projection.
-- **Three motion verbs only:** draw · hinge · pour.
-- **Mono is the measured voice** (dimensions, stack, metrics). Prose is never
-  mono.
-- **`prefers-reduced-motion`** collapses the set into four fully composed
-  static sheets.
-
 ## Stack
 
 Next.js (App Router) · TypeScript · React Three Fiber (3D walk-through, in
