@@ -27,7 +27,7 @@ export default function SheetBlueprint() {
     >
       <p className={copy.eyebrow}>Sheet S-02 · design intent</p>
       <FitHeading className={`${copy.heading} ${copy.headingFit}`} lines={['Solving', 'Bottlenecks']} />
-      <p className={copy.lede}>
+      <p className={`${copy.lede} ${copy.ledeLarge}`}>
         Imagination machine <IgnitionGlyph />
       </p>
       <dl className={copy.spec}>
