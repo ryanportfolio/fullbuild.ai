@@ -14,8 +14,7 @@
         (native cursor hidden over the sheet, telemetry reads
         `plotting · visitor`). Coordinates clamp to the frame: the Margin Law
         holds even for the visitor's hand.
-     2. SGN — pointer strokes lay real SVG polylines; a typed name is the
-        fallback mark.
+     2. SGN — pointer strokes lay real SVG polylines; Clear wipes the mark.
      3. TRANSMIT — POST /api/transmit (stub: validates, logs, issues an RFI
         number), the sheet folds into a drawn envelope, the TRANSMITTED stamp
         lands, the pen docks, and the rail site log gains its correspondence
@@ -87,7 +86,6 @@ export default function SheetTransmittal() {
   const [status, setStatus] = useState<{ text: string; fault: boolean }>({ text: '', fault: false });
   const [busy, setBusy] = useState(false);
   const [marks, setMarks] = useState<string[]>([]);
-  const [typed, setTyped] = useState('');
   const drawing = useRef<string[] | null>(null);
 
   phaseRef.current = phase;
@@ -271,7 +269,7 @@ export default function SheetTransmittal() {
     if (!form) return;
     const fd = new FormData(form);
     const val = (k: string) => String(fd.get(k) ?? '').trim();
-    const signed = marks.length ? 'drawn' : typed.trim() ? `typed:${typed.trim()}` : '';
+    const signed = marks.length ? 'drawn' : '';
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val('from')))
       return setStatus({ text: 'FROM needs a reachable address', fault: true });
@@ -529,35 +527,12 @@ export default function SheetTransmittal() {
                       strokeLinejoin="round"
                       vectorEffect="non-scaling-stroke"
                     />
-                    {!marks.length && typed.trim() ? (
-                      <text
-                        x={SGN_W / 2}
-                        y={SGN_H - 36}
-                        textAnchor="middle"
-                        fontFamily="var(--font-display)"
-                        fontSize={26}
-                        fontWeight={600}
-                        fill="currentColor"
-                      >
-                        {typed.trim()}
-                      </text>
-                    ) : null}
                   </svg>
                   <div className={s.sgnMeta}>
-                    <input
-                      className={s.sgnTyped}
-                      value={typed}
-                      onChange={(e) => setTyped(e.target.value)}
-                      maxLength={140}
-                      aria-label="Typed signature fallback"
-                    />
                     <button
                       type="button"
                       className={s.sgnClear}
-                      onClick={() => {
-                        setMarks([]);
-                        setTyped('');
-                      }}
+                      onClick={() => setMarks([])}
                     >
                       Clear
                     </button>
