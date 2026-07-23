@@ -581,12 +581,22 @@ export default function SheetTransmittal() {
               </div>
             </div>
 
-            <aside className={s.notes} aria-label="General notes">
-              <div className={s.notesHead}>General notes</div>
-              <ol>
-                <li>Print in ink</li>
-                <li>One subject per dispatch</li>
-              </ol>
+            <aside className={s.notes} aria-label="About Ryan">
+              <div className={s.notesHead}>Hi, I&apos;m Ryan</div>
+              <dl className={s.notesData}>
+                <div className={s.notesRow}>
+                  <dt>Location</dt>
+                  <dd>Chesapeake, VA</dd>
+                </div>
+                <div className={s.notesRow}>
+                  <dt>Response</dt>
+                  <dd>within 24 h</dd>
+                </div>
+                <div className={s.notesRow}>
+                  <dt>Reads mail</dt>
+                  <dd>personally</dd>
+                </div>
+              </dl>
             </aside>
           </form>
 

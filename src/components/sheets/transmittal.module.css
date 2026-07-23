@@ -308,22 +308,27 @@
   margin-bottom: 0.7rem;
   border-bottom: 1px solid var(--rule);
 }
-.notes ol {
-  list-style: none;
-  counter-reset: gn;
+.notesData {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
 }
-.notes li {
-  counter-increment: gn;
-  display: grid;
-  grid-template-columns: 1.4rem 1fr;
-  gap: 0.4rem;
+.notesRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  column-gap: 0.6rem;
 }
-.notes li::before {
-  content: counter(gn) '.';
-  color: var(--ink-witness);
+.notesRow dt {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.notesRow dd {
+  margin-left: auto;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--ink-graphite);
 }
 
 /* ---- the envelope ------------------------------------------------------- */
