@@ -1,7 +1,6 @@
 import { Line } from '../drafting/Marks';
 import StaticFloor from './StaticFloor';
-import { buildFrame } from '@/lib/pour/frame';
-import { LIVE_PROJECTS } from '@/lib/projects';
+import CapabilitySchedule from './CapabilitySchedule';
 import copy from './copy.module.css';
 import s from './shipped.module.css';
 
@@ -9,8 +8,8 @@ import s from './shipped.module.css';
  * STATE 03 — ENGINEERING. Concrete. The band cell beside this copy is where
  * the REAL structure assembles: the R3F island erects one bent per live
  * project in graphite wireframe as this sheet arrives (the same geometry the
- * next sheet pours). The member schedule below is computed from that exact
- * geometry at build time — the numbers cannot drift from the drawing.
+ * next sheet pours). The capability schedule below draws what has shipped
+ * across the repos — each row's title carries its source.
  */
 const STACK: [string, string][] = [
   ['LVL 4', 'Vercel · edge'],
@@ -20,14 +19,6 @@ const STACK: [string, string][] = [
 ];
 
 export default function SheetFrame() {
-  // Same call the Scene makes — pure and deterministic, so the schedule below
-  // is a true readout of the erected geometry.
-  const frame = buildFrame(LIVE_PROJECTS.map((p) => ({ id: p.id, href: p.href })));
-  const count = (role: string) => frame.members.filter((m) => m.role === role).length;
-  const ties = frame.members.filter((m) => m.role === 'tie' && !m.id.startsWith('purlin') && !m.id.startsWith('girt')).length;
-  const purlins = frame.members.filter((m) => m.id.startsWith('purlin')).length;
-  const girts = frame.members.filter((m) => m.id.startsWith('girt')).length;
-
   return (
     <section id="state-03" data-state="03" data-ink="concrete" className={s.sheet} aria-label="Sheet 03 of 4 · Engineering">
       <div className={s.frame}>
@@ -48,36 +39,7 @@ export default function SheetFrame() {
               Building with AI in a safe, maintainable, and request-aligned way
             </p>
 
-            <dl className={copy.spec} aria-label="Member schedule: computed from the erected geometry">
-              <div className={copy.specRow}>
-                <span className={copy.specKey}>Bents</span>
-                <span className={copy.specVal}>{frame.bays.length}</span>
-              </div>
-              <div className={copy.specRow}>
-                <span className={copy.specKey}>Columns</span>
-                <span className={copy.specVal}>{count('column')}</span>
-              </div>
-              <div className={copy.specRow}>
-                <span className={copy.specKey}>Rafters</span>
-                <span className={copy.specVal}>{count('rafter')}</span>
-              </div>
-              <div className={copy.specRow}>
-                <span className={copy.specKey}>Braces</span>
-                <span className={copy.specVal}>{count('brace')}</span>
-              </div>
-              <div className={copy.specRow}>
-                <span className={copy.specKey}>Ties</span>
-                <span className={copy.specVal}>{ties}</span>
-              </div>
-              <div className={copy.specRow}>
-                <span className={copy.specKey}>Ridge purlins</span>
-                <span className={copy.specVal}>{purlins}</span>
-              </div>
-              <div className={copy.specRow}>
-                <span className={copy.specKey}>Eave girts</span>
-                <span className={copy.specVal}>{girts}</span>
-              </div>
-            </dl>
+            <CapabilitySchedule />
 
             <dl className={copy.spec} aria-label="Structural stack">
               {STACK.map(([lvl, v]) => (
