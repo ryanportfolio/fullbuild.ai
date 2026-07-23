@@ -265,7 +265,7 @@ export const PROJECTS: Project[] = [
     href: 'https://fullbuild.ai',
     repo: null,
     live: true,
-    role: 'idea → design → engineering ⟳ shipped',
+    role: 'idea → design → engineering → audit ⟳ shipped',
     year: "'26",
     stack: ['Next.js', 'React Three Fiber', 'GLSL', 'GSAP'],
     langs: ['TypeScript', 'GLSL'],
