@@ -70,8 +70,11 @@
   color: var(--ink-graphite);
   font-weight: 600;
 }
-/* Wrap unit: the tagline breaks between these groups or not at all. */
+/* Each group owns a line: machine pipeline above, human audit clause below.
+   TaglineFit scales the second line's type so its measure lands exactly at
+   the end of "engineering" on the first. */
 .tagline .taglineGroup {
+  display: block;
   white-space: nowrap;
 }
 /* "audit" is the human step before shipping: graphite like the other words
