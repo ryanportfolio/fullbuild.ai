@@ -548,7 +548,6 @@ export default function SheetTransmittal() {
                       className={s.sgnTyped}
                       value={typed}
                       onChange={(e) => setTyped(e.target.value)}
-                      placeholder="or letter your name here"
                       maxLength={140}
                       aria-label="Typed signature fallback"
                     />
