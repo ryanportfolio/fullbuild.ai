@@ -337,6 +337,15 @@ export default function DrawingSet({
       // rasterize pixel-crisp. The page-turn survives; the blur does not.
       const HINGE_START = 1.6;
       const HINGE_END = -1.4;
+      // Envelope: the tilt relaxes to exactly 0 while the sheet holds the
+      // reading band, ZEROED BEFORE the flatten hysteresis window (env hits 0
+      // by ratio 0.28, under FLAT_OFF = 0.30), so both edges of the
+      // de-composition flip happen at zero angle and read as nothing — no
+      // one-frame tilt snap. Pure function of visible ratio: no time-based
+      // tween, no ownership handoff, and the anti-buzz dead band above stays
+      // untouched.
+      const ENV_LO = 0.12;
+      const ENV_HI = 0.28;
       sections.forEach((sec) => {
         const el = sec as HTMLElement;
         el.style.transformOrigin = 'left center';
@@ -347,9 +356,18 @@ export default function DrawingSet({
           onUpdate: (self) => {
             // The active (crisp) sheet is owned by flatIO — leave it de-composited.
             if (flat.has(el)) return;
-            const angle = HINGE_START + (HINGE_END - HINGE_START) * self.progress;
+            // Visible ratio from ScrollTrigger's cached geometry (travel =
+            // sheet height + viewport for these trigger points) — pure
+            // arithmetic, no getBoundingClientRect forced reflow per tick.
+            const vh = window.innerHeight || 1;
+            const h = Math.max(1, self.end - self.start - vh);
+            const top = vh - self.progress * (vh + h);
+            const visible = Math.max(0, Math.min(top + h, vh) - Math.max(top, 0));
+            const env = 1 - smoothstep(ENV_LO, ENV_HI, visible / h);
+            const angle =
+              (HINGE_START + (HINGE_END - HINGE_START) * self.progress) * env;
             el.style.transformStyle = 'preserve-3d';
-            el.style.transform = `rotateY(${angle.toFixed(2)}deg)`;
+            el.style.transform = `rotateY(${angle.toFixed(3)}deg)`;
           },
         });
       });
