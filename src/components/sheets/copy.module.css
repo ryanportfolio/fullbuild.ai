@@ -62,8 +62,17 @@
   color: var(--ink-graphite);
   font-weight: 600;
 }
-/* The engineering→shipped connector is a CYCLE, not an arrow: the human
-   verification loop before anything ships. Accent red is spent on the glyph
+/* Wrap unit: the tagline breaks between these groups or not at all. */
+.tagline .taglineGroup {
+  white-space: nowrap;
+}
+/* "audit" is the human step before shipping: graphite like the other words
+   (red is never spent on a word); its exit connector is the CYCLE below. */
+.tagline .audit {
+  color: var(--ink-graphite);
+}
+/* The audit→shipped connector is a CYCLE, not an arrow: the human
+   verification loop repeats until it passes. Accent red is spent on the glyph
    (a mark, not a word) — same ink as S-03's red-marked "Loop". */
 .tagline .loopGlyph {
   color: var(--accent-live);

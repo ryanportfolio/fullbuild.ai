@@ -36,13 +36,20 @@ export default function SheetElevation() {
       }
     >
       <p className={copy.tagline}>
-        <span className={copy.s1}>idea</span> →{' '}
-        <span className={copy.s2}>design</span> →{' '}
-        <span className={copy.s3}>engineering</span>{' '}
-        <span className={copy.loopGlyph} role="img" aria-label="verification loop, then">
-          ⟳
+        {/* Two nowrap groups: when the measure runs out, the line breaks once,
+            cleanly, between the machine pipeline and the human audit clause —
+            never mid-arrow. */}
+        <span className={copy.taglineGroup}>
+          <span className={copy.s1}>idea</span> → <span className={copy.s2}>design</span> →{' '}
+          <span className={copy.s3}>engineering</span>
         </span>{' '}
-        <span className={copy.s4}>shipped</span>
+        <span className={copy.taglineGroup}>
+          → <span className={copy.audit}>audit</span>{' '}
+          <span className={copy.loopGlyph} role="img" aria-label="verification loop, then">
+            ⟳
+          </span>{' '}
+          <span className={copy.s4}>shipped</span>
+        </span>
       </p>
       <MaterialLegend />
       <MarginStudy />
