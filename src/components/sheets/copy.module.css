@@ -76,7 +76,41 @@
    (a mark, not a word) — same ink as S-03's red-marked "Loop". */
 .tagline .loopGlyph {
   color: var(--accent-live);
-  font-weight: 600;
+}
+.tagline .loopGlyph svg {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  vertical-align: -0.1em;
+  /* The review loop RUNS: the arc indexes through quarter turns — dwell,
+     tick, dwell — like a carriage detent, not a smooth spinner. */
+  animation: loop-index 6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes loop-index {
+  0%,
+  18% {
+    transform: rotate(0deg);
+  }
+  25%,
+  43% {
+    transform: rotate(90deg);
+  }
+  50%,
+  68% {
+    transform: rotate(180deg);
+  }
+  75%,
+  93% {
+    transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tagline .loopGlyph svg {
+    animation: none;
+  }
 }
 
 .heading {

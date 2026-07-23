@@ -46,7 +46,7 @@ export default function SheetElevation() {
         <span className={copy.taglineGroup}>
           → <span className={copy.audit}>audit</span>{' '}
           <span className={copy.loopGlyph} role="img" aria-label="verification loop, then">
-            ⟳
+            <LoopGlyph />
           </span>{' '}
           <span className={copy.s4}>shipped</span>
         </span>
@@ -54,6 +54,29 @@ export default function SheetElevation() {
       <MaterialLegend />
       <MarginStudy />
     </Sheet>
+  );
+}
+
+/**
+ * The audit cycle, drawn instead of typed: a 270° arc with a drafting
+ * arrowhead, indexing through quarter turns like a mechanical carriage —
+ * the review loop running. CSS drives the motion (copy.module.css); it
+ * parks for prefers-reduced-motion.
+ */
+function LoopGlyph() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      {/* clockwise from 12 o'clock, 270° around to 9 o'clock */}
+      <path
+        d="M 8 2.5 A 5.5 5.5 0 1 1 2.5 8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+      {/* arrowhead at the open end, aimed along the travel (upward) */}
+      <polygon points="0.7,9.2 4.3,9.2 2.5,5.4" fill="currentColor" />
+    </svg>
   );
 }
 
