@@ -225,6 +225,17 @@
   opacity: 0.8;
 }
 
+/* Capability schedule value cell: a drafted icon where a count would sit. */
+.specIcon {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+.specIcon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
 /* honest empty witness value */
 .specVal[data-empty='true']::after {
   content: '';
