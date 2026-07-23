@@ -34,6 +34,11 @@ let rafId = 0;
 let scrollOwnsTime = false;
 let hopOwnsTime = false;
 let controlTarget = initialIndex;
+// Entry-handoff blend state; owned by the spine scroll handler below but
+// read by the resize handler so a resize never snaps a running blend.
+let handoff = null;
+let instantSpine = false;
+let lastSpineTime = initialIndex;
 
 const setPhaseVariables = (tokens) => {
   arrival.style.setProperty("--phase-width", tokens.width);
@@ -41,13 +46,47 @@ const setPhaseVariables = (tokens) => {
   document.documentElement.style.setProperty("--phase-scatter", tokens.scatter);
 };
 
-const renderFrame = () => {
+const stageViews = () => {
+  const width = window.innerWidth;
+  const tier = width <= 760 ? "narrow" : width <= 1080 ? "mid" : "wide";
+  const views = {
+    // Narrow spine: smaller scale so high-scatter states (vapor) stay inside
+    // the 390px frame instead of flooding it edge to edge.
+    narrow: { free: { offsetX: 0, offsetY: -1.15, scale: 0.32 }, spine: { offsetX: 0, offsetY: 0.3, scale: 0.34 } },
+    mid: { free: { offsetX: 0.55, offsetY: -1.25, scale: 0.33 }, spine: { offsetX: -0.3, offsetY: 0.15, scale: 0.45 } },
+    wide: { free: { offsetX: 0.92, offsetY: 0.06, scale: 0.58 }, spine: { offsetX: -0.55, offsetY: 0, scale: 0.5 } },
+  };
+  // Short landscape viewports squeeze the free band between lede and promise
+  // row; pull the artifact further right and down so spikes clear the text.
+  if (tier === "mid" && window.innerHeight <= 760) {
+    views.mid.free = { offsetX: 0.8, offsetY: -1.45, scale: 0.29 };
+  }
+  return views[tier];
+};
+
+// Live camera view, tweened alongside time so free <-> spine handoffs glide
+// instead of snapping. Starts at the free view for the current tier.
+const viewLive = { ...stageViews().free };
+
+const targetView = () => {
+  const views = stageViews();
+  return scrollOwnsTime ? views.spine : views.free;
+};
+
+const fitView = () => {
+  if (!renderer || renderer.isLost()) return;
+  Object.assign(viewLive, targetView());
+  renderer.set({ ...viewLive });
+};
+
+const renderFrame = (view) => {
   if (renderer && !renderer.isLost()) {
     renderer.set({
       time: live.time,
       scatter: live.scatter,
       heat: live.heat,
       spin: live.spin,
+      ...(view ? { offsetX: view.offsetX, offsetY: view.offsetY, scale: view.scale } : null),
     });
   }
   if (clock) clock.textContent = `t+${live.time.toFixed(2)}`;
@@ -62,12 +101,14 @@ const tweenTo = (target, { duration = 760 } = {}) => {
     const tokens = resolvePhase(Math.round(target));
     live.scatter = tokens.scatter;
     live.heat = tokens.heat;
-    renderFrame();
+    Object.assign(viewLive, targetView());
+    renderFrame(viewLive);
     return;
   }
-  const from = { time: live.time, scatter: live.scatter, heat: live.heat, spin: live.spin };
+  const from = { time: live.time, scatter: live.scatter, heat: live.heat, spin: live.spin, ...viewLive };
   const tokens = interpolatePhase(Math.round(live.time), Math.round(target), 1);
-  const to = { time: target, scatter: tokens.scatter, heat: tokens.heat, spin: -0.55 + (target - from.time) * 0.35 };
+  const view = targetView();
+  const to = { time: target, scatter: tokens.scatter, heat: tokens.heat, spin: -0.55 + (target - from.time) * 0.35, ...view };
   const start = performance.now();
   const step = (now) => {
     const progress = Math.min(1, (now - start) / duration);
@@ -76,7 +117,10 @@ const tweenTo = (target, { duration = 760 } = {}) => {
     live.scatter = from.scatter + (to.scatter - from.scatter) * eased;
     live.heat = from.heat + (to.heat - from.heat) * eased;
     live.spin = from.spin + (to.spin - from.spin) * eased;
-    renderFrame();
+    viewLive.offsetX = from.offsetX + (to.offsetX - from.offsetX) * eased;
+    viewLive.offsetY = from.offsetY + (to.offsetY - from.offsetY) * eased;
+    viewLive.scale = from.scale + (to.scale - from.scale) * eased;
+    renderFrame(viewLive);
     if (progress < 1) rafId = requestAnimationFrame(step);
   };
   rafId = requestAnimationFrame(step);
@@ -230,30 +274,6 @@ if (renderer && !reducedMotion) {
   arrival.addEventListener("pointercancel", release);
 }
 
-const stageViews = () => {
-  const width = window.innerWidth;
-  const tier = width <= 760 ? "narrow" : width <= 1080 ? "mid" : "wide";
-  const views = {
-    // Narrow spine: smaller scale so high-scatter states (vapor) stay inside
-    // the 390px frame instead of flooding it edge to edge.
-    narrow: { free: { offsetX: 0, offsetY: -1.15, scale: 0.32 }, spine: { offsetX: 0, offsetY: 0.3, scale: 0.34 } },
-    mid: { free: { offsetX: 0.55, offsetY: -1.25, scale: 0.33 }, spine: { offsetX: -0.3, offsetY: 0.15, scale: 0.45 } },
-    wide: { free: { offsetX: 0.92, offsetY: 0.06, scale: 0.58 }, spine: { offsetX: -0.55, offsetY: 0, scale: 0.5 } },
-  };
-  // Short landscape viewports squeeze the free band between lede and promise
-  // row; pull the artifact further right and down so spikes clear the text.
-  if (tier === "mid" && window.innerHeight <= 760) {
-    views.mid.free = { offsetX: 0.8, offsetY: -1.45, scale: 0.29 };
-  }
-  return views[tier];
-};
-
-const fitView = () => {
-  if (!renderer || renderer.isLost()) return;
-  const views = stageViews();
-  renderer.set(scrollOwnsTime ? views.spine : views.free);
-};
-
 // End-of-track handoff: the artifact shrinks and hops down the shop-rules
 // stagger, landing on each rule's top border, instead of cutting out.
 // Screen px <-> renderer offsets via the same perspective the renderer uses:
@@ -332,6 +352,53 @@ const renderHop = () => {
 // Scroll = time through the manufacture spine; controls own time elsewhere.
 if (track) {
   let ticking = false;
+
+  // Entry handoff: when scroll takes ownership, blend from the committed
+  // arrival state (time, material, camera) into the scroll-derived state over
+  // HANDOFF_MS instead of snapping both in one frame. The scroll target keeps
+  // moving while the blend runs, so each frame re-reads it and converges.
+  const HANDOFF_MS = 900;
+
+  const spineFrame = (now) => {
+    cancelAnimationFrame(rafId);
+    const rect = track.getBoundingClientRect();
+    const viewport = window.innerHeight;
+    const progress = Math.min(1, Math.max(0, -rect.top / (rect.height - viewport)));
+    track.classList.toggle("is-track-ending", progress > 0.985);
+    const target = progress * 3;
+    lastSpineTime = target;
+    const lower = Math.floor(Math.min(2.99, target));
+    const tokens = interpolatePhase(lower, lower + 1, target - lower);
+    if (handoff) {
+      const p = Math.min(1, (now - handoff.start) / HANDOFF_MS);
+      const eased = easeInOut(p);
+      const f = handoff.from;
+      const spine = stageViews().spine;
+      live.time = f.time + (target - f.time) * eased;
+      live.scatter = f.scatter + (tokens.scatter - f.scatter) * eased;
+      live.heat = f.heat + (tokens.heat - f.heat) * eased;
+      viewLive.offsetX = f.offsetX + (spine.offsetX - f.offsetX) * eased;
+      viewLive.offsetY = f.offsetY + (spine.offsetY - f.offsetY) * eased;
+      viewLive.scale = f.scale + (spine.scale - f.scale) * eased;
+      renderFrame(viewLive);
+      if (p >= 1) {
+        handoff = null;
+      } else {
+        // Keep blending between scroll events; __capture.freeze() starves
+        // this the same way it starves tweens.
+        rafId = requestAnimationFrame((t) => {
+          if (scrollOwnsTime && handoff) spineFrame(t);
+        });
+      }
+    } else {
+      live.time = target;
+      live.scatter = tokens.scatter;
+      live.heat = tokens.heat;
+      renderFrame();
+    }
+    return target;
+  };
+
   const onScroll = () => {
     if (ticking) return;
     ticking = true;
@@ -354,30 +421,33 @@ if (track) {
       if (inside && !reducedMotion) {
         if (!scrollOwnsTime) {
           scrollOwnsTime = true;
-          fitView();
+          cancelAnimationFrame(rafId);
+          if (instantSpine) {
+            // Deep-link review jumps land settled; no entry morph.
+            instantSpine = false;
+            fitView();
+          } else {
+            handoff = {
+              start: performance.now(),
+              from: { time: live.time, scatter: live.scatter, heat: live.heat, ...viewLive },
+            };
+          }
         }
-        const progress = Math.min(1, Math.max(0, -rect.top / (rect.height - viewport)));
-        track.classList.toggle("is-track-ending", progress > 0.985);
-        const target = progress * 3;
-        cancelAnimationFrame(rafId);
-        live.time = target;
-        const lower = Math.floor(Math.min(2.99, target));
-        const tokens = interpolatePhase(lower, lower + 1, target - lower);
-        live.scatter = tokens.scatter;
-        live.heat = tokens.heat;
-        renderFrame();
+        const target = spineFrame(performance.now());
         const nearest = Math.round(target);
         panels.forEach((panel, index) => panel.toggleAttribute("data-active", index === nearest));
         document.documentElement.dataset.activePhase = resolvePhase(nearest).id;
       } else if (scrollOwnsTime) {
         scrollOwnsTime = false;
-        fitView();
+        handoff = null;
+        // View glides back to the free dock inside the tween below instead
+        // of snapping.
         // Keep the tail faded when leaving past the bottom; only a top exit
         // (scrolling back up) restores the panel.
         if (rect.top > 0) track.classList.remove("is-track-ending");
         // Commit the last scrolled stage (gate still holds) so console,
         // phase, and artifact agree after the spine releases.
-        const nearest = Math.round(live.time);
+        const nearest = Math.round(lastSpineTime);
         if (!machine.set(Math.min(nearest, 2))) {
           const state = machine.getState();
           panels.forEach((panel, index) => panel.toggleAttribute("data-active", index === state.index));
@@ -401,6 +471,7 @@ if (track) {
   const deepLink = new URLSearchParams(window.location.search).get("t");
   if (deepLink !== null) {
     const target = Math.min(3, Math.max(0, Number(deepLink) || 0));
+    instantSpine = true;
     requestAnimationFrame(() => {
       const docTop = track.getBoundingClientRect().top + window.scrollY;
       window.scrollTo({ top: docTop + (track.offsetHeight - window.innerHeight) * (target / 3), behavior: "instant" });
@@ -413,6 +484,9 @@ window.addEventListener("resize", () => {
     renderHop();
     return;
   }
+  // Mid-handoff: the blend re-reads stageViews() every frame, so it adapts
+  // to the new tier on its own; a fitView here would snap the camera.
+  if (handoff) return;
   fitView();
   renderFrame();
 });
