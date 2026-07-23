@@ -239,6 +239,52 @@
   height: 1.5rem;
 }
 
+/* Capability rows: the label owns the row; the icon cell only takes what it
+   needs, so long labels wrap as late as possible. */
+.specRowCap {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.specNowrap {
+  white-space: nowrap;
+}
+
+/* A schedule row that resolves to a real artifact: drafted hover, no red
+   (revision-red stays reserved for live-in-production semantics). */
+.specLink {
+  text-decoration: none;
+  color: inherit;
+}
+.specLink .specKey {
+  transition: color 0.2s ease;
+}
+.specLink:hover .specKey,
+.specLink:focus-visible .specKey {
+  color: var(--ink-graphite);
+}
+.specLink:focus-visible {
+  outline: 1px dashed var(--rule-strong);
+  outline-offset: 2px;
+}
+/* Plotted ↗: the row states where its proof lives. */
+.specMark {
+  margin-left: 0.4rem;
+  font-size: 0.85em;
+  color: var(--ink-witness);
+  opacity: 0.7;
+  display: inline-block;
+  transition: opacity 0.2s ease, transform 0.2s var(--ease-draw, ease);
+}
+.specLink:hover .specMark,
+.specLink:focus-visible .specMark {
+  opacity: 1;
+  transform: translate(1px, -1px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .specMark {
+    transition: opacity 0.15s ease;
+  }
+}
+
 /* honest empty witness value */
 .specVal[data-empty='true']::after {
   content: '';
