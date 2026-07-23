@@ -38,7 +38,10 @@ export default function SheetElevation() {
       <p className={copy.tagline}>
         <span className={copy.s1}>idea</span> →{' '}
         <span className={copy.s2}>design</span> →{' '}
-        <span className={copy.s3}>engineering</span> →{' '}
+        <span className={copy.s3}>engineering</span>{' '}
+        <span className={copy.loopGlyph} role="img" aria-label="verification loop, then">
+          ⟳
+        </span>{' '}
         <span className={copy.s4}>shipped</span>
       </p>
       <MaterialLegend />

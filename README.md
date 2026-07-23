@@ -4,7 +4,7 @@
 
 # fullbuild.ai
 
-**[fullbuild.ai](https://fullbuild.ai)** · idea → design → engineering → shipped
+**[fullbuild.ai](https://fullbuild.ai)** · idea → design → engineering ⟳ shipped
 
 A portfolio built as an architect's working drawing set. Scrolling advances a
 set of four sheets, and the drawing builds itself as you go: the same building

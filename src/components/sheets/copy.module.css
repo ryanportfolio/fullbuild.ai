@@ -62,6 +62,13 @@
   color: var(--ink-graphite);
   font-weight: 600;
 }
+/* The engineering→shipped connector is a CYCLE, not an arrow: the human
+   verification loop before anything ships. Accent red is spent on the glyph
+   (a mark, not a word) — same ink as S-03's red-marked "Loop". */
+.tagline .loopGlyph {
+  color: var(--accent-live);
+  font-weight: 600;
+}
 
 .heading {
   font-family: var(--font-display);
