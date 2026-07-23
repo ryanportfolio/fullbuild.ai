@@ -38,14 +38,6 @@ progress) · GSAP + Lenis · Zustand · CSS Modules
 Tailwind is deliberately absent. With no utility classes in the build, no
 gradient or blur utility can leak in and break the contract.
 
-## Adding real work
-
-All shipped work lives in one typed file:
-[`src/lib/projects.ts`](src/lib/projects.ts). Append an entry with a real
-title, real `href`, real metrics, and `live: true`. The build sizes STAGE 04
-to what actually exists, and a metric with `value: null` renders an honest
-empty witness line instead of an invented number.
-
 ## Develop
 
 ```bash
