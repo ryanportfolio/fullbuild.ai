@@ -1,17 +1,30 @@
+import { PROJECTS } from '../../lib/projects';
 import copy from './copy.module.css';
 
 /**
  * Capability schedule — what these hands have shipped, drawn instead of
  * counted. Each row pairs a mono label with a drafted line icon in the value
- * cell; the title attribute carries the source repo, so the sheet keeps
- * proving its own figures. Icons follow the Marks register: currentColor
- * strokes, no fills except node dots, drafting-weight lines.
+ * cell. Rows resolve their link through lib/projects.ts (the single typed
+ * source of truth), preferring the live site over the public repo, so a
+ * capability can never point somewhere the shipped sheet doesn't. The title
+ * attribute carries the source proof. Icons follow the Marks register:
+ * currentColor strokes, no fills except node dots, drafting-weight lines.
  */
-const CAPS: { key: string; label: string; source: string; icon: React.ReactNode }[] = [
+const CAPS: {
+  key: string;
+  label: string;
+  source: string;
+  /** id in PROJECTS; href resolves to project.href ?? project.repo. */
+  projectId?: string;
+  /** Explicit target when the project entry can't provide one. */
+  href?: string;
+  icon: React.ReactNode;
+}[] = [
   {
     key: 'rag',
     label: 'RAG retrieval',
-    source: 'Truenote: hybrid vector + full-text + trigram',
+    source: 'Truenote: hybrid vector + BM25 + trigram, Cohere rerank',
+    projectId: 'truenote',
     icon: (
       <>
         {/* document with a fold, lens over its corner */}
@@ -23,9 +36,26 @@ const CAPS: { key: string; label: string; source: string; icon: React.ReactNode 
     ),
   },
   {
+    key: 'cited',
+    label: 'Cited answers',
+    source: 'Truenote: every answer cites its sources or refuses outright',
+    projectId: 'truenote',
+    icon: (
+      <>
+        {/* quote strokes over text lines; the short last line is the citation */}
+        <path d="M5.5 3 L4 6.5" />
+        <path d="M8.5 3 L7 6.5" />
+        <path d="M4 10 H16" />
+        <path d="M4 13 H16" />
+        <path d="M4 16 H10" />
+      </>
+    ),
+  },
+  {
     key: 'council',
     label: 'Model council',
-    source: 'CoreWise: six-model council over transcripts',
+    source: 'CoreWise: six-model council over extracted transcripts',
+    projectId: 'corewise',
     icon: (
       <>
         {/* five nodes ringed around a center, spoked */}
@@ -46,9 +76,24 @@ const CAPS: { key: string; label: string; source: string; icon: React.ReactNode 
     ),
   },
   {
+    key: 'research',
+    label: 'Deep research',
+    source: 'CoreWise: web + academic retrieval over Linkup and OpenAlex',
+    projectId: 'corewise',
+    icon: (
+      <>
+        {/* globe: equator and one meridian */}
+        <circle cx="10" cy="10" r="6.5" />
+        <path d="M3.5 10 H16.5" />
+        <path d="M10 3.5 C13 6 13 14 10 16.5 C7 14 7 6 10 3.5" />
+      </>
+    ),
+  },
+  {
     key: 'evals',
     label: 'Deterministic evals',
-    source: 'tracebench + willaicite: no LLM in the scoring path',
+    source: 'tracebench: weighted-checklist grading, no LLM in the scoring path',
+    projectId: 'tracebench',
     icon: (
       <>
         {/* gauge: dial arc, ticks, needle parked at pass */}
@@ -62,9 +107,24 @@ const CAPS: { key: string; label: string; source: string; icon: React.ReactNode 
     ),
   },
   {
+    key: 'geo',
+    label: 'Answer-engine audit',
+    source: 'willaicite: 9-dimension GEO score, deterministic, no LLM calls',
+    projectId: 'willaicite',
+    icon: (
+      <>
+        {/* crosshair over a ranked list */}
+        <circle cx="7" cy="10" r="4.5" />
+        <path d="M7 4 V6.5 M7 13.5 V16 M1.5 10 H4 M10 10 H12.5" />
+        <path d="M14.5 6 H18 M14.5 10 H18 M14.5 14 H16.5" />
+      </>
+    ),
+  },
+  {
     key: 'gates',
     label: 'CI merge gates',
     source: 'SDLC Audit: plan, build, review, gate, merge',
+    projectId: 'agentic-audit',
     icon: (
       <>
         {/* rails with a gate valve between them */}
@@ -78,7 +138,8 @@ const CAPS: { key: string; label: string; source: string; icon: React.ReactNode 
   {
     key: 'backtest',
     label: 'Backtest engine',
-    source: 'Kine Fractal: full-history replay after every close',
+    source: 'Kine Fractal: full-history replay after every close, 513 tests',
+    projectId: 'kinefractal',
     icon: (
       <>
         {/* axes and a stepped equity line */}
@@ -90,7 +151,8 @@ const CAPS: { key: string; label: string; source: string; icon: React.ReactNode 
   {
     key: 'tokens',
     label: 'Token pipeline',
-    source: 'RTK + savetokens.tips: 79.5% filtered, measured',
+    source: 'RTK + STK + savetokens.tips: 79.5% filtered, measured',
+    projectId: 'savetokens',
     icon: (
       <>
         {/* funnel with the filtered stream leaving the spout */}
@@ -102,7 +164,8 @@ const CAPS: { key: string; label: string; source: string; icon: React.ReactNode 
   {
     key: 'speech',
     label: 'Speech capture',
-    source: 'Local PTT: CPU-only, fully offline',
+    source: 'Local PTT: int8 Whisper on CPU, fully offline',
+    projectId: 'whisper-ptt',
     icon: (
       <>
         {/* waveform bars about the centerline */}
@@ -115,9 +178,29 @@ const CAPS: { key: string; label: string; source: string; icon: React.ReactNode 
     ),
   },
   {
+    key: 'firewall',
+    label: 'Default-deny firewall',
+    source: 'SecureWall: WFP enforcement, scoped outbound prompts',
+    projectId: 'securewall',
+    icon: (
+      <>
+        {/* brick courses, staggered */}
+        <path d="M3.5 5 H16.5 V15.5 H3.5 Z" />
+        <path d="M3.5 8.5 H16.5" />
+        <path d="M3.5 12 H16.5" />
+        <path d="M10 5 V8.5" />
+        <path d="M6.75 8.5 V12" />
+        <path d="M13.25 8.5 V12" />
+        <path d="M10 12 V15.5" />
+      </>
+    ),
+  },
+  {
     key: 'r3f',
     label: 'Realtime 3D',
     source: 'fullbuild.ai: R3F + GLSL, the frame this sheet erects',
+    // Linking this page to itself would be circular; the public repo is the proof.
+    href: 'https://github.com/ryanportfolio/fullbuild.ai',
     icon: (
       <>
         {/* isometric cube, the same solid the band cell pours */}
@@ -129,19 +212,57 @@ const CAPS: { key: string; label: string; source: string; icon: React.ReactNode 
   },
 ];
 
+function resolveHref(c: (typeof CAPS)[number]): string | null {
+  if (c.href) return c.href;
+  const p = c.projectId ? PROJECTS.find((x) => x.id === c.projectId) : undefined;
+  return p ? (p.href ?? p.repo) : null;
+}
+
 export default function CapabilitySchedule() {
   return (
     <dl className={copy.spec} aria-label="Capability schedule: built and shipped across the repos">
-      {CAPS.map((c) => (
-        <div key={c.key} className={copy.specRow} title={c.source}>
-          <span className={copy.specKey}>{c.label}</span>
-          <span className={copy.specIcon}>
-            <svg viewBox="0 0 20 20" role="img" aria-label={c.label} fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-              {c.icon}
-            </svg>
-          </span>
-        </div>
-      ))}
+      {CAPS.map((c) => {
+        const href = resolveHref(c);
+        const words = c.label.split(' ');
+        const last = words.pop();
+        const cells = (
+          <>
+            <span className={copy.specKey}>
+              {words.length > 0 && `${words.join(' ')} `}
+              {/* The plotted ↗ stays glued to the last word across wraps. */}
+              <span className={copy.specNowrap}>
+                {last}
+                {href && <span className={copy.specMark} aria-hidden="true">↗</span>}
+              </span>
+            </span>
+            <span className={copy.specIcon}>
+              <svg viewBox="0 0 20 20" role="img" aria-label={c.label} fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                {c.icon}
+              </svg>
+            </span>
+          </>
+        );
+        return (
+          <div key={c.key}>
+            {href ? (
+              <a
+                className={`${copy.specRow} ${copy.specRowCap} ${copy.specLink}`}
+                href={href}
+                target="_blank"
+                rel="noreferrer"
+                title={c.source}
+                aria-label={`${c.label}. ${c.source}`}
+              >
+                {cells}
+              </a>
+            ) : (
+              <div className={`${copy.specRow} ${copy.specRowCap}`} title={c.source}>
+                {cells}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </dl>
   );
 }

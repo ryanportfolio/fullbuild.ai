@@ -11,11 +11,42 @@ import s from './shipped.module.css';
  * next sheet pours). The capability schedule below draws what has shipped
  * across the repos — each row's title carries its source.
  */
-const STACK: [string, string][] = [
-  ['LVL 4', 'Vercel · edge'],
-  ['LVL 3', 'GSAP · Lenis'],
-  ['LVL 2', 'R3F · GLSL'],
-  ['LVL 1', 'Next.js · TS'],
+/**
+ * Structural stack, read as a building: floors are construction layers from
+ * footing to envelope, not a difficulty ranking. Grouped from a full inventory
+ * of the repos (2026-07-23); each row's title carries its proof.
+ */
+const STACK: { lvl: string; name: string; items: string; source: string }[] = [
+  {
+    lvl: 'L5',
+    name: 'Envelope',
+    items: 'Vercel · Actions · CI gates',
+    source: 'Ship and gate: Vercel (fullbuild.ai, savetokens.tips), Replit autoscale (Truenote), GitHub Pages (tracebench), GitHub Actions CI and merge gates (SDLC Audit, SecureWall releases)',
+  },
+  {
+    lvl: 'L4',
+    name: 'Finish',
+    items: 'R3F · GLSL · GSAP · Lenis',
+    source: 'Motion and realtime 3D: the R3F island and GLSL on this sheet, Three.js at CoreWise Academy, canvas game engine in PixelSwarm',
+  },
+  {
+    lvl: 'L3',
+    name: 'Services',
+    items: 'Postgres · pgvector · Claude · GPT · Gemini',
+    source: 'Data and AI run through the walls: pgvector + pg_trgm retrieval (Truenote), SQLite FTS5 (research mirror), model council (CoreWise), Whisper STT (Local PTT)',
+  },
+  {
+    lvl: 'L2',
+    name: 'Frame',
+    items: 'Next.js · React · Astro · Node · Tauri',
+    source: 'Runtimes and UI frames: Next.js (fullbuild.ai), React 19 (Truenote, PixelSwarm), Astro (CoreWise Academy), Express + Drizzle (CoreWise), Tauri 2 desktop (PixelSwarm)',
+  },
+  {
+    lvl: 'L1',
+    name: 'Footing',
+    items: 'TypeScript · Python · Rust · Go · C#',
+    source: 'Languages the work is poured in: TypeScript across the stack, Python (Kine Fractal, tracebench, Local PTT), Rust (RTK, STK), Go (research mirror), C# (SecureWall, ZipFlow)',
+  },
 ];
 
 export default function SheetFrame() {
@@ -41,11 +72,11 @@ export default function SheetFrame() {
 
             <CapabilitySchedule />
 
-            <dl className={copy.spec} aria-label="Structural stack">
-              {STACK.map(([lvl, v]) => (
-                <div key={lvl} className={copy.specRow}>
-                  <span className={copy.specKey}>{lvl}</span>
-                  <span className={copy.specVal}>{v}</span>
+            <dl className={copy.spec} aria-label="Structural stack: construction layers from footing to envelope">
+              {STACK.map((f) => (
+                <div key={f.lvl} className={copy.specRow} title={f.source}>
+                  <span className={copy.specKey}>{f.lvl} · {f.name}</span>
+                  <span className={copy.specVal}>{f.items}</span>
                 </div>
               ))}
             </dl>
@@ -70,8 +101,8 @@ function IsoFrame() {
   const oy = 330;
   const ex: [number, number] = [70, 40];
   const ey: [number, number] = [-70, 40];
-  const up = -56;
-  const stories = 4;
+  const up = -48;
+  const stories = STACK.length;
 
   const P = (i: number, j: number, k: number): [number, number] => [
     ox + i * ex[0] + j * ey[0],
@@ -121,11 +152,11 @@ function IsoFrame() {
       {rings}
       {columns}
       {braces}
-      {STACK.map(([lvl], idx) => {
+      {STACK.map((f, idx) => {
         const k = stories - idx; // top-down
         const [px, py] = P(1, 0, k);
         return (
-          <g key={lvl}>
+          <g key={f.lvl}>
             <Line x1={px - 3.5} y1={py - 3.5} x2={px + 3.5} y2={py + 3.5} ink="graphite" w={0.9} o={stories * 3 + idx} />
             <Line x1={px} y1={py} x2={px + 40} y2={py} ink="graphite" w={0.7} o={stories * 3 + idx} />
             <text
@@ -137,7 +168,7 @@ function IsoFrame() {
               dominantBaseline="middle"
               style={{ letterSpacing: '0.03em' }}
             >
-              {lvl}
+              {f.lvl} {f.name.toUpperCase()}
             </text>
           </g>
         );
