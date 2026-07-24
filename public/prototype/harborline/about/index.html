@@ -21,6 +21,7 @@
                         <span class="brand-name">Harborline</span>
                         <span class="brand-sub">Marine outfitting · Chesapeake, Virginia</span>
                     </a>
+                    <p class="header-availability">Next haul week <span class="cms-value" data-fb-field="company.next_haul_week">17 August</span></p>
                     <button class="nav-toggle" aria-expanded="false" aria-controls="site-nav">
                         <span class="sr-only">Menu</span>
                         <span class="nav-toggle-bar"></span>
@@ -34,6 +35,10 @@
                             
                                 <li><a href="/prototype/harborline/contact">Contact</a></li>
                             
+                                <li><a href="/prototype/harborline/services">Services</a></li>
+                            
+                                <li><a href="/prototype/harborline/notices">Notices</a></li>
+                            
                             <li><a class="nav-cta" href="/prototype/harborline/contact">Book a haul-out</a></li>
                         </ul>
                     </nav>
@@ -41,16 +46,93 @@
             </header>
 
             <main id="main">
-                <section class="page">
-    <div class="page-inner">
+                <section class="page-head">
+    <div class="page-head-inner">
         <p class="eyebrow">Harborline · Chesapeake, Virginia</p>
-        <h1>About</h1>
-        <div class="prose">
+        <h1 data-fb-field="pages.title">About</h1>
+        <div class="prose" data-fb-field="pages.content">
             <p>Harborline started in 1987 as a two-man rigging shop on Dockside Lane. Nearly four decades later we run a full-service yard with a 35-ton travel lift, a certified engine bay, and a crew that averages fifteen years on the water.</p>
 <p>We work on sail and power, wood and glass, weekend skiffs and offshore cruisers. If it floats on the Chesapeake, someone on our dock has fixed one like it.</p>
 <p>Our promise is simple: honest estimates, straight timelines, and no surprise line items when you pick up the boat.</p>
 
         </div>
+    </div>
+</section>
+
+<section class="yard-spec" data-fb-region="company" data-fb-query="global company">
+    <header class="section-head">
+        <p class="eyebrow">The yard</p>
+        <h2>What we can take</h2>
+    </header>
+
+    <div class="spec-columns">
+        <dl class="spec">
+            <div class="spec-row">
+                <dt>Travel lift</dt>
+                <dd class="cms-value" data-fb-field="company.lift_tons">35 tons</dd>
+            </div>
+            <div class="spec-row">
+                <dt>Maximum LOA</dt>
+                <dd class="cms-value" data-fb-field="company.max_loa">62 ft</dd>
+            </div>
+            <div class="spec-row">
+                <dt>Maximum beam</dt>
+                <dd class="cms-value" data-fb-field="company.max_beam">18 ft</dd>
+            </div>
+            <div class="spec-row">
+                <dt>Sill depth</dt>
+                <dd class="cms-value" data-fb-field="company.sill_depth">8 ft at MLLW</dd>
+            </div>
+        </dl>
+
+        <dl class="spec">
+            <div class="spec-row">
+                <dt>Covered engine bays</dt>
+                <dd class="cms-value" data-fb-field="company.engine_bays">2</dd>
+            </div>
+            <div class="spec-row">
+                <dt>Dry storage rows</dt>
+                <dd class="cms-value" data-fb-field="company.storage_rows">140</dd>
+            </div>
+            <div class="spec-row">
+                <dt>Paint shed</dt>
+                <dd>Climate controlled</dd>
+            </div>
+            <div class="spec-row">
+                <dt>Rigging loft</dt>
+                <dd>On site, swaging to 1/2 in</dd>
+            </div>
+        </dl>
+
+        <dl class="spec">
+            <div class="spec-row">
+                <dt>Established</dt>
+                <dd class="cms-value" data-fb-field="company.established">1987</dd>
+            </div>
+            <div class="spec-row">
+                <dt>Crew</dt>
+                <dd class="cms-value" data-fb-field="company.crew">19</dd>
+            </div>
+            <div class="spec-row">
+                <dt>Hours</dt>
+                <dd data-fb-field="company.hours">Monday to Saturday, 7am to 5pm</dd>
+            </div>
+            <div class="spec-row">
+                <dt>Hail</dt>
+                <dd>VHF 16, working 68</dd>
+            </div>
+        </dl>
+    </div>
+</section>
+
+<section class="chart-note">
+    <div class="note-box">
+        <p class="note-label">Note</p>
+        <div class="note-body">
+            <h2>Bring the boat, not the paperwork</h2>
+            <p>Every job starts with a dockside look and ends with a written estimate. Nothing gets done that you have not agreed to.</p>
+        </div>
+        <a class="btn btn-primary" href="/prototype/harborline/contact">Book a haul-out</a>
     </div>
 </section>
 
@@ -85,6 +167,15 @@ Chesapeake, VA 23320</p>
             </footer>
         </div>
 
+        <div class="fb-switch" data-fb-switch>
+            <p class="fb-switch-label">View</p>
+            <div class="fb-switch-buttons" role="group" aria-label="Page view">
+                <button type="button" data-fb-mode-button="hull" aria-pressed="true">Hull</button>
+                <button type="button" data-fb-mode-button="structure" aria-pressed="false">Structure</button>
+            </div>
+        </div>
+
+        <script type="application/json" id="fb-schema">{"generated_from":"resources/blueprints","rendered_detected_from":"data-fb-field stamps in resources/views","namespaces":{"pages":{"kind":"collection","handle":"pages","title":"Pages","entries":5,"fields":[{"handle":"title","type":"text","display":"Title","parent":null,"rendered":true},{"handle":"content","type":"markdown","display":"Content","parent":null,"rendered":true},{"handle":"hero_eyebrow","type":"text","display":"Hero eyebrow","parent":null,"rendered":true},{"handle":"hero_heading","type":"text","display":"Hero heading","parent":null,"rendered":true},{"handle":"hero_subheading","type":"textarea","display":"Hero subheading","parent":null,"rendered":true},{"handle":"hero_cta_label","type":"text","display":"Primary CTA label","parent":null,"rendered":false},{"handle":"hero_cta_url","type":"text","display":"Primary CTA URL","parent":null,"rendered":false},{"handle":"hero_secondary_label","type":"text","display":"Secondary CTA label","parent":null,"rendered":false},{"handle":"hero_secondary_url","type":"text","display":"Secondary CTA URL","parent":null,"rendered":false},{"handle":"services_heading","type":"text","display":"Services heading","parent":null,"rendered":true},{"handle":"log_entries","type":"grid","display":"Log entries","parent":null,"rendered":false},{"handle":"log_entries.date","type":"text","display":"Date","parent":"log_entries","rendered":true},{"handle":"log_entries.quote","type":"textarea","display":"Quote","parent":"log_entries","rendered":true},{"handle":"log_entries.vessel","type":"text","display":"Owner and vessel","parent":"log_entries","rendered":false},{"handle":"log_entries.position","type":"text","display":"Position","parent":"log_entries","rendered":false},{"handle":"cta_heading","type":"text","display":"CTA heading","parent":null,"rendered":true},{"handle":"cta_text","type":"textarea","display":"CTA text","parent":null,"rendered":true}]},"landing":{"kind":"collection","handle":"landing","title":"Landing Pages","entries":2,"fields":[{"handle":"title","type":"text","display":"Title","parent":null,"rendered":false},{"handle":"offer_tag","type":"text","display":"Offer tag","parent":null,"rendered":true},{"handle":"headline","type":"text","display":"Headline","parent":null,"rendered":true},{"handle":"subheadline","type":"textarea","display":"Subheadline","parent":null,"rendered":true},{"handle":"cta_label","type":"text","display":"CTA label","parent":null,"rendered":true},{"handle":"notice_no","type":"text","display":"Notice number","parent":null,"rendered":true},{"handle":"posted","type":"date","display":"Posted","parent":null,"rendered":true},{"handle":"expires","type":"date","display":"Expires","parent":null,"rendered":true},{"handle":"offer_deadline","type":"text","display":"Offer deadline note","parent":null,"rendered":true},{"handle":"features","type":"grid","display":"Features","parent":null,"rendered":false},{"handle":"features.icon","type":"text","display":"Icon (emoji)","parent":"features","rendered":false},{"handle":"features.heading","type":"text","display":"Heading","parent":"features","rendered":false},{"handle":"features.text","type":"textarea","display":"Text","parent":"features","rendered":false},{"handle":"closing_heading","type":"text","display":"Closing heading","parent":null,"rendered":false},{"handle":"closing_text","type":"textarea","display":"Closing text","parent":null,"rendered":false}]},"services":{"kind":"collection","handle":"services","title":"Services","entries":12,"fields":[{"handle":"title","type":"text","display":"Title","parent":null,"rendered":true},{"handle":"order","type":"integer","display":"Sort order","parent":null,"rendered":true},{"handle":"category","type":"select","display":"Category","parent":null,"rendered":true},{"handle":"icon","type":"text","display":"Icon (emoji)","parent":null,"rendered":false},{"handle":"summary","type":"textarea","display":"Summary","parent":null,"rendered":true},{"handle":"body","type":"markdown","display":"What the job involves","parent":null,"rendered":true},{"handle":"rate_amount","type":"integer","display":"Rate amount (USD)","parent":null,"rendered":true},{"handle":"rate_basis","type":"select","display":"Rate basis","parent":null,"rendered":true},{"handle":"rate_note","type":"text","display":"Rate qualifier","parent":null,"rendered":true},{"handle":"days_on_hard","type":"integer","display":"Typical days on the hard","parent":null,"rendered":true},{"handle":"lead_time_weeks","type":"integer","display":"Current lead time (weeks)","parent":null,"rendered":true},{"handle":"credential","type":"text","display":"Certification held","parent":null,"rendered":true},{"handle":"min_loa","type":"integer","display":"Minimum LOA (feet)","parent":null,"rendered":true},{"handle":"max_loa","type":"integer","display":"Maximum LOA (feet)","parent":null,"rendered":true},{"handle":"max_draft","type":"float","display":"Maximum draft (feet)","parent":null,"rendered":true},{"handle":"leg","type":"text","display":"Course leg bearing","parent":null,"rendered":true},{"handle":"cta","type":"text","display":"Card CTA label","parent":null,"rendered":true}]},"company":{"kind":"global","handle":"company","title":"Company","entries":1,"fields":[{"handle":"name","type":"text","display":"Company name","parent":null,"rendered":false},{"handle":"tagline","type":"text","display":"Tagline","parent":null,"rendered":false},{"handle":"phone","type":"text","display":"Phone","parent":null,"rendered":true},{"handle":"email","type":"text","display":"Email","parent":null,"rendered":true},{"handle":"address","type":"textarea","display":"Address","parent":null,"rendered":true},{"handle":"cta_label","type":"text","display":"Global CTA label","parent":null,"rendered":false},{"handle":"cta_url","type":"text","display":"Global CTA URL","parent":null,"rendered":false},{"handle":"lift_tons","type":"integer","display":"Travel lift capacity (tons)","parent":null,"rendered":true},{"handle":"max_loa","type":"integer","display":"Maximum LOA (feet)","parent":null,"rendered":true},{"handle":"max_beam","type":"integer","display":"Maximum beam (feet)","parent":null,"rendered":true},{"handle":"sill_depth","type":"float","display":"Sill depth at MLLW (feet)","parent":null,"rendered":true},{"handle":"engine_bays","type":"integer","display":"Covered engine bays","parent":null,"rendered":true},{"handle":"storage_rows","type":"integer","display":"Dry storage rows","parent":null,"rendered":true},{"handle":"established","type":"integer","display":"Established","parent":null,"rendered":true},{"handle":"crew","type":"integer","display":"Crew","parent":null,"rendered":true},{"handle":"hours","type":"text","display":"Opening hours","parent":null,"rendered":true},{"handle":"next_haul_week","type":"text","display":"Next available haul week","parent":null,"rendered":true}]}},"totals":{"fields":66,"rendered":47,"unused":19},"orphans":[]}</script>
         <script src="/prototype/harborline/js/site.js" defer></script>
     </body>
 </html>
