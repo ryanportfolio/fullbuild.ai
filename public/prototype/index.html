@@ -137,6 +137,10 @@
 
     .tag--live { background: var(--lemon); border-color: var(--lemon); color: var(--ink); }
 
+    .tags { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; }
+
+    .tag--platform { color: var(--orchid); background: transparent; }
+
     .note {
       max-width: 40ch;
       margin: clamp(2.5rem, 5vw, 4rem) 0 0;
@@ -194,6 +198,19 @@
             <p>Liquid metal hardens phase by phase. Unshipped will not set.</p>
           </span>
           <span class="tag tag--live">view</span>
+        </a>
+      </li>
+      <li>
+        <a class="row" href="/prototype/harborline">
+          <span class="num">05</span>
+          <span>
+            <h2>Harborline</h2>
+            <p>A working boatyard site whose entire design is a generated sea chart.</p>
+          </span>
+          <span class="tags">
+            <span class="tag tag--platform">Statamic CMS</span>
+            <span class="tag tag--live">view</span>
+          </span>
         </a>
       </li>
     </ol>
