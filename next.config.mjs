@@ -20,6 +20,12 @@ const nextConfig = {
       { source: '/prototype/assembly-line', destination: '/prototype/assembly-line/index.html' },
       { source: '/prototype/burn-in', destination: '/prototype/burn-in/index.html' },
       { source: '/prototype/quench', destination: '/prototype/quench/index.html' },
+      // Harborline is a static export of a Statamic CMS build: multi-page, so
+      // each clean URL maps to its directory's index.html.
+      { source: '/prototype/harborline', destination: '/prototype/harborline/index.html' },
+      { source: '/prototype/harborline/about', destination: '/prototype/harborline/about/index.html' },
+      { source: '/prototype/harborline/contact', destination: '/prototype/harborline/contact/index.html' },
+      { source: '/prototype/harborline/lp/fall-winterization', destination: '/prototype/harborline/lp/fall-winterization/index.html' },
     ];
   },
   // Old prototype URLs that have been linked or shipped before the rename.

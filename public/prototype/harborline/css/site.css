@@ -1,0 +1,630 @@
+/* Harborline. The whole site lives inside one conceit: a harbor chart.
+   Contract:
+   - Buff paper, navy ink. Red spent only on action and notice marks
+     (primary CTA, NOTE tabs, LNM numbers). Green spent only on wayfinding
+     (links, current position). Chart place names stay ink.
+   - Line semantics: solid = structure, dashed = plotted course (intent),
+     dotted = soundings and auxiliary data.
+   - Type: Archivo Narrow caps for chart lettering, Newsreader for prose.
+   - One easing curve. No gradients, no decorative shadows. */
+
+:root {
+    --paper: #f6f1e4;
+    --water: #dceaec;
+    --ink: #1c2f3f;
+    --ink-soft: #4a5d6d;
+    --rule: #c9bda2;
+    --red: #b3402e;
+    --red-dark: #93321f;
+    --green: #2e6e4e;
+    --caps: "Archivo Narrow", "Arial Narrow", sans-serif;
+    --serif: "Newsreader", Georgia, serif;
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { box-sizing: border-box; }
+
+html { background: var(--ink); }
+
+body {
+    margin: 0;
+    padding: 14px;
+    font-family: var(--serif);
+    font-size: 17px;
+    color: var(--ink);
+    line-height: 1.6;
+    background: var(--paper);
+}
+
+img { max-width: 100%; height: auto; }
+
+.sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap; border: 0;
+}
+
+.skip-link {
+    position: absolute;
+    left: -999px; top: 0;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 0.5rem 1rem;
+    z-index: 100;
+}
+.skip-link:focus { left: 14px; }
+
+.nowrap { white-space: nowrap; }
+
+/* The chart sheet: double neatline, graticule labels in the margin */
+.chart-frame {
+    position: relative;
+    border: 1.5px solid var(--ink);
+    outline: 1px solid var(--ink);
+    outline-offset: 3px;
+    background: var(--paper);
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.graticule {
+    position: absolute;
+    top: -1px;
+    transform: translateY(-100%);
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 0.72rem;
+    color: var(--paper);
+    padding: 0 2px 4px;
+}
+.graticule-nw { left: 8px; }
+.graticule-ne { right: 8px; }
+
+/* Chart lettering */
+.eyebrow {
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin: 0 0 0.9rem;
+}
+
+h1, h2 {
+    font-family: var(--caps);
+    text-transform: uppercase;
+    font-weight: 700;
+    line-height: 1.06;
+    letter-spacing: 0.015em;
+    margin: 0 0 1rem;
+    color: var(--ink);
+}
+h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); text-wrap: balance; }
+h2 { font-size: clamp(1.5rem, 3vw, 2.1rem); text-wrap: balance; }
+h3 {
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    font-size: 1.02rem;
+    margin: 0 0 0.4rem;
+}
+
+.lead {
+    font-size: 1.14rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    margin: 0 0 1.6rem;
+}
+
+a { color: var(--green); }
+
+/* Header: the chart's title strip */
+.site-header {
+    border-bottom: 1.5px solid var(--ink);
+    position: relative;
+    z-index: 5;
+    background: var(--paper);
+}
+
+.header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 0.9rem 2rem;
+}
+
+.brand { text-decoration: none; color: var(--ink); }
+.brand-name {
+    display: block;
+    font-family: var(--caps);
+    text-transform: uppercase;
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: 0.24em;
+}
+.brand-sub {
+    display: block;
+    font-style: italic;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    margin-top: 0.05rem;
+}
+
+.site-nav ul {
+    display: flex;
+    align-items: center;
+    gap: 1.75rem;
+    list-style: none;
+    margin: 0; padding: 0;
+}
+
+.site-nav a {
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--ink);
+    text-decoration: none;
+    padding-bottom: 2px;
+    transition: color 0.15s var(--ease);
+}
+.site-nav a:hover { color: var(--green); }
+.site-nav a[aria-current="page"] {
+    color: var(--green);
+    position: relative;
+    padding-left: 1.1em;
+}
+/* Current position: the chart's circled-dot fix mark, in wayfinding green */
+.site-nav a[aria-current="page"]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 0.46em; height: 0.46em;
+    transform: translateY(-58%);
+    border: 1.5px solid var(--green);
+    border-radius: 50%;
+    padding: 2px;
+    background: var(--green);
+    background-clip: content-box;
+    box-sizing: content-box;
+}
+
+.nav-cta {
+    background: var(--red);
+    color: var(--paper) !important;
+    padding: 0.45rem 1rem 0.4rem;
+    border-bottom: none !important;
+    transition: background 0.15s var(--ease);
+}
+.nav-cta:hover { background: var(--red-dark); color: var(--paper); }
+
+.nav-toggle {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    background: none;
+    border: 0;
+    padding: 0.5rem;
+    cursor: pointer;
+}
+.nav-toggle-bar {
+    width: 22px; height: 2px;
+    background: var(--ink);
+    transition: transform 0.2s var(--ease), opacity 0.2s var(--ease);
+}
+.nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(2) { transform: translateY(6px) rotate(45deg); }
+.nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(3) { opacity: 0; }
+.nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(4) { transform: translateY(-6px) rotate(-45deg); }
+
+/* Buttons: red acts, dashed plots a course */
+.btn {
+    display: inline-block;
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-decoration: none;
+    padding: 0.75rem 1.5rem 0.7rem;
+    transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+.btn-lg { padding: 0.9rem 2rem 0.85rem; font-size: 0.95rem; }
+.btn-primary { background: var(--red); color: var(--paper); }
+.btn-primary:hover { background: var(--red-dark); }
+/* A dashed border is a plotted course; green because it navigates */
+.btn-course {
+    border: 1.5px dashed var(--green);
+    color: var(--green);
+    padding: 0.68rem 1.4rem 0.63rem;
+}
+.btn-course:hover { background: var(--green); color: var(--paper); border-style: solid; }
+
+.btn-row { display: flex; flex-wrap: wrap; gap: 0.8rem; }
+
+/* Hero: the chart itself, with a title cartouche pinned over it */
+.hero {
+    position: relative;
+    border-bottom: 1.5px solid var(--ink);
+    overflow: hidden;
+}
+
+.hero-chart {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.hero-cartouche {
+    position: absolute;
+    top: 3rem;
+    left: 3rem;
+    max-width: 480px;
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    outline: 1px solid var(--ink);
+    outline-offset: 3px;
+    padding: 2rem 2.2rem;
+}
+.hero-cartouche .lead { margin-bottom: 1.4rem; }
+
+/* Stations: services as charted stations */
+.stations { padding: 4.5rem 2rem; }
+
+.section-head { max-width: 720px; margin: 0 0 2.5rem; }
+.section-head h2 { margin-bottom: 0; }
+
+.station-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    border-top: 1.5px solid var(--ink);
+    border-left: 1.5px solid var(--ink);
+}
+
+.station {
+    border-right: 1.5px solid var(--ink);
+    border-bottom: 1.5px solid var(--ink);
+    padding: 1.75rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* The course runs through the stations: a dashed leg crosses each card,
+   passing through its diamond daymark, bearing noted en route */
+.station-course {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+/* Same 9-6 dash the chart uses for the plotted course */
+.station-course::after {
+    content: "";
+    flex: 1;
+    height: 2px;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="15" height="2"><line x1="0" y1="1" x2="9" y2="1" stroke="%231c2f3f" stroke-width="1.6"/></svg>') repeat-x left center;
+}
+.station-mark {
+    color: var(--ink);
+    font-family: var(--caps);
+    font-weight: 600;
+    line-height: 0;
+}
+.station-leg {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+
+.station-link {
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--green);
+    text-decoration: none;
+    margin-top: auto;
+}
+.station-link:hover { text-decoration: underline; }
+
+.station-id {
+    font-family: var(--caps);
+    letter-spacing: 0.22em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin: 0 0 0.35rem;
+}
+
+.station-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+.station-body h3 + p {
+    margin: 0 0 1rem;
+    color: var(--ink-soft);
+    font-size: 0.98rem;
+    line-height: 1.55;
+}
+
+/* The log: dated entries ruled like a logbook, on water */
+.log {
+    position: relative;
+    background: var(--water) url("../img/chart-hero.svg") no-repeat left 30% / 130%;
+    border-bottom: 1.5px solid var(--ink);
+    padding: 4rem 2rem;
+}
+/* Veil so the chart reads as watermark, not competition for the entries */
+.log::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(220, 234, 236, 0.87);
+}
+
+.log-inner { position: relative; max-width: 960px; margin: 0 auto; }
+.log-entries { display: flex; flex-direction: column; }
+
+.log-entry {
+    display: grid;
+    grid-template-columns: 7.5rem 1fr 15rem;
+    gap: 1.5rem;
+    align-items: baseline;
+    padding: 1.4rem 0;
+    border-top: 1.5px dotted var(--ink-soft);
+}
+.log-entry:last-child { border-bottom: 1.5px dotted var(--ink-soft); }
+
+.log-date {
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.78rem;
+    font-weight: 700;
+    margin: 0;
+}
+.log-entry blockquote { margin: 0; }
+.log-entry blockquote p {
+    font-style: italic;
+    font-size: 1.12rem;
+    line-height: 1.5;
+    margin: 0;
+}
+.log-meta {
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin: 0;
+    text-align: right;
+    line-height: 1.7;
+}
+
+/* Chart note: the CTA as a boxed NOTE, per chart convention */
+.chart-note { padding: 4rem 2rem; }
+
+.note-box {
+    position: relative;
+    max-width: 980px;
+    margin: 0 auto;
+    border: 1.5px solid var(--ink);
+    padding: 2.2rem 2.2rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.note-label {
+    position: absolute;
+    top: 0; left: 1.5rem;
+    transform: translateY(-55%);
+    background: var(--paper);
+    padding: 0 0.6rem;
+    margin: 0;
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--red);
+}
+
+.note-body h2 { font-size: 1.5rem; margin-bottom: 0.4rem; }
+.note-body p { margin: 0; color: var(--ink-soft); }
+
+/* Plain pages: chart-margin prose */
+.page { padding: 4rem 2rem 5rem; }
+.page-inner { max-width: 640px; margin: 0 auto; }
+.prose p { font-size: 1.08rem; line-height: 1.7; }
+.prose p:first-of-type { font-size: 1.2rem; }
+
+/* Local Notice to Mariners: the landing page as a dense left-aligned
+   bulletin. One document width for every block on the page. */
+.notice { padding: 3rem 2rem 4rem; }
+.notice > * { max-width: 800px; margin-left: auto; margin-right: auto; }
+
+.notice-masthead {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    border-top: 3px double var(--ink);
+    border-bottom: 3px double var(--ink);
+    padding: 1.1rem 0 0.9rem;
+    margin-bottom: 2.5rem;
+}
+.notice-org {
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin: 0 0 0.3rem;
+}
+.notice-doc {
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    font-size: 1.15rem;
+    margin: 0;
+}
+.notice-no {
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--red);
+    margin: 0 0 0.15rem;
+}
+
+.notice-body h1 { font-size: clamp(2rem, 4.6vw, 3rem); }
+.notice-body .lead { max-width: 620px; }
+.fine-print {
+    font-style: italic;
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+    margin-top: 1rem;
+}
+
+.notice-items {
+    list-style: none;
+    padding: 0;
+    margin-top: 2.75rem;
+    margin-bottom: 3rem;
+}
+.notice-items li {
+    display: grid;
+    grid-template-columns: 9.5rem 1fr;
+    gap: 1.25rem;
+    border-top: 1.5px dotted var(--ink-soft);
+    padding: 1.4rem 0;
+}
+.notice-items li:last-child { border-bottom: 1.5px dotted var(--ink-soft); }
+.notice-ref {
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--red);
+    margin: 0.2rem 0 0;
+}
+.notice-items h3 { margin-bottom: 0.3rem; }
+.notice-items li p:not(.notice-ref) { margin: 0; color: var(--ink-soft); font-size: 0.98rem; }
+.notice .note-box { margin-top: 0; }
+
+/* Footer: the chart margin */
+.site-footer { border-top: 1.5px solid var(--ink); }
+
+.footer-margin-data {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.7rem 2rem;
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+}
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 2rem;
+    padding: 2.5rem 2rem;
+}
+
+.footer-brand {
+    font-family: var(--caps);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    font-size: 1.05rem;
+    margin: 0 0 0.5rem;
+}
+.footer-heading {
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--ink-soft);
+    margin: 0 0 0.6rem;
+}
+.footer-note { font-style: italic; color: var(--ink-soft); }
+.site-footer p { margin: 0; font-size: 0.95rem; }
+.site-footer a { color: var(--green); }
+.site-footer a:hover { text-decoration: none; }
+
+.footer-legal {
+    border-top: 1px solid var(--rule);
+    padding: 1rem 2rem;
+    font-style: italic;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+}
+
+/* Mobile */
+@media (max-width: 780px) {
+    body { padding: 8px; }
+
+    .nav-toggle { display: flex; }
+
+    .site-nav {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0; right: 0;
+        background: var(--paper);
+        border-bottom: 1.5px solid var(--ink);
+        padding: 1rem 2rem 1.5rem;
+    }
+    .site-nav.is-open { display: block; }
+    .site-nav ul { flex-direction: column; align-items: flex-start; gap: 1rem; }
+    .site-header { position: relative; }
+
+    .hero-chart { height: 320px; object-fit: cover; object-position: right center; }
+    /* Keep the signature move on mobile: the cartouche still sits on the chart */
+    .hero-cartouche {
+        position: relative;
+        max-width: none;
+        margin: -4.5rem 1rem 1.5rem;
+        top: auto; left: auto;
+        padding: 1.6rem 1.4rem;
+    }
+    .hero { border-bottom: none; }
+
+    .stations, .chart-note, .log, .page, .notice { padding-left: 1.25rem; padding-right: 1.25rem; }
+    .header-inner { padding: 0.8rem 1.25rem; }
+    .footer-margin-data, .footer-grid, .footer-legal { padding-left: 1.25rem; padding-right: 1.25rem; }
+
+    .note-box { flex-direction: column; align-items: flex-start; }
+    .notice-items li { grid-template-columns: 1fr; gap: 0.35rem; }
+
+    .log-entry { grid-template-columns: 1fr; gap: 0.5rem; }
+    .log-meta { text-align: left; }
+}
