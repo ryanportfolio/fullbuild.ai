@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Fall Winterization Special | Harborline</title>
+        <title>Notices | Harborline</title>
         <meta name="description" content="Full-service marine outfitting on the Chesapeake since 1987">
         <link rel="stylesheet" href="/prototype/harborline/css/fonts.css">
         <link rel="stylesheet" href="/prototype/harborline/css/site.css">
@@ -37,7 +37,7 @@
                             
                                 <li><a href="/prototype/harborline/services">Services</a></li>
                             
-                                <li><a href="/prototype/harborline/notices">Notices</a></li>
+                                <li><a href="/prototype/harborline/notices" aria-current="page">Notices</a></li>
                             
                             <li><a class="nav-cta" href="/prototype/harborline/contact">Book a haul-out</a></li>
                         </ul>
@@ -46,60 +46,51 @@
             </header>
 
             <main id="main">
-                <section class="notice">
-    <header class="notice-masthead">
-        <div>
-            <p class="notice-org">Harborline · Chesapeake, Virginia</p>
-            <p class="notice-doc">Local Notice to Mariners</p>
-        </div>
-        <p class="notice-no"><span data-fb-field="landing.notice_no">LNM 07-26</span> · <span data-fb-field="landing.offer_tag">Special notice</span></p>
-    </header>
-
-    
-
-    <div class="notice-body">
-        <h1 data-fb-field="landing.headline">Wrapped, stored, and safe before first frost</h1>
-        <p class="lead" data-fb-field="landing.subheadline">Haul dates booked before 15 October carry a 15 percent reduction on the full winterization and storage package. Engine, systems, shrink wrap, and dry storage in one visit.</p>
-        <a class="btn btn-primary btn-lg" href="/prototype/harborline/contact" data-fb-field="landing.cta_label">Reserve a haul date</a>
-        <p class="fine-print" data-fb-field="landing.offer_deadline">Notice expires 15 Oct 2026. New customers only.</p>
+                <section class="page-head">
+    <div class="page-head-inner">
+        <p class="eyebrow" data-fb-field="pages.hero_eyebrow">Local notices</p>
+        <h1 data-fb-field="pages.hero_heading">Seasonal notices</h1>
+        <p class="lead" data-fb-field="pages.hero_subheading">Offers and yard notices, current and expired. Expired ones stay posted so you can see what we ran and when.</p>
     </div>
+</section>
 
-    <ol class="notice-items">
+<section class="notice-index" data-fb-region="landing" data-fb-query="collection:landing sort=expires:desc">
+    <ol class="notice-list">
         
-            <li>
-                <p class="notice-ref">LNM 07-26 (1)</p>
-                <div>
-                    <h3>Full winterize</h3>
-                    <p>Engines, freshwater systems, and heads are drained, flushed, and treated before the first hard freeze.</p>
+            <li data-fb-entry="fall-winterization">
+                <p class="notice-ref">
+                    <span data-fb-field="landing.notice_no">LNM 07-26</span>
+                    <span class="notice-state" data-state="current">Current</span>
+                </p>
+                <div class="notice-entry">
+                    <h2><a href="/prototype/harborline/lp/fall-winterization" data-fb-field="landing.headline">Wrapped, stored, and safe before first frost</a></h2>
+                    <p data-fb-field="landing.subheadline">Haul dates booked before 15 October carry a 15 percent reduction on the full winterization and storage package. Engine, systems, shrink wrap, and dry storage in one visit.</p>
+                    <p class="notice-dates">
+                        Posted <span class="cms-value" data-fb-field="landing.posted">1 Jul 2026</span>,
+                        open until
+                        <span class="cms-value" data-fb-field="landing.expires">15 Oct 2026</span>
+                    </p>
                 </div>
             </li>
         
-            <li>
-                <p class="notice-ref">LNM 07-26 (2)</p>
-                <div>
-                    <h3>Wrap and store</h3>
-                    <p>Shrink wrap and dry storage assignments are made in haul order. Early dates draw covered rows.</p>
-                </div>
-            </li>
-        
-            <li>
-                <p class="notice-ref">LNM 07-26 (3)</p>
-                <div>
-                    <h3>Spring priority</h3>
-                    <p>Boats wintered at the yard hold first position on the spring commissioning schedule.</p>
+            <li data-fb-entry="spring-commissioning-2026" data-expired="true">
+                <p class="notice-ref">
+                    <span data-fb-field="landing.notice_no">LNM 02-26</span>
+                    <span class="notice-state" data-state="expired">Expired</span>
+                </p>
+                <div class="notice-entry">
+                    <h2><a href="/prototype/harborline/lp/spring-commissioning-2026" data-fb-field="landing.headline">Splash dates opened for the spring run</a></h2>
+                    <p data-fb-field="landing.subheadline">Boats wintered at the yard took first position on the commissioning schedule, with dewinterize, bottom paint, and a systems check booked into one window.</p>
+                    <p class="notice-dates">
+                        Posted <span class="cms-value" data-fb-field="landing.posted">2 Feb 2026</span>,
+                        closed
+                        <span class="cms-value" data-fb-field="landing.expires">15 May 2026</span>
+                    </p>
                 </div>
             </li>
         
     </ol>
-
-    <div class="note-box" id="claim">
-        <p class="note-label">Note</p>
-        <div class="note-body">
-            <h2>October haul dates are nearly assigned</h2>
-            <p>One call books your haul date, your winterize, and your storage row. Wrapped before the first frost warning.</p>
-        </div>
-        <a class="btn btn-primary" href="/prototype/harborline/contact">Request a haul date</a>
-    </div>
+    <p class="table-note">Expired notices stay posted. An offer page that quietly disappears is how a yard loses the argument about what it promised.</p>
 </section>
 
             </main>

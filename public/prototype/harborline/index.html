@@ -21,6 +21,7 @@
                         <span class="brand-name">Harborline</span>
                         <span class="brand-sub">Marine outfitting · Chesapeake, Virginia</span>
                     </a>
+                    <p class="header-availability">Next haul week <span class="cms-value" data-fb-field="company.next_haul_week">17 August</span></p>
                     <button class="nav-toggle" aria-expanded="false" aria-controls="site-nav">
                         <span class="sr-only">Menu</span>
                         <span class="nav-toggle-bar"></span>
@@ -34,6 +35,10 @@
                             
                                 <li><a href="/prototype/harborline/contact">Contact</a></li>
                             
+                                <li><a href="/prototype/harborline/services">Services</a></li>
+                            
+                                <li><a href="/prototype/harborline/notices">Notices</a></li>
+                            
                             <li><a class="nav-cta" href="/prototype/harborline/contact">Book a haul-out</a></li>
                         </ul>
                     </nav>
@@ -45,8 +50,8 @@
     <img class="hero-chart" src="/prototype/harborline/img/chart-hero.svg" alt="Harbor chart showing the plotted approach to the Harborline yard, with numbered station diamonds, depth soundings, and a compass rose">
     <div class="hero-cartouche">
         <p class="eyebrow">Chesapeake, Virginia · <span class="nowrap">Chart No. 4412</span></p>
-        <h1>Haul out,<br>fit out,<br>get back out</h1>
-        <p class="lead">Harborline keeps Tidewater boats rigged, serviced, and on the water. One dock, one crew, every job done right.</p>
+        <h1 data-fb-field="pages.hero_heading">Haul out,<br>fit out,<br>get back out</h1>
+        <p class="lead" data-fb-field="pages.hero_subheading">Harborline keeps Tidewater boats rigged, serviced, and on the water. One dock, one crew, every job done right.</p>
         <div class="btn-row">
             <a class="btn btn-primary" href="/prototype/harborline/contact">Book a haul-out</a>
             <a class="btn btn-course" href="#services">Follow the course</a>
@@ -57,63 +62,63 @@
 <section class="stations" id="services">
     <header class="section-head">
         <p class="eyebrow">Stations of the yard</p>
-        <h2>From haul-out to open water</h2>
+        <h2 data-fb-field="pages.services_heading">From haul-out to open water</h2>
     </header>
-    <div class="station-grid">
+    <div class="station-grid" data-fb-region="services" data-fb-query="collection:services sort=order:asc limit=4">
         
-            <article class="station">
+            <article class="station" data-fb-entry="engine-service">
                 <div class="station-course" aria-hidden="true">
-                    <span class="station-mark">
+                    <span class="station-mark" data-fb-field="services.order">
                         <svg viewBox="0 0 40 40" width="40" height="40"><rect x="8" y="8" width="24" height="24" transform="rotate(45 20 20)" fill="#f6f1e4" stroke="currentColor" stroke-width="2"/><text x="20" y="25" text-anchor="middle" font-size="13" font-family="inherit" fill="currentColor">1</text></svg>
                     </span>
-                    <span class="station-leg">077° M</span>
+                    <span class="station-leg" data-fb-field="services.leg">077° M</span>
                 </div>
                 <div class="station-body">
-                    <h3>Engine Service</h3>
-                    <p>Diesel and outboard diagnostics, repowers, and scheduled maintenance from certified techs in our covered engine bay.</p>
-                    <a class="station-link" href="/prototype/harborline/contact">Ask about a repower</a>
+                    <h3 data-fb-field="services.title">Engine Service</h3>
+                    <p data-fb-field="services.summary">Diesel and outboard diagnostics, repowers, and scheduled maintenance from certified techs in our covered engine bay.</p>
+                    <a class="station-link" href="/prototype/harborline/services/engine-service" data-fb-field="services.cta">Ask about a repower</a>
                 </div>
             </article>
         
-            <article class="station">
+            <article class="station" data-fb-entry="rigging">
                 <div class="station-course" aria-hidden="true">
-                    <span class="station-mark">
+                    <span class="station-mark" data-fb-field="services.order">
                         <svg viewBox="0 0 40 40" width="40" height="40"><rect x="8" y="8" width="24" height="24" transform="rotate(45 20 20)" fill="#f6f1e4" stroke="currentColor" stroke-width="2"/><text x="20" y="25" text-anchor="middle" font-size="13" font-family="inherit" fill="currentColor">2</text></svg>
                     </span>
-                    <span class="station-leg">050° M</span>
+                    <span class="station-leg" data-fb-field="services.leg">050° M</span>
                 </div>
                 <div class="station-body">
-                    <h3>Custom Rigging</h3>
-                    <p>Standing and running rigging, furlers, and deck hardware. Measured, built, and tuned on site.</p>
-                    <a class="station-link" href="/prototype/harborline/contact">Get a rigging quote</a>
+                    <h3 data-fb-field="services.title">Custom Rigging</h3>
+                    <p data-fb-field="services.summary">Standing and running rigging, furlers, and deck hardware. Measured, built, and tuned on site.</p>
+                    <a class="station-link" href="/prototype/harborline/services/rigging" data-fb-field="services.cta">Get a rigging quote</a>
                 </div>
             </article>
         
-            <article class="station">
+            <article class="station" data-fb-entry="hull-and-paint">
                 <div class="station-course" aria-hidden="true">
-                    <span class="station-mark">
+                    <span class="station-mark" data-fb-field="services.order">
                         <svg viewBox="0 0 40 40" width="40" height="40"><rect x="8" y="8" width="24" height="24" transform="rotate(45 20 20)" fill="#f6f1e4" stroke="currentColor" stroke-width="2"/><text x="20" y="25" text-anchor="middle" font-size="13" font-family="inherit" fill="currentColor">3</text></svg>
                     </span>
-                    <span class="station-leg">067° M</span>
+                    <span class="station-leg" data-fb-field="services.leg">067° M</span>
                 </div>
                 <div class="station-body">
-                    <h3>Hull and Paint</h3>
-                    <p>Bottom jobs, gelcoat repair, and full topside refinishing with a 35-ton lift and climate-controlled paint shed.</p>
-                    <a class="station-link" href="/prototype/harborline/contact">Book paint bay time</a>
+                    <h3 data-fb-field="services.title">Hull and Paint</h3>
+                    <p data-fb-field="services.summary">Bottom jobs, gelcoat repair, and full topside refinishing in a climate-controlled paint shed.</p>
+                    <a class="station-link" href="/prototype/harborline/services/hull-and-paint" data-fb-field="services.cta">Book paint bay time</a>
                 </div>
             </article>
         
-            <article class="station">
+            <article class="station" data-fb-entry="winterization">
                 <div class="station-course" aria-hidden="true">
-                    <span class="station-mark">
+                    <span class="station-mark" data-fb-field="services.order">
                         <svg viewBox="0 0 40 40" width="40" height="40"><rect x="8" y="8" width="24" height="24" transform="rotate(45 20 20)" fill="#f6f1e4" stroke="currentColor" stroke-width="2"/><text x="20" y="25" text-anchor="middle" font-size="13" font-family="inherit" fill="currentColor">4</text></svg>
                     </span>
-                    <span class="station-leg">056° M</span>
+                    <span class="station-leg" data-fb-field="services.leg">056° M</span>
                 </div>
                 <div class="station-body">
-                    <h3>Winterize and Storage</h3>
-                    <p>Full winterize, shrink wrap, and secure dry storage. Spring commissioning scheduled before you leave the lot.</p>
-                    <a class="station-link" href="/prototype/harborline/contact">Reserve a storage row</a>
+                    <h3 data-fb-field="services.title">Winterize and Storage</h3>
+                    <p data-fb-field="services.summary">Full winterize, shrink wrap, and secure dry storage with spring commissioning booked before you leave the lot.</p>
+                    <a class="station-link" href="/prototype/harborline/services/winterization" data-fb-field="services.cta">Reserve a storage row</a>
                 </div>
             </article>
         
@@ -123,23 +128,23 @@
 <section class="log">
     <div class="log-inner">
         <p class="eyebrow">From the log</p>
-        <div class="log-entries">
+        <div class="log-entries" data-fb-region="pages" data-fb-query="grid log_entries">
             
                 <article class="log-entry">
-                    <p class="log-date">14 Jul 2026</p>
-                    <blockquote><p>&ldquo;Rig survey and new standing rigging in nine days. Tuned it on the way out and she points higher than the day we bought her.&rdquo;</p></blockquote>
+                    <p class="log-date" data-fb-field="pages.log_entries.date">14 Jul 2026</p>
+                    <blockquote data-fb-field="pages.log_entries.quote"><p>&ldquo;Rig survey and new standing rigging in nine days. Tuned it on the way out and she points higher than the day we bought her.&rdquo;</p></blockquote>
                     <p class="log-meta">Dana Whitfield · S/V Meridian<br><span class="nowrap">&oplus; 36°51'N 76°01'W</span></p>
                 </article>
             
                 <article class="log-entry">
-                    <p class="log-date">02 Jun 2026</p>
-                    <blockquote><p>&ldquo;They caught a cracked manifold during a routine winterize. That is the kind of yard you stay with.&rdquo;</p></blockquote>
+                    <p class="log-date" data-fb-field="pages.log_entries.date">02 Jun 2026</p>
+                    <blockquote data-fb-field="pages.log_entries.quote"><p>&ldquo;They caught a cracked manifold during a routine winterize. That is the kind of yard you stay with.&rdquo;</p></blockquote>
                     <p class="log-meta">The Alvarez family · M/V Pelican<br><span class="nowrap">&oplus; 36°46'N 76°18'W</span></p>
                 </article>
             
                 <article class="log-entry">
-                    <p class="log-date">21 Apr 2026</p>
-                    <blockquote><p>&ldquo;Splashed on the exact date they promised in February. The written report came with photos of every through-hull.&rdquo;</p></blockquote>
+                    <p class="log-date" data-fb-field="pages.log_entries.date">21 Apr 2026</p>
+                    <blockquote data-fb-field="pages.log_entries.quote"><p>&ldquo;Splashed on the exact date they promised in February. The written report came with photos of every through-hull.&rdquo;</p></blockquote>
                     <p class="log-meta">R. Okafor · S/V Long Reach<br><span class="nowrap">&oplus; 36°57'N 76°09'W</span></p>
                 </article>
             
@@ -151,8 +156,8 @@
     <div class="note-box">
         <p class="note-label">Note</p>
         <div class="note-body">
-            <h2>Storage rows fill by October</h2>
-            <p>Get on the fall haul list before the first frost rush. Free dockside estimate on any service.</p>
+            <h2 data-fb-field="pages.cta_heading">Storage rows fill by October</h2>
+            <p data-fb-field="pages.cta_text">Get on the fall haul list before the first frost rush. Free dockside estimate on any service.</p>
         </div>
         <a class="btn btn-primary" href="/prototype/harborline/contact">Book a haul-out</a>
     </div>
@@ -189,6 +194,15 @@ Chesapeake, VA 23320</p>
             </footer>
         </div>
 
+        <div class="fb-switch" data-fb-switch>
+            <p class="fb-switch-label">View</p>
+            <div class="fb-switch-buttons" role="group" aria-label="Page view">
+                <button type="button" data-fb-mode-button="hull" aria-pressed="true">Hull</button>
+                <button type="button" data-fb-mode-button="structure" aria-pressed="false">Structure</button>
+            </div>
+        </div>
+
+        <script type="application/json" id="fb-schema">{"generated_from":"resources/blueprints","rendered_detected_from":"data-fb-field stamps in resources/views","namespaces":{"pages":{"kind":"collection","handle":"pages","title":"Pages","entries":5,"fields":[{"handle":"title","type":"text","display":"Title","parent":null,"rendered":true},{"handle":"content","type":"markdown","display":"Content","parent":null,"rendered":true},{"handle":"hero_eyebrow","type":"text","display":"Hero eyebrow","parent":null,"rendered":true},{"handle":"hero_heading","type":"text","display":"Hero heading","parent":null,"rendered":true},{"handle":"hero_subheading","type":"textarea","display":"Hero subheading","parent":null,"rendered":true},{"handle":"hero_cta_label","type":"text","display":"Primary CTA label","parent":null,"rendered":false},{"handle":"hero_cta_url","type":"text","display":"Primary CTA URL","parent":null,"rendered":false},{"handle":"hero_secondary_label","type":"text","display":"Secondary CTA label","parent":null,"rendered":false},{"handle":"hero_secondary_url","type":"text","display":"Secondary CTA URL","parent":null,"rendered":false},{"handle":"services_heading","type":"text","display":"Services heading","parent":null,"rendered":true},{"handle":"log_entries","type":"grid","display":"Log entries","parent":null,"rendered":false},{"handle":"log_entries.date","type":"text","display":"Date","parent":"log_entries","rendered":true},{"handle":"log_entries.quote","type":"textarea","display":"Quote","parent":"log_entries","rendered":true},{"handle":"log_entries.vessel","type":"text","display":"Owner and vessel","parent":"log_entries","rendered":false},{"handle":"log_entries.position","type":"text","display":"Position","parent":"log_entries","rendered":false},{"handle":"cta_heading","type":"text","display":"CTA heading","parent":null,"rendered":true},{"handle":"cta_text","type":"textarea","display":"CTA text","parent":null,"rendered":true}]},"landing":{"kind":"collection","handle":"landing","title":"Landing Pages","entries":2,"fields":[{"handle":"title","type":"text","display":"Title","parent":null,"rendered":false},{"handle":"offer_tag","type":"text","display":"Offer tag","parent":null,"rendered":true},{"handle":"headline","type":"text","display":"Headline","parent":null,"rendered":true},{"handle":"subheadline","type":"textarea","display":"Subheadline","parent":null,"rendered":true},{"handle":"cta_label","type":"text","display":"CTA label","parent":null,"rendered":true},{"handle":"notice_no","type":"text","display":"Notice number","parent":null,"rendered":true},{"handle":"posted","type":"date","display":"Posted","parent":null,"rendered":true},{"handle":"expires","type":"date","display":"Expires","parent":null,"rendered":true},{"handle":"offer_deadline","type":"text","display":"Offer deadline note","parent":null,"rendered":true},{"handle":"features","type":"grid","display":"Features","parent":null,"rendered":false},{"handle":"features.icon","type":"text","display":"Icon (emoji)","parent":"features","rendered":false},{"handle":"features.heading","type":"text","display":"Heading","parent":"features","rendered":false},{"handle":"features.text","type":"textarea","display":"Text","parent":"features","rendered":false},{"handle":"closing_heading","type":"text","display":"Closing heading","parent":null,"rendered":false},{"handle":"closing_text","type":"textarea","display":"Closing text","parent":null,"rendered":false}]},"services":{"kind":"collection","handle":"services","title":"Services","entries":12,"fields":[{"handle":"title","type":"text","display":"Title","parent":null,"rendered":true},{"handle":"order","type":"integer","display":"Sort order","parent":null,"rendered":true},{"handle":"category","type":"select","display":"Category","parent":null,"rendered":true},{"handle":"icon","type":"text","display":"Icon (emoji)","parent":null,"rendered":false},{"handle":"summary","type":"textarea","display":"Summary","parent":null,"rendered":true},{"handle":"body","type":"markdown","display":"What the job involves","parent":null,"rendered":true},{"handle":"rate_amount","type":"integer","display":"Rate amount (USD)","parent":null,"rendered":true},{"handle":"rate_basis","type":"select","display":"Rate basis","parent":null,"rendered":true},{"handle":"rate_note","type":"text","display":"Rate qualifier","parent":null,"rendered":true},{"handle":"days_on_hard","type":"integer","display":"Typical days on the hard","parent":null,"rendered":true},{"handle":"lead_time_weeks","type":"integer","display":"Current lead time (weeks)","parent":null,"rendered":true},{"handle":"credential","type":"text","display":"Certification held","parent":null,"rendered":true},{"handle":"min_loa","type":"integer","display":"Minimum LOA (feet)","parent":null,"rendered":true},{"handle":"max_loa","type":"integer","display":"Maximum LOA (feet)","parent":null,"rendered":true},{"handle":"max_draft","type":"float","display":"Maximum draft (feet)","parent":null,"rendered":true},{"handle":"leg","type":"text","display":"Course leg bearing","parent":null,"rendered":true},{"handle":"cta","type":"text","display":"Card CTA label","parent":null,"rendered":true}]},"company":{"kind":"global","handle":"company","title":"Company","entries":1,"fields":[{"handle":"name","type":"text","display":"Company name","parent":null,"rendered":false},{"handle":"tagline","type":"text","display":"Tagline","parent":null,"rendered":false},{"handle":"phone","type":"text","display":"Phone","parent":null,"rendered":true},{"handle":"email","type":"text","display":"Email","parent":null,"rendered":true},{"handle":"address","type":"textarea","display":"Address","parent":null,"rendered":true},{"handle":"cta_label","type":"text","display":"Global CTA label","parent":null,"rendered":false},{"handle":"cta_url","type":"text","display":"Global CTA URL","parent":null,"rendered":false},{"handle":"lift_tons","type":"integer","display":"Travel lift capacity (tons)","parent":null,"rendered":true},{"handle":"max_loa","type":"integer","display":"Maximum LOA (feet)","parent":null,"rendered":true},{"handle":"max_beam","type":"integer","display":"Maximum beam (feet)","parent":null,"rendered":true},{"handle":"sill_depth","type":"float","display":"Sill depth at MLLW (feet)","parent":null,"rendered":true},{"handle":"engine_bays","type":"integer","display":"Covered engine bays","parent":null,"rendered":true},{"handle":"storage_rows","type":"integer","display":"Dry storage rows","parent":null,"rendered":true},{"handle":"established","type":"integer","display":"Established","parent":null,"rendered":true},{"handle":"crew","type":"integer","display":"Crew","parent":null,"rendered":true},{"handle":"hours","type":"text","display":"Opening hours","parent":null,"rendered":true},{"handle":"next_haul_week","type":"text","display":"Next available haul week","parent":null,"rendered":true}]}},"totals":{"fields":66,"rendered":47,"unused":19},"orphans":[]}</script>
         <script src="/prototype/harborline/js/site.js" defer></script>
     </body>
 </html>

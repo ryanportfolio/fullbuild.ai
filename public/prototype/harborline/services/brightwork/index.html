@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Fall Winterization Special | Harborline</title>
+        <title>Brightwork | Harborline</title>
         <meta name="description" content="Full-service marine outfitting on the Chesapeake since 1987">
         <link rel="stylesheet" href="/prototype/harborline/css/fonts.css">
         <link rel="stylesheet" href="/prototype/harborline/css/site.css">
@@ -46,60 +46,84 @@
             </header>
 
             <main id="main">
-                <section class="notice">
-    <header class="notice-masthead">
-        <div>
-            <p class="notice-org">Harborline · Chesapeake, Virginia</p>
-            <p class="notice-doc">Local Notice to Mariners</p>
-        </div>
-        <p class="notice-no"><span data-fb-field="landing.notice_no">LNM 07-26</span> · <span data-fb-field="landing.offer_tag">Special notice</span></p>
-    </header>
-
-    
-
-    <div class="notice-body">
-        <h1 data-fb-field="landing.headline">Wrapped, stored, and safe before first frost</h1>
-        <p class="lead" data-fb-field="landing.subheadline">Haul dates booked before 15 October carry a 15 percent reduction on the full winterization and storage package. Engine, systems, shrink wrap, and dry storage in one visit.</p>
-        <a class="btn btn-primary btn-lg" href="/prototype/harborline/contact" data-fb-field="landing.cta_label">Reserve a haul date</a>
-        <p class="fine-print" data-fb-field="landing.offer_deadline">Notice expires 15 Oct 2026. New customers only.</p>
+                <section class="service" data-fb-region="services" data-fb-query="entry brightwork">
+    <div class="service-head" data-fb-entry="brightwork">
+        <p class="eyebrow"><a class="crumb" href="/prototype/harborline/services">Stations of the yard</a> · <span data-fb-field="services.category">Finish</span></p>
+        <h1 data-fb-field="services.title">Brightwork</h1>
+        <p class="lead" data-fb-field="services.summary">Teak and mahogany stripped, sealed, and built up in varnish, then maintained on a schedule.</p>
     </div>
 
-    <ol class="notice-items">
-        
-            <li>
-                <p class="notice-ref">LNM 07-26 (1)</p>
-                <div>
-                    <h3>Full winterize</h3>
-                    <p>Engines, freshwater systems, and heads are drained, flushed, and treated before the first hard freeze.</p>
-                </div>
-            </li>
-        
-            <li>
-                <p class="notice-ref">LNM 07-26 (2)</p>
-                <div>
-                    <h3>Wrap and store</h3>
-                    <p>Shrink wrap and dry storage assignments are made in haul order. Early dates draw covered rows.</p>
-                </div>
-            </li>
-        
-            <li>
-                <p class="notice-ref">LNM 07-26 (3)</p>
-                <div>
-                    <h3>Spring priority</h3>
-                    <p>Boats wintered at the yard hold first position on the spring commissioning schedule.</p>
-                </div>
-            </li>
-        
-    </ol>
+    <div class="service-grid">
+        <div class="service-body">
+            <div class="prose" data-fb-field="services.body">
+                <p>Eight coats minimum on bare wood, sanded between, because anything less will not survive a Tidewater August.</p>
+<p>Once it is built, a two-coat maintenance visit each spring keeps it there.</p>
 
-    <div class="note-box" id="claim">
-        <p class="note-label">Note</p>
-        <div class="note-body">
-            <h2>October haul dates are nearly assigned</h2>
-            <p>One call books your haul date, your winterize, and your storage row. Wrapped before the first frost warning.</p>
+            </div>
+
+            <a class="btn btn-primary" href="/prototype/harborline/contact?service=brightwork" data-fb-field="services.cta">Book brightwork</a>
         </div>
-        <a class="btn btn-primary" href="/prototype/harborline/contact">Request a haul date</a>
+
+        <aside class="rate-card" aria-label="Rates and scheduling">
+            <p class="rate-card-label">Rate card</p>
+            <dl class="spec">
+                <div class="spec-row">
+                    <dt>Rate</dt>
+                    <dd class="cms-value">
+                        <span data-fb-field="services.rate_amount">$86</span>
+                        <span data-fb-field="services.rate_basis">per shop hour</span>
+                    </dd>
+                </div>
+                
+                    <div class="spec-row">
+                        <dt>Includes</dt>
+                        <dd data-fb-field="services.rate_note">Maintenance coats quoted per season</dd>
+                    </div>
+                
+                <div class="spec-row">
+                    <dt>Days on the hard</dt>
+                    <dd class="cms-value" data-fb-field="services.days_on_hard">7</dd>
+                </div>
+                <div class="spec-row">
+                    <dt>Lead time</dt>
+                    <dd class="cms-value" data-fb-field="services.lead_time_weeks">4 weeks</dd>
+                </div>
+                <div class="spec-row">
+                    <dt>Fits</dt>
+                    <dd class="cms-value"><span data-fb-field="services.min_loa">20</span> to <span data-fb-field="services.max_loa">70</span> ft LOA, <span data-fb-field="services.max_draft">9</span> ft draft
+                    </dd>
+                </div>
+                <div class="spec-row">
+                    <dt>Certification</dt>
+                    <dd data-fb-field="services.credential">Epifanes trained finishers</dd>
+                </div>
+            </dl>
+            <p class="rate-card-note">Rates quoted July 2026. A written estimate follows the dockside look.</p>
+        </aside>
     </div>
+
+    <nav class="service-siblings" aria-label="Other services">
+        <p class="eyebrow">Also in Finish</p>
+        <ul data-fb-region="services" data-fb-query="collection:services where category=finish">
+            
+                
+                    <li data-fb-entry="engine-service"><a href="/prototype/harborline/services/engine-service">Engine Service</a></li>
+                
+            
+                
+                    <li data-fb-entry="rigging"><a href="/prototype/harborline/services/rigging">Custom Rigging</a></li>
+                
+            
+                
+                    <li data-fb-entry="hull-and-paint"><a href="/prototype/harborline/services/hull-and-paint">Hull and Paint</a></li>
+                
+            
+                
+                    <li data-fb-entry="winterization"><a href="/prototype/harborline/services/winterization">Winterize and Storage</a></li>
+                
+            
+        </ul>
+    </nav>
 </section>
 
             </main>

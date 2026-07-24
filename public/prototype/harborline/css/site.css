@@ -17,9 +17,44 @@
     --red: #b3402e;
     --red-dark: #93321f;
     --green: #2e6e4e;
+    /* Chart-correction magenta. Real charts reserve it for corrections; here it
+       is reserved for values that came out of the CMS and can change. It is
+       never applied to a number typed into a template. */
+    --cms: #a1246b;
+    /* The third state. An audit that can only pass or fail is a lie, so a
+       partial result gets its own ink rather than borrowing red. */
+    --amber: #9a6516;
+    /* Watermark veil over the log chart, and the plotted-course dash. Both were
+       hard-coded, and so were the two things that refused to follow the palette.
+       The dash carries its whole url() because a custom property cannot be
+       interpolated inside one. */
+    --veil: rgba(220, 234, 236, 0.87);
+    --course-dash: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="15" height="2"><line x1="0" y1="1" x2="9" y2="1" stroke="%231c2f3f" stroke-width="1.6"/></svg>');
     --caps: "Archivo Narrow", "Arial Narrow", sans-serif;
     --serif: "Newsreader", Georgia, serif;
+    --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
     --ease: cubic-bezier(0.4, 0, 0.2, 1);
+    /* The blank margin around the sheet. The graticule labels live in it, so it
+       has to be deep enough to set them. */
+    --sheet-margin: 26px;
+}
+
+/* Structure mode is the same design with the tokens re-pointed, not a second
+   design. Everything downstream already draws from these, so the page reads as
+   a cutaway of itself rather than a separate dark theme. */
+html[data-fb-mode="structure"] {
+    --paper: #0b1219;
+    --water: #0f1b25;
+    --ink: #cddbe4;
+    --ink-soft: #7d94a4;
+    --rule: #24323d;
+    --red: #e0614a;
+    --red-dark: #ef7358;
+    --green: #4fbe86;
+    --cms: #ef6ab0;
+    --amber: #e8b25c;
+    --veil: rgba(11, 18, 25, 0.88);
+    --course-dash: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="15" height="2"><line x1="0" y1="1" x2="9" y2="1" stroke="%234a5f70" stroke-width="1.6"/></svg>');
 }
 
 * { box-sizing: border-box; }
@@ -28,7 +63,7 @@ html { background: var(--ink); }
 
 body {
     margin: 0;
-    padding: 14px;
+    padding: var(--sheet-margin);
     font-family: var(--serif);
     font-size: 17px;
     color: var(--ink);
@@ -62,13 +97,22 @@ img { max-width: 100%; height: auto; }
 /* The chart sheet: double neatline, graticule labels in the margin */
 .chart-frame {
     position: relative;
+    display: flex;
+    flex-direction: column;
     border: 1.5px solid var(--ink);
     outline: 1px solid var(--ink);
     outline-offset: 3px;
     background: var(--paper);
     max-width: 1280px;
     margin: 0 auto;
+    /* Short pages used to stop at content height and let the ink html
+       background show through as a slab under the sheet. The sheet now runs to
+       the foot of the viewport and the footer sits on its bottom edge. */
+    min-height: calc(100vh - var(--sheet-margin) * 2);
+    min-height: calc(100dvh - var(--sheet-margin) * 2);
 }
+
+.chart-frame > main { flex: 1 0 auto; }
 
 .graticule {
     position: absolute;
@@ -77,7 +121,9 @@ img { max-width: 100%; height: auto; }
     font-family: var(--serif);
     font-style: italic;
     font-size: 0.72rem;
-    color: var(--paper);
+    /* Was var(--paper), which is also the ground it sits on, so these never
+       rendered once. The margin data belongs in the marginalia register. */
+    color: var(--ink-soft);
     padding: 0 2px 4px;
 }
 .graticule-nw { left: 8px; }
@@ -309,7 +355,7 @@ a { color: var(--green); }
     content: "";
     flex: 1;
     height: 2px;
-    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="15" height="2"><line x1="0" y1="1" x2="9" y2="1" stroke="%231c2f3f" stroke-width="1.6"/></svg>') repeat-x left center;
+    background: var(--course-dash) repeat-x left center;
 }
 .station-mark {
     color: var(--ink);
@@ -371,7 +417,7 @@ a { color: var(--green); }
     content: "";
     position: absolute;
     inset: 0;
-    background: rgba(220, 234, 236, 0.87);
+    background: var(--veil);
 }
 
 .log-inner { position: relative; max-width: 960px; margin: 0 auto; }
@@ -588,9 +634,565 @@ a { color: var(--green); }
     color: var(--ink-soft);
 }
 
+/* ---------------------------------------------------------------------------
+   Hull mode additions: the pages a client site actually needs. One type scale,
+   one label style, and a single magenta ink reserved for values that came out
+   of the CMS. Anything typed into a template stays ink.
+   --------------------------------------------------------------------------- */
+
+/* A value that came from a content field and can change without a deploy. It is
+   never applied to a number typed into a template, which is the one thing worth
+   checking about this whole design. */
+.cms-value {
+    color: var(--cms);
+    font-variant-numeric: tabular-nums;
+}
+
+.page-head {
+    padding: 4rem 2rem 2.5rem;
+    border-bottom: 1.5px solid var(--ink);
+}
+
+.page-head-inner { max-width: 46rem; }
+
+.page-head h1 { margin: 0 0 1rem; }
+
+.page-head .lead { margin: 0; max-width: 38rem; }
+
+.crumb { color: var(--green); }
+
+/* Specification lists and tables. Numbers are tabular so a column of them reads
+   as a column. */
+.spec { margin: 0; }
+
+.spec-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px dotted var(--rule);
+}
+
+.spec-row:last-child { border-bottom: none; }
+
+.spec dt {
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    padding-top: 0.2rem;
+}
+
+.spec dd {
+    margin: 0;
+    text-align: right;
+    font-size: 0.98rem;
+}
+
+.spec-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.98rem;
+}
+
+.spec-table th,
+.spec-table td {
+    text-align: left;
+    padding: 0.75rem 1rem 0.75rem 0;
+    border-bottom: 1px dotted var(--rule);
+    vertical-align: baseline;
+}
+
+.spec-table thead th {
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    border-bottom: 1.5px solid var(--ink);
+}
+
+.spec-table tbody th { font-weight: 400; }
+.spec-table tbody th a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
+.spec-table tbody th a:hover { border-bottom-color: var(--ink); }
+.spec-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.spec-table tbody tr:hover { background: rgba(0, 0, 0, 0.02); }
+
+.row-note {
+    display: block;
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.66rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-top: 0.15rem;
+}
+
+.service-index,
+.notice-index,
+.yard-spec { padding: 3rem 2rem; }
+
+.table-note,
+.rate-card-note {
+    margin: 1.5rem 0 0;
+    font-style: italic;
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+}
+
+/* Service detail */
+.service { padding: 0 0 3rem; }
+.service-head { padding: 4rem 2rem 2rem; max-width: 46rem; }
+.service-head h1 { margin: 0 0 1rem; }
+
+.service-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(17rem, 1fr);
+    gap: 3rem;
+    padding: 0 2rem;
+    align-items: start;
+}
+
+.service-body .btn { margin-top: 2rem; }
+
+.rate-card {
+    border: 1.5px solid var(--ink);
+    padding: 1.5rem;
+}
+
+.rate-card-label,
+.fieldset-note {
+    margin: 0 0 1rem;
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--red);
+}
+
+.service-siblings { padding: 3rem 2rem 0; }
+.service-siblings ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 1.5rem; }
+.service-siblings a { color: var(--green); }
+
+.spec-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 2.5rem;
+}
+
+/* Notices index */
+.notice-list { list-style: none; margin: 0; padding: 0; }
+
+.notice-list li {
+    display: grid;
+    grid-template-columns: 12rem minmax(0, 1fr);
+    gap: 2rem;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--rule);
+}
+
+.notice-list h2 { font-size: 1.35rem; margin: 0 0 0.4rem; }
+.notice-list h2 a { color: var(--ink); text-decoration: none; }
+.notice-list h2 a:hover { text-decoration: underline; }
+.notice-list li[data-expired] .notice-entry { opacity: 0.62; }
+
+.notice-state {
+    display: inline-block;
+    margin-top: 0.35rem;
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.66rem;
+    font-weight: 600;
+}
+
+.notice-state[data-state="current"] { color: var(--green); }
+.notice-state[data-state="expired"] { color: var(--ink-soft); }
+
+.notice-dates { margin: 0.5rem 0 0; font-size: 0.88rem; color: var(--ink-soft); }
+
+.notice-expired {
+    margin: 0;
+    padding: 0.9rem 2rem;
+    background: var(--water);
+    border-bottom: 1px solid var(--rule);
+    font-size: 0.92rem;
+}
+.notice-expired a { color: var(--green); }
+
+/* The haul request */
+.request {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(16rem, 1fr);
+    gap: 3rem;
+    padding: 3rem 2rem;
+    align-items: start;
+}
+
+.field-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    margin: 0 0 1.5rem;
+}
+
+.field { margin: 0; flex: 0 1 8rem; }
+.field-wide { flex: 1 1 16rem; }
+.field-full { margin: 0 0 1.5rem; }
+
+.field label,
+.services-fieldset legend {
+    display: block;
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-bottom: 0.4rem;
+    padding: 0;
+}
+
+.field-input { display: flex; align-items: baseline; gap: 0.4rem; }
+
+.field input,
+.field textarea {
+    width: 100%;
+    font-family: var(--serif);
+    font-size: 1rem;
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid var(--ink);
+    padding: 0.4rem 0;
+    border-radius: 0;
+}
+
+.field input:focus,
+.field textarea:focus { outline: 2px solid var(--green); outline-offset: 3px; }
+
+.field-unit {
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+}
+
+.services-fieldset { border: none; padding: 0; margin: 0 0 1.5rem; }
+
+.service-options {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 0.5rem 1.5rem;
+}
+
+.service-options label {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.6rem;
+    align-items: baseline;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.service-options input { margin: 0; accent-color: var(--red); }
+
+.option-note {
+    grid-column: 2;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    font-variant-numeric: tabular-nums;
+}
+
+/* The fit report. The refusal is the useful state, so it is the loudest one. */
+.fit-report { display: block; margin: 0 0 1.5rem; }
+.fit-report:empty { display: none; }
+
+.fit-line {
+    margin: 0 0 0.35rem;
+    padding-left: 1.5rem;
+    position: relative;
+    font-size: 0.95rem;
+}
+
+.fit-line::before {
+    position: absolute;
+    left: 0;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+}
+
+.fit-line[data-fit="yes"] { color: var(--ink); }
+.fit-line[data-fit="yes"]::before { content: "+"; color: var(--green); }
+.fit-line[data-fit="warn"] { color: var(--ink); }
+.fit-line[data-fit="warn"]::before { content: "!"; color: var(--amber); }
+.fit-line[data-fit="no"] { color: var(--ink); }
+.fit-line[data-fit="no"]::before { content: "x"; color: var(--red); }
+
+.form-actions { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
+
+.form-note,
+.fieldset-note {
+    font-style: italic;
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+}
+
+.fieldset-note {
+    font-family: var(--serif);
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+    color: var(--ink-soft);
+}
+
+.request-aside { border: 1.5px solid var(--ink); padding: 1.5rem; }
+.request-aside a { color: var(--green); }
+
+/* ---------------------------------------------------------------------------
+   Structure mode. The client site with the hull taken off: same layout, tokens
+   re-pointed to the dark ground, and every region a template stamped labelled
+   with the collection, entry and field that produced it. Every label is read
+   from schema.json, which is derived from the blueprints, so nothing here can
+   flatter the content model by being typed.
+   --------------------------------------------------------------------------- */
+
+/* The mechanic sits in the marginalia register, not above the offer. It is one
+   compact row so it covers as little of the page as a floating control can. */
+.fb-switch {
+    position: fixed;
+    right: var(--sheet-margin);
+    bottom: var(--sheet-margin);
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.4rem 0.6rem;
+    background: var(--paper);
+    border: 1px solid var(--ink);
+    transition: background-color 420ms var(--ease), border-color 420ms var(--ease);
+}
+
+/* Clearance so the switch never lands on the last line of a page. */
+.chart-frame > main { padding-bottom: 3.5rem; }
+
+.header-availability {
+    margin: 0 auto 0 2rem;
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+}
+
+.fb-switch-label {
+    margin: 0;
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+}
+
+.fb-switch-buttons { display: flex; }
+
+.fb-switch-buttons button {
+    font-family: var(--caps);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    background: transparent;
+    border: 1px solid var(--rule);
+    padding: 0.35rem 0.7rem;
+    cursor: pointer;
+    transition: color 200ms var(--ease), background-color 200ms var(--ease), border-color 200ms var(--ease);
+}
+
+.fb-switch-buttons button + button { border-left: none; }
+.fb-switch-buttons button:hover { color: var(--ink); }
+
+.fb-switch-buttons button[aria-pressed="true"] {
+    color: var(--paper);
+    background: var(--ink);
+    border-color: var(--ink);
+}
+
+.fb-switch-audit {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    color: var(--ink-soft);
+}
+
+/* An audit that always reads clean proves nothing, so a non-zero unused count
+   gets the third ink rather than being hidden or coloured like a failure. */
+.fb-switch-audit[data-fb-partial] { color: var(--amber); }
+.fb-switch-audit[data-fb-orphan] { color: var(--red); }
+
+/* The crossfade between the two views. */
+body,
+.chart-frame,
+.site-nav,
+.hero-cartouche,
+.station,
+.note-box {
+    transition: background-color 420ms var(--ease), border-color 420ms var(--ease), color 420ms var(--ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body, .chart-frame, .site-nav, .hero-cartouche, .station, .note-box, .fb-switch { transition: none; }
+}
+
+/* The station diamond carries a hard-coded paper fill as an SVG presentation
+   attribute, which cannot follow a token on its own. */
+.station-mark svg rect { fill: var(--paper); }
+
+html[data-fb-mode="structure"] body { background: var(--paper); }
+
+/* Prose drops back so the labelling is the foreground. */
+html[data-fb-mode="structure"] .station-body p,
+html[data-fb-mode="structure"] .lead,
+html[data-fb-mode="structure"] .prose { color: var(--ink-soft); }
+
+/* The chart is drawn on buff paper, so on the dark ground it wants inverting
+   rather than dimming. Dimming turned it to mud. */
+html[data-fb-mode="structure"] .hero-chart {
+    filter: invert(1) hue-rotate(180deg);
+    opacity: 0.55;
+}
+
+/* Every label is set in the same technical register, and none of them inherit
+   the chart lettering of whatever they happen to be labelling. Without this the
+   label on an uppercase heading came out uppercase, and the one on an italic
+   line came out italic. */
+html[data-fb-mode="structure"] [data-fb-field]::after,
+html[data-fb-mode="structure"] [data-fb-region]::before,
+html[data-fb-mode="structure"] [data-fb-region]::after,
+html[data-fb-mode="structure"] [data-fb-entry]::before {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    text-transform: none;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1;
+    text-decoration: none;
+}
+
+/* Structure mode is a cutaway, so it is allowed to breathe where the hull is
+   tight. The clearance is what stops one field's label landing on the next
+   field's text. */
+html[data-fb-mode="structure"] [data-fb-field] { margin-top: 1.45rem; }
+html[data-fb-mode="structure"] .station-course { gap: 3.6rem; }
+html[data-fb-mode="structure"] .station-body h3 + p { margin-top: 1.45rem; }
+/* The card CTA still pins to the foot of its card, so the row of them keeps one
+   baseline. The clearance rule above would otherwise unpin it. */
+html[data-fb-mode="structure"] .station-link { margin-top: auto; padding-top: 1.45rem; }
+
+/* Region: the collection, how many of its entries this query returned, and the
+   query itself. */
+html[data-fb-mode="structure"] [data-fb-region] {
+    position: relative;
+    outline: 1px solid var(--rule);
+    outline-offset: 20px;
+    /* Clearance for the region label above it. */
+    margin-top: 2.75rem;
+}
+
+html[data-fb-mode="structure"] [data-fb-region]::before {
+    content: attr(data-fb-label);
+    position: absolute;
+    left: 0;
+    top: -22px;
+    transform: translateY(-100%);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    color: var(--cms);
+    white-space: nowrap;
+}
+
+html[data-fb-mode="structure"] [data-fb-region]::after {
+    content: attr(data-fb-audit);
+    position: absolute;
+    right: 0;
+    top: -22px;
+    transform: translateY(-100%);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    white-space: nowrap;
+}
+
+html[data-fb-mode="structure"] [data-fb-region][data-fb-partial]::after { color: var(--amber); }
+
+/* Field: the handle and the fieldtype the blueprint declares. */
+html[data-fb-mode="structure"] [data-fb-field] {
+    position: relative;
+    outline: 1px dashed var(--rule);
+    outline-offset: 3px;
+}
+
+html[data-fb-mode="structure"] [data-fb-field]::after {
+    content: attr(data-fb-label);
+    position: absolute;
+    left: 0;
+    /* --fb-lane is set by the lane pass when labels on one line would collide. */
+    top: calc(-6px - (var(--fb-lane, 0) * 0.95rem));
+    transform: translateY(-100%);
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.03em;
+    color: var(--cms);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* A stamp with no blueprint behind it is a typo pretending to be evidence. */
+html[data-fb-mode="structure"] [data-fb-field][data-fb-orphan] { outline-color: var(--red); }
+html[data-fb-mode="structure"] [data-fb-field][data-fb-orphan]::after { color: var(--red); }
+
+html[data-fb-mode="structure"] [data-fb-entry] { position: relative; }
+
+html[data-fb-mode="structure"] [data-fb-entry]::before {
+    content: "entry " attr(data-fb-entry);
+    position: absolute;
+    /* Entry labels hang off the right edge so they never queue up against the
+       field labels, which all anchor left. */
+    right: 0;
+    bottom: -6px;
+    transform: translateY(100%);
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.03em;
+    color: var(--ink-soft);
+    white-space: nowrap;
+}
+
 /* Mobile */
 @media (max-width: 780px) {
-    body { padding: 8px; }
+    :root { --sheet-margin: 8px; }
+
+    /* The margin is too shallow at this width to set the graticule, and the
+       same coordinates already run in the footer marginalia strip. */
+    .graticule { display: none; }
 
     .nav-toggle { display: flex; }
 
