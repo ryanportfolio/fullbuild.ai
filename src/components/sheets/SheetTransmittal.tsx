@@ -568,11 +568,7 @@ export default function SheetTransmittal() {
                 </div>
                 <div className={s.notesRow}>
                   <dt>Response</dt>
-                  <dd>within 24 h</dd>
-                </div>
-                <div className={s.notesRow}>
-                  <dt>Reads mail</dt>
-                  <dd>personally</dd>
+                  <dd>within 24hr</dd>
                 </div>
               </dl>
             </div>
