@@ -21,6 +21,10 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrthographicCamera } from '@react-three/drei';
 import { EffectComposer, SelectiveBloom } from '@react-three/postprocessing';
+import type {
+  EffectComposer as EffectComposerImpl,
+  SelectiveBloomEffect,
+} from 'postprocessing';
 import { damp } from 'maath/easing';
 import {
   BoxGeometry,
@@ -957,23 +961,70 @@ export default function Scene() {
       <CameraRig frame={frame} />
       <Pour frame={frame} onLitChange={setLit} />
       <Overgrowth frame={frame} />
-      {lit && (
-        // No `selection` prop: that force-adds every diamond to the bloom layer
-        // (and would keep a health-failed keystone glowing at N>=2). Membership
-        // is controlled per frame via mesh.layers on BLOOM_LAYER instead.
-        <EffectComposer autoClear={false} multisampling={4}>
-          <SelectiveBloom
-            selectionLayer={BLOOM_LAYER}
-            lights={[]}
-            intensity={1.5}
-            luminanceThreshold={0.2}
-            luminanceSmoothing={0.9}
-            mipmapBlur
-            radius={0.7}
-          />
-        </EffectComposer>
-      )}
+      {lit && <BloomStack />}
     </Canvas>
+  );
+}
+
+/* ---------------------------------------------------------------------------
+   The composer hangs off the ignition threshold, so it unmounts and remounts
+   every time the reader scrubs back across the ridge — and nothing in the
+   library frees its GPU buffers on the way out. @react-three/postprocessing's
+   unmount cleanup only calls removePass, and SelectiveBloom renders
+   <primitive dispose={null}> with no dispose effect of its own (Outline,
+   defined right beside it, has one). three carries no FinalizationRegistry, so
+   nothing reclaims the orphaned render targets on GC: each ignite/de-ignite
+   cycle stranded a fresh multisampled buffer pair plus the bloom mip chain.
+   Hold the instances and free them.
+   ------------------------------------------------------------------------ */
+function BloomStack() {
+  // Callback refs, not element refs: React detaches those during unmount, so
+  // .current can already be null by the time a passive cleanup runs. Latching
+  // the instance on the way in keeps it reachable on the way out.
+  const held = useRef<{ composer?: EffectComposerImpl; bloom?: SelectiveBloomEffect }>({});
+
+  useEffect(() => {
+    const composer = held.current.composer;
+    // Snapshot the passes while they are still attached. The wrapper strips the
+    // EffectPass in a LAYOUT cleanup, which runs before this passive one, so by
+    // unmount time composer.passes no longer holds it and composer.dispose()
+    // cannot reach it.
+    const passes = composer ? [...composer.passes] : [];
+    return () => {
+      for (const p of passes) p.dispose();
+      held.current.bloom?.dispose();
+      // Ends by disposing the shared static Pass.fullscreenGeometry. That is
+      // safe: three drops the GPU buffer but keeps the attribute arrays, so the
+      // next ignition re-uploads it.
+      composer?.dispose();
+      held.current = {};
+    };
+  }, []);
+
+  return (
+    // No `selection` prop: that force-adds every diamond to the bloom layer
+    // (and would keep a health-failed keystone glowing at N>=2). Membership
+    // is controlled per frame via mesh.layers on BLOOM_LAYER instead.
+    <EffectComposer
+      ref={(c) => {
+        if (c) held.current.composer = c;
+      }}
+      autoClear={false}
+      multisampling={4}
+    >
+      <SelectiveBloom
+        ref={(b) => {
+          if (b) held.current.bloom = b;
+        }}
+        selectionLayer={BLOOM_LAYER}
+        lights={[]}
+        intensity={1.5}
+        luminanceThreshold={0.2}
+        luminanceSmoothing={0.9}
+        mipmapBlur
+        radius={0.7}
+      />
+    </EffectComposer>
   );
 }
 
