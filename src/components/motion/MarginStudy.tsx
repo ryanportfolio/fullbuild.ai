@@ -422,21 +422,31 @@ export default function MarginStudy({ className }: { className?: string }) {
 
   // Shared stroke props. `ms-stroke` (never ws-draw) keeps these out of the
   // crewed cover timeline's querySelectorAll('.ws-draw') claim.
+  //
+  // NO vector-effect here, deliberately. It is the natural choice for a figure
+  // that scales, and it is wrong for one that reveals itself by dash: the UA
+  // measures the dash pattern in the svg's CSS-pixel space, so at render scale
+  // S a pathLength=1 "full length" dash paints only 1/S of the path and every
+  // stroke stands permanently short. This figure renders 339px at a 1280
+  // viewport and 554px at 1920 against a 384-unit viewBox, so S runs 0.88 to
+  // 1.44 and at the wide end 31% of every mark simply never arrived. Without
+  // it, dashes are user units and pathLength=1 is exact at any size; the cost
+  // is that stroke WIDTHS now scale with the drawing, which for a drawing that
+  // scales as a whole is the honest behaviour anyway.
   const stroke = {
     className: 'ms-stroke',
     stroke: 'var(--ink-graphite)',
     strokeLinecap: 'butt' as const,
     pathLength: 1,
-    vectorEffect: 'non-scaling-stroke' as const,
     fill: 'none',
   };
   // Ghosts are never dashed and never staggered, so no pathLength and a class
-  // the timeline's `.ms-stroke` query cannot reach.
+  // the timeline's `.ms-stroke` query cannot reach. They drop vector-effect
+  // too, so a ghost keeps the same weight as the live rafter it remembers.
   const ghost = {
     className: 'ms-ghost',
     stroke: 'var(--ink-graphite)',
     strokeLinecap: 'butt' as const,
-    vectorEffect: 'non-scaling-stroke' as const,
     strokeWidth: 1.3,
     fill: 'none',
   };
@@ -476,7 +486,10 @@ export default function MarginStudy({ className }: { className?: string }) {
         ))}
         <path {...stroke} d={`M${BASE_X1} ${GROUND_Y} L${BASE_X1} ${EAVE_Y}`} strokeWidth={1.3} />
         <path {...stroke} d={`M${BASE_X0} ${GROUND_Y} L${BASE_X0} ${EAVE_Y}`} strokeWidth={1.3} />
-        <path {...stroke} d={`M${BASE_X0} ${EAVE_Y} L${SPRING_X1} ${EAVE_Y}`} strokeWidth={0.5} />
+        {/* 0.6, not 0.5: widths are user units now, and at the 1280 viewport
+            the figure renders at 0.88 so a 0.5 hairline drops below half a
+            device pixel and greys out. */}
+        <path {...stroke} d={`M${BASE_X0} ${EAVE_Y} L${SPRING_X1} ${EAVE_Y}`} strokeWidth={0.6} />
 
         {/* Then the ATTEMPT: rafters, apex witness tick, apex registration
             circle, and the protractor arc checking the angle just drawn. */}
