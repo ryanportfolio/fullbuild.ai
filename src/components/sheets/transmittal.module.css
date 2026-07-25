@@ -221,6 +221,8 @@
   color: var(--ink-witness);
   padding: 0.2rem 0.5rem;
   cursor: pointer;
+  /* 24px touch target */
+  min-height: 24px;
 }
 .sgnClear:hover {
   color: var(--ink-graphite);

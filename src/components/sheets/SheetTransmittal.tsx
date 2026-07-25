@@ -556,7 +556,10 @@ export default function SheetTransmittal() {
               </div>
             </div>
 
-            <aside className={s.notes} aria-label="About Ryan">
+            {/* div, not <aside>: nesting a complementary landmark inside this
+                sheet's <section> landmark is a violation, and the note belongs
+                to the transmittal rather than standing apart from it. */}
+            <div className={s.notes}>
               <div className={s.notesHead}>Hi, I&apos;m Ryan</div>
               <dl className={s.notesData}>
                 <div className={s.notesRow}>
@@ -572,7 +575,7 @@ export default function SheetTransmittal() {
                   <dd>personally</dd>
                 </div>
               </dl>
-            </aside>
+            </div>
           </form>
 
           <div ref={envRef} className={s.envelope} aria-live="polite">

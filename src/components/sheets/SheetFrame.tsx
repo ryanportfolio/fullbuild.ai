@@ -75,8 +75,8 @@ export default function SheetFrame() {
             <dl className={copy.spec} aria-label="Structural stack: construction layers from footing to envelope">
               {STACK.map((f) => (
                 <div key={f.lvl} className={copy.specRow} title={f.source}>
-                  <span className={copy.specKey}>{f.lvl} · {f.name}</span>
-                  <span className={copy.specVal}>{f.items}</span>
+                  <dt className={copy.specKey}>{f.lvl} · {f.name}</dt>
+                  <dd className={copy.specVal}>{f.items}</dd>
                 </div>
               ))}
             </dl>

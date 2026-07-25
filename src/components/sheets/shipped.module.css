@@ -234,6 +234,9 @@
   line-height: 1;
   transition: opacity 0.2s var(--ease-draw);
   color: var(--ink-graphite);
+  /* 24px touch target, padding cancelled by margin — no layout shift. */
+  padding-block: 2px;
+  margin-block: -2px;
 }
 /* LIVE + poured = revision-red (large text passes 3:1). Down or repo-only or
    not-yet-poured = graphite; red never lies and never jumps the waterline. */
@@ -249,6 +252,11 @@
   letter-spacing: 0.06em;
   color: var(--ink-witness);
   border-bottom: 1px dashed var(--rule-strong);
+  /* 24px touch target. Padding on the TOP only, cancelled by an equal negative
+     margin: the hit box grows upward into whitespace, the dashed underline
+     stays welded to the text, and nothing on the sheet moves. */
+  padding-top: 7px;
+  margin-top: -7px;
 }
 .repoLink:hover {
   color: var(--ink-graphite);
@@ -332,6 +340,9 @@
   text-decoration: none;
   color: var(--ink-graphite);
   transition: color 0.2s ease;
+  /* 24px touch target, padding cancelled by margin — no layout shift. */
+  padding-block: 3px;
+  margin-block: -3px;
 }
 .contact b {
   font-weight: 600;
@@ -358,6 +369,9 @@
   color: var(--ink-witness);
   text-decoration: none;
   transition: color 0.22s ease, letter-spacing 0.22s var(--ease-draw, ease);
+  /* 24px touch target, padding cancelled by margin — no layout shift. */
+  padding-block: 4px;
+  margin-block: -4px;
 }
 .urlText {
   position: relative;
