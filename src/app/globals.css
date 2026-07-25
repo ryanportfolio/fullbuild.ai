@@ -223,6 +223,7 @@ svg {
    visibility, not a dash: CSS dash lengths are px and Chrome divides them by
    the render scale, which is the truncated-building bug DrawingSet documents. */
 [data-draw-pending] .ws-draw:not([data-ws-armed]),
+[data-draw-pending] .ws-scrub:not([data-ws-armed]),
 [data-draw-pending] [data-draw-hold]:not([data-ws-armed]) {
   visibility: hidden;
 }
