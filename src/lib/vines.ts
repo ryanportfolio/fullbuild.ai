@@ -3,8 +3,9 @@
    (plain number tuples, same discipline as pour/frame.ts). Twelve vines —
    one per schedule entry — climb the SAME Frame the pour builds: a helix
    wrapped around a real column (radius derived from that member's thickness),
-   continuing along a rafter, an eave girt, or the ridge purlin; leaves bud
-   off the stem behind the growth tip and a flower closes the path. Every
+   continuing along a rafter, an eave girt, or the ridge purlin; a seeded bed
+   of tufts plants the foot, leaves bud off the stem behind the growth tip,
+   secondary blooms open along the run, and a flower closes the path. Every
    scattered choice is mulberry32-seeded per project id — never Math.random().
 
    ROOT-FIRST RULE (inherited from the 2D plate): the stem polyline starts at
@@ -285,6 +286,77 @@ function buildPetals(
 }
 
 /**
+ * Stamp a petal fan (built at the origin by buildPetals) into a world-space
+ * segment stream at `center`, scaled, tagged with one spawn param so the whole
+ * flower draws on as a single pen stroke behind the growth tip.
+ *
+ * Secondary blooms ride the LEAF stream rather than owning a scaling Group of
+ * their own: it costs no extra draw call, and a flower that is *drawn* matches
+ * the linework voice better than one that inflates. The terminal flower keeps
+ * its Group, because that is the one allowed to open and spend red.
+ */
+function pushBloomAt(
+  segs: number[],
+  spawn: number[],
+  t: number,
+  center: Vec3,
+  petals: number[],
+  scale: number,
+): void {
+  for (let i = 0; i < petals.length; i += 3) {
+    segs.push(
+      center[0] + petals[i] * scale,
+      center[1] + petals[i + 1] * scale,
+      center[2] + petals[i + 2] * scale,
+    );
+    if (i % 6 === 0) spawn.push(t);
+  }
+}
+
+/**
+ * The bed the vine climbs out of: a few seeded tufts at grade around the
+ * column foot, each a leaning arc with a leaf and a small crowning flower.
+ * Spawned at the very start of the vine's arc so the planting reads as the
+ * root of the climb, not as scatter that arrives afterwards.
+ */
+function pushBasalTufts(
+  segs: number[],
+  spawn: number[],
+  root: Vec3,
+  live: boolean,
+  rng: () => number,
+): void {
+  const tufts = 2 + Math.floor(rng() * 2); // 2..3
+  for (let k = 0; k < tufts; k++) {
+    const a0 = rng() * Math.PI * 2;
+    const rad = 0.18 + rng() * 0.26;
+    const base: Vec3 = [
+      root[0] + Math.cos(a0) * rad,
+      0,
+      root[2] + Math.sin(a0) * rad,
+    ];
+    const h = 0.36 + rng() * 0.3;
+    const lean: Vec3 = [(rng() - 0.5) * 0.22, 0, (rng() - 0.5) * 0.22];
+    const tip: Vec3 = [base[0] + lean[0], h, base[2] + lean[2]];
+    // Ascending, and comfortably ahead of the first stem leaf.
+    const t = 0.004 + k * 0.008;
+    const ctrl: Vec3 = [
+      base[0] + lean[0] * 0.25,
+      h * 0.58,
+      base[2] + lean[2] * 0.25,
+    ];
+    pushQuad(segs, base, ctrl, tip, 5, spawn, t);
+    const tan = norm(sub(tip, base));
+    const { u } = axisBasis(tan);
+    pushLeaf(segs, spawn, t, lerp3(base, tip, 0.5), tan, u, rng, 1);
+    // Crowning flower: open only for a live project, and not on every tuft —
+    // a bed in bloom everywhere reads as wallpaper rather than as planting.
+    const petals = buildPetals(rng, u, tan, live && rng() < 0.7);
+    pushBloomAt(segs, spawn, t, tip, petals, 0.44 + rng() * 0.18);
+  }
+}
+
+/**
  * Build the twelve vines for the given schedule entries against the erected
  * frame. Live projects climb their OWN bent; repo-only entries take a seeded
  * bent — twelve vines spread across the eight bents, all id-salted.
@@ -397,9 +469,26 @@ export function buildVines(
     }
     if (total > 0) for (let j = 0; j < count; j++) arcT[j] /= total;
 
-    // --- leaves: bud off the stem at seeded arc intervals ------------------
+    // --- leaves + mid-run blooms, on ONE spawn-ordered stream ---------------
+    // Everything that draws on behind the tip shares this stream: the basal
+    // planting at the root, the leaves, and the secondary flowers. Spawn params
+    // must stay ascending (the scene advances a one-way cursor over them), so
+    // the planting goes in first and every later param is clamped upward.
     const leafSegs: number[] = [];
     const leafSpawn: number[] = [];
+    const root: Vec3 = [points[0], points[1], points[2]];
+    pushBasalTufts(leafSegs, leafSpawn, root, p.live, rng);
+    let lastT = leafSpawn.length > 0 ? leafSpawn[leafSpawn.length - 1] : 0;
+
+    // Secondary bloom stations along the run — the vine flowers as it climbs
+    // instead of saving every petal for the tip.
+    const bloomAt: number[] = [];
+    const extraBlooms = 1 + Math.floor(rng() * 2); // 1..2
+    for (let k = 0; k < extraBlooms; k++) {
+      bloomAt.push(0.34 + k * 0.24 + rng() * 0.17);
+    }
+    let bloomNext = 0;
+
     let acc = 0;
     let nextAt = 0.42 + rng() * 0.26;
     let flip = rng() < 0.5 ? 1 : -1;
@@ -408,10 +497,6 @@ export function buildVines(
       const dy = points[j * 3 + 1] - points[(j - 1) * 3 + 1];
       const dz = points[j * 3 + 2] - points[(j - 1) * 3 + 2];
       acc += Math.hypot(dx, dy, dz);
-      if (acc < nextAt) continue;
-      acc = 0;
-      nextAt = 0.3 + rng() * 0.26;
-      if (arcT[j] > 0.9) break; // leave the last reach for the flower
       const pnt: Vec3 = [points[j * 3], points[j * 3 + 1], points[j * 3 + 2]];
       const tangent: Vec3 = [
         points[(j + 1) * 3] - points[(j - 1) * 3],
@@ -419,7 +504,25 @@ export function buildVines(
         points[(j + 1) * 3 + 2] - points[(j - 1) * 3 + 2],
       ];
       const nrm: Vec3 = [normals[j * 3], normals[j * 3 + 1], normals[j * 3 + 2]];
-      pushLeaf(leafSegs, leafSpawn, arcT[j], pnt, tangent, nrm, rng, flip);
+      while (bloomNext < bloomAt.length && bloomAt[bloomNext] <= arcT[j]) {
+        lastT = Math.max(lastT, arcT[j]);
+        const petals = buildPetals(rng, nrm, tangent, p.live);
+        pushBloomAt(
+          leafSegs,
+          leafSpawn,
+          lastT,
+          pnt,
+          petals,
+          0.52 + rng() * 0.2,
+        );
+        bloomNext++;
+      }
+      if (acc < nextAt) continue;
+      acc = 0;
+      nextAt = 0.3 + rng() * 0.26;
+      if (arcT[j] > 0.9) break; // leave the last reach for the flower
+      lastT = Math.max(lastT, arcT[j]);
+      pushLeaf(leafSegs, leafSpawn, lastT, pnt, tangent, nrm, rng, flip);
       flip = -flip;
     }
 
