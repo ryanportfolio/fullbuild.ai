@@ -61,8 +61,14 @@ import styles from './MarginStudy.module.css';
 // apexY follows the pitch. The box is deep enough for the STEEPEST pitch on the
 // list plus the apex furniture — shallower cycles leave air above, which is
 // what a pitch study looks like.
-const VB_H = 232;
-const BASE_Y = 190;
+// The study is a whole BENT, not a bare gable: columns off the ground line up
+// to the eave, then the roof. That is the structure frame.ts generates and the
+// cover Elevation draws once per project, so the margin is practicing the set's
+// own vocabulary — and the column height, being constant, holds the drawing
+// down the sheet at every pitch instead of only the steep ones.
+const VB_H = 400;
+const GROUND_Y = 350;
+const EAVE_Y = 190;
 const BASE_X0 = 24;
 const BASE_X1 = 360;
 const APEX_X = 192;
@@ -73,18 +79,22 @@ const PITCHES = [18, 24, 30, 36, 27] as const;
 const HATCH_XS = [66, 118, 170, 222, 274, 326] as const;
 
 const apexAt = (deg: number): number =>
-  +(BASE_Y - HALF_SPAN * Math.tan((deg * Math.PI) / 180)).toFixed(2);
+  +(EAVE_Y - HALF_SPAN * Math.tan((deg * Math.PI) / 180)).toFixed(2);
 
 // Pitch-dependent geometry, rewritten between cycles (the ATTEMPT strokes).
-const leftRafterD = (apexY: number) => `M${BASE_X0} ${BASE_Y} L${APEX_X} ${apexY}`;
+const leftRafterD = (apexY: number) => `M${BASE_X0} ${EAVE_Y} L${APEX_X} ${apexY}`;
 // Right rafter starts AT the apex (where the left rafter just ended) so the
-// nib sweeps back down instead of snapping across to the far baseline end.
-const rightRafterD = (apexY: number) => `M${APEX_X} ${apexY} L${BASE_X1} ${BASE_Y}`;
+// nib sweeps back down instead of snapping across to the far eave.
+const rightRafterD = (apexY: number) => `M${APEX_X} ${apexY} L${BASE_X1} ${EAVE_Y}`;
 const witnessD = (apexY: number) => `M${APEX_X} ${apexY - 28} L${APEX_X} ${apexY - 9}`;
 
-// The pitch arc: a protractor check swung off the left eave, from the baseline
-// up to the rafter. It is the one mark whose SHAPE changes with the pitch, so
-// it makes the subject of the exercise legible instead of merely implied.
+// The pitch arc: a protractor check swung off the left eave, from the springing
+// line up to the rafter. It is the one mark whose SHAPE changes with the pitch,
+// so it makes the subject of the exercise legible instead of merely implied.
+// The springing line is the hairline horizontal datum drawn with the frame —
+// pitch is measured against the horizontal, and with the ground line now 160
+// units below the eave there has to be one up here to measure against.
+const SPRING_X1 = 124;
 //
 // Bare arc, no terminal tick: a tick would have to run radially to read as one,
 // and the radius through the arc's end IS the rafter, so it landed invisibly on
@@ -98,15 +108,15 @@ const pitchArcD = (deg: number): string => {
   const a = (deg * Math.PI) / 180;
   const f = (v: number) => +v.toFixed(2);
   const ex = f(BASE_X0 + ARC_R * Math.cos(a));
-  const ey = f(BASE_Y - ARC_R * Math.sin(a));
-  return `M${BASE_X0 + ARC_R} ${BASE_Y} A${ARC_R} ${ARC_R} 0 0 0 ${ex} ${ey}`;
+  const ey = f(EAVE_Y - ARC_R * Math.sin(a));
+  return `M${BASE_X0 + ARC_R} ${EAVE_Y} A${ARC_R} ${ARC_R} 0 0 0 ${ex} ${ey}`;
 };
 
 // --- loop structure ---------------------------------------------------------
-// The first SHEET_COUNT strokes (baseline + grade hatch) are the sheet; the
-// rest are the attempt. Only the attempt is re-tried on a short cycle. Derived,
-// not literal, so changing the hatch cannot silently split the sets wrongly.
-const SHEET_COUNT = 1 + HATCH_XS.length;
+// The LAST strokes in plot order are the attempt (rafters, witness, ring, arc);
+// everything before them is the standing frame. Counted from the end, so adding
+// a mark to the frame can never silently split the sets wrongly.
+const ATTEMPT_COUNT = 5;
 const GHOST_OPACITY = [0.24, 0.14, 0.08] as const; // newest attempt first
 const GHOST_KEEP = GHOST_OPACITY.length;
 
@@ -149,8 +159,8 @@ export default function MarginStudy({ className }: { className?: string }) {
 
     // Plot order = document order (the JSX is authored in plot order).
     const strokes = Array.from(svg.querySelectorAll<SVGGeometryElement>('.ms-stroke'));
-    if (strokes.length <= SHEET_COUNT) return;
-    const attempt = strokes.slice(SHEET_COUNT);
+    if (strokes.length <= ATTEMPT_COUNT) return;
+    const attempt = strokes.slice(strokes.length - ATTEMPT_COUNT);
     // The pitch-dependent geometry, rewritten between cycles.
     const [rafterL, rafterR, witness, ring, arc] = attempt;
     const ghostPairs = Array.from(ghostGroup.children) as SVGGElement[];
@@ -457,12 +467,19 @@ export default function MarginStudy({ className }: { className?: string }) {
         </g>
 
         {/* The study, authored fully drawn at cycle 0 (18°), in plot order.
-            First the SHEET: baseline and four grade-hatch ticks (the
-            Elevation's exact idiom), kept standing between tries. */}
-        <line {...stroke} x1={BASE_X0} y1={BASE_Y} x2={BASE_X1} y2={BASE_Y} strokeWidth={1.6} />
+            First the FRAME: ground line and grade hatch (the Elevation's exact
+            idiom), the two columns, and the springing line the pitch is
+            measured against. All of it stands between tries.
+
+            The columns run right then left so the pen finishes at the left eave,
+            where the springing line and then the first rafter begin. */}
+        <line {...stroke} x1={BASE_X0} y1={GROUND_Y} x2={BASE_X1} y2={GROUND_Y} strokeWidth={1.6} />
         {HATCH_XS.map((x) => (
-          <path key={x} {...stroke} d={`M${x} ${BASE_Y} l-16 20`} strokeWidth={0.7} />
+          <path key={x} {...stroke} d={`M${x} ${GROUND_Y} l-16 20`} strokeWidth={0.7} />
         ))}
+        <path {...stroke} d={`M${BASE_X1} ${GROUND_Y} L${BASE_X1} ${EAVE_Y}`} strokeWidth={1.3} />
+        <path {...stroke} d={`M${BASE_X0} ${GROUND_Y} L${BASE_X0} ${EAVE_Y}`} strokeWidth={1.3} />
+        <path {...stroke} d={`M${BASE_X0} ${EAVE_Y} L${SPRING_X1} ${EAVE_Y}`} strokeWidth={0.5} />
 
         {/* Then the ATTEMPT: rafters, apex witness tick, apex registration
             circle, and the protractor arc checking the angle just drawn. */}
