@@ -25,6 +25,14 @@ const smoothstep = (e0: number, e1: number, x: number): number => {
   return t * t * (3 - 2 * t);
 };
 
+/* Holding the built frame behind the APPENDIX as a "record backdrop" was tried
+   and REJECTED, deliberately: the Margin Law only guarantees non-occlusion for
+   sheets whose grid reserves the dimensioned band cell, and the appendix's right
+   column is spent on the contact specimen and the stamp. At any opacity the shed
+   crossed the email and the LinkedIn mark. The set's tail is escalated by the
+   appendix's OWN content instead (the ledger sweep + the stamp strike below),
+   which occupies the sheet's real estate rather than fighting it. */
+
 export default function DrawingSet({
   children,
   island = true,
@@ -95,8 +103,28 @@ export default function DrawingSet({
 
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce) {
+      // --depth keeps its CSS fallback of 1 (the finished, fully subdivided,
+      // fully read set) — the same floor rule --pour follows.
       return () => io.disconnect();
     }
+
+    // THE DEPTH RATCHET — one monotonic scalar, 0 at the cover to 1 at END OF
+    // SET, published on <html> as --depth. Every escalating quantity reads it:
+    // the HINGE gain below in JS, the rail ruler's subdivision and the ledger's
+    // ignition in pure CSS. Ratcheted on purpose (same doctrine as the rail
+    // sketch's pencil): the set only ever gets MORE built, so scrolling back up
+    // never un-earns depth the reader already reached.
+    const html = document.documentElement;
+    let depth = 0;
+    // Normally already 0: layout.tsx zeroes it in a pre-paint head script so the
+    // finished ground never flashes before hydration. Kept so the effect is
+    // self-sufficient if that script is ever removed or fails.
+    html.style.setProperty('--depth', '0');
+    const applyDepth = (p: number) => {
+      if (p <= depth) return;
+      depth = p;
+      html.style.setProperty('--depth', depth.toFixed(4));
+    };
 
     // A 3D-rotated element is composited into one GPU texture and bilinear-
     // resampled, softening vector linework + text. So the sheet currently being
@@ -211,9 +239,27 @@ export default function DrawingSet({
       // still draw), and returns for the pour.
       const BASE_DUR = 0.9;
       const BASE_STAGGER = 0.06;
-      sections.forEach((sec) => {
+      // Depth escalation of the hand. Keyed to the sheet's POSITION IN THE SET
+      // rather than live --depth, because a timeline's tween durations are baked
+      // when it is built (at mount, with the reader still at the cover) — and
+      // sheet order is exactly the monotonic quantity we want anyway. The cover
+      // is plotted deliberately, one stroke at a time; by the closing sheets the
+      // plotter runs fast with several strokes in flight at once. Stagger
+      // contracts HARDER than duration, so what climbs is the overlap — the
+      // density of the hand — not merely its speed.
+      // Pushed hard on STAGGER specifically: a modest change to overlap is
+      // imperceptible, because no reader ever sees sheet 2 and sheet 6 plot side
+      // by side. Only a change in KIND registers — the cover is plotted stroke
+      // after visible stroke, the closing sheets arrive in a burst, several dozen
+      // strokes in flight at once.
+      const DUR_GAIN = 0.55;
+      const STAGGER_GAIN = 0.85;
+      sections.forEach((sec, si) => {
         const strokes = gsap.utils.toArray<SVGElement>(sec.querySelectorAll('.ws-draw'));
         if (!strokes.length) return;
+        const sd = sections.length > 1 ? si / (sections.length - 1) : 0;
+        const sheetDur = BASE_DUR * (1 - DUR_GAIN * sd);
+        const sheetStagger = BASE_STAGGER * (1 - STAGGER_GAIN * sd);
         strokes.sort(
           (a, b) => Number(a.getAttribute('data-o') ?? 0) - Number(b.getAttribute('data-o') ?? 0),
         );
@@ -298,7 +344,7 @@ export default function DrawingSet({
             {
               attr: { 'stroke-dashoffset': 0 },
               ease: 'power2.out',
-              duration: BASE_DUR / speed,
+              duration: sheetDur / speed,
               onStart: () => {
                 leader = i;
               },
@@ -324,7 +370,7 @@ export default function DrawingSet({
             // each stroke starts a beat after the previous one STARTS — the
             // beat stretches with the region's speed, so a slowed drawing also
             // paces its hand, not just its stroke travel
-            i === 0 ? 0 : `<${(BASE_STAGGER / speed).toFixed(4)}`,
+            i === 0 ? 0 : `<${(sheetStagger / speed).toFixed(4)}`,
           );
         });
       });
@@ -337,6 +383,15 @@ export default function DrawingSet({
       // rasterize pixel-crisp. The page-turn survives; the blur does not.
       const HINGE_START = 1.6;
       const HINGE_END = -1.4;
+      // Depth gain on the turn: by END OF SET the sheets hinge FOUR times as
+      // hard as at the cover (1.6deg -> 6.4deg), which is where a page-turn
+      // actually starts reading as a page-turn. At 2x it measured correctly and
+      // could not be seen. Multiplies the ANGLE only — env is left
+      // exactly as it was, so the tilt still reaches precisely 0 inside the
+      // reading band. Both edges of the de-composition flip therefore still
+      // happen at zero angle, and the anti-buzz dead band below (which is what
+      // keeps Firefox from smearing a repaint trail) keeps working untouched.
+      const HINGE_DEPTH_GAIN = 3;
       // Envelope: the tilt relaxes to exactly 0 while the sheet holds the
       // reading band, ZEROED BEFORE the flatten hysteresis window (env hits 0
       // by ratio 0.28, under FLAT_OFF = 0.30), so both edges of the
@@ -365,7 +420,9 @@ export default function DrawingSet({
             const visible = Math.max(0, Math.min(top + h, vh) - Math.max(top, 0));
             const env = 1 - smoothstep(ENV_LO, ENV_HI, visible / h);
             const angle =
-              (HINGE_START + (HINGE_END - HINGE_START) * self.progress) * env;
+              (HINGE_START + (HINGE_END - HINGE_START) * self.progress) *
+              env *
+              (1 + HINGE_DEPTH_GAIN * depth);
             el.style.transformStyle = 'preserve-3d';
             el.style.transform = `rotateY(${angle.toFixed(3)}deg)`;
           },
@@ -405,6 +462,7 @@ export default function DrawingSet({
         onUpdate: (self) => {
           setProgress(self.progress);
           applySketch(self.progress);
+          applyDepth(self.progress);
         },
       });
 
@@ -457,6 +515,55 @@ export default function DrawingSet({
           onUpdate: (self) => setGrow(self.progress),
         });
       }
+
+      // THE RECORD CLOSES — the APPENDIX was the one sheet in the set with no
+      // motion of its own, which is why the old curve peaked at the pour and
+      // then flatlined for two sheets. Two beats fix that, both drawn from the
+      // set's own conceit rather than added as effect:
+      //   1. the revision ledger reveals row by row as the reader works down it
+      //      (--rev scrubbed; one property, zero React re-renders — the same
+      //      idiom --pour already uses for the schedule);
+      //   2. the ISSUED FOR CONSTRUCTION stamp STRIKES, once, near the bottom.
+      // A real drawing set ends by being stamped, so that is the set's last
+      // beat, landing exactly where the energy used to die.
+      const record = document.getElementById('rev');
+      const stamp = record?.querySelector<HTMLElement>('[data-stamp]') ?? null;
+      if (record) {
+        // Arming the stamp is what licenses CSS to hold it back: with no JS the
+        // attribute never appears and the stamp stands already struck.
+        stamp?.setAttribute('data-struck', 'false');
+        // Pinned to 0 up front so the ledger can never POP: a scrub only writes
+        // once its trigger activates, and inheriting the CSS fallback of 1 until
+        // then would light the whole record and then dim it the moment the
+        // sheet arrived.
+        record.style.setProperty('--rev', '0');
+        // The window is the appendix's ENTRY — top edge crossing the viewport
+        // bottom, finishing as the sheet seats at the top. That is precisely
+        // when the ledger rows sweep up across the glass, so a row ignites as it
+        // is read. (Scrubbing the sheet's own scroll-through instead would crush
+        // the whole reveal into the few hundred px this sheet clears the
+        // viewport by.)
+        ScrollTrigger.create({
+          trigger: record,
+          start: 'top bottom',
+          end: 'top top',
+          scrub: true,
+          onUpdate: (self) =>
+            record.style.setProperty('--rev', self.progress.toFixed(4)),
+        });
+        // Triggered off the STAMP, not the sheet: gated on the sheet's bottom it
+        // struck a beat after the stamp had already scrolled into view, leaving a
+        // visibly empty slot in the side column. Its own top edge crossing the
+        // fold is the honest cue — the stamp is never on screen unstruck.
+        if (stamp) {
+          ScrollTrigger.create({
+            trigger: stamp,
+            start: 'top 88%',
+            once: true,
+            onEnter: () => stamp.setAttribute('data-struck', 'true'),
+          });
+        }
+      }
     }, root);
 
     // The pen's beat sheet, cued by the state tracker: crewed on the cover,
@@ -485,6 +592,12 @@ export default function DrawingSet({
       document.querySelectorAll<SVGElement>('.ws-scrub').forEach((s) => {
         s.removeAttribute('stroke-dashoffset');
       });
+      // The depth ratchet, the ledger scrub and the stamp's armed flag are all
+      // direct writes too, so ctx.revert() above does not own them.
+      html.style.removeProperty('--depth');
+      const rec = document.getElementById('rev');
+      rec?.style.removeProperty('--rev');
+      rec?.querySelector('[data-stamp]')?.removeAttribute('data-struck');
       gsap.ticker.remove(tick);
       lenis.destroy();
       delete (window as unknown as { __lenis?: Lenis }).__lenis;

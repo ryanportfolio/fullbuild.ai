@@ -58,6 +58,15 @@ const noFlashTheme = `(function(){try{var t=localStorage.getItem('ws-theme');if(
 // visitors never run this, so the SSR text stays visible for them.
 const noFlashPlot = `(function(){try{if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;var d=document.documentElement;d.setAttribute('data-plot-pending','');window.__plotGuard=window.setTimeout(function(){d.removeAttribute('data-plot-pending');},3000);}catch(e){}})();`;
 
+// Zero the depth ratchet BEFORE first paint. --depth defaults to 1 in CSS so
+// that a no-JS visitor gets the finished sheet (fully subdivided ground, fully
+// ruled rail) — but that means the first frame would otherwise paint the FINISHED
+// ground and snap coarse the instant DrawingSet's effect writes 0. Same class of
+// flash the two scripts above exist to prevent, and the same carve-outs: reduced
+// motion opts out (that path never scrubs, so the finished depth must stand from
+// frame one), and no-JS visitors never run this at all.
+const noFlashDepth = `(function(){try{if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;document.documentElement.style.setProperty('--depth','0');}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: {
@@ -73,6 +82,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: noFlashTheme }} />
         <script dangerouslySetInnerHTML={{ __html: noFlashPlot }} />
+        <script dangerouslySetInnerHTML={{ __html: noFlashDepth }} />
       </head>
       <body>
         {children}

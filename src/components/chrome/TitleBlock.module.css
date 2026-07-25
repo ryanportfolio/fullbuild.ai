@@ -77,12 +77,32 @@
   container-type: size;
 }
 
-/* rail station ruler — keeps time on the scene's left edge */
+/* rail station ruler — keeps time on the scene's left edge. The scale sits back
+   (per-tick opacity, NOT a blanket opacity on the svg: a parent opacity would
+   multiply into the read head and cap it at the scale's own strength). */
 .ruler {
   flex: none;
   width: 0.7rem;
   color: var(--ink-graphite);
+}
+.rulerTick {
   opacity: 0.4;
+}
+/* Half-stations: absent at the cover, fully inked by the closing sheets. Reads
+   the depth ratchet directly, so the rail measures how far the set has been
+   taken, not merely where the viewport is. Fallback --depth 1 = fully
+   subdivided, so a no-JS or reduced-motion rail shows the finished ruler. */
+.rulerSub {
+  opacity: clamp(0, calc((var(--depth, 1) - 0.12) * 1.5), 1);
+}
+/* The read head rides the scale. preserveAspectRatio="none" stretches the
+   viewBox vertically, so a translate in user units lands proportionally right at
+   any rail height. Full ink against the sat-back scale. */
+.rulerHead {
+  opacity: 0.85;
+  /* Inset by the arrow's own half-height at both ends: mapped to the full 0-400
+     the head is half-clipped by the svg edge at depth 0 and again at depth 1. */
+  transform: translateY(calc(5px + var(--depth, 1) * 390px));
 }
 
 /* the site log — drawn on by DrawingSet as the set advances. A grid of six

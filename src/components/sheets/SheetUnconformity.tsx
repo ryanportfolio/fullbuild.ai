@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { GIT } from '@/lib/git';
 import IfcStamp from './IfcStamp';
 import { FasterGlyph, StrongerGlyph, SecureGlyph } from './SheetGlyphs';
@@ -14,6 +15,11 @@ import u from './unconformity.module.css';
  */
 export default function SheetUnconformity() {
   const log = GIT.log;
+  // Row count + each row's place in it feed the ledger's ignition (--lit,
+  // derived in CSS from the scrubbed --rev): the record reveals revision by
+  // revision as the reader works down the appendix, the same one-property
+  // idiom the schedule uses for the pour.
+  const revCount = log.length + (GIT.gap > 0 ? 1 : 0);
 
   return (
     <section id="rev" data-state="rev" className={u.sheet} aria-label="Revision log and contact">
@@ -35,10 +41,19 @@ export default function SheetUnconformity() {
             </p>
 
             {log.length === 0 ? (
-              <div className={u.revTable} role="table">
+              <div
+                className={u.revTable}
+                role="table"
+                style={{ '--n': 3 } as CSSProperties}
+              >
                 {/* Honest empty state: git unavailable in this runtime. */}
                 {[0, 1, 2].map((i) => (
-                  <div className={u.revRow} role="row" key={i}>
+                  <div
+                    className={u.revRow}
+                    role="row"
+                    key={i}
+                    style={{ '--i': i } as CSSProperties}
+                  >
                     <span className={u.revTag}>·</span>
                     <span className={`${u.revDesc} ${u.revEmpty}`} />
                     <span className={u.revWhen}>––––</span>
@@ -46,7 +61,11 @@ export default function SheetUnconformity() {
                 ))}
               </div>
             ) : (
-              <div className={u.revTable} role="table">
+              <div
+                className={u.revTable}
+                role="table"
+                style={{ '--n': revCount } as CSSProperties}
+              >
                 {log.map((r, i) => {
                   const current = i === 0;
                   return (
@@ -54,6 +73,7 @@ export default function SheetUnconformity() {
                       className={u.revRow}
                       role="row"
                       key={r.sha}
+                      style={{ '--i': i } as CSSProperties}
                       data-current={current ? 'true' : undefined}
                     >
                       {current && (
@@ -72,19 +92,16 @@ export default function SheetUnconformity() {
                   );
                 })}
                 {GIT.gap > 0 && (
-                  <div className={`${u.revRow} ${u.revGap}`} role="row">
+                  <div
+                    className={`${u.revRow} ${u.revGap}`}
+                    role="row"
+                    style={{ '--i': log.length } as CSSProperties}
+                  >
                     <span className={u.revTag}>···</span>
                     <span className={u.revDesc}>
                       {GIT.gap} intermediate revision{GIT.gap === 1 ? '' : 's'}
                     </span>
                     <span className={u.revWhen}>···</span>
-                  </div>
-                )}
-                {GIT.first && (
-                  <div className={u.revRow} role="row">
-                    <span className={u.revTag}>{GIT.first.sha}</span>
-                    <span className={u.revDesc}>{GIT.first.subject}</span>
-                    <span className={u.revWhen}>{GIT.first.date}</span>
                   </div>
                 )}
               </div>

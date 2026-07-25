@@ -45,6 +45,23 @@
   --ground-tint: #ded7c7; /* faint tonal block on vellum */
   --rule: rgba(33, 31, 28, 0.16); /* graphite grid / witness rules on vellum */
   --rule-strong: rgba(33, 31, 28, 0.34);
+  /* The half-station grid: absent at the cover, and by END OF SET still only a
+     whisper of the station rule. Two deliberate choices keep it subtle.
+     EASED, not linear: the strength goes as depth SQUARED, because the first
+     faint ink laid onto bare paper is by far the most noticeable step. Linear
+     put a quarter of the whole change inside the first tenth of the page, which
+     read as the ground snapping rather than developing.
+     CAPPED at 25%: the half-stations never rise to meet the station grid, so the
+     drawing keeps one dominant rule and one subordinate one, the way a real
+     sheet subdivides. A quarter-strength ceiling is a whisper — you register the
+     ground as finer-ruled without ever catching a line arriving.
+     Derived from --rule so it follows the ground into the night theme without a
+     second token to keep in sync. */
+  --rule-sub: color-mix(
+    in srgb,
+    transparent calc(100% - var(--depth) * var(--depth) * 25%),
+    var(--rule)
+  );
 
   /* Type */
   --font-display: var(--font-archivo), "Arial Narrow", system-ui, sans-serif;
@@ -55,6 +72,15 @@
   --ease-draw: cubic-bezier(0.22, 1, 0.36, 1); /* power2-ish out */
   --ease-hinge: cubic-bezier(0.65, 0, 0.35, 1); /* inOut for scrubbed turns */
   --dur-draw: 1.9s;
+
+  /* THE DEPTH RATCHET — monotonic progress through the whole set (0 at the
+     cover, 1 at END OF SET), written to <html> by DrawingSet. Every escalating
+     quantity reads THIS, so "further down = more built" has exactly one
+     authority instead of a per-feature guess. Ratcheted like the rail sketch:
+     the set only ever gains, so scrolling back up never un-builds.
+     Fallback 1: without JS (and under reduced motion) the set stands at its
+     finished depth — same floor rule as --pour. */
+  --depth: 1;
 
   /* Fixed drafting scale — driftless */
   --sheet-margin: clamp(1.25rem, 3vw, 2.5rem);
@@ -120,12 +146,41 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  /* Faint drafting grid — real linework, not a gradient. */
+  /* Faint drafting grid — real linework, not a gradient.
+     THE SHEET GAINS RESOLUTION. Two layer pairs: the station grid at full pitch
+     (always drawn) and a half-station grid that inks in with --depth, so the
+     ground the reader is standing on is visibly finer-ruled at END OF SET than
+     at the cover. This is the escalation's one full-viewport, always-on-screen
+     channel — the reason the deeper set FEELS more built and not merely more
+     measured. Additive, so the station grid never rescales and nothing shimmers
+     while scrolling. */
   background-image:
+    linear-gradient(to right, var(--rule-sub) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--rule-sub) 1px, transparent 1px),
     linear-gradient(to right, var(--rule) 1px, transparent 1px),
     linear-gradient(to bottom, var(--rule) 1px, transparent 1px);
-  background-size: 2.25rem 2.25rem;
-  background-position: center top;
+  /* The half-station layer runs at the SAME pitch as the station grid, offset by
+     half a bay, so it lands strictly BETWEEN the station lines. A 1.125rem pitch
+     would have drawn every half-station INCLUDING the station positions, painting
+     those twice: the ground then read as alternating dark and light columns
+     instead of a finer uniform grid, and the existing lines darkened as the new
+     ones arrived. Interleaving means each line is painted exactly once, so the
+     only thing that changes with depth is the new lines fading in. */
+  background-size:
+    2.25rem 2.25rem,
+    2.25rem 2.25rem,
+    2.25rem 2.25rem,
+    2.25rem 2.25rem;
+  /* Anchored at the LEFT edge, not centred. Two reasons, both structural: a
+     centred lattice shifts sideways on every resize, and — load-bearing — the
+     blueprint print continues these same columns across its own opaque ground
+     (see Sheet.module.css). x=0 is the one origin both boxes can agree on
+     without measuring anything, since neither is horizontally scrolled. */
+  background-position:
+    1.125rem 1.125rem,
+    1.125rem 1.125rem,
+    0 0,
+    0 0;
 }
 
 a {

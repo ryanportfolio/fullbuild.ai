@@ -71,6 +71,13 @@
   border-top: 1px solid var(--rule-strong);
 }
 .revRow {
+  /* Ledger ignition — the same arithmetic the schedule's rows use against
+     --pour: 1 once the reader's advance through the appendix has passed this
+     row. --rev is scrubbed by DrawingSet over this sheet; the 0.4 offset
+     centres the flip inside the row's own band and 6 sharpens it.
+     Fallback --rev 1 = the whole record already read, so a no-JS or
+     reduced-motion set shows the finished ledger. */
+  --lit: clamp(0, calc((var(--rev, 1) * var(--n, 7) - var(--i, 0) - 0.4) * 6), 1);
   display: grid;
   grid-template-columns: 4.6rem minmax(0, 1fr) 5.8rem;
   gap: 1rem;
@@ -79,6 +86,9 @@
   border-bottom: 1px solid var(--rule);
   position: relative;
   font-size: 0.72rem;
+  /* Never to zero: an unread revision is faint, not withheld. The history is
+     real and stays legible to selection, search and screen readers. */
+  opacity: calc(0.34 + var(--lit) * 0.66);
 }
 .revRow[data-current='true'] {
   outline: 1.5px solid var(--ink-graphite);
@@ -277,6 +287,35 @@
   transform: rotate(-1deg);
   pointer-events: none;
 }
+/* THE STRIKE — the set's closing beat, and the only new motion this escalation
+   adds. One 190ms impact: the stamp lands over-canted and a hair over-scaled,
+   then seats into its resting angle. No bounce, no glow, no fade-up-from-below;
+   a hand stamp hits paper once and stops. DrawingSet arms it by writing
+   data-struck="false" — with no JS the attribute never appears and the stamp
+   stands already struck, the same floor rule the whole set follows. */
+.stamp[data-struck='false'] {
+  opacity: 0;
+}
+.stamp[data-struck='true'] {
+  animation: stampStrike 190ms var(--ease-draw) both;
+}
+@keyframes stampStrike {
+  from {
+    opacity: 0;
+    transform: rotate(-7deg) scale(1.08);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-3.5deg) scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* The stamp is struck, not animated — never left invisible. */
+  .stamp[data-struck='false'] {
+    opacity: 1;
+  }
+}
+
 .stampTotal {
   opacity: 0.55;
 }

@@ -27,8 +27,11 @@ function readGit(): {
   sha: string;
   rev: string;
   log: Revision[];
-  first: Revision | null;
-  /** Revisions between the visible recent log and the first commit. */
+  /**
+   * Every revision the ledger does not list individually. The visible rows plus
+   * this number must always equal `rev` — the appendix shows its own arithmetic,
+   * so this is the one field that keeps it honest.
+   */
   gap: number;
 } {
   try {
@@ -42,15 +45,14 @@ function readGit(): {
         .filter((p) => p.length === 3)
         .map(([h, s, d]) => ({ sha: h, subject: s, date: d }));
     const log = parse(run('git log -n 5 --format=%h%x1f%s%x1f%as'));
-    const first =
-      parse(run('git log --max-parents=0 -n 1 --format=%h%x1f%s%x1f%as'))[0] ??
-      null;
-    const gap = Math.max(0, Number(count) - log.length - (first ? 1 : 0));
-    return { sha, rev: count, log, first, gap };
+    // The initial commit is no longer pulled out as its own row, so the gap
+    // absorbs it: visible rows + gap === rev, still.
+    const gap = Math.max(0, Number(count) - log.length);
+    return { sha, rev: count, log, gap };
   } catch {
     // Vercel exposes the SHA via env when git isn't present in the runtime.
     const envSha = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7);
-    return { sha: envSha ?? '0000000', rev: '·', log: [], first: null, gap: 0 };
+    return { sha: envSha ?? '0000000', rev: '·', log: [], gap: 0 };
   }
 }
 
