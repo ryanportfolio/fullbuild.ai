@@ -127,6 +127,8 @@
   color: var(--ink-cyanotype);
   border-bottom: 1px solid currentColor;
   overflow-wrap: anywhere;
+  /* 24px touch target — inline, so this costs no layout. */
+  padding-top: 9px;
 }
 
 .sideCol {
@@ -191,10 +193,16 @@
 }
 .fieldVal a {
   border-bottom: 1px solid currentColor;
+  /* 24px touch target. These stay inline, so top padding grows the hit box
+     without touching the line box or dropping the underline. */
+  padding-top: 6px;
 }
 /* CHECKED BY — still the deliberate null, but now it is the hook: an empty
    witness line you can click to go countersign the set. */
 .fieldVal a.checkedBy {
+  /* inline-block, so the hit-box padding above WOULD move the line — the null
+     witness line owns its own geometry. */
+  padding-top: 0;
   display: inline-block;
   width: 100%;
   min-width: 3rem;

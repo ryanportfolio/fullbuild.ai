@@ -220,7 +220,10 @@ function resolveHref(c: (typeof CAPS)[number]): string | null {
 
 export default function CapabilitySchedule() {
   return (
-    <dl className={copy.spec} aria-label="Capability schedule: built and shipped across the repos">
+    // ul/li, not dl: every row here is a link to the artifact that proves it,
+    // and an <a> cannot legally sit between <dl> and its dt/dd pair. A list of
+    // links is what this actually is. Styling rides the same classes.
+    <ul className={copy.spec} aria-label="Capability schedule: built and shipped across the repos">
       {CAPS.map((c) => {
         const href = resolveHref(c);
         const words = c.label.split(' ');
@@ -243,7 +246,7 @@ export default function CapabilitySchedule() {
           </>
         );
         return (
-          <div key={c.key}>
+          <li key={c.key}>
             {href ? (
               <a
                 className={`${copy.specRow} ${copy.specRowCap} ${copy.specLink}`}
@@ -260,9 +263,9 @@ export default function CapabilitySchedule() {
                 {cells}
               </div>
             )}
-          </div>
+          </li>
         );
       })}
-    </dl>
+    </ul>
   );
 }

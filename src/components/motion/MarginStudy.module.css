@@ -20,12 +20,7 @@
   font-family: var(--font-mono);
 }
 
-/* Same sizes as legend.module.css's title / foot voices. */
-.title {
-  font-size: 8.5px;
-  letter-spacing: 0.16em;
-  fill: var(--ink-graphite);
-}
+/* Same size as legend.module.css's foot voice. */
 .foot {
   font-size: 6.5px;
   letter-spacing: 0.1em;

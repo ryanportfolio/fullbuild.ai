@@ -193,6 +193,8 @@
 
 /* Measured voice — a spec block that reads like a real drawing's schedule. */
 .spec {
+  /* the capability schedule renders this as a <ul> — no markers, ever */
+  list-style: none;
   margin-top: 1.6rem;
   border-top: 1px solid var(--rule);
   font-family: var(--font-mono);

@@ -49,9 +49,11 @@ export default function Sheet({
         {masthead ? <div className={styles.masthead}>{masthead}</div> : null}
 
         <div className={styles.body}>
-          <figure className={styles.drawing} aria-hidden="true">
-            {drawing}
-          </figure>
+          {/* NOT aria-hidden: the cover's drawing slot carries the SHEET INDEX,
+              a real list of links to every shipped project, and each plate's
+              root <svg> already carries role="img" + a described aria-label.
+              Hiding the figure stranded those links — tabbable, unannounced. */}
+          <figure className={styles.drawing}>{drawing}</figure>
           <div className={styles.copy}>{children}</div>
         </div>
       </div>

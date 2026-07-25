@@ -54,9 +54,9 @@ export default function SheetUnconformity() {
                     key={i}
                     style={{ '--i': i } as CSSProperties}
                   >
-                    <span className={u.revTag}>·</span>
-                    <span className={`${u.revDesc} ${u.revEmpty}`} />
-                    <span className={u.revWhen}>––––</span>
+                    <span className={u.revTag} role="cell">·</span>
+                    <span className={`${u.revDesc} ${u.revEmpty}`} role="cell" />
+                    <span className={u.revWhen} role="cell">––––</span>
                   </div>
                 ))}
               </div>
@@ -85,9 +85,9 @@ export default function SheetUnconformity() {
                           </text>
                         </svg>
                       )}
-                      <span className={u.revTag}>{r.sha}</span>
-                      <span className={u.revDesc}>{r.subject}</span>
-                      <span className={u.revWhen}>{r.date}</span>
+                      <span className={u.revTag} role="cell">{r.sha}</span>
+                      <span className={u.revDesc} role="cell">{r.subject}</span>
+                      <span className={u.revWhen} role="cell">{r.date}</span>
                     </div>
                   );
                 })}
@@ -97,11 +97,11 @@ export default function SheetUnconformity() {
                     role="row"
                     style={{ '--i': log.length } as CSSProperties}
                   >
-                    <span className={u.revTag}>···</span>
-                    <span className={u.revDesc}>
+                    <span className={u.revTag} role="cell">···</span>
+                    <span className={u.revDesc} role="cell">
                       {GIT.gap} intermediate revision{GIT.gap === 1 ? '' : 's'}
                     </span>
-                    <span className={u.revWhen}>···</span>
+                    <span className={u.revWhen} role="cell">···</span>
                   </div>
                 )}
               </div>
@@ -118,7 +118,10 @@ export default function SheetUnconformity() {
             </p>
           </div>
 
-          <aside className={u.sideCol}>
+          {/* div, not <aside>: a complementary landmark nested inside this
+              sheet's <section> landmark is a nesting violation, and this column
+              is part of the sheet rather than an aside to it. */}
+          <div className={u.sideCol}>
             <div className={u.specimen}>
               <div className={u.specimenHead}>Title block · contact</div>
               <EmailRow />
@@ -134,7 +137,7 @@ export default function SheetUnconformity() {
               </a>
             </div>
             <IfcStamp />
-          </aside>
+          </div>
         </div>
 
         <p className={`${u.endOfSet} u-mono`}>
