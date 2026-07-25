@@ -80,9 +80,13 @@
   display: none;
 }
 
+/* The general-notes column is sized in its own right, not as a fraction left
+   over from the writing surface: a proportional track let the message box push
+   the note narrow enough to wrap "within 24 h" onto a second line and break the
+   note's register. Fields take the remainder, capped to a readable measure. */
 .form {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.5fr);
+  grid-template-columns: minmax(0, 1fr) clamp(15rem, 22vw, 18rem);
   gap: clamp(1.5rem, 4vw, 3.5rem);
   align-items: start;
 }
@@ -91,6 +95,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
+  max-width: 44rem;
 }
 
 /* one written line of the RFI: label · writing surface */
