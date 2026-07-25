@@ -125,16 +125,22 @@ export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
           keeps time on the left; beside it, the site-log pencil record draws
           itself as the reader advances the set. */}
       <div className={styles.scene} aria-hidden="true">
+        {/* The ruler GAINS RESOLUTION with depth. A real set subdivides its
+            stations as it matures from survey toward IFC, so the half-stations
+            here are drawn from the start but only ink in as --depth climbs
+            (pure CSS off the ratchet — no per-tick JS). */}
         <svg className={styles.ruler} viewBox="0 0 24 400" preserveAspectRatio="none">
-          {Array.from({ length: 41 }).map((_, i) => {
-            const y = (i / 40) * 400;
-            const major = i % 5 === 0;
+          {Array.from({ length: 81 }).map((_, i) => {
+            const y = (i / 80) * 400;
+            const sub = i % 2 === 1; // half-station — earned by depth
+            const major = i % 10 === 0;
             return (
               <line
                 key={i}
+                className={sub ? styles.rulerSub : styles.rulerTick}
                 x1="0"
                 y1={y}
-                x2={major ? 10 : 5}
+                x2={major ? 10 : sub ? 3 : 5}
                 y2={y}
                 stroke="currentColor"
                 strokeWidth="1"
@@ -142,7 +148,23 @@ export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
               />
             );
           })}
-          <line x1="0" y1="0" x2="0" y2="400" stroke="currentColor" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+          <line
+            className={styles.rulerTick}
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="400"
+            stroke="currentColor"
+            strokeWidth="1"
+            vectorEffect="non-scaling-stroke"
+          />
+          {/* THE READ HEAD — the one mark on the page that moves continuously
+              with depth. Held at full ink while the ruler itself sits back at
+              0.4, so the instrument reads as live against its own scale. */}
+          <g className={styles.rulerHead}>
+            <line x1="0" y1="0" x2="14" y2="0" stroke="currentColor" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
+            <path d="M0 -4 L6 0 L0 4 Z" fill="currentColor" />
+          </g>
         </svg>
         <RailSketch className={styles.sketch} />
       </div>

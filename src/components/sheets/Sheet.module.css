@@ -38,7 +38,7 @@
    linework. (Dark mode inverts the whole sheet below; same concept, night
    table.) The two grounds still rule the page; the blue is a document ON them. */
 .sheet[data-ink='cyanotype'][data-negative='true'] .drawing {
-  background: var(--cyanotype-deep);
+  background-color: var(--cyanotype-deep);
   padding: clamp(1rem, 2.2vw, 1.9rem);
   color: var(--vellum);
 }
@@ -49,8 +49,46 @@
 /* STATE 02 in DARK = true cyanotype negative: the deep blue becomes the ground
    and every line + letter flips to pale vellum. Literal machinery, not a slogan. */
 :root[data-theme='dark'] .sheet[data-ink='cyanotype'][data-negative='true'] .frame {
-  background: var(--cyanotype-deep);
+  background-color: var(--cyanotype-deep);
   border-color: rgba(233, 227, 214, 0.28);
+}
+
+/* THE TABLE'S RULES PASS THROUGH THE PRINT.
+   The blueprint is an opaque panel laid on the drafting table, so it used to cut
+   the ground's vertical rules dead: a full-height line ending at a hard
+   horizontal edge that swept up the viewport as the sheet rose, which reads as
+   the line being CLIPPED rather than covered. The print now carries the same
+   station columns in its own pale ink, so a rule crosses the panel and only
+   changes colour, the way a line under a real print still tells you where it is.
+   COLUMNS ONLY. The table's rows are anchored to the document while the print's
+   would be anchored to its own box, so rows can never register across the edge,
+   and a horizontal line that lands half a bay off is worse than no line.
+   `fixed` is load-bearing: it takes the tile out of the panel's box and into the
+   nearest fixed-containing-block ancestor, all of which start at x=0 like the
+   body does — so both lattices anchor at 0 and stay registered at any width,
+   with no measuring and no JS.
+   The half-station layer is carried too, at the same --depth law as the ground,
+   or the faint new columns would get the exact hard cut this rule removes. */
+.sheet[data-ink='cyanotype'][data-negative='true'] .drawing,
+:root[data-theme='dark'] .sheet[data-ink='cyanotype'][data-negative='true'] .frame {
+  /* The print's ruling: vellum ink on the blueline, matching the dark table's
+     --rule so the two grounds rule at the same weight. */
+  --rule-print: rgba(233, 227, 214, 0.16);
+  --rule-print-sub: color-mix(
+    in srgb,
+    transparent calc(100% - var(--depth) * var(--depth) * 25%),
+    var(--rule-print)
+  );
+  background-image:
+    linear-gradient(to right, var(--rule-print-sub) 1px, transparent 1px),
+    linear-gradient(to right, var(--rule-print) 1px, transparent 1px);
+  background-size:
+    2.25rem 2.25rem,
+    2.25rem 2.25rem;
+  background-position:
+    1.125rem 0,
+    0 0;
+  background-attachment: fixed, fixed;
 }
 :root[data-theme='dark'] .sheet[data-ink='cyanotype'][data-negative='true'] .drawing :global(svg) {
   color: var(--vellum);

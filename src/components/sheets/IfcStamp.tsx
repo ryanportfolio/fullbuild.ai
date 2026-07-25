@@ -18,7 +18,12 @@ export default function IfcStamp() {
   const lit = selfUp && upCount > 0;
 
   return (
-    <div className={u.stamp} data-lit={lit ? 'true' : undefined} aria-label="Issue stamp">
+    <div
+      className={u.stamp}
+      data-stamp
+      data-lit={lit ? 'true' : undefined}
+      aria-label="Issue stamp"
+    >
       <span className={u.stampTitle}>Issued for construction</span>
       <span className={`${u.stampCount} u-mono`}>
         {probed ? upCount : '·'}
