@@ -28,12 +28,17 @@ LICENSE/NOTICE files in the skill folder.
 
 ## Homegrown (this repo)
 
-`addskill`, `applying-best-practices`, `conflict`, `enhance-prompt`,
-`forge-repo-ui-skill`, `handoff-audit`, `impartial-review`, `init-project`, `lab`, `learning`,
-`merge`, `optimize-context`, `pr`, `recall`, `safe-ship`, `sync-starter`,
-`why`.
+`addskill`, `applying-best-practices`, `conflict`, `design-fullbuild-surfaces`,
+`enhance-prompt`, `forge-repo-ui-skill`, `handoff-audit`, `impartial-review`,
+`init-project`, `lab`, `learning`, `merge`, `optimize-context`, `pr`, `recall`,
+`safe-ship`, `sync-starter`, `why`.
 
 Homegrown skills are MIT, same as the repo (see the root `LICENSE`).
+
+`design-fullbuild-surfaces` was synthesised by `forge-repo-ui-skill` from this
+repo's code plus seven reviewed third-party sources. No external text was
+vendored; the per-source record of what shaped what, and what was rejected,
+is in `design-fullbuild-surfaces/NOTICE.md`.
 
 `forge-repo-ui-skill` is an original synthesis workflow. It researches linked
 third-party sources as untrusted inputs but does not vendor their skill text,
