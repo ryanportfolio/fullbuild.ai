@@ -183,7 +183,8 @@ cover Elevation renders 707px against 380 units (S = 1.86); its ground line
 pinned at dashoffset 0.5 painted 96 units, gap, then 72 units of a 360-unit
 path, against the 180 units it should have.
 
-Fix used in MarginStudy: **drop `vector-effect`** from the animated strokes.
+Fix: **drop `vector-effect`** from the animated strokes. Applied in both
+MarginStudy and Marks.tsx (which backs every .ws-draw stroke on the site).
 Dashes then measure in user units and `pathLength=1` is exact at every size.
 The cost is that stroke WIDTHS scale with the drawing, which for a drawing that
 scales as a whole is the honest behaviour; re-check any hairline under 0.6 user

@@ -32,11 +32,37 @@ export function inkVar(ink?: Ink): string {
   }
 }
 
+/*
+ * NO vector-effect by default, deliberately.
+ *
+ * `non-scaling-stroke` is the natural choice for a drawing that scales, and it
+ * is wrong on anything revealed by a `pathLength=1` dash: the UA measures the
+ * dash pattern in the svg's own host coordinate space, so at render scale S a
+ * "full length" dash paints only 1/S of the path, and above S≈1.5 the pattern
+ * is short enough to REPEAT inside the path. The cover Elevation renders 707px
+ * against its 380-unit viewBox at a 1920 viewport (S = 1.86): its ground line
+ * held at dashoffset 0.5 painted 96 units, a gap, then 72 units of a 360-unit
+ * path, against the 180 it owed. DrawingSet strips the dash attributes when a
+ * stroke completes, so the settled drawing was always right and the damage was
+ * confined to the reveal, which ran short and then snapped to full length.
+ *
+ * Without it, dashes are user units and pathLength=1 is exact at any size. The
+ * cost is that stroke WIDTHS now scale with the drawing, which for a drawing
+ * that scales as a whole is the honest behaviour. Keep authored widths at or
+ * above ~0.5 user units so a hairline cannot drop below half a device pixel at
+ * the narrow end of the range.
+ *
+ * The one place that looks like it needs the opt-out does not: T-01's form
+ * rules stretch a `0 0 100 2` viewBox with preserveAspectRatio="none", but
+ * their CSS box is `height: 2px` against a 2-unit viewBox, so their Y scale is
+ * exactly 1 and a horizontal rule's width is untouched either way. They were
+ * the worst-hit strokes on the site (stretched to S = 6.76 at a 1920 viewport,
+ * so 15% of each rule painted) and they are fixed by the same removal.
+ */
 const drawProps = (order: number) => ({
   className: 'ws-draw',
   pathLength: 1,
   'data-o': order,
-  vectorEffect: 'non-scaling-stroke' as const,
 });
 
 /** A single drawable line. */
