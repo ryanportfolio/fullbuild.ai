@@ -1,9 +1,16 @@
 /* ============================================================================
    STATE 04 — the drawing schedule + the DOM pour.
-   One custom property (--pour, written by the store) drives the waterline and
-   every row's ignition factor (--lit). No React re-render per scroll tick.
+   One custom property (--pour) drives the waterline height and every row's
+   ignition factor (--lit). No React re-render per scroll tick.
    Fallback --pour = 1: without JS (and under reduced motion) the schedule
    stands fully poured — the finished end-state, per the motion doctrine.
+
+   The declarations below are the spec, and they are what actually renders on
+   the no-JS and reduced-motion paths. On the animated path SheetShipped.tsx
+   evaluates the same two formulas in JS and writes the RESULTS (an inline
+   height, and --lit per row) instead of writing --pour here: inheriting
+   --pour down the schedule invalidated style for ~220 descendants on every
+   scroll frame. Change a formula here and change it there too.
    ========================================================================= */
 
 .sheet {
