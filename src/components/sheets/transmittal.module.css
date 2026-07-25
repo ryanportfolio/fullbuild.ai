@@ -183,6 +183,7 @@
   position: absolute;
   left: 0;
   right: 0;
+  width: 100%;
   height: 2px;
   color: var(--ink-graphite);
   opacity: 0.55;
