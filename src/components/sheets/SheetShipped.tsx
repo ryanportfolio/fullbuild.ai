@@ -24,19 +24,46 @@ export default function SheetShipped() {
   const health = useWorkingSet((st) => st.health);
   const scheduleRef = useRef<HTMLDivElement>(null);
 
-  // POUR → CSS. One custom property, written straight to the DOM on store
-  // change (no React re-render per scroll tick); each row derives its own
-  // ignition factor from --pour and --i in pure CSS.
+  // POUR → CSS. Written straight to the DOM on store change (no React
+  // re-render per scroll tick).
+  //
+  // The --lit declaration in shipped.module.css is the spec and stays there as
+  // the no-JS / reduced-motion fallback. But writing --pour on .schedule and
+  // letting CSS derive --lit invalidates style for all ~220 descendants every
+  // scroll frame: 10.5ms of pure recalc per tick, measured. So on the JS path
+  // we evaluate that SAME expression here and write the result onto each row,
+  // skipping rows whose value did not change. One tick then dirties the one
+  // row mid-transition (the * 8 sharpening means at most one is), not the
+  // whole subtree. Keep the two in sync — the CSS is not dead code.
   useEffect(() => {
     const el = scheduleRef.current;
     if (!el) return;
     // Reduced motion: the schedule stands fully poured (the finished end-state
-    // is the spec) — never let the scroll-scrubbed store value dim it.
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      el.style.setProperty('--pour', '1');
-      return;
-    }
-    const apply = (p: number) => el.style.setProperty('--pour', p.toFixed(4));
+    // is the spec) — never let the scroll-scrubbed store value dim it. The CSS
+    // fallbacks already resolve to exactly that, so write nothing at all.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const wl = el.querySelector<HTMLElement>('[data-waterline]');
+    const rows = Array.from(el.querySelectorAll<HTMLElement>('[data-row]'));
+    const n = PROJECTS.length;
+    const written: string[] = new Array(rows.length).fill('');
+
+    const apply = (raw: number) => {
+      // Round first, so every row sees the value the CSS would have seen.
+      const p = Number(raw.toFixed(4));
+      if (wl) wl.style.height = `${(p * 100).toFixed(3)}%`;
+      for (let i = 0; i < rows.length; i += 1) {
+        // shipped.module.css: clamp(0, (pour * n - i - 0.45) * 8, 1)
+        const lit = Math.min(1, Math.max(0, (p * n - i - 0.45) * 8)).toFixed(4);
+        // Compare against the last value written FOR THIS ROW — a fast-scroll
+        // or resize tick can jump the pour past several rows at once, and a
+        // saturation test would strand them part-lit.
+        if (written[i] === lit) continue;
+        written[i] = lit;
+        rows[i].style.setProperty('--lit', lit);
+      }
+    };
+
     apply(useWorkingSet.getState().pour);
     return useWorkingSet.subscribe((st, prev) => {
       if (st.pour !== prev.pour) apply(st.pour);
@@ -65,7 +92,7 @@ export default function SheetShipped() {
               </p>
             </div>
 
-            <div className={s.schedule} ref={scheduleRef} style={{ '--n': n } as React.CSSProperties}>
+            <div className={s.schedule} data-schedule ref={scheduleRef} style={{ '--n': n } as React.CSSProperties}>
               {/* the waterline — same store value as the 3D section plane */}
               <div className={s.waterline} data-waterline aria-hidden="true">
                 <span className={s.waterTag}>POUR</span>
@@ -79,6 +106,7 @@ export default function SheetShipped() {
                   <article
                     className={s.row}
                     key={p.id}
+                    data-row
                     style={{ '--i': i } as React.CSSProperties}
                     data-live={live ? 'true' : 'false'}
                   >

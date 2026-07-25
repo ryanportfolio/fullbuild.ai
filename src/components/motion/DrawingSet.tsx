@@ -412,25 +412,36 @@ export default function DrawingSet({
       // the schedule is actively pouring (concrete pen — red is never a pen).
       const shipped = document.getElementById('state-04');
       if (shipped) {
+        // The nib is derived from the SCHEDULE box, not from the waterline's
+        // own rect, and the read happens BEFORE setPour. Reading the waterline
+        // after the pour write measured 11-22ms of forced synchronous reflow
+        // every scroll frame: setPour writes --pour, that resizes the
+        // waterline, and the rect read then had to flush layout to answer.
+        // The result is the same pixel — .waterline is absolute at
+        // left/right/top 0 in .schedule, whose only box inset is a 1px
+        // border-top, so its bottom edge is (top + 1) + pour * (height - 1).
+        const schedule = shipped.querySelector<HTMLElement>('[data-schedule]');
         ScrollTrigger.create({
           trigger: shipped,
           start: 'top bottom',
           end: 'top top',
           scrub: true,
           onUpdate: (self) => {
-            setPour(self.progress);
-            if (self.progress > 0.02 && self.progress < 0.985) {
-              const wl = document.querySelector<HTMLElement>('[data-waterline]');
-              if (wl) {
-                const r = wl.getBoundingClientRect();
-                penBus.set({ x: r.right - 6, y: r.bottom, ink: 'concrete', mode: 'pour' });
-              }
+            if (schedule && self.progress > 0.02 && self.progress < 0.985) {
+              const r = schedule.getBoundingClientRect();
+              penBus.set({
+                x: r.right - 6,
+                y: r.top + 1 + self.progress * (r.height - 1),
+                ink: 'concrete',
+                mode: 'pour',
+              });
             } else if (penBus.last?.mode === 'pour') {
               // The pour is the pen's only mid-set appearance — either side of
               // it, the instrument parks off-stage rather than trailing the
               // reader down the page.
               hidePen();
             }
+            setPour(self.progress);
           },
         });
 
