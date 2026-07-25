@@ -139,7 +139,10 @@ px dash values by the render scale before applying them against `pathLength=1`
 — at a 472px render of a 380-unit viewBox only 1/1.243 ≈ 80.4% of each stroke
 paints. Fix (DrawingSet.tsx): set/animate dash values as SVG **attributes**
 (`attr: { 'stroke-dasharray': '1 1', 'stroke-dashoffset': 1 }`) — user units,
-pathLength-normalized, exact at any size. On stroke completion remove the
+pathLength-normalized. **Correction (2026-07-25):** this entry used to claim
+attributes are "exact at any size". They are not, while the stroke also carries
+`vector-effect: non-scaling-stroke` — see the non-scaling-stroke entry below,
+which is the same 1/scale error arriving by a second route. On stroke completion remove the
 animation dash and restore any authored dash pattern, dropping `pathLength`
 there (authored dashes like "2 4" are viewBox units; against pathLength=1 they
 exceed the whole path and render solid). This also supersedes the autoRound
@@ -162,12 +165,36 @@ cycles: an `A` arc command was blamed, rewritten as a cubic, and the cubic
 
 Rules: never inflate the element to inspect a dashed stroke. Magnify the
 RASTER instead — capture at a high `deviceScaleFactor` at the real layout
-width, then upscale the PNG. Corollary for the real site: a dash reveal on
-non-scaling strokes is only exact while the svg renders near 1:1 against its
-viewBox. MarginStudy and the cover Elevation both sit at ~1.02, so the error is
-invisible, but widening either well past its viewBox would truncate every
-stroke. Detection: compare the painted extent against `getBBox()`, and check
-`svg.getBoundingClientRect().width / viewBoxWidth` before believing the shot.
+width, then upscale the PNG.
+
+## non-scaling-stroke silently truncates every dash reveal (2026-07-25)
+
+`vector-effect: non-scaling-stroke` and a `pathLength=1` dash reveal cannot both
+be on the same stroke. The UA measures the dash pattern in the svg's own
+CSS-pixel space, so at render scale S (= `svg.getBoundingClientRect().width /
+viewBox width`) a "full length" dash paints only 1/S of the path. Above S≈1.5
+the pattern is short enough to REPEAT inside the path, so the stroke comes out
+as segment-gap-segment rather than merely short.
+
+Measured on the live site at a 1920 viewport: MarginStudy rendered 554px against
+a 384-unit viewBox (S = 1.44) and every mark painted 69% — ground line short of
+its columns, rafters short of the apex, registration ring an open hook. The
+cover Elevation renders 707px against 380 units (S = 1.86); its ground line
+pinned at dashoffset 0.5 painted 96 units, gap, then 72 units of a 360-unit
+path, against the 180 units it should have.
+
+Fix used in MarginStudy: **drop `vector-effect`** from the animated strokes.
+Dashes then measure in user units and `pathLength=1` is exact at every size.
+The cost is that stroke WIDTHS scale with the drawing, which for a drawing that
+scales as a whole is the honest behaviour; re-check any hairline under 0.6 user
+units, since it can drop below half a device pixel at the narrow end and grey out.
+
+Note this is invisible near S = 1.0 and does NOT show up in a settled screenshot
+of anything that strips its dash attributes on completion the way DrawingSet
+does — there the defect lives only in the reveal, ending in a snap to full
+length. Detection: pin a long stroke at `stroke-dashoffset` 0.5 and check that
+the painted run is half the path and not half/S, and always read
+`getBoundingClientRect().width / viewBox width` before trusting any dash shot.
 
 ## fr-track min-content overflow crosses the rail (2026-07-21)
 
