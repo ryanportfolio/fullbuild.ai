@@ -57,6 +57,14 @@ export interface Frame {
   /** Max erection order among CLAD members (normalises the stagger). */
   maxCladOrder: number;
   bounds: { min: Vec3; max: Vec3; center: Vec3; size: Vec3 };
+  /**
+   * Foundation linework at grade — pad outlines under every column plus the
+   * longitudinal setting-out line binding them. Flat xyz SEGMENT pairs, drawn
+   * (never clad), revealed by the erection clock like the frame above it.
+   */
+  footingSegs: number[];
+  /** Per-SEGMENT reveal param on the Member.stagger axis, ascending. */
+  footingSpawn: number[];
 }
 
 // --- deterministic grid constants (NOT seeded) ------------------------------
@@ -243,10 +251,60 @@ export function buildFrame(
   }
   for (const b of bays) b.apex = shift(b.apex);
 
-  const size: Vec3 = [max[0] - min[0], max[1] - min[1], max[2] - min[2]];
+  // --- foundations: pads at grade + the longitudinal setting-out line -------
+  // Built AFTER the recentre shift so pad coordinates match the members that
+  // stand on them. Each pad leads its own column slightly: the ground is set
+  // out before the frame lands on it, which is what gives the axon a floor to
+  // sit on instead of hanging in the paper.
+  const FOOT_LEAD = 0.05;
+  const PAD_HALF = THICK * 1.6;
+  const columns = members.filter((m) => m.role === 'column');
+  const footEntries: { spawn: number; segs: number[] }[] = [];
+  for (let b = 0; b < bays.length; b++) {
+    for (const side of [0, 1] as const) {
+      const col = columns[b * 2 + side];
+      if (!col) continue;
+      const [x, , z] = col.p0;
+      const spawn = Math.max(0, col.stagger - FOOT_LEAD);
+      // Pad outline in plan, closed.
+      const c0: Vec3 = [x - PAD_HALF, 0, z - PAD_HALF];
+      const c1: Vec3 = [x + PAD_HALF, 0, z - PAD_HALF];
+      const c2: Vec3 = [x + PAD_HALF, 0, z + PAD_HALF];
+      const c3: Vec3 = [x - PAD_HALF, 0, z + PAD_HALF];
+      footEntries.push({
+        spawn,
+        segs: [...c0, ...c1, ...c1, ...c2, ...c2, ...c3, ...c3, ...c0],
+      });
+      // Setting-out line back to the previous bent's pad on this side.
+      const prev = columns[(b - 1) * 2 + side];
+      if (b > 0 && prev) {
+        footEntries.push({
+          spawn,
+          segs: [prev.p0[0], 0, prev.p0[2], x, 0, z],
+        });
+      }
+    }
+  }
+  footEntries.sort((a, b) => a.spawn - b.spawn);
+  const footingSegs: number[] = [];
+  const footingSpawn: number[] = [];
+  for (const entry of footEntries) {
+    for (let i = 0; i < entry.segs.length; i += 6) {
+      for (let k = 0; k < 6; k++) footingSegs.push(entry.segs[i + k]);
+      footingSpawn.push(entry.spawn);
+    }
+  }
+
+  // Pads sit proud of the columns in plan, so the framing bounds have to own
+  // them or the outermost footing clips at the cell edge.
+  const size: Vec3 = [
+    max[0] - min[0] + PAD_HALF * 2,
+    max[1] - min[1],
+    max[2] - min[2] + PAD_HALF * 2,
+  ];
   const bounds = {
-    min: [min[0] - cx, min[1], min[2] - cz] as Vec3,
-    max: [max[0] - cx, max[1], max[2] - cz] as Vec3,
+    min: [min[0] - cx - PAD_HALF, min[1], min[2] - cz - PAD_HALF] as Vec3,
+    max: [max[0] - cx + PAD_HALF, max[1], max[2] - cz + PAD_HALF] as Vec3,
     center: [0, (min[1] + max[1]) / 2, 0] as Vec3,
     size,
   };
@@ -258,5 +316,7 @@ export function buildFrame(
     apexY: max[1],
     maxCladOrder,
     bounds,
+    footingSegs,
+    footingSpawn,
   };
 }

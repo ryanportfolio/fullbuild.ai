@@ -33,6 +33,7 @@ import {
   DoubleSide,
   EdgesGeometry,
   Float32BufferAttribute,
+  Fog,
   Group,
   Line,
   LineBasicMaterial,
@@ -70,8 +71,31 @@ const STRIKE_TIME = 1.0; // s, fully framed -> bare site (scrolling back up)
 const DRAW_WINDOW = 0.14;
 const CAM_AZ = (28 * Math.PI) / 180; // axonometric azimuth
 const CAM_TILT = (18 * Math.PI) / 180; // axonometric tilt (sectioned axon)
+// ...and where the axon has turned to by the time the set is poured and grown.
+// A sectioned axon under an orthographic camera has NO perspective parallax, so
+// a slow turn is the only honest signal that the reader is moving around a real
+// object rather than past a flat plate. Kept small: this is a drawing being
+// re-pinned on the board, not an orbit.
+const CAM_AZ_END = (34 * Math.PI) / 180;
+const CAM_TILT_END = (25 * Math.PI) / 180;
+const CAM_DRIFT_DAMP = 0.55; // catch-up damp on the turn (s)
+const CAM_DIST = 120; // camera standoff along the view axis
 const FRAME_MARGIN = 1.22; // fill the band cell, clearing the sheet header rules
 const UP = new Vector3(0, 1, 0);
+
+// Aerial recession. The deepest bent fades this far toward the paper — the
+// draughtsman's depth cue (far linework laid lighter), not a blur and not a
+// gradient. WebGL core lines are always one pixel wide, so tonal value is the
+// only line-weight hierarchy available here.
+const FOG_MAX = 0.52;
+
+function camDir(az: number, tilt: number, out: Vector3): Vector3 {
+  return out.set(
+    Math.sin(az) * Math.cos(tilt),
+    Math.sin(tilt),
+    Math.cos(az) * Math.cos(tilt),
+  );
+}
 
 // Bloom membership + composer-mount thresholds, measured on the diamond's ACTUAL
 // ignition strength (0 = graphite .. 1 = full red), NOT raw pour — so the pass
@@ -89,6 +113,7 @@ interface Palette {
   concrete: Color;
   poche: PocheColors;
   live: Color; // revision-red
+  paper: Color; // the ground the set is drawn on — what depth fades toward
   dark: boolean;
 }
 
@@ -109,9 +134,10 @@ function readPalette(): Palette {
   // reads as ONE material family under both grounds.
   const concrete = read('--pour-concrete', dark ? '#5d574d' : '#7a7263');
   const live = read('--accent-live', dark ? '#ff5138' : '#cb3a26');
+  const paper = read('--ground', dark ? '#14181a' : '#e9e3d6');
   // Hatch a hair off the fill: lighter toward vellum on dark, darker toward ink on light.
   const hatch = concrete.clone().lerp(dark ? read('--vellum', '#e9e3d6') : graphite, 0.35);
-  return { graphite, concrete, poche: { fill: concrete, hatch }, live, dark };
+  return { graphite, concrete, poche: { fill: concrete, hatch }, live, paper, dark };
 }
 
 // ---------------------------------------------------------------------------
@@ -154,10 +180,22 @@ interface DiamondViz {
   bias: number;
 }
 
+/** Foundation linework at grade, revealed by the erection clock. */
+interface FootingViz {
+  geo: BufferGeometry;
+  material: LineBasicMaterial;
+  /** Ascending reveal params on the raw Member.stagger axis. */
+  spawn: number[];
+  /** One-way cursor over `spawn`; walks back down when the frame strikes. */
+  cursor: number;
+}
+
 interface Built {
   group: Group;
   members: MemberViz[];
   diamonds: DiamondViz[];
+  footings: FootingViz;
+  poche: PocheMaterial;
   dispose: () => void;
 }
 
@@ -336,6 +374,9 @@ function buildScene(frame: Frame, pal: Palette): Built {
         // on top (no depth test) with a high render order.
         depthTest: false,
         depthWrite: false,
+        // Exempt from the aerial recession: a deep bay's keystone is either
+        // live or it is not, and fog would read as a half-answer. Red never lies.
+        fog: false,
       }),
     );
     const mesh = new Mesh(octaGeo, material);
@@ -354,6 +395,7 @@ function buildScene(frame: Frame, pal: Palette): Built {
         color: pal.graphite.clone(),
         depthTest: false,
         depthWrite: false,
+        fog: false,
       }),
     );
     const edge = new LineSegments(octaEdges, edgeMaterial);
@@ -373,20 +415,90 @@ function buildScene(frame: Frame, pal: Palette): Built {
     };
   });
 
+  // Foundations at grade. One merged LineSegments for every pad and setting-out
+  // line in the set: it draws on with the erection clock via drawRange, exactly
+  // like a vine's leaves, and costs a single draw call for the whole floor.
+  const footGeo = track(new BufferGeometry());
+  footGeo.setAttribute(
+    'position',
+    new Float32BufferAttribute(frame.footingSegs, 3),
+  );
+  footGeo.setDrawRange(0, 0);
+  const footMat = track(new LineBasicMaterial({ color: pal.graphite.clone() }));
+  const footings = new LineSegments(footGeo, footMat);
+  footings.frustumCulled = false; // drawRange animates; skip bounds churn
+  group.add(footings);
+
   const dispose = () => {
     for (const d of disposables) d.dispose();
     group.clear();
   };
 
-  return { group, members, diamonds, dispose };
+  return {
+    group,
+    members,
+    diamonds,
+    footings: {
+      geo: footGeo,
+      material: footMat,
+      spawn: frame.footingSpawn,
+      cursor: 0,
+    },
+    poche: pocheMat,
+    dispose,
+  };
 }
 
 // ---------------------------------------------------------------------------
-// Fixed sectioned-axonometric camera. Set once + on resize; never orbits.
+// Sectioned-axonometric camera. The FRUSTUM is set once + on resize and never
+// changes again; only the view direction drifts, and only across the pour and
+// growth. Framing is fitted against the WIDEST projection in that drift range,
+// so the set turns without breathing in size as it turns — and because the pan
+// is on the frustum rather than the model, the world-space pour clip planes
+// stay valid throughout. Never orbits under the reader's hand.
 // ---------------------------------------------------------------------------
 function CameraRig({ frame }: { frame: Frame }) {
   const camRef = useRef<OrthographicCameraImpl>(null);
   const { size, invalidate } = useThree();
+  const azRef = useRef(CAM_AZ);
+  const center = useMemo(() => {
+    const c = frame.bounds.center;
+    return new Vector3(c[0], c[1], c[2]);
+  }, [frame]);
+  const scratch = useRef({
+    dir: new Vector3(),
+    right: new Vector3(),
+    up: new Vector3(),
+    corner: new Vector3(),
+    need: { w: 0, h: 0 },
+  }).current;
+  // Frustum half-extents fitted at the START azimuth; the turn holds apparent
+  // size with zoom against these rather than by fitting the worst case, which
+  // would shrink the set in its cell for the whole of STATE 03.
+  const halfRef = useRef({ w: 1, h: 1 });
+
+  /** Half-extents the bounds need at this view direction, margin included. */
+  const measure = useCallback(
+    (az: number) => {
+      const { min, max } = frame.bounds;
+      const dir = camDir(az, driftTilt(az), scratch.dir);
+      const right = scratch.right.crossVectors(dir, UP).normalize();
+      const camUp = scratch.up.crossVectors(right, dir).normalize();
+      let w = 0;
+      let h = 0;
+      for (const x of [min[0], max[0]])
+        for (const y of [min[1], max[1]])
+          for (const z of [min[2], max[2]]) {
+            scratch.corner.set(x, y, z).sub(center);
+            w = Math.max(w, Math.abs(scratch.corner.dot(right)));
+            h = Math.max(h, Math.abs(scratch.corner.dot(camUp)));
+          }
+      scratch.need.w = w * FRAME_MARGIN;
+      scratch.need.h = h * FRAME_MARGIN;
+      return scratch.need;
+    },
+    [frame, center, scratch],
+  );
 
   useLayoutEffect(() => {
     const cam = camRef.current;
@@ -396,33 +508,13 @@ function CameraRig({ frame }: { frame: Frame }) {
     // Exact fit: project the 8 bounding-box corners into camera space and take
     // the max extents. (The old hypot-based bound over-shot badly for the long
     // multi-bent shed and rendered it tiny in its cell.)
-    const { min, max } = frame.bounds;
-    const c = frame.bounds.center;
-    const center = new Vector3(c[0], c[1], c[2]);
-    const dir = new Vector3(
-      Math.sin(CAM_AZ) * Math.cos(CAM_TILT),
-      Math.sin(CAM_TILT),
-      Math.cos(CAM_AZ) * Math.cos(CAM_TILT),
-    );
-    const right = new Vector3().crossVectors(dir, UP).normalize();
-    const camUp = new Vector3().crossVectors(right, dir).normalize();
-    let needW = 0;
-    let needH = 0;
-    const corner = new Vector3();
-    for (const x of [min[0], max[0]])
-      for (const y of [min[1], max[1]])
-        for (const z of [min[2], max[2]]) {
-          corner.set(x, y, z).sub(center);
-          needW = Math.max(needW, Math.abs(corner.dot(right)));
-          needH = Math.max(needH, Math.abs(corner.dot(camUp)));
-        }
-    needW *= FRAME_MARGIN;
-    needH *= FRAME_MARGIN;
+    const need = measure(CAM_AZ);
     // Respect the canvas aspect: widen whichever axis is slack.
-    let halfW = needW;
-    let halfH = needH;
+    let halfW = need.w;
+    let halfH = need.h;
     if (halfW / halfH > aspect) halfH = halfW / aspect;
     else halfW = halfH * aspect;
+    halfRef.current = { w: halfW, h: halfH };
 
     // Camera-space pan: the canvas IS the band cell now (Margin Law), so the
     // frame owns its room — just a hair of downward bias so the ridge clears the
@@ -438,16 +530,54 @@ function CameraRig({ frame }: { frame: Frame }) {
     cam.far = 500;
     cam.zoom = 1;
 
-    cam.position.copy(center).addScaledVector(dir, 120);
+    cam.position
+      .copy(center)
+      .addScaledVector(camDir(azRef.current, driftTilt(azRef.current), scratch.dir), CAM_DIST);
     cam.up.copy(UP);
     cam.lookAt(center);
     cam.updateProjectionMatrix();
     invalidate();
-  }, [frame, size.width, size.height, invalidate]);
+  }, [frame, size.width, size.height, invalidate, center, scratch, measure]);
+
+  // The turn itself. Driven by pour + growth (never whole-set progress), so it
+  // moves only while STATE 03/04 are on screen and the demand loop is already
+  // awake for the pour — this adds no wake-ups of its own.
+  useFrame((_, dt) => {
+    const cam = camRef.current;
+    if (!cam) return;
+    const s = useWorkingSet.getState();
+    const advance = clamp01(s.pour * 0.5 + s.grow * 0.5);
+    const target = CAM_AZ + (CAM_AZ_END - CAM_AZ) * easeInOutCubic(advance);
+    const settling = damp(azRef, 'current', target, CAM_DRIFT_DAMP, dt);
+    const az = azRef.current;
+    cam.position
+      .copy(center)
+      .addScaledVector(camDir(az, driftTilt(az), scratch.dir), CAM_DIST);
+    cam.up.copy(UP);
+    cam.lookAt(center);
+    // A turning axon presents a wider silhouette; scale the frustum to keep the
+    // set the same size in its cell, so the drift reads as the drawing turning
+    // rather than as the drawing being pushed away. Zoom leaves the world-space
+    // pour clip planes untouched (they are camera-independent).
+    const { w, h } = measure(az);
+    const half = halfRef.current;
+    const zoom = Math.min(half.w / w, half.h / h);
+    if (Math.abs(zoom - cam.zoom) > 1e-4) {
+      cam.zoom = zoom;
+      cam.updateProjectionMatrix();
+    }
+    if (settling) invalidate();
+  });
 
   return (
     <OrthographicCamera ref={camRef} makeDefault manual near={0.1} far={500} />
   );
+}
+
+/** Tilt is slaved to azimuth so the drift is one motion, not two. */
+function driftTilt(az: number): number {
+  const k = (az - CAM_AZ) / (CAM_AZ_END - CAM_AZ);
+  return CAM_TILT + (CAM_TILT_END - CAM_TILT) * k;
 }
 
 // ---------------------------------------------------------------------------
@@ -460,10 +590,38 @@ function Pour({
   frame: Frame;
   onLitChange: (lit: boolean) => void;
 }) {
-  const { invalidate, gl } = useThree();
+  const { invalidate, gl, scene } = useThree();
 
   const paletteRef = useRef<Palette>(readPalette());
   const built = useMemo(() => buildScene(frame, paletteRef.current), [frame]);
+
+  // AERIAL RECESSION — linear fog fitted to the set's own depth along the view
+  // axis, so the near bent stays full-strength graphite and the deepest one has
+  // faded FOG_MAX of the way to the paper. Range is measured once at the middle
+  // of the camera drift; a nine-degree turn moves it by well under a percent.
+  const fog = useMemo(() => {
+    const dir = camDir(
+      (CAM_AZ + CAM_AZ_END) / 2,
+      (CAM_TILT + CAM_TILT_END) / 2,
+      new Vector3(),
+    );
+    const { min, max, center } = frame.bounds;
+    const c = new Vector3(center[0], center[1], center[2]);
+    const corner = new Vector3();
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (const x of [min[0], max[0]])
+      for (const y of [min[1], max[1]])
+        for (const z of [min[2], max[2]]) {
+          const d = corner.set(x, y, z).sub(c).dot(dir);
+          if (d < lo) lo = d;
+          if (d > hi) hi = d;
+        }
+    // Camera sits CAM_DIST along +dir from centre, so view depth = CAM_DIST - d.
+    const near = CAM_DIST - hi;
+    const span = Math.max(hi - lo, 1e-3);
+    return new Fog(paletteRef.current.paper.getHex(), near, near + span / FOG_MAX);
+  }, [frame]);
   const hRef = useRef(frame.baseY);
   const litRef = useRef(false);
   // Erection clock: 0 = bare site, 1 = fully framed. Rises when STATE 03
@@ -484,11 +642,25 @@ function Pour({
     });
   }, [invalidate]);
 
+  // --- fog: own it on the scene, and mirror it onto the poché shader -------
+  useEffect(() => {
+    scene.fog = fog;
+    built.poche.setFog(fog.color, fog.near, fog.far);
+    invalidate();
+    return () => {
+      if (scene.fog === fog) scene.fog = null;
+    };
+  }, [scene, fog, built, invalidate]);
+
   // --- theme: re-resolve palette + recolor materials on data-theme change --
   useEffect(() => {
     const applyTheme = () => {
       const pal = readPalette();
       paletteRef.current = pal;
+      // Depth fades toward whichever ground the set is drawn on.
+      fog.color.copy(pal.paper);
+      built.poche.setFog(fog.color, fog.near, fog.far);
+      built.footings.material.color.copy(pal.graphite);
       for (const mv of built.members) {
         (mv.wire.material as LineBasicMaterial).color.copy(pal.graphite);
         if (mv.solid) {
@@ -515,7 +687,7 @@ function Pour({
       attributeFilter: ['data-theme'],
     });
     return () => obs.disconnect();
-  }, [built, invalidate]);
+  }, [built, invalidate, fog]);
 
   // --- lifecycle: webglActive + full disposal ------------------------------
   useEffect(() => {
@@ -555,6 +727,22 @@ function Pour({
     erectRef.current = e;
     const erecting = e !== erectTarget;
     const staggerSpan = 1 - DRAW_WINDOW;
+
+    // Foundations first: pads and setting-out lines are laid just ahead of the
+    // columns that stand on them. Two-way cursor, so a strike un-draws the
+    // floor in the same order it was set out.
+    const fp = built.footings;
+    while (
+      fp.cursor < fp.spawn.length &&
+      fp.spawn[fp.cursor] * staggerSpan <= e
+    ) {
+      fp.cursor++;
+    }
+    while (fp.cursor > 0 && fp.spawn[fp.cursor - 1] * staggerSpan > e) {
+      fp.cursor--;
+    }
+    fp.geo.setDrawRange(0, fp.cursor * 2);
+
     for (const mv of built.members) {
       if (mv.growDir && mv.growP0) {
         const t = clamp01((e - mv.member.stagger * staggerSpan) / DRAW_WINDOW);
@@ -653,9 +841,12 @@ function Pour({
 // ---------------------------------------------------------------------------
 // L-101 OVERGROWTH — twelve vines climbing the erected frame.
 //
-// One vine per schedule entry (12), spread across the 8 bents: helices wrap
-// the real columns and continue along rafters / eave girts / the ridge purlin,
-// leaves budding behind the growth tip, a flower closing each path. Growth is
+// One vine per schedule entry (12), spread across the 8 bents: a seeded bed of
+// tufts plants each column foot, helices wrap the real columns and continue
+// along rafters / eave girts / the ridge purlin, leaves budding behind the
+// growth tip, secondary blooms opening along the run, a flower closing each
+// path. Planting, leaves and secondary blooms all ride ONE spawn-ordered
+// segment stream per vine, so the extra flora costs no extra draw call. Growth is
 // a tip-first drawRange reveal driven by scroll progress THROUGH STATE 04
 // (store.grow), staggered per vine, monotonic (the vine only ever adds), with
 // a short catch-up damp so a fast scroll still grows instead of snapping.
@@ -730,7 +921,14 @@ function buildOvergrowth(vines: Vine[], pal: Palette): OvergrowthBuilt {
     petals.frustumCulled = false;
     flower.add(petals);
     const dotMat = track(
-      new MeshBasicMaterial({ color: pal.graphite.clone(), toneMapped: false }),
+      // Unfogged for the same reason as the schedule diamonds: the bloom centre
+      // is a live/not-live verdict, and a half-faded red would soften a claim
+      // that is binary. The stems and petals around it fade normally.
+      new MeshBasicMaterial({
+        color: pal.graphite.clone(),
+        toneMapped: false,
+        fog: false,
+      }),
     );
     const dot = new Mesh(dotGeo, dotMat);
     dot.visible = false;
