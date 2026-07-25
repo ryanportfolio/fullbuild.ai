@@ -275,6 +275,10 @@ export default function DrawingSet({
           if (authored) el.dataset.wsDash = authored;
         });
         gsap.set(strokes, { attr: { 'stroke-dasharray': '1 1', 'stroke-dashoffset': 1 } });
+        // The dash hide is now this timeline's, so release each stroke from the
+        // pre-paint CSS hold (globals.css) in the same frame — the stroke never
+        // paints between the two states.
+        strokes.forEach((el) => el.setAttribute('data-ws-armed', ''));
         const ink = inkOf(sec);
         const crewed = Number(sec.dataset.state) === 1;
         // T-01 TRANSMITTAL is the set's second crewed sheet: the pen works its

@@ -67,6 +67,16 @@ const noFlashPlot = `(function(){try{if(window.matchMedia('(prefers-reduced-moti
 // frame one), and no-JS visitors never run this at all.
 const noFlashDepth = `(function(){try{if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;document.documentElement.style.setProperty('--depth','0');}catch(e){}})();`;
 
+// Hold the plotted linework BEFORE first paint. The drawings are SSR-complete so
+// that no-JS and reduced-motion visitors get the finished sheet, which means the
+// first frame would otherwise show every stroke drawn only to have DrawingSet and
+// the rail mark hide them at mount and re-draw — the flash the two scripts above
+// exist to prevent, one layer down. Each owner stamps data-ws-armed per stroke as
+// it takes the hidden state, dropping out of the CSS hold with no frame between;
+// the timer restores the linework if hydration never arrives. Same carve-outs:
+// reduced motion opts out, no-JS never runs this.
+const noFlashDraw = `(function(){try{if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;var d=document.documentElement;d.setAttribute('data-draw-pending','');window.__drawGuard=window.setTimeout(function(){d.removeAttribute('data-draw-pending');},3000);}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: {
@@ -83,6 +93,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: noFlashTheme }} />
         <script dangerouslySetInnerHTML={{ __html: noFlashPlot }} />
         <script dangerouslySetInnerHTML={{ __html: noFlashDepth }} />
+        <script dangerouslySetInnerHTML={{ __html: noFlashDraw }} />
       </head>
       <body>
         {children}

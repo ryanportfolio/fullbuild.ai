@@ -212,6 +212,21 @@ svg {
   letter-spacing: 0.16em;
 }
 
+/* Pre-hydration hold for the plotted linework, the same move MastheadPlot makes
+   for the wordmark: the head inline script stamps data-draw-pending on <html>
+   before first paint, so the finished drawings never flash while the bundle
+   loads and the animation then snaps them away. Each owner (DrawingSet, the
+   rail mark) stamps data-ws-armed on a stroke the instant it holds the hidden
+   state itself, which drops that stroke out of this rule with no frame in
+   between; a safety timer in the script lifts the attribute if hydration never
+   arrives. Reduced motion and no-JS never set it, so they get the finished set.
+   visibility, not a dash: CSS dash lengths are px and Chrome divides them by
+   the render scale, which is the truncated-building bug DrawingSet documents. */
+[data-draw-pending] .ws-draw:not([data-ws-armed]),
+[data-draw-pending] [data-draw-hold]:not([data-ws-armed]) {
+  visibility: hidden;
+}
+
 /* Focus — a drafted registration box, never a glow */
 :focus-visible {
   outline: 2px solid var(--accent-live);
