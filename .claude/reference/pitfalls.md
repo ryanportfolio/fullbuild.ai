@@ -147,6 +147,28 @@ entry above: the attr plugin doesn't round, so `autoRound: false` is gone.
 Detection: compare a stroke's painted extent against its geometry (zoomed
 screenshot), or check `getComputedStyle(stroke).strokeDasharray` for px units.
 
+## Inflating an SVG in the DOM to "zoom in" breaks its dash reveal (2026-07-25)
+
+Symptom: a magnified screenshot shows dash-reveal strokes painting only a
+fraction of their length and stopping in mid-air, with `stroke-dashoffset` read
+as 0 and the ticker frozen — a bug that does not exist at normal size. Cause:
+the zoom rig set `width: 1100px` on the figure to get pixels on a small mark.
+These strokes carry `vector-effect: non-scaling-stroke`, which measures dash
+lengths in the svg's own CSS-pixel space, so at scale S a full-length dash
+paints only 1/S of the path. At 1100px against a 384-unit viewBox that is 35%,
+which reads convincingly as a geometry or path-command bug. Cost several
+cycles: an `A` arc command was blamed, rewritten as a cubic, and the cubic
+"failed" identically before the rig itself was suspected.
+
+Rules: never inflate the element to inspect a dashed stroke. Magnify the
+RASTER instead — capture at a high `deviceScaleFactor` at the real layout
+width, then upscale the PNG. Corollary for the real site: a dash reveal on
+non-scaling strokes is only exact while the svg renders near 1:1 against its
+viewBox. MarginStudy and the cover Elevation both sit at ~1.02, so the error is
+invisible, but widening either well past its viewBox would truncate every
+stroke. Detection: compare the painted extent against `getBBox()`, and check
+`svg.getBoundingClientRect().width / viewBoxWidth` before believing the shot.
+
 ## fr-track min-content overflow crosses the rail (2026-07-21)
 
 Symptom: sheet content (appendix contact specimen) renders under the fixed

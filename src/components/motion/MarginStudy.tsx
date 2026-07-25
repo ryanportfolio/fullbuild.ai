@@ -9,13 +9,28 @@
    (baseline, grade hatch, gable rafters, apex witness + registration) — the
    same hand practicing a joint detail in the margin, forever.
 
-   The loop: a tiny local nib plots the study stroke by stroke, holds it for
-   reading, un-plots it in reverse like a lifted pencil, then redraws at the
-   next roof pitch from a fixed deterministic list. No randomness: SSR markup,
-   cycle 0, and every replay agree exactly.
+   THE LOOP is a five-cycle super-loop, not one cycle repeated. Four SHORT
+   cycles lift only the ATTEMPT (rafters, witness, ring, pitch arc) and leave
+   the SHEET (baseline + grade hatch) standing, because a drafter re-trying
+   five roof pitches does not redraw the ground line five times. The fifth is
+   LONG: it lifts all ten strokes, wipes the accumulated ghosts, and replots
+   the whole study from the baseline up. That is what gives the figure a
+   period of five cycles instead of one.
+
+   Every lifted attempt leaves a faint GHOST behind, up to three deep, so the
+   figure accumulates a fan of past pitches the way a real study sheet does,
+   and the long cycle's wipe reads as a fresh sheet.
+
+   Between strokes the nib TRAVELS: it moves from the mark it just finished to
+   the start of the next one with the pen lifted (dimmed), instead of cutting
+   there instantly. That is the difference between an SVG animation and a
+   machine drawing.
+
+   No randomness: SSR markup, cycle 0, and every replay agree exactly.
 
    Contracts honored here:
-   - Graphite only; no fake data, no invented numbers.
+   - Graphite only; no fake data, no invented numbers. The pitch arc carries no
+     figure for the same reason nothing else here does.
    - Every frame rides gsap.ticker (one timeline + one delayedCall), so the
      dev-only window.__capture.freeze() halts it for screenshots with no extra
      code. Offscreen (IntersectionObserver) and hidden-tab states pause it.
@@ -24,12 +39,14 @@
    - Strokes are classed `ms-stroke`, NEVER `ws-draw`: DrawingSet's crewed
      STATE 01 timeline claims every .ws-draw in the section, and adopting
      these would drag the site pen into the figure and clobber the dash attrs.
+     Ghosts are `ms-ghost` so the retract/draw staggers never claim them.
    - One instrument, one hand: nothing runs until ws:cover-drawn — the
      carriage's own completion signal for the crewed cover — plus a short
      breath. The moving instrument is a nib INSIDE the viewBox, an order of
      magnitude smaller than the DOM PenCarriage; penBus is never touched.
    - prefers-reduced-motion / SSR / no-JS: the finished cycle-0 study simply
-     stands — no dash attrs are authored in markup, so it paints complete.
+     stands — no dash attrs are authored in markup, so it paints complete, and
+     the ghosts are authored at opacity 0.
    ========================================================================= */
 
 import { useEffect, useRef } from 'react';
@@ -53,22 +70,51 @@ const HATCH_XS = [138, 172, 206, 240] as const;
 const apexAt = (deg: number): number =>
   +(BASE_Y - HALF_SPAN * Math.tan((deg * Math.PI) / 180)).toFixed(2);
 
-// Pitch-dependent geometry, rewritten between cycles (strokes 6-9).
+// Pitch-dependent geometry, rewritten between cycles (the ATTEMPT strokes).
 const leftRafterD = (apexY: number) => `M${BASE_X0} ${BASE_Y} L${APEX_X} ${apexY}`;
 // Right rafter starts AT the apex (where the left rafter just ended) so the
 // nib sweeps back down instead of snapping across to the far baseline end.
 const rightRafterD = (apexY: number) => `M${APEX_X} ${apexY} L${BASE_X1} ${BASE_Y}`;
 const witnessD = (apexY: number) => `M${APEX_X} ${apexY - 12} L${APEX_X} ${apexY - 4}`;
 
+// The pitch arc: a protractor check swung off the left eave, from the baseline
+// up to the rafter. It is the one mark whose SHAPE changes with the pitch, so
+// it makes the subject of the exercise legible instead of merely implied.
+//
+// Bare arc, no terminal tick: a tick would have to run radially to read as one,
+// and the radius through the arc's end IS the rafter, so it landed invisibly on
+// top of it. The arc alone is the standard angular mark and needs no help.
+// R is set for legibility, not geometry — the sweep is fixed by the pitch, so
+// arc LENGTH is the only handle on how readable a shallow 18° mark is.
+//
+// Sweep flag 0 = anticlockwise on screen.
+const ARC_R = 32;
+const pitchArcD = (deg: number): string => {
+  const a = (deg * Math.PI) / 180;
+  const f = (v: number) => +v.toFixed(2);
+  const ex = f(BASE_X0 + ARC_R * Math.cos(a));
+  const ey = f(BASE_Y - ARC_R * Math.sin(a));
+  return `M${BASE_X0 + ARC_R} ${BASE_Y} A${ARC_R} ${ARC_R} 0 0 0 ${ex} ${ey}`;
+};
+
+// --- loop structure ---------------------------------------------------------
+// The first SHEET_COUNT strokes (baseline + grade hatch) are the sheet; the
+// rest are the attempt. Only the attempt is re-tried on a short cycle.
+const SHEET_COUNT = 5;
+const GHOST_OPACITY = [0.24, 0.14, 0.08] as const; // newest attempt first
+const GHOST_KEEP = GHOST_OPACITY.length;
+
 // --- timeline beats (seconds) ----------------------------------------------
-const RETRACT_AT = 0; // strokes lift in reverse plot order
-const RETRACT_DUR = 0.3;
+const RETRACT_DUR = 0.3; // strokes lift in reverse plot order
 const RETRACT_STAGGER = 0.06;
-const REST_AT = 0.9; // blank beat; geometry rewrites for the next pitch
-const DRAW_AT = 1.7; // strokes re-plot in order
-const STROKE_DUR = 0.5;
-const HOLD_END = 9.2; // finished study rests until the cycle repeats
+const GHOST_FADE = 0.5; // long cycle only: the accumulated fan wipes
+const REST = 0.35; // blank beat; geometry rewrites for the next pitch
+const STROKE_DUR = 0.42;
+const TRAVEL_DUR = 0.18; // pen-up move between consecutive strokes
+const TRAVEL_OP = 0.35; // nib dims while the pen is off the sheet
 const NIB_FADE = 0.2;
+const HOLD_SHORT = 1.35; // the finished study rests before the next try
+const HOLD_LONG = 1.5;
 const ARM_DELAY = 1.5; // seconds of breath after ws:cover-drawn before the first retract
 // Generous fallback: a torn-down cover (or one that never completes) must
 // still let the vignette live. The wordmark plot settles by ~2.4s worst case
@@ -78,9 +124,12 @@ const COVER_FALLBACK_MS = 12000;
 
 const STATIC_APEX = apexAt(PITCHES[0]);
 
+type Pt = { x: number; y: number };
+
 export default function MarginStudy({ className }: { className?: string }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const nibRef = useRef<SVGGElement>(null);
+  const ghostRef = useRef<SVGGElement>(null);
 
   useEffect(() => {
     // First act, before touching any attribute or timer: reduced motion gets
@@ -89,21 +138,33 @@ export default function MarginStudy({ className }: { className?: string }) {
 
     const svg = svgRef.current;
     const nib = nibRef.current;
-    if (!svg || !nib) return;
+    const ghostGroup = ghostRef.current;
+    if (!svg || !nib || !ghostGroup) return;
 
     // Plot order = document order (the JSX is authored in plot order).
     const strokes = Array.from(svg.querySelectorAll<SVGGeometryElement>('.ms-stroke'));
-    if (strokes.length === 0) return;
-    // Strokes 6-9 (indices 5-8): rafters, witness tick, registration circle —
-    // the pitch-dependent geometry rewritten between cycles.
-    const [rafterL, rafterR, witness, ring] = strokes.slice(5, 9);
+    if (strokes.length <= SHEET_COUNT) return;
+    const attempt = strokes.slice(SHEET_COUNT);
+    // The pitch-dependent geometry, rewritten between cycles.
+    const [rafterL, rafterR, witness, ring, arc] = attempt;
+    const ghostPairs = Array.from(ghostGroup.children) as SVGGElement[];
 
     // getPointAtLength needs REAL user-unit lengths (pathLength=1 only
     // normalizes dashes); cache them and refresh after every d rewrite so the
-    // nib never pays a getTotalLength per frame.
+    // nib never pays a getTotalLength per frame. Endpoints are cached from the
+    // same measurement so the travel moves cost nothing per frame either.
     const lengths = new Map<SVGGeometryElement, number>();
-    const cacheLength = (el: SVGGeometryElement) => lengths.set(el, el.getTotalLength());
-    strokes.forEach(cacheLength);
+    const starts = new Map<SVGGeometryElement, Pt>();
+    const ends = new Map<SVGGeometryElement, Pt>();
+    const cachePoints = (el: SVGGeometryElement) => {
+      const len = el.getTotalLength();
+      lengths.set(el, len);
+      const a = el.getPointAtLength(0);
+      const b = el.getPointAtLength(len);
+      starts.set(el, { x: a.x, y: a.y });
+      ends.set(el, { x: b.x, y: b.y });
+    };
+    strokes.forEach(cachePoints);
 
     let cycle = 0; // index into PITCHES; SSR markup already shows cycle 0
     let tl: gsap.core.Timeline | null = null;
@@ -111,8 +172,37 @@ export default function MarginStudy({ className }: { className?: string }) {
     let armed: gsap.core.Tween | null = null;
     let fallbackId = 0;
 
+    // --- ghosts -------------------------------------------------------------
+    // Apex heights of the most recent attempts, newest first. Painted straight
+    // from that list, so the fan is a pure function of loop position.
+    const ghostApex: number[] = [];
+    const paintGhosts = () => {
+      ghostPairs.forEach((pair, i) => {
+        const apexY = ghostApex[i];
+        if (apexY === undefined) {
+          pair.setAttribute('opacity', '0');
+          return;
+        }
+        pair.children[0].setAttribute('d', leftRafterD(apexY));
+        pair.children[1].setAttribute('d', rightRafterD(apexY));
+        pair.setAttribute('opacity', String(GHOST_OPACITY[i]));
+      });
+    };
+    // Fired as the attempt starts to lift, so the mark being erased leaves its
+    // own trace behind rather than a ghost popping in during the blank beat.
+    const pushGhost = () => {
+      ghostApex.unshift(apexAt(PITCHES[cycle]));
+      ghostApex.length = Math.min(ghostApex.length, GHOST_KEEP);
+      paintGhosts();
+    };
+    const clearGhosts = () => {
+      ghostApex.length = 0;
+      paintGhosts();
+      ghostGroup.setAttribute('opacity', '1');
+    };
+
     // Between retract and redraw: swap in the next pitch, then defensively
-    // re-assert the dash normalization and re-cache lengths — a UA could drop
+    // re-assert the dash normalization and re-cache points — a UA could drop
     // either on a d/cy rewrite, mis-drawing the stroke or misplacing the nib.
     const advanceGeometry = () => {
       cycle = (cycle + 1) % PITCHES.length;
@@ -121,19 +211,28 @@ export default function MarginStudy({ className }: { className?: string }) {
       rafterR.setAttribute('d', rightRafterD(apexY));
       witness.setAttribute('d', witnessD(apexY));
       ring.setAttribute('cy', String(apexY));
-      [rafterL, rafterR, witness, ring].forEach((el) => {
+      arc.setAttribute('d', pitchArcD(PITCHES[cycle]));
+      attempt.forEach((el) => {
         el.setAttribute('stroke-dasharray', '1 1');
-        cacheLength(el);
+        cachePoints(el);
       });
     };
 
+    // --- the nib ------------------------------------------------------------
+    const place = (x: number, y: number) => nib.setAttribute('transform', `translate(${x} ${y})`);
     // The nib rides the currently drawing stroke's tip, in LOCAL viewBox
     // coordinates — no getScreenCTM, no DOM coupling.
     const rideNib = (el: SVGGeometryElement, p: number) => {
       const len = lengths.get(el) ?? 0;
       const pt = el.getPointAtLength(Math.max(0, Math.min(1, p)) * len);
-      nib.setAttribute('transform', `translate(${pt.x} ${pt.y})`);
+      place(pt.x, pt.y);
     };
+    const parkNib = (el: SVGGeometryElement) => {
+      const p = starts.get(el);
+      if (p) place(p.x, p.y);
+    };
+    // Pen-up travel proxy: fromTo so it replays identically on every repeat.
+    const carriage = { t: 0 };
 
     const start = () => {
       // Dash attrs arrive only now, offset 0 first — the standing SSR frame
@@ -142,39 +241,101 @@ export default function MarginStudy({ className }: { className?: string }) {
 
       tl = gsap.timeline({ repeat: -1, paused: true });
 
-      // RETRACT — reverse plot order, the pencil lifting its own marks.
-      strokes.forEach((el, i) => {
-        const k = strokes.length - 1 - i; // reverse order position
-        tl!.to(
-          el,
-          { attr: { 'stroke-dashoffset': 1 }, duration: RETRACT_DUR, ease: 'power1.in' },
-          RETRACT_AT + k * RETRACT_STAGGER,
-        );
-      });
+      /**
+       * One cycle: lift `set`, advance the pitch, replot `set` with the nib
+       * travelling between marks. `long` also wipes the ghost fan. Returns the
+       * timeline position the next cycle should start at.
+       */
+      const addCycle = (at: number, set: SVGGeometryElement[], long: boolean): number => {
+        let t = at;
 
-      // REST — blank beat while the joint moves to its next pitch.
-      tl.call(advanceGeometry, undefined, REST_AT);
+        // RETRACT — reverse plot order, the pencil lifting its own marks.
+        tl!.call(pushGhost, undefined, t);
+        set.forEach((el, i) => {
+          const k = set.length - 1 - i; // reverse order position
+          tl!.to(
+            el,
+            { attr: { 'stroke-dashoffset': 1 }, duration: RETRACT_DUR, ease: 'power1.in' },
+            t + k * RETRACT_STAGGER,
+          );
+        });
+        t += (set.length - 1) * RETRACT_STAGGER + RETRACT_DUR;
 
-      // DRAW — the 9 strokes sequentially, nib on the tip throughout.
-      tl.to(nib, { attr: { opacity: 1 }, duration: NIB_FADE }, DRAW_AT);
-      strokes.forEach((el, i) => {
-        tl!.to(
-          el,
-          {
-            attr: { 'stroke-dashoffset': 0 },
-            duration: STROKE_DUR,
-            ease: 'power2.out',
-            onUpdate() {
-              rideNib(el, this.progress());
+        // WIPE — only on the long cycle: the accumulated fan goes, and the
+        // next act starts from a sheet with nothing on it at all.
+        if (long) {
+          tl!.to(ghostGroup, { attr: { opacity: 0 }, duration: GHOST_FADE, ease: 'none' }, t);
+          tl!.call(clearGhosts, undefined, t + GHOST_FADE);
+          t += GHOST_FADE;
+        }
+
+        // REST — blank beat while the joint moves to its next pitch.
+        t += REST;
+        tl!.call(advanceGeometry, undefined, t);
+
+        // DRAW — sequential strokes, nib on the tip, pen-up moves between.
+        tl!.call(() => parkNib(set[0]), undefined, t);
+        tl!.to(nib, { attr: { opacity: 1 }, duration: NIB_FADE }, t);
+        set.forEach((el, i) => {
+          if (i > 0) {
+            const from = set[i - 1];
+            tl!.fromTo(
+              carriage,
+              { t: 0 },
+              {
+                t: 1,
+                duration: TRAVEL_DUR,
+                ease: 'sine.inOut',
+                // Without this, fromTo renders its start state at BUILD time,
+                // firing onStart and lighting the nib during the opening hold.
+                immediateRender: false,
+                onStart() {
+                  nib.setAttribute('opacity', String(TRAVEL_OP));
+                },
+                onUpdate() {
+                  const a = ends.get(from);
+                  const b = starts.get(el);
+                  if (!a || !b) return;
+                  place(a.x + (b.x - a.x) * carriage.t, a.y + (b.y - a.y) * carriage.t);
+                },
+                onComplete() {
+                  nib.setAttribute('opacity', '1');
+                },
+              },
+              t,
+            );
+            t += TRAVEL_DUR;
+          }
+          tl!.to(
+            el,
+            {
+              attr: { 'stroke-dashoffset': 0 },
+              duration: STROKE_DUR,
+              ease: 'power2.out',
+              onUpdate() {
+                rideNib(el, this.progress());
+              },
             },
-          },
-          DRAW_AT + i * STROKE_DUR,
-        );
-      });
-      tl.to(nib, { attr: { opacity: 0 }, duration: NIB_FADE }, DRAW_AT + strokes.length * STROKE_DUR);
+            t,
+          );
+          t += STROKE_DUR;
+        });
 
-      // HOLD — an empty tween pads the cycle so the finished study rests.
-      tl.to({}, { duration: 0.01 }, HOLD_END - 0.01);
+        // HOLD — the nib leaves and the finished study rests for reading.
+        tl!.to(nib, { attr: { opacity: 0 }, duration: NIB_FADE }, t);
+        return t + NIB_FADE + (long ? HOLD_LONG : HOLD_SHORT);
+      };
+
+      // The super-loop: one cycle per pitch, and the one that lands back on
+      // PITCHES[0] rebuilds the whole sheet. Because it ends where it began
+      // (pitch 0, every stroke drawn, no ghosts), repeat: -1 seams cleanly.
+      let t = 0;
+      for (let k = 0; k < PITCHES.length; k++) {
+        const long = (k + 1) % PITCHES.length === 0;
+        t = addCycle(t, long ? strokes : attempt, long);
+      }
+      // Pad the timeline out to the computed end so the last hold is real.
+      tl.to({}, { duration: 0.01 }, t - 0.01);
 
       // Power discipline: pause offscreen and on hidden tab. Two independent
       // gates feed one sync so overlapping resume events can never double-play.
@@ -231,11 +392,15 @@ export default function MarginStudy({ className }: { className?: string }) {
       tl?.kill();
       io?.disconnect();
       cleanupVisibility?.();
-      // Return the strokes to their authored (fully drawn, dash-free) state.
+      // Return the strokes to their authored (fully drawn, dash-free) state,
+      // and the ghosts to the hidden state the markup ships them in.
       strokes.forEach((el) => {
         el.removeAttribute('stroke-dasharray');
         el.removeAttribute('stroke-dashoffset');
       });
+      ghostGroup.setAttribute('opacity', '1');
+      ghostPairs.forEach((pair) => pair.setAttribute('opacity', '0'));
+      nib.setAttribute('opacity', '0');
     };
   }, []);
 
@@ -247,6 +412,16 @@ export default function MarginStudy({ className }: { className?: string }) {
     strokeLinecap: 'butt' as const,
     pathLength: 1,
     vectorEffect: 'non-scaling-stroke' as const,
+    fill: 'none',
+  };
+  // Ghosts are never dashed and never staggered, so no pathLength and a class
+  // the timeline's `.ms-stroke` query cannot reach.
+  const ghost = {
+    className: 'ms-ghost',
+    stroke: 'var(--ink-graphite)',
+    strokeLinecap: 'butt' as const,
+    vectorEffect: 'non-scaling-stroke' as const,
+    strokeWidth: 1,
     fill: 'none',
   };
 
@@ -262,17 +437,32 @@ export default function MarginStudy({ className }: { className?: string }) {
           PLOTTER EXERCISE · NTS
         </text>
 
-        {/* The study, authored fully drawn at cycle 0 (18°), in plot order:
-            baseline, four grade-hatch ticks (the Elevation's exact idiom),
-            rafters, apex witness tick, apex registration circle. */}
+        {/* The fan of past attempts, under everything and shipped invisible so
+            the SSR / no-JS / reduced-motion frame is one clean study. */}
+        <g ref={ghostRef} opacity={1}>
+          {GHOST_OPACITY.map((_, i) => (
+            <g key={i} opacity={0}>
+              <path {...ghost} d={leftRafterD(STATIC_APEX)} />
+              <path {...ghost} d={rightRafterD(STATIC_APEX)} />
+            </g>
+          ))}
+        </g>
+
+        {/* The study, authored fully drawn at cycle 0 (18°), in plot order.
+            First the SHEET: baseline and four grade-hatch ticks (the
+            Elevation's exact idiom), kept standing between tries. */}
         <line {...stroke} x1={BASE_X0} y1={BASE_Y} x2={BASE_X1} y2={BASE_Y} strokeWidth={1.2} />
         {HATCH_XS.map((x) => (
           <path key={x} {...stroke} d={`M${x} ${BASE_Y} l-8 10`} strokeWidth={0.6} />
         ))}
+
+        {/* Then the ATTEMPT: rafters, apex witness tick, apex registration
+            circle, and the protractor arc checking the angle just drawn. */}
         <path {...stroke} d={leftRafterD(STATIC_APEX)} strokeWidth={1} />
         <path {...stroke} d={rightRafterD(STATIC_APEX)} strokeWidth={1} />
         <path {...stroke} d={witnessD(STATIC_APEX)} strokeWidth={0.7} />
         <circle {...stroke} cx={APEX_X} cy={STATIC_APEX} r={5} strokeWidth={0.8} />
+        <path {...stroke} d={pitchArcD(PITCHES[0])} strokeWidth={0.6} />
 
         {/* The study's own instrument: a tiny graphite nib (dot + 45° lead),
             parked invisible; the timeline rides it along the drawing stroke. */}
