@@ -6,8 +6,11 @@ import copy from './copy.module.css';
 /**
  * The cover pipeline, set as two flush lines: the machine pipeline above, the
  * human audit clause below scaled so its measure lands exactly at the end of
- * "engineering" — the same fit-to-width move FitHeading makes on S-02. The CSS
- * size is the no-JS fallback (line two simply runs shorter).
+ * "engineering" — the same fit-to-width move FitHeading makes on S-02. CSS
+ * already sizes line two at the fitted ratio (copy.module.css), so the server
+ * paint lands at the final size and this pass only trims the residual; it also
+ * covers a different mono (webfont still swapping, no-JS is simply the CSS
+ * ratio).
  */
 export default function TaglineFit() {
   const ref = useRef<HTMLParagraphElement>(null);

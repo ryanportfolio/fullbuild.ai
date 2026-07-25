@@ -77,6 +77,14 @@
   display: block;
   white-space: nowrap;
 }
+/* Both lines are one nowrap mono run, so the fit is a fixed ratio of the two
+   natural measures — 1.615 in Martian Mono, constant at every type size. Ship
+   that ratio in CSS so the server HTML paints line two at its final size; the
+   JS fit then only trims the sub-pixel residual instead of growing the line
+   from the base size after hydration (a visible shift on load). */
+.tagline .taglineGroup + .taglineGroup {
+  font-size: 1.615em;
+}
 /* "audit" is the human step before shipping: graphite like the other words
    (red is never spent on a word); its exit connector is the CYCLE below. */
 .tagline .audit {
