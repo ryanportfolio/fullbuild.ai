@@ -178,6 +178,9 @@
   letter-spacing: 0.06em;
   color: inherit;
   text-decoration: none;
+  /* 24px touch target, padding cancelled by margin — the strip never moves. */
+  padding-block: 3px;
+  margin-block: -3px;
 }
 .brand b {
   font-weight: 700;
@@ -201,6 +204,8 @@
   color: inherit;
   padding: 0.2rem 0.45rem;
   cursor: pointer;
+  /* 24px touch target */
+  min-height: 24px;
 }
 .themeBtn:hover {
   border-color: var(--ink-graphite);

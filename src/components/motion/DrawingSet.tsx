@@ -41,7 +41,7 @@ export default function DrawingSet({
   /** false = no WebGL band (the standalone /contact sheet has no pour). */
   island?: boolean;
 }) {
-  const rootRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   // The band cell hosts the frame across its whole life: it assembles as
@@ -617,9 +617,11 @@ export default function DrawingSet({
         </div>
       ) : null}
       <PenCarriage />
-      <div ref={rootRef} className={styles.set}>
+      {/* <main>: the set IS the document's main content. The title block rail
+          is the only chrome outside it. */}
+      <main ref={rootRef} className={styles.set}>
         {children}
-      </div>
+      </main>
     </>
   );
 }

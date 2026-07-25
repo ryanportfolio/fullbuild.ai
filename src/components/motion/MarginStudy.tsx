@@ -4,8 +4,8 @@
    MARGIN STUDY — a drafter's margin exercise under the Materials Legend.
 
    Openly decorative furniture: unlike everything else on the cover it derives
-   from NO data, so it is labeled as what it is ("MARGIN STUDY" / "PLOTTER
-   EXERCISE · NTS") and borrows the exact stroke idiom of the cover Elevation
+   from NO data, so it is labeled as what it is ("PLOTTER EXERCISE · NTS")
+   and borrows the exact stroke idiom of the cover Elevation
    (baseline, grade hatch, gable rafters, apex witness + registration) — the
    same hand practicing a joint detail in the margin, forever.
 
@@ -444,13 +444,10 @@ export default function MarginStudy({ className }: { className?: string }) {
   return (
     <figure className={`${styles.wrap}${className ? ` ${className}` : ''}`} aria-hidden="true">
       <svg ref={svgRef} viewBox={`0 0 384 ${VB_H}`} className={styles.svg}>
-        {/* Static lettering — server-rendered, never animated. The labels ARE
-            the honesty device: this figure is furniture, and says so. Sizes are
-            viewBox units and the width is unchanged, so they hold the legend's
-            register while the drawing inside them grew. */}
-        <text x={4} y={12} className={styles.title}>
-          MARGIN STUDY
-        </text>
+        {/* Static lettering — server-rendered, never animated. The foot label
+            IS the honesty device: this figure is furniture, and says so. Its
+            size is a viewBox unit and the width is unchanged, so it holds the
+            legend's register while the drawing above it grew. */}
         <text x={4} y={VB_H - 3} className={styles.foot}>
           PLOTTER EXERCISE · NTS
         </text>

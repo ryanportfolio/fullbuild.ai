@@ -43,11 +43,14 @@ export default function SheetBlueprint() {
 
 function SpecRow({ k, v }: { k: string; v: string | null }) {
   return (
+    // dt/dd, not spans: a <dl> may only contain dt/dd groups (optionally
+    // wrapped in a div). The classes carry all the styling, so this is a
+    // semantics-only swap.
     <div className={copy.specRow}>
-      <span className={copy.specKey}>{k}</span>
-      <span className={copy.specVal} data-empty={v === null ? 'true' : undefined}>
+      <dt className={copy.specKey}>{k}</dt>
+      <dd className={copy.specVal} data-empty={v === null ? 'true' : undefined}>
         {v}
-      </span>
+      </dd>
     </div>
   );
 }
