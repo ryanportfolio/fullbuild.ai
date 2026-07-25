@@ -65,6 +65,34 @@ const STRIKE_TIME = 1.0; // s, fully framed -> bare site (scrolling back up)
 // start joint), rather than appearing fully formed. Staggers are compressed to
 // 1 - DRAW_WINDOW so the last member still finishes drawing exactly at e = 1.
 const DRAW_WINDOW = 0.14;
+// TEMPORARY WORKS. Concrete is not placed against air: the shutters go up ahead
+// of the pour, the pour fills them, and the strike is a SEPARATE operation later.
+// Modelling all three gives every clad member four readable states instead of
+// two, and — because the strike runs on the growth clock rather than the pour —
+// it keeps the structure itself moving through the long stretch after the
+// section front has topped out, which until now belonged to the planting alone.
+const FORM_LEAD = 0.2; // shutters stand this far above the section front
+const FORM_BAND = 0.42; // ...and this far below it before the strike front takes over
+const FORM_SWELL = 2.0; // shutter cross-section, as a multiple of the member's
+const FORM_RINGS = 7; // panel joints along the shutter, ends included
+const STRIKE_END = 0.76; // growth at which the last shutter is off
+
+// The dimension string reads off after the pour, station by station.
+const DIM_FROM = 0.34;
+const DIM_TO = 0.84;
+// Lightest pen on the sheet: dimensions are annotation, not structure, and one-
+// pixel WebGL lines leave tonal value as the only weight hierarchy available.
+const DIM_PEN = 0.2; // fraction of the way from graphite toward the paper
+
+// The revision cloud is the last mark the sheet takes, and it closes a little
+// short of the bottom on purpose. It cannot ride the appendix's ISSUED FOR
+// CONSTRUCTION stamp, which is where it belongs by rights: the canvas layer
+// fades out across the tail of STATE 04, so by the time that stamp strikes
+// there is nothing on screen to draw on. Landing the cloud just before the
+// fade keeps the relay — the sheet marks itself, then the record stamps it.
+const REVISE_FROM = 0.82;
+const REVISE_TO = 0.97;
+
 const CAM_AZ = (28 * Math.PI) / 180; // axonometric azimuth
 const CAM_TILT = (18 * Math.PI) / 180; // axonometric tilt (sectioned axon)
 // ...and where the axon has turned to by the time the set is poured and grown.
@@ -148,6 +176,10 @@ interface MemberViz {
   planeWire: Plane; // y >= effCut
   cap: Mesh | null; // section poché, at effCut, only when the span crosses
   lift: LineLoop | null; // graphite lift line around the cap
+  form: LineSegments | null; // shuttering, clipped to the band between the two below
+  formMat: LineBasicMaterial | null;
+  planeFormTop: Plane; // y <= effCut + FORM_LEAD  (shutters lead the pour)
+  planeFormBot: Plane; // y >= strike front        (…and are struck from below)
   // precomputed
   y0: number;
   y1: number;
@@ -176,13 +208,17 @@ interface DiamondViz {
   bias: number;
 }
 
-/** Foundation linework at grade, revealed by the erection clock. */
-interface FootingViz {
+/**
+ * A merged linework stream drawn on by a cursor over its own ascending spawn
+ * params — the foundations, the dimension string, and the revision cloud all
+ * work this way, so each of them is one draw call however many marks it holds.
+ */
+interface StreamViz {
   geo: BufferGeometry;
   material: LineBasicMaterial;
-  /** Ascending reveal params on the raw Member.stagger axis. */
+  /** Ascending reveal params, one per SEGMENT. */
   spawn: number[];
-  /** One-way cursor over `spawn`; walks back down when the frame strikes. */
+  /** Two-way cursor over `spawn`; walks back down when its clock reverses. */
   cursor: number;
 }
 
@@ -190,9 +226,71 @@ interface Built {
   group: Group;
   members: MemberViz[];
   diamonds: DiamondViz[];
-  footings: FootingViz;
+  footings: StreamViz;
+  /** Running bent-spacing dimensions at grade, read off on the growth clock. */
+  dims: StreamViz;
+  /** Revision cloud + delta over the front keystone, the sheet's last mark. */
+  revise: StreamViz;
   poche: PocheMaterial;
   dispose: () => void;
+}
+
+/**
+ * One unit shutter box: four arris lines, panel joints along its length, and
+ * tie stubs at alternate joints. Built once at unit scale (x/y are the
+ * cross-section, z is the run) and scaled per member like the solid it boxes,
+ * so every clad member shares this geometry.
+ */
+function buildShutterGeometry(): BufferGeometry {
+  const v: number[] = [];
+  const half = 0.5;
+  for (const sx of [-half, half])
+    for (const sy of [-half, half]) v.push(sx, sy, -half, sx, sy, half);
+  for (let i = 0; i < FORM_RINGS; i++) {
+    const z = -half + i / (FORM_RINGS - 1);
+    v.push(-half, -half, z, half, -half, z);
+    v.push(half, -half, z, half, half, z);
+    v.push(half, half, z, -half, half, z);
+    v.push(-half, half, z, -half, -half, z);
+    // Tie stubs at alternate interior joints — the marks that say temporary works.
+    if (i > 0 && i < FORM_RINGS - 1 && i % 2 === 1) {
+      const out = 0.78;
+      v.push(half, 0, z, out, 0, z);
+      v.push(-half, 0, z, -out, 0, z);
+      v.push(0, half, z, 0, out, z);
+      v.push(0, -half, z, 0, -out, z);
+    }
+  }
+  const geo = new BufferGeometry();
+  geo.setAttribute('position', new Float32BufferAttribute(v, 3));
+  return geo;
+}
+
+/** Wire up a merged, cursor-drawn linework stream as one scene object. */
+function makeStream(
+  group: Group,
+  segs: number[],
+  spawn: number[],
+  color: Color,
+): { viz: StreamViz; parts: { dispose: () => void }[] } {
+  const geo = new BufferGeometry();
+  geo.setAttribute('position', new Float32BufferAttribute(segs, 3));
+  geo.setDrawRange(0, 0);
+  const material = new LineBasicMaterial({ color: color.clone() });
+  const lines = new LineSegments(geo, material);
+  lines.frustumCulled = false; // drawRange animates; skip bounds churn
+  group.add(lines);
+  return {
+    viz: { geo, material, spawn, cursor: 0 },
+    parts: [geo, material],
+  };
+}
+
+/** Advance or retreat a stream's cursor to match a 0..1 clock. */
+function driveStream(s: StreamViz, t: number): void {
+  while (s.cursor < s.spawn.length && s.spawn[s.cursor] <= t) s.cursor++;
+  while (s.cursor > 0 && s.spawn[s.cursor - 1] > t) s.cursor--;
+  s.geo.setDrawRange(0, s.cursor * 2);
 }
 
 function buildScene(frame: Frame, pal: Palette): Built {
@@ -211,6 +309,7 @@ function buildScene(frame: Frame, pal: Palette): Built {
   const edgesGeo = track(new EdgesGeometry(boxGeo));
   const planeGeo = track(new PlaneGeometry(1, 1));
   const octaGeo = track(new OctahedronGeometry(0.16, 0));
+  const shutterGeo = track(buildShutterGeometry());
   const rectGeo = track(new BufferGeometry());
   rectGeo.setAttribute(
     'position',
@@ -240,6 +339,9 @@ function buildScene(frame: Frame, pal: Palette): Built {
     // Complementary clip planes sharing a single driver (currentH - bias).
     const planeSolid = new Plane(new Vector3(0, -1, 0), 0); // keeps y <= c
     const planeWire = new Plane(new Vector3(0, 1, 0), 0); // keeps y >= c
+    // …and the band the shuttering lives in, between the same two directions.
+    const planeFormTop = new Plane(new Vector3(0, -1, 0), 0);
+    const planeFormBot = new Plane(new Vector3(0, 1, 0), 0);
 
     // Graphite wireframe (EdgesGeometry of the swept tube), consumed from
     // beneath. Non-structural linework (ties/purlins/girts) draws as a single
@@ -281,6 +383,33 @@ function buildScene(frame: Frame, pal: Palette): Built {
     let outline: LineSegments | null = null;
     let cap: Mesh | null = null;
     let lift: LineLoop | null = null;
+    let form: LineSegments | null = null;
+    let formMat: LineBasicMaterial | null = null;
+
+    // Shuttering, on the members a crew would actually box: columns and rafters.
+    // The triangulating brace is drafted linework rather than a formed pour, and
+    // boxing it would cost a draw call per bent to say something untrue.
+    if (member.clad && (member.role === 'column' || member.role === 'rafter')) {
+      formMat = track(
+        // Concrete ink, not graphite: temporary works are not the structure, and
+        // the lighter value keeps them legible against the frame they surround.
+        new LineBasicMaterial({
+          color: pal.concrete.clone(),
+          clippingPlanes: [planeFormTop, planeFormBot],
+        }),
+      );
+      form = new LineSegments(shutterGeo, formMat);
+      form.position.copy(tmpMid);
+      form.quaternion.setFromUnitVectors(zAxis, dir);
+      form.scale.set(
+        member.thickness * FORM_SWELL,
+        member.thickness * FORM_SWELL,
+        len,
+      );
+      form.renderOrder = 4;
+      form.visible = false;
+      group.add(form);
+    }
 
     if (member.clad) {
       const solidMat = track(
@@ -343,6 +472,10 @@ function buildScene(frame: Frame, pal: Palette): Built {
       planeWire,
       cap,
       lift,
+      form,
+      formMat,
+      planeFormTop,
+      planeFormBot,
       y0: p0.y,
       y1: p1.y,
       dirY,
@@ -411,19 +544,29 @@ function buildScene(frame: Frame, pal: Palette): Built {
     };
   });
 
-  // Foundations at grade. One merged LineSegments for every pad and setting-out
-  // line in the set: it draws on with the erection clock via drawRange, exactly
-  // like a vine's leaves, and costs a single draw call for the whole floor.
-  const footGeo = track(new BufferGeometry());
-  footGeo.setAttribute(
-    'position',
-    new Float32BufferAttribute(frame.footingSegs, 3),
+  // Three cursor-drawn linework streams, one draw call each however many marks
+  // they hold: the foundations laid on the erection clock, the running
+  // dimensions read off on the growth clock, and the revision cloud that closes
+  // the sheet. Only their clocks differ.
+  const footings = makeStream(
+    group,
+    frame.footingSegs,
+    frame.footingSpawn,
+    pal.graphite,
   );
-  footGeo.setDrawRange(0, 0);
-  const footMat = track(new LineBasicMaterial({ color: pal.graphite.clone() }));
-  const footings = new LineSegments(footGeo, footMat);
-  footings.frustumCulled = false; // drawRange animates; skip bounds churn
-  group.add(footings);
+  const dims = makeStream(
+    group,
+    frame.dimSegs,
+    frame.dimSpawn,
+    pal.graphite.clone().lerp(pal.paper, DIM_PEN),
+  );
+  const revise = makeStream(
+    group,
+    frame.reviseSegs,
+    frame.reviseSpawn,
+    pal.graphite,
+  );
+  for (const p of [...footings.parts, ...dims.parts, ...revise.parts]) track(p);
 
   const dispose = () => {
     for (const d of disposables) d.dispose();
@@ -434,12 +577,9 @@ function buildScene(frame: Frame, pal: Palette): Built {
     group,
     members,
     diamonds,
-    footings: {
-      geo: footGeo,
-      material: footMat,
-      spawn: frame.footingSpawn,
-      cursor: 0,
-    },
+    footings: footings.viz,
+    dims: dims.viz,
+    revise: revise.viz,
     poche: pocheMat,
     dispose,
   };
@@ -619,20 +759,34 @@ function Pour({
     return new Fog(paletteRef.current.paper.getHex(), near, near + span / FOG_MAX);
   }, [frame]);
   const hRef = useRef(frame.baseY);
+  // The de-shuttering front. A second, slower height chasing the section front
+  // up the same axis — never above it, because a shutter cannot come off a pour
+  // that has not happened.
+  const strikeRef = useRef(frame.baseY);
+  /** Growth value at which the pour topped out; -1 until it has. */
+  const handoffRef = useRef(-1);
   const litRef = useRef(false);
   // Erection clock: 0 = bare site, 1 = fully framed. Rises when STATE 03
   // arrives; members become visible in authored order along the way.
   const erectRef = useRef(0);
 
-  // --- store subscription: wake the demand loop on pour/state/health -------
+  // --- store subscription: wake the demand loop on pour/grow/state/health --
   // NOT progress: progress is the whole-set scroll value and is never read in
   // useFrame, so subscribing to it would re-render the canvas on every scroll
   // tick site-wide (even with STATE 04 far off-screen), defeating frameloop
   // "demand". The lit/ignition decision lives in useFrame, tied to the actual
-  // section-front position — not raw pour.
+  // section-front position — not raw pour. Growth joined this list when the
+  // strike, the dimensions and the revision cloud started riding it: they are
+  // structure and annotation, but their clock is the reader's trip down the
+  // shipped sheet, which is the same window `grow` already covers.
   useEffect(() => {
     return useWorkingSet.subscribe((s, p) => {
-      if (s.pour !== p.pour || s.state !== p.state || s.health !== p.health) {
+      if (
+        s.pour !== p.pour ||
+        s.grow !== p.grow ||
+        s.state !== p.state ||
+        s.health !== p.health
+      ) {
         invalidate();
       }
     });
@@ -657,8 +811,11 @@ function Pour({
       fog.color.copy(pal.paper);
       built.poche.setFog(fog.color, fog.near, fog.far);
       built.footings.material.color.copy(pal.graphite);
+      built.revise.material.color.copy(pal.graphite);
+      built.dims.material.color.copy(pal.graphite).lerp(pal.paper, DIM_PEN);
       for (const mv of built.members) {
         (mv.wire.material as LineBasicMaterial).color.copy(pal.graphite);
+        if (mv.formMat) mv.formMat.color.copy(pal.concrete);
         if (mv.solid) {
           (mv.solid.material as MeshBasicMaterial).color.copy(pal.concrete);
         }
@@ -689,8 +846,23 @@ function Pour({
   useEffect(() => {
     const setWebglActive = useWorkingSet.getState().setWebglActive;
     setWebglActive(true);
+    // Dev-only handle so automated verification can read the two fronts and the
+    // annotation cursors, rather than inferring them from a screenshot.
+    if (process.env.NODE_ENV !== 'production') {
+      (window as unknown as { __pour?: unknown }).__pour = {
+        cut: () => hRef.current,
+        strike: () => strikeRef.current,
+        shuttered: () =>
+          built.members.filter((m) => m.form?.visible).length,
+        dims: () => `${built.dims.cursor}/${built.dims.spawn.length}`,
+        revise: () => `${built.revise.cursor}/${built.revise.spawn.length}`,
+      };
+    }
     return () => {
       setWebglActive(false);
+      if (process.env.NODE_ENV !== 'production') {
+        delete (window as unknown as { __pour?: unknown }).__pour;
+      }
       built.dispose();
     };
   }, [built]);
@@ -727,17 +899,7 @@ function Pour({
     // Foundations first: pads and setting-out lines are laid just ahead of the
     // columns that stand on them. Two-way cursor, so a strike un-draws the
     // floor in the same order it was set out.
-    const fp = built.footings;
-    while (
-      fp.cursor < fp.spawn.length &&
-      fp.spawn[fp.cursor] * staggerSpan <= e
-    ) {
-      fp.cursor++;
-    }
-    while (fp.cursor > 0 && fp.spawn[fp.cursor - 1] * staggerSpan > e) {
-      fp.cursor--;
-    }
-    fp.geo.setDrawRange(0, fp.cursor * 2);
+    driveStream(built.footings, staggerSpan > 0 ? e / staggerSpan : e);
 
     for (const mv of built.members) {
       if (mv.growDir && mv.growP0) {
@@ -753,10 +915,38 @@ function Pour({
       }
     }
 
+    const travel = frame.apexY + STAGGER_SPAN - frame.baseY;
     const eased = easeInOutCubic(clamp01(s.pour));
-    const target = frame.baseY + (frame.apexY + STAGGER_SPAN - frame.baseY) * eased;
+    const target = frame.baseY + travel * eased;
     const animating = damp(hRef, 'current', target, DAMP_TIME, dt);
     const h = hRef.current;
+
+    // THE STRIKE — the floor of the shuttering, trailing the section front while
+    // the pour runs and then closing on it once the pour has finished.
+    //
+    // The handoff between those two phases is LATCHED off the growth clock
+    // rather than written as a constant, because where it falls is a property of
+    // the reader's viewport: `pour` scrubs across one screen of travel and
+    // `grow` across the whole shipped sheet, so the section front tops out
+    // somewhere around a fifth of the way down a tall window and much later on a
+    // short one. Two shapes that avoid the latch were measured and both fail —
+    // a second absolute front ramped from the base sits frozen for a third of
+    // the sheet before it overtakes the trail (8 shuttered members, unchanged,
+    // from grow 0.25 to 0.60), and a band closed on the cut's own top edge
+    // finishes by grow 0.45, because the cut overruns the ridge by STAGGER_SPAN
+    // and so clears every member long before the clock runs out.
+    if (s.pour >= 1 && handoffRef.current < 0) handoffRef.current = s.grow;
+    const handoff = handoffRef.current;
+    const trail = target - FORM_BAND;
+    const closing =
+      handoff < 0
+        ? 0
+        : clamp01(
+            (s.grow - handoff) / Math.max(STRIKE_END - Math.max(handoff, 0), 0.08),
+          );
+    const strikeTarget = trail + (target + FORM_LEAD - trail) * closing;
+    const striking = damp(strikeRef, 'current', strikeTarget, DAMP_TIME, dt);
+    const strike = strikeRef.current;
 
     // Per-member: drive both clip planes + the section cap/lift line.
     for (const mv of built.members) {
@@ -764,9 +954,27 @@ function Pour({
       mv.planeSolid.constant = effCut; // y <= effCut  (concrete)
       mv.planeWire.constant = -effCut; // y >= effCut  (wireframe)
 
-      if (!mv.cap || !mv.lift) continue;
       const lo = Math.min(mv.y0, mv.y1);
       const hi = Math.max(mv.y0, mv.y1);
+
+      if (mv.form) {
+        // Shutters lead the pour and are struck from below, so the band is
+        // open at both ends and a member passes through four readable states:
+        // wireframe, boxed, poured, struck.
+        const formTop = effCut + FORM_LEAD;
+        const effStrike = strike - mv.bias;
+        mv.planeFormTop.constant = formTop;
+        mv.planeFormBot.constant = -effStrike;
+        // Skip the draw entirely when the band misses the member — most of the
+        // frame is outside it at any moment, and this is what keeps the
+        // shuttering to a handful of extra draw calls instead of one per member.
+        mv.form.visible =
+          e >= mv.member.stagger * staggerSpan + DRAW_WINDOW * 0.9 &&
+          hi > effStrike &&
+          lo < formTop;
+      }
+
+      if (!mv.cap || !mv.lift) continue;
       const crossing = mv.cross && effCut > lo && effCut < hi && mv.dirY > 0.02;
       mv.cap.visible = crossing;
       mv.lift.visible = crossing;
@@ -822,8 +1030,26 @@ function Pour({
       onLitChange(litNow);
     }
 
+    // ANNOTATION — what a draughtsman does to a set that already stands, and so
+    // the beats that belong to the back half of the shipped sheet, where the
+    // section front has finished and only the planting was still moving.
+    //
+    // Both ride raw `grow` rather than the overgrowth's monotonic front: these
+    // are marks on the sheet, not growth, and a mark can be rubbed out. Scrolling
+    // back up walks the same cursors down, exactly as the pour reverses.
+    driveStream(built.dims, (s.grow - DIM_FROM) / (DIM_TO - DIM_FROM));
+    // The cloud is the last mark the sheet takes, and only a standing sheet can
+    // take it — if the reader climbs back above STATE 03 and the frame strikes,
+    // the annotation goes with the thing it annotates.
+    driveStream(
+      built.revise,
+      e < 1 ? -1 : (s.grow - REVISE_FROM) / (REVISE_TO - REVISE_FROM),
+    );
+
     // Keep the demand loop alive only while something is still settling.
-    if (animating || erecting || Math.abs(h - target) > 1e-4) invalidate();
+    if (animating || striking || erecting || Math.abs(h - target) > 1e-4) {
+      invalidate();
+    }
   });
 
   // Ensure clipping is live even if the gl prop was not honoured.

@@ -65,6 +65,27 @@ export interface Frame {
   footingSegs: number[];
   /** Per-SEGMENT reveal param on the Member.stagger axis, ascending. */
   footingSpawn: number[];
+  /**
+   * Running dimension string at grade, outboard of the right-hand column line:
+   * one station per bent, each with an extension line and a 45° tick, joined by
+   * the dimension line itself. Flat xyz SEGMENT pairs. Deliberately NOT folded
+   * into `bounds` — it rides the framing margin rather than shrinking the set
+   * that is actually being drawn.
+   */
+  dimSegs: number[];
+  /** Per-SEGMENT reveal param, 0..1 front bent to back, ascending. */
+  dimSpawn: number[];
+  /**
+   * Revision cloud over the front bent's keystone — the last mark made on the
+   * sheet before it is issued. Drawn in the front bent's own plane, so it reads
+   * as an annotation on the elevation rather than a floating decal. No revision
+   * delta beside it: a delta means the number it carries, this scene has no
+   * typeface, and an empty triangle reads as noise next to the mark that does
+   * carry meaning.
+   */
+  reviseSegs: number[];
+  /** Per-SEGMENT reveal param, 0..1 around the cloud, ascending. */
+  reviseSpawn: number[];
 }
 
 // --- deterministic grid constants (NOT seeded) ------------------------------
@@ -76,6 +97,23 @@ const EAVE_H = 2.4; // column top height
 const RIDGE_RISE = 0.7; // ridge above eave
 const THICK = 0.21; // nominal member cross-section
 const ORDER_STRIDE = 12; // order slots reserved per bent (front bents erect first)
+// Dimension string: how far outboard of the frame's own extents the line runs,
+// how far its extension lines overshoot it, and the reach of a tick slash.
+const DIM_OFFSET = 0.75;
+const DIM_OVERSHOOT = 0.12;
+const DIM_TICK = 0.11;
+// Revision cloud: the marked region around the front keystone, the scallop
+// chord walked around its perimeter, and the delta that flags it.
+// Sized to enclose the whole keystone node and the heads of both rafters. A
+// tighter cloud was legible on its own but not against the front bent, which by
+// the time this mark lands carries the most-grown vine on the frame and the
+// brightest of the lit diamonds.
+const CLOUD_HALF_X = 0.66;
+const CLOUD_HALF_Y = 0.5;
+const CLOUD_RISE = 0.2; // cloud centre above the apex node (where the diamond sits)
+const CLOUD_CHORD = 0.26;
+const CLOUD_BULGE = 0.088;
+const CLOUD_ARC_STEPS = 4;
 
 interface Seed {
   (): number;
@@ -295,6 +333,102 @@ export function buildFrame(
     }
   }
 
+  // --- the running dimension string ----------------------------------------
+  // A set gets dimensioned once it stands. This is the bent spacing, measured
+  // along the building at grade and read off station by station from the front
+  // bent back, which is the one drawing operation with as many beats in it as
+  // there are bents — so it has something to say for the whole stretch after
+  // the pour has topped out and only the planting is still moving.
+  //
+  // It stays OUT of `bounds` on purpose. Folding it in would widen the fit and
+  // shrink the frame itself in its cell for the entire sheet, to make room for
+  // an annotation that is only on the paper for part of it. FRAME_MARGIN already
+  // leaves slack around the fitted extents; the string spends some of that.
+  const dimX = max[0] - cx + DIM_OFFSET;
+  const padOuterX = max[0] - cx + PAD_HALF;
+  const dimSegs: number[] = [];
+  const dimSpawn: number[] = [];
+  const pushDim = (spawn: number, seg: number[]) => {
+    for (const v of seg) dimSegs.push(v);
+    dimSpawn.push(spawn);
+  };
+  for (let b = 0; b < bays.length; b++) {
+    const z = bays[b].apex[2]; // already shifted
+    const spawn = bays.length > 1 ? b / (bays.length - 1) : 0;
+    // The run back to the previous station comes first, so the line reaches a
+    // station before that station's own witness marks land on it.
+    if (b > 0) {
+      pushDim(spawn, [dimX, 0, bays[b - 1].apex[2], dimX, 0, z]);
+    }
+    // Extension line, overshooting the dimension line by convention.
+    pushDim(spawn, [padOuterX, 0, z, dimX + DIM_OVERSHOOT, 0, z]);
+    // 45° tick slash through the station, struck in the ground plane.
+    pushDim(spawn, [
+      dimX - DIM_TICK,
+      0,
+      z - DIM_TICK,
+      dimX + DIM_TICK,
+      0,
+      z + DIM_TICK,
+    ]);
+  }
+
+  // --- the revision cloud ---------------------------------------------------
+  // Scalloped perimeter around the front bent's keystone. Built in that bent's
+  // own x/y plane and walked in one continuous direction, so the reveal draws it
+  // the way a hand would.
+  const reviseSegs: number[] = [];
+  const reviseSpawn: number[] = [];
+  const front = bays[0];
+  if (front) {
+    const [ax, ay, az] = front.apex;
+    const cy = ay + CLOUD_RISE;
+    // Perimeter corners, walked anticlockwise from the lower left.
+    const corners: [number, number][] = [
+      [ax - CLOUD_HALF_X, cy - CLOUD_HALF_Y],
+      [ax + CLOUD_HALF_X, cy - CLOUD_HALF_Y],
+      [ax + CLOUD_HALF_X, cy + CLOUD_HALF_Y],
+      [ax - CLOUD_HALF_X, cy + CLOUD_HALF_Y],
+    ];
+    // Walk the whole perimeter first to know its length, so scallop spawns can
+    // be a true fraction of the trip round.
+    const edges = corners.map((c, i) => {
+      const n = corners[(i + 1) % corners.length];
+      const dx = n[0] - c[0];
+      const dy = n[1] - c[1];
+      return { c, dx, dy, len: Math.hypot(dx, dy) };
+    });
+    const perim = edges.reduce((sum, e) => sum + e.len, 0);
+    let walked = 0;
+    for (const e of edges) {
+      const ux = e.dx / e.len;
+      const uy = e.dy / e.len;
+      // Outward normal for an anticlockwise walk is the right-hand side.
+      const nx = uy;
+      const ny = -ux;
+      const scallops = Math.max(1, Math.round(e.len / CLOUD_CHORD));
+      const chord = e.len / scallops;
+      for (let s = 0; s < scallops; s++) {
+        const s0 = s * chord;
+        const spawn = (walked + s0) / perim;
+        // Each scallop is a shallow outward arc across its chord.
+        let px = e.c[0] + ux * s0;
+        let py = e.c[1] + uy * s0;
+        for (let k = 1; k <= CLOUD_ARC_STEPS; k++) {
+          const t = k / CLOUD_ARC_STEPS;
+          const bulge = Math.sin(t * Math.PI) * CLOUD_BULGE;
+          const qx = e.c[0] + ux * (s0 + chord * t) + nx * bulge;
+          const qy = e.c[1] + uy * (s0 + chord * t) + ny * bulge;
+          reviseSegs.push(px, py, az, qx, qy, az);
+          reviseSpawn.push(spawn);
+          px = qx;
+          py = qy;
+        }
+      }
+      walked += e.len;
+    }
+  }
+
   // Pads sit proud of the columns in plan, so the framing bounds have to own
   // them or the outermost footing clips at the cell edge.
   const size: Vec3 = [
@@ -318,5 +452,9 @@ export function buildFrame(
     bounds,
     footingSegs,
     footingSpawn,
+    dimSegs,
+    dimSpawn,
+    reviseSegs,
+    reviseSpawn,
   };
 }
