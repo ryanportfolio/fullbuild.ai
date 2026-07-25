@@ -54,18 +54,23 @@ import gsap from 'gsap';
 import styles from './MarginStudy.module.css';
 
 // --- deterministic geometry (viewBox units) --------------------------------
-// viewBox matches MaterialLegend's W=384 so the two figures column-align at
-// the copy column's 42ch. The joint sits on a 144-unit baseline (120→264)
-// with a 72-unit half-span; apexY follows the pitch.
-const BASE_Y = 88;
-const BASE_X0 = 120;
-const BASE_X1 = 264;
+// viewBox WIDTH matches MaterialLegend's W=384 so the two figures column-align
+// at the copy column's 42ch, and so the mono lettering keeps the legend's exact
+// register (font sizes are viewBox units; changing the width would rescale
+// them). The joint spans the full measure, 24→360, on a 168-unit half-span;
+// apexY follows the pitch. The box is deep enough for the STEEPEST pitch on the
+// list plus the apex furniture — shallower cycles leave air above, which is
+// what a pitch study looks like.
+const VB_H = 232;
+const BASE_Y = 190;
+const BASE_X0 = 24;
+const BASE_X1 = 360;
 const APEX_X = 192;
-const HALF_SPAN = 72;
+const HALF_SPAN = 168;
 // Fixed pitch list, cycled in order — the only variation source. 18° is
 // cycle 0 and therefore the SSR / reduced-motion frame.
 const PITCHES = [18, 24, 30, 36, 27] as const;
-const HATCH_XS = [138, 172, 206, 240] as const;
+const HATCH_XS = [66, 118, 170, 222, 274, 326] as const;
 
 const apexAt = (deg: number): number =>
   +(BASE_Y - HALF_SPAN * Math.tan((deg * Math.PI) / 180)).toFixed(2);
@@ -75,7 +80,7 @@ const leftRafterD = (apexY: number) => `M${BASE_X0} ${BASE_Y} L${APEX_X} ${apexY
 // Right rafter starts AT the apex (where the left rafter just ended) so the
 // nib sweeps back down instead of snapping across to the far baseline end.
 const rightRafterD = (apexY: number) => `M${APEX_X} ${apexY} L${BASE_X1} ${BASE_Y}`;
-const witnessD = (apexY: number) => `M${APEX_X} ${apexY - 12} L${APEX_X} ${apexY - 4}`;
+const witnessD = (apexY: number) => `M${APEX_X} ${apexY - 28} L${APEX_X} ${apexY - 9}`;
 
 // The pitch arc: a protractor check swung off the left eave, from the baseline
 // up to the rafter. It is the one mark whose SHAPE changes with the pitch, so
@@ -88,7 +93,7 @@ const witnessD = (apexY: number) => `M${APEX_X} ${apexY - 12} L${APEX_X} ${apexY
 // arc LENGTH is the only handle on how readable a shallow 18° mark is.
 //
 // Sweep flag 0 = anticlockwise on screen.
-const ARC_R = 32;
+const ARC_R = 75;
 const pitchArcD = (deg: number): string => {
   const a = (deg * Math.PI) / 180;
   const f = (v: number) => +v.toFixed(2);
@@ -99,8 +104,9 @@ const pitchArcD = (deg: number): string => {
 
 // --- loop structure ---------------------------------------------------------
 // The first SHEET_COUNT strokes (baseline + grade hatch) are the sheet; the
-// rest are the attempt. Only the attempt is re-tried on a short cycle.
-const SHEET_COUNT = 5;
+// rest are the attempt. Only the attempt is re-tried on a short cycle. Derived,
+// not literal, so changing the hatch cannot silently split the sets wrongly.
+const SHEET_COUNT = 1 + HATCH_XS.length;
 const GHOST_OPACITY = [0.24, 0.14, 0.08] as const; // newest attempt first
 const GHOST_KEEP = GHOST_OPACITY.length;
 
@@ -421,19 +427,21 @@ export default function MarginStudy({ className }: { className?: string }) {
     stroke: 'var(--ink-graphite)',
     strokeLinecap: 'butt' as const,
     vectorEffect: 'non-scaling-stroke' as const,
-    strokeWidth: 1,
+    strokeWidth: 1.3,
     fill: 'none',
   };
 
   return (
     <figure className={`${styles.wrap}${className ? ` ${className}` : ''}`} aria-hidden="true">
-      <svg ref={svgRef} viewBox="0 0 384 120" className={styles.svg}>
+      <svg ref={svgRef} viewBox={`0 0 384 ${VB_H}`} className={styles.svg}>
         {/* Static lettering — server-rendered, never animated. The labels ARE
-            the honesty device: this figure is furniture, and says so. */}
+            the honesty device: this figure is furniture, and says so. Sizes are
+            viewBox units and the width is unchanged, so they hold the legend's
+            register while the drawing inside them grew. */}
         <text x={4} y={12} className={styles.title}>
           MARGIN STUDY
         </text>
-        <text x={4} y={117} className={styles.foot}>
+        <text x={4} y={VB_H - 3} className={styles.foot}>
           PLOTTER EXERCISE · NTS
         </text>
 
@@ -451,24 +459,25 @@ export default function MarginStudy({ className }: { className?: string }) {
         {/* The study, authored fully drawn at cycle 0 (18°), in plot order.
             First the SHEET: baseline and four grade-hatch ticks (the
             Elevation's exact idiom), kept standing between tries. */}
-        <line {...stroke} x1={BASE_X0} y1={BASE_Y} x2={BASE_X1} y2={BASE_Y} strokeWidth={1.2} />
+        <line {...stroke} x1={BASE_X0} y1={BASE_Y} x2={BASE_X1} y2={BASE_Y} strokeWidth={1.6} />
         {HATCH_XS.map((x) => (
-          <path key={x} {...stroke} d={`M${x} ${BASE_Y} l-8 10`} strokeWidth={0.6} />
+          <path key={x} {...stroke} d={`M${x} ${BASE_Y} l-16 20`} strokeWidth={0.7} />
         ))}
 
         {/* Then the ATTEMPT: rafters, apex witness tick, apex registration
             circle, and the protractor arc checking the angle just drawn. */}
-        <path {...stroke} d={leftRafterD(STATIC_APEX)} strokeWidth={1} />
-        <path {...stroke} d={rightRafterD(STATIC_APEX)} strokeWidth={1} />
-        <path {...stroke} d={witnessD(STATIC_APEX)} strokeWidth={0.7} />
-        <circle {...stroke} cx={APEX_X} cy={STATIC_APEX} r={5} strokeWidth={0.8} />
-        <path {...stroke} d={pitchArcD(PITCHES[0])} strokeWidth={0.6} />
+        <path {...stroke} d={leftRafterD(STATIC_APEX)} strokeWidth={1.3} />
+        <path {...stroke} d={rightRafterD(STATIC_APEX)} strokeWidth={1.3} />
+        <path {...stroke} d={witnessD(STATIC_APEX)} strokeWidth={0.9} />
+        <circle {...stroke} cx={APEX_X} cy={STATIC_APEX} r={11} strokeWidth={1} />
+        <path {...stroke} d={pitchArcD(PITCHES[0])} strokeWidth={0.7} />
 
         {/* The study's own instrument: a tiny graphite nib (dot + 45° lead),
-            parked invisible; the timeline rides it along the drawing stroke. */}
+            parked invisible; the timeline rides it along the drawing stroke.
+            Sized in viewBox units so it grew with the joint it draws. */}
         <g ref={nibRef} opacity={0}>
-          <circle cx={0} cy={0} r={1.4} fill="var(--ink-graphite)" />
-          <line x1={0} y1={0} x2={4.2} y2={-4.2} stroke="var(--ink-graphite)" strokeWidth={0.7} />
+          <circle cx={0} cy={0} r={3.2} fill="var(--ink-graphite)" />
+          <line x1={0} y1={0} x2={9.8} y2={-9.8} stroke="var(--ink-graphite)" strokeWidth={0.9} />
         </g>
       </svg>
     </figure>
