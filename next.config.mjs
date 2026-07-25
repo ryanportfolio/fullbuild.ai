@@ -1,3 +1,8 @@
+// Fahrzeugmarkt's Spring Boot API. Vercel cannot host a JVM service, so it runs
+// on Railway and is proxied under the prototype's own path.
+const FAHRZEUGMARKT_API =
+  process.env.FAHRZEUGMARKT_API || 'https://api-production-0ece.up.railway.app';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -27,6 +32,21 @@ const nextConfig = {
       // public/ (the css, js, svg and woff2) resolve before any of it runs.
       { source: '/prototype/harborline', destination: '/prototype/harborline/index.html' },
       { source: '/prototype/harborline/:path*', destination: '/prototype/harborline/:path*/index.html' },
+      // Fahrzeugmarkt is a single-page app with a live backend, not a static
+      // export. Its API is proxied here rather than called cross-origin so the
+      // session cookie stays first-party; this must precede the SPA fallback
+      // below or the fallback would swallow the API calls.
+      {
+        source: '/prototype/fahrzeugmarkt/api/:path*',
+        destination: `${FAHRZEUGMARKT_API}/api/:path*`,
+      },
+      // Client-side routes fall back to the app shell. Real files in public/
+      // resolve before this, so the built assets are unaffected.
+      { source: '/prototype/fahrzeugmarkt', destination: '/prototype/fahrzeugmarkt/index.html' },
+      {
+        source: '/prototype/fahrzeugmarkt/:path*',
+        destination: '/prototype/fahrzeugmarkt/index.html',
+      },
     ];
   },
   // Old prototype URLs that have been linked or shipped before the rename.
