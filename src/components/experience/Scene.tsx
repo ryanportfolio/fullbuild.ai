@@ -21,10 +21,6 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrthographicCamera } from '@react-three/drei';
 import { EffectComposer, SelectiveBloom } from '@react-three/postprocessing';
-import type {
-  EffectComposer as EffectComposerImpl,
-  SelectiveBloomEffect,
-} from 'postprocessing';
 import { damp } from 'maath/easing';
 import {
   BoxGeometry,
@@ -97,13 +93,13 @@ function camDir(az: number, tilt: number, out: Vector3): Vector3 {
   );
 }
 
-// Bloom membership + composer-mount thresholds, measured on the diamond's ACTUAL
-// ignition strength (0 = graphite .. 1 = full red), NOT raw pour — so the pass
-// exists only while a genuinely red keystone is lit. Hysteresis stops the pass
-// flickering while the section front settles.
+// Bloom membership + composer-enable thresholds, measured on the diamond's
+// ACTUAL ignition strength (0 = graphite .. 1 = full red), NOT raw pour — so the
+// pass runs only while a genuinely red keystone is lit. Hysteresis stops the
+// pass flickering while the section front settles.
 const BLOOM_IN = 0.5; // strength at which a diamond joins the bloom layer
-const LIT_ON = 0.55; // strongest-diamond strength that mounts the composer
-const LIT_OFF = 0.4; // ...and below which it unmounts
+const LIT_ON = 0.55; // strongest-diamond strength that enables the composer
+const LIT_OFF = 0.4; // ...and below which it goes idle again
 
 // ---------------------------------------------------------------------------
 // Theme palette resolved from CSS custom properties into three Colors.
@@ -1159,61 +1155,41 @@ export default function Scene() {
       <CameraRig frame={frame} />
       <Pour frame={frame} onLitChange={setLit} />
       <Overgrowth frame={frame} />
-      {lit && <BloomStack />}
+      <BloomStack lit={lit} />
     </Canvas>
   );
 }
 
 /* ---------------------------------------------------------------------------
-   The composer hangs off the ignition threshold, so it unmounts and remounts
-   every time the reader scrubs back across the ridge — and nothing in the
-   library frees its GPU buffers on the way out. @react-three/postprocessing's
-   unmount cleanup only calls removePass, and SelectiveBloom renders
-   <primitive dispose={null}> with no dispose effect of its own (Outline,
-   defined right beside it, has one). three carries no FinalizationRegistry, so
-   nothing reclaims the orphaned render targets on GC: each ignite/de-ignite
-   cycle stranded a fresh multisampled buffer pair plus the bloom mip chain.
-   Hold the instances and free them.
+   ONE composer for the island's whole life, gated by `enabled` rather than by
+   mounting and unmounting it at the ignition threshold.
+
+   Gating by mount was the original design, and it cost twice. The library frees
+   nothing on the way out, so every ignite/de-ignite cycle stranded a fresh
+   multisampled buffer pair plus the bloom mip chain; the manual disposal added
+   to plug that then broke the pass chain outright, because
+   EffectComposer.dispose() ends with `this.passes = []`. The wrapper builds its
+   RenderPass inside the useMemo that constructs the composer and only ever
+   re-adds EFFECT passes afterwards, so a composer that survives a disposal —
+   which is exactly what React StrictMode's double-invoked effect produces in
+   development — is left holding the bloom pass and no scene pass at all. The
+   band cell then renders the blur chain over nothing and reads as empty from
+   the moment the first keystone ignites.
+
+   Holding one composer removes the cause rather than the symptom: nothing
+   accumulates because nothing is recreated, and no disposal hook is needed.
+   When `enabled` is false the wrapper registers its frame callback at priority
+   0, which hands rendering back to R3F, so an unlit set takes the same path it
+   took before any of this existed. The cost is one idle buffer pair held for
+   the island's lifetime, which is bounded, unlike the leak it replaces.
    ------------------------------------------------------------------------ */
-function BloomStack() {
-  // Callback refs, not element refs: React detaches those during unmount, so
-  // .current can already be null by the time a passive cleanup runs. Latching
-  // the instance on the way in keeps it reachable on the way out.
-  const held = useRef<{ composer?: EffectComposerImpl; bloom?: SelectiveBloomEffect }>({});
-
-  useEffect(() => {
-    const composer = held.current.composer;
-    // Snapshot the passes while they are still attached. The wrapper strips the
-    // EffectPass in a LAYOUT cleanup, which runs before this passive one, so by
-    // unmount time composer.passes no longer holds it and composer.dispose()
-    // cannot reach it.
-    const passes = composer ? [...composer.passes] : [];
-    return () => {
-      for (const p of passes) p.dispose();
-      held.current.bloom?.dispose();
-      // Ends by disposing the shared static Pass.fullscreenGeometry. That is
-      // safe: three drops the GPU buffer but keeps the attribute arrays, so the
-      // next ignition re-uploads it.
-      composer?.dispose();
-      held.current = {};
-    };
-  }, []);
-
+function BloomStack({ lit }: { lit: boolean }) {
   return (
     // No `selection` prop: that force-adds every diamond to the bloom layer
     // (and would keep a health-failed keystone glowing at N>=2). Membership
     // is controlled per frame via mesh.layers on BLOOM_LAYER instead.
-    <EffectComposer
-      ref={(c) => {
-        if (c) held.current.composer = c;
-      }}
-      autoClear={false}
-      multisampling={4}
-    >
+    <EffectComposer enabled={lit} autoClear={false} multisampling={4}>
       <SelectiveBloom
-        ref={(b) => {
-          if (b) held.current.bloom = b;
-        }}
         selectionLayer={BLOOM_LAYER}
         lights={[]}
         intensity={1.5}
