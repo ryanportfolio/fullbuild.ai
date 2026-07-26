@@ -274,7 +274,7 @@ export const PROJECTS: Project[] = [
       { label: 'achievements', value: '31', source: 'repo: 31 achievement art files, matching the store page claim' },
       { label: 'commits', value: '261', source: 'GitHub API, commit pagination (private repo)' },
     ],
-    note: 'Pixel-art bullet heaven built as a standalone Steam title: 9 base weapons with 11 evolved and ascended forms, 20+ bosses, 31 achievements with stats and leaderboards. TypeScript game loop in a Tauri 2 desktop shell, Steamworks wired through Rust. Planned release Aug 28, 2026.',
+    note: 'Pixel-art bullet heaven Steam game with achievements and leaderboard: TypeScript game loop in a Tauri 2 desktop shell, Steamworks wired through Rust.',
   },
   {
     // The self-referential anchor, drawn last: this drawing set is itself a
