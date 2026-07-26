@@ -1,7 +1,7 @@
 /* ============================================================================
    L-101 — OVERGROWTH geometry. Pure + deterministic, no three.js import
-   (plain number tuples, same discipline as pour/frame.ts). Twelve vines —
-   one per schedule entry — climb the SAME Frame the pour builds: a helix
+   (plain number tuples, same discipline as pour/frame.ts). One vine per
+   schedule entry climbs the SAME Frame the pour builds: a helix
    wrapped around a real column (radius derived from that member's thickness),
    continuing along a rafter, an eave girt, or the ridge purlin; a seeded bed
    of tufts plants the foot, leaves bud off the stem behind the growth tip,
@@ -357,9 +357,9 @@ function pushBasalTufts(
 }
 
 /**
- * Build the twelve vines for the given schedule entries against the erected
- * frame. Live projects climb their OWN bent; repo-only entries take a seeded
- * bent — twelve vines spread across the eight bents, all id-salted.
+ * Build one vine per schedule entry against the erected frame. Live projects
+ * climb their OWN bent; entries with no bent of their own take a seeded one,
+ * so the full schedule spreads across the live bents, all id-salted.
  */
 export function buildVines(
   frame: Frame,

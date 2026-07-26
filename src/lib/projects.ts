@@ -257,10 +257,30 @@ export const PROJECTS: Project[] = [
     note: 'Replayable evals harvested from my own failed agent sessions: does the agent verify claims, own mistakes, self-correct? Deterministic grading, every transcript committed, CI re-scores to prove zero drift.',
   },
   {
+    id: 'maimcoil',
+    sheet: 'S-04.13',
+    title: 'MAIMCOIL',
+    href: 'https://store.steampowered.com/app/4975550/MAIMCOIL/',
+    repo: null, // source is private — the store page is the artifact
+    // The store page is up; the game is not. Red means live in production, and
+    // an unreleased title has not shipped, so this stays graphite until the
+    // planned release date passes and the build is actually buyable.
+    live: false,
+    role: 'solo build · engine, content, Steam integration',
+    year: "'26",
+    stack: ['TypeScript', 'React 19', 'Tauri 2', 'Steamworks'],
+    langs: ['TypeScript', 'Rust'],
+    metrics: [
+      { label: 'achievements', value: '31', source: 'repo: 31 achievement art files, matching the store page claim' },
+      { label: 'commits', value: '261', source: 'GitHub API, commit pagination (private repo)' },
+    ],
+    note: 'Pixel-art bullet heaven built as a standalone Steam title: 9 base weapons with 11 evolved and ascended forms, 20+ bosses, 31 achievements with stats and leaderboards. TypeScript game loop in a Tauri 2 desktop shell, Steamworks wired through Rust. Planned release Aug 28, 2026.',
+  },
+  {
     // The self-referential anchor, drawn last: this drawing set is itself a
     // shipped artifact. Red is earned. Its REV field is the real deployed commit.
     id: 'fullbuild-ai',
-    sheet: 'S-04.13',
+    sheet: 'S-04.14',
     title: 'fullbuild.ai',
     href: 'https://fullbuild.ai',
     repo: null,

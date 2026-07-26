@@ -7,7 +7,7 @@ import styles from './legend.module.css';
 /**
  * MATERIALS LEGEND — the cover's language schedule, drawn as a real drafting
  * convention: every language is a construction MATERIAL with its own hatch, and
- * the matrix records which of the 11 drawings each material was specified in.
+ * the matrix records which of the drawings each material was specified in.
  * Present = a hatched cell in that material's pattern; absent = a witness tick
  * (the honest empty convention shared with Dim). Generated wholly from
  * `Project.langs`, so every count it prints is the data — nothing to drift.
@@ -34,6 +34,7 @@ const HATCH = [
   { lang: 'JavaScript', id: 'h-js' },
   { lang: 'HTML', id: 'h-html' },
   { lang: 'GLSL', id: 'h-glsl' },
+  { lang: 'Rust', id: 'h-rust' },
 ] as const;
 
 const KNOWN = new Set<string>(HATCH.map((h) => h.lang));
@@ -164,12 +165,15 @@ export default function MaterialLegend() {
             <pattern id="h-glsl" width="3" height="3" patternUnits="userSpaceOnUse">
               <path d="M0,3 L3,0" stroke="var(--ink-graphite)" strokeWidth="0.55" />
             </pattern>
+            <pattern id="h-rust" width="5" height="5" patternUnits="userSpaceOnUse">
+              <path d="M0,4 L2.5,1 L5,4" fill="none" stroke="var(--ink-graphite)" strokeWidth="0.6" />
+            </pattern>
           </defs>
 
           {/* title block */}
           <text x={SW_X} y={12} className={styles.title}>MATERIALS LEGEND</text>
 
-          {/* column heads: drawing number 1…11, over the matrix */}
+          {/* column heads: one drawing number per project, over the matrix */}
           {PROJECTS.map((p, j) => (
             <text key={p.id} x={cellCX(j)} y={HEAD_Y} className={styles.colno} textAnchor="middle">
               {j + 1}
