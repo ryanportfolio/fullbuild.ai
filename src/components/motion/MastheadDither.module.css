@@ -1,0 +1,25 @@
+/* The dither field and the returning pen sit exactly over the wordmark's text
+   box and never enter flow. The canvas starts transparent — the effect turns it
+   on only once it is built AND clipped away, so a bail leaves the crisp title
+   standing alone and the field never flashes over it. */
+.field,
+.pen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.field {
+  opacity: 0;
+}
+
+/* Same instrument as the plot's pen: a one-pixel line the height of the word,
+   inked in the active ground's graphite. Hidden until the second pass starts. */
+.pen {
+  width: 1px;
+  height: 100%;
+  opacity: 0;
+  transform: translateX(-1px);
+  will-change: transform;
+}

@@ -151,7 +151,7 @@ const CAPS: {
   {
     key: 'tokens',
     label: 'Token pipeline',
-    source: 'RTK + STK + savetokens.tips: 79.5% filtered, measured',
+    source: 'RTK + STK + savetokens.tips: 51.7% filtered, many millions of tokens saved, snapshot 2026-07-28',
     projectId: 'savetokens',
     icon: (
       <>

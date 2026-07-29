@@ -118,10 +118,15 @@ export const PROJECTS: Project[] = [
     stack: ['Astro', 'MDX', 'TypeScript'],
     langs: ['JavaScript', 'HTML', 'TypeScript'],
     metrics: [
-      { label: 'guides published', value: '18', source: 'corewise.academy catalog page' },
+      {
+        label: 'guides published',
+        value: '23',
+        source:
+          'corewise.academy catalog page, printed total "Whole catalogue · VOL. I · 23 · 162 minutes"; layer counts 3+7+9+2+2 = 23. Re-verified 2026-07-28 (was 18)',
+      },
       { label: 'commits', value: '327', source: 'GitHub API, commit pagination (private repo)' },
     ],
-    note: 'Free course catalog on working with AI: 18 guides across 5 layers at 3 depth levels, each with objectives, exercises, and self-checks. No accounts, no fees: the whole catalog reads in about 133 minutes.',
+    note: 'Free course catalog on working with AI, each with objectives, exercises, and skills to help optimize and get the most out of models.',
   },
   {
     id: 'kinefractal',
@@ -151,9 +156,26 @@ export const PROJECTS: Project[] = [
     year: "'26",
     stack: ['HTML', 'Node scripts', 'PowerShell'],
     langs: ['HTML', 'JavaScript', 'PowerShell'],
+    // These two figures move on a live sample, so they are written to stay TRUE
+    // as it grows rather than to be re-pasted every day. The cumulative total is
+    // deliberately QUALITATIVE: it only ever climbs, and any exact figure printed
+    // here is wrong within a day, so the drawing states the magnitude and lets
+    // the source carry the measurement. A RATIO cannot be handled the same way:
+    // this one has been 79.5%, then 77.9%, and is 51.7% now that the sample went
+    // global, so it stays an exact dated snapshot rather than an open-ended claim.
     metrics: [
-      { label: 'tokens filtered', value: '79.5%', source: 'measured: rtk gain log over 95,821 commands' },
-      { label: 'tokens saved', value: '19.7M', source: 'per-command before/after logs, refreshed daily' },
+      {
+        label: 'of tokens saved',
+        value: 'many millions',
+        source:
+          'savetokens.tips: "22.8M tokens saved in total by filtering command output before the agent reads it", rtk gain logs, snapshot 2026-07-28. Cumulative and rising, so the drawing states the magnitude and the source carries the figure',
+      },
+      {
+        label: 'tokens filtered',
+        value: '51.7%',
+        source:
+          'savetokens.tips: "51.7% of output tokens removed across every command routed through the filter", n=107,415 commands, global scope, snapshot 2026-07-28. A ratio revises in both directions, so this is the exact sample, not a floor',
+      },
     ],
     note: 'Usage optimization guide; every figure measured from logged commands and updated to site automatically.',
   },
@@ -277,10 +299,37 @@ export const PROJECTS: Project[] = [
     note: 'Pixel-art bullet heaven Steam game with achievements and leaderboard: TypeScript game loop in a Tauri 2 desktop shell, Steamworks wired through Rust.',
   },
   {
+    id: 'stk',
+    sheet: 'S-04.14',
+    title: 'STK',
+    href: 'https://savetokens.tips/stk',
+    repo: 'https://github.com/ryanportfolio/STK',
+    // Shipped and installable now, and its datasheet page is reachable, so red
+    // is earned on the same terms as savetokens.tips. Unlike MAIMCOIL (store
+    // page up, game unreleased) there is no gap here between the page and the
+    // artifact it describes.
+    live: true,
+    role: 'solo build · hook, outline engine, install scripts',
+    year: "'26",
+    stack: ['Rust', 'Claude Code hooks', '0 runtime deps'],
+    // The shipped artifact is one Rust binary. The repo also carries JavaScript
+    // and Shell, but those are agent scaffolding and installers, not the tool.
+    langs: ['Rust'],
+    metrics: [
+      {
+        label: 'oversized context from Read',
+        value: '85%',
+        source: 'README: 250 mined Claude Code sessions, 27.8MB of tool output',
+      },
+      { label: 'commits', value: '102', source: 'GitHub API, commit pagination' },
+    ],
+    note: 'Claude Code hook that clamps oversized Read results into line-numbered outlines: an 84KB source file lands as about 2KB. RTK kills tokens per command, STK per session.',
+  },
+  {
     // The self-referential anchor, drawn last: this drawing set is itself a
     // shipped artifact. Red is earned. Its REV field is the real deployed commit.
     id: 'fullbuild-ai',
-    sheet: 'S-04.14',
+    sheet: 'S-04.15',
     title: 'fullbuild.ai',
     href: 'https://fullbuild.ai',
     repo: null,
