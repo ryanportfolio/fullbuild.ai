@@ -76,6 +76,40 @@
 .tagline .taglineGroup {
   display: block;
   white-space: nowrap;
+  /* Size the BOX to the line it actually paints. These lines are nowrap and
+     already overflow their column (578px of text in a 446px box), which is
+     invisible until something clips them: clip-path measures from the border
+     box, so the overflowing tail could never be wiped in and popped instead
+     when the clip was released. max-content makes the box the line, so the
+     lettering pass can travel the whole measure. Painted result is unchanged. */
+  width: max-content;
+}
+
+/* The lettering pass rides inside the paragraph's own box. */
+.tagline {
+  position: relative;
+}
+/* Pre-hydration hide: the head inline script stamps data-pipeline-pending on
+   <html> before first paint (skipped for reduced motion and no-JS), so the
+   finished line never flashes while the bundle loads. Same clip the lettering
+   pass then takes over inline, so the handoff has no frame between. TaglineFit
+   lifts the attribute once its effect owns the clip; a safety timer in the
+   script lifts it if hydration never arrives. */
+:global([data-pipeline-pending]) .tagline .taglineGroup {
+  clip-path: inset(0 100% 0 0);
+}
+/* Same instrument as the masthead's pens: a one-pixel line the height of the
+   line being lettered. Hidden until TaglineFit's pass starts, and never
+   present at all under reduced motion or without JS. */
+.tagline .taglinePen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  opacity: 0;
+  background: currentColor;
+  pointer-events: none;
+  will-change: left;
 }
 /* Both lines are one nowrap mono run, so the fit is a fixed ratio of the two
    natural measures — 1.615 in Martian Mono, constant at every type size. Ship

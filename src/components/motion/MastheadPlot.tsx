@@ -16,6 +16,7 @@
 
 import { useLayoutEffect, useRef, useState } from 'react';
 import copy from '../sheets/copy.module.css';
+import MastheadDither from './MastheadDither';
 import styles from './MastheadPlot.module.css';
 
 // --- tuning ----------------------------------------------------------------
@@ -73,6 +74,10 @@ export default function MastheadPlot({ text }: { text: string }) {
   // 'static' = SSR/no-JS finished state (visible, value pending measurement).
   const [dimW, setDimW] = useState<number | null>(null);
   const [dimPhase, setDimPhase] = useState<'static' | 'hidden' | 'shown'>('static');
+  // The dither field only mounts once the plot has genuinely RESOLVED — never
+  // on a bail or under reduced motion, and never before document.fonts.ready,
+  // so it always builds from the real display face the <h1> is showing.
+  const [ditherReady, setDitherReady] = useState(false);
 
   useLayoutEffect(() => {
     const wrap = wrapRef.current;
@@ -358,6 +363,7 @@ export default function MastheadPlot({ text }: { text: string }) {
           canvas.style.opacity = '0';
           pen.style.display = 'none';
           settle();
+          setDitherReady(true);
           resolveTimeout = window.setTimeout(() => {
             // transition props cleared so theme flips / future writes stay instant
             canvas.style.display = 'none';
@@ -396,6 +402,7 @@ export default function MastheadPlot({ text }: { text: string }) {
       </h1>
       <canvas ref={canvasRef} className={styles.canvas} aria-hidden="true" />
       <span ref={penRef} className={styles.pen} aria-hidden="true" />
+      {ditherReady && <MastheadDither h1Ref={h1Ref} />}
       {/* Always in flow — the row's height is reserved from first paint so the
           post-plot reveal never pushes the sheet down. Only the ink toggles. */}
       <div className={styles.dim} aria-hidden="true" data-phase={dimPhase}>
