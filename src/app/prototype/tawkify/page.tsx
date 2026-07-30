@@ -66,7 +66,7 @@ export default function TawkifyStoryPage() {
               Your person is out there, let us introduce you
             </h1>
             <p className={styles.deck} data-reveal="settle" style={{ "--stagger": 1 } as React.CSSProperties}>
-              A matchmaker who has actually talked to you, screening one
+              A matchmaker who has actually talked to you, choosing one
               person at a time. You never swipe
             </p>
             <div className={styles.heroActions} data-reveal="settle" style={{ "--stagger": 2 } as React.CSSProperties}>
@@ -114,9 +114,9 @@ export default function TawkifyStoryPage() {
       <Band folio="03 · MATCHMAKERS" ground="cream-light" tier="l">
         <div id="matchmakers">
           <SectionHead
-            eyebrow="The people doing the work"
+            eyebrow="Who you'll actually work with"
             title="Meet your matchmakers"
-            deck="Named, tenured, and accountable to your debrief"
+            deck="The person who remembers your last date went badly, and why"
           />
           <div className={styles.makerGrid}>
             {matchmakers.map((maker, index) => (
@@ -134,16 +134,16 @@ export default function TawkifyStoryPage() {
             ))}
           </div>
           <p className={styles.continuityNote}>
-            One named matchmaker for your whole engagement. If that ever
-            breaks, you get a briefed handoff and an additional match at no
-            cost, in writing.
+            One matchmaker, by name, from your first call to your last date.
+            If she ever leaves, you get a proper handoff and an extra match at
+            no cost, in writing.
           </p>
         </div>
       </Band>
 
       {/* 4 · The four steps, names verbatim */}
       <Band folio="04 · PROCESS" ground="cream" tier="m">
-        <SectionHead eyebrow="What to expect" title="Four steps, in the order they happen" />
+        <SectionHead eyebrow="What to expect" title="How it goes, first call to first date" />
         <div className={styles.stepGrid}>
           {ledgerSteps.map((step, index) => (
             <article key={step.id} className={styles.step} data-reveal="settle" style={{ "--stagger": index } as React.CSSProperties}>
@@ -205,7 +205,7 @@ export default function TawkifyStoryPage() {
           <div>
             <SectionHead
               eyebrow="How we screen"
-              title="Safety is a procedure, not a badge"
+              title="What we check before you ever meet"
             />
             <dl className={styles.specList}>
               {screeningSpec.map((item) => (
@@ -220,12 +220,12 @@ export default function TawkifyStoryPage() {
             <Plate id="p9" />
             <div>
               <h3 className={styles.h3} style={{ fontSize: "1.15rem", marginBottom: "0.6rem" }}>
-                Your file is a contract, and we check it
+                We remember what you told us
               </h3>
               <p className={styles.muted} style={{ fontSize: "0.95rem", marginBottom: "1rem" }}>
-                Every introduction is checked against your stated
-                non-negotiables, with the computed values shown. This is the
-                same component your matchmaker uses.
+                Every introduction is checked against the things you said you
+                could not compromise on, and you see the check yourself.
+                Nothing gets waved through quietly.
               </p>
               <ConstraintRows rows={constraints.slice(0, 3)} />
             </div>
@@ -248,11 +248,11 @@ export default function TawkifyStoryPage() {
           <div className={styles.sectionHead} style={{ marginBottom: 0 }}>
             <span className={styles.rule} data-reveal="rule" />
             <p className={styles.eyebrow}>Real introductions</p>
-            <h2 className={styles.h2}>The dates these plates stand for</h2>
+            <h2 className={styles.h2}>People who met this way</h2>
           </div>
           <p className={styles.deck}>
-            Three couples, three cities, captions with the parts that usually
-            get cropped out
+            Three couples, three cities, and the parts that usually get left
+            out
           </p>
         </div>
         <div data-reveal="settle">
@@ -299,7 +299,7 @@ export default function TawkifyStoryPage() {
 
       {/* 10 · The full ratings row, including the bad ones */}
       <Band folio="10 · IN PUBLIC" ground="cream-light" tier="s">
-        <SectionHead eyebrow="What everyone says" title="All of our ratings, not just the good one" />
+        <SectionHead eyebrow="What everyone says" title="Every rating we have, including the bad ones" />
         <div className={styles.ratingsRow}>
           {platformRatings.map((rating) => (
             <div key={rating.platform} className={styles.rating}>
@@ -321,7 +321,7 @@ export default function TawkifyStoryPage() {
       <Band folio="11 · START SMALLER" ground="cream" tier="xs">
         <SectionHead
           eyebrow="Not ready for the full search"
-          title="Three rungs, you choose where to step on"
+          title="Start with one date, not a contract"
         />
         <div className={styles.ladder}>
           {arrowsLadder.map((rung, index) => (
@@ -335,7 +335,7 @@ export default function TawkifyStoryPage() {
           ))}
         </div>
         <div style={{ marginTop: "2rem" }}>
-          <StageTimeline current={0} note="MOST CLIENTS ENTER AT RUNG 1 · THE LADDER IS THE FUNNEL" />
+          <StageTimeline current={0} note="MOST PEOPLE START WITH THE FREE DATE" />
         </div>
       </Band>
 
@@ -346,8 +346,8 @@ export default function TawkifyStoryPage() {
             Let&rsquo;s see if you&rsquo;re a match
           </h2>
           <p className={styles.deck} data-reveal="settle" style={{ "--stagger": 1 } as React.CSSProperties}>
-            A 30 minute call with a matchmaker, no card required. What happens
-            next is band 04, in order
+            A 30 minute call with a matchmaker, no card required. If we are
+            not the right fit, we will say so on the call
           </p>
           <div className={styles.heroActions} data-reveal="settle" style={{ "--stagger": 2 } as React.CSSProperties}>
             <Link href="/prototype/tawkify/match" className={styles.pillPrimary}>

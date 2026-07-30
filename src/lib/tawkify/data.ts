@@ -104,7 +104,7 @@ export const pricingTiers: PricingTier[] = [
 ];
 
 export const matchDefinition =
-  "A match is an introduction that satisfies every hard constraint in your file and that your matchmaker has personally screened against your last debrief. A first date that happens counts. A candidate list does not.";
+  "A match is an introduction that respects every one of your non-negotiables, screened personally by your matchmaker against what you told her after your last date. A first date that happens counts. A list of names does not.";
 
 export const disclosureTerms: string[] = [
   "Packages are billed up front and are non-refundable after the rescission window.",
@@ -125,7 +125,7 @@ export const screeningSpec: ScreeningItem[] = [
 
 export const poolDisclosure = {
   heading: "Who is in the pool",
-  body: "Two tiers, disclosed before you pay. Clients hold a package and receive matches. Screened members passed identity and records checks and a shorter interview, and can be matched to clients. Every candidate you meet is labeled with which tier they came from.",
+  body: "Two kinds of people, and we tell you which is which before you pay. Clients are paying for a search of their own. Screened members passed the same identity and records checks and a shorter interview. Everyone you meet is labeled with where they came from.",
 };
 
 export type Story = {
@@ -194,11 +194,11 @@ export const platformRatings: PlatformRating[] = [
 
 export const criticsBlock = {
   heading: "What our critics say and what we changed",
-  body: "The one-star reviews cluster on three things: price learned late, refund terms learned later, and matchmakers who went quiet. This concept answers all three on this page: the price is in the hero, the refund terms sit beside the pricing table, and silence now has a clock on it that your matchmaker cannot hide from.",
+  body: "The one-star reviews cluster on three things: a price you learn late, refund terms you learn later, and matchmakers who go quiet. So the price now sits at the top of this page, the terms sit next to it in plain language, and nobody goes two weeks without hearing from their matchmaker.",
 };
 
 export const arrowsLadder = [
-  { stage: "Arrows", detail: "A free vetted video date, our new relationship discovery product" },
+  { stage: "Arrows", detail: "One free video date with someone we vetted. No package, no commitment" },
   { stage: "Starter package", detail: "Three matches with a dedicated matchmaker" },
   { stage: "Full engagement", detail: "The full search, when you have seen how we work" },
 ];
@@ -260,11 +260,11 @@ export const clientMatch = {
   matchesUsed: "3 of 6",
   nextCheckIn: "Aug 12",
   narrative: [
-    "Claire is the first candidate from your shortlist who cleared every screen in your file, and I want to be precise about why that matters: your last two introductions each carried one override, this one carries none I made for convenience.",
-    "You both described the same failure mode, moving too fast and resenting it. So I am pacing this deliberately, and she knows that too.",
+    "Claire is the first person I have brought you where I did not bend a single one of your rules, and I want you to know why that matters: for your last two introductions I bent one each time, and told you so.",
+    "You both described the same thing ending your last relationships, moving too fast and resenting it. So I am pacing this one on purpose, and she knows that too.",
     "She reads as reserved for the first twenty minutes, then very funny. Ask about the rooftop meadow she is building over a parking garage.",
   ],
-  pullLine: "Your last two introductions each carried one override, this one carries none",
+  pullLine: "The first person I have brought you where I did not bend a single one of your rules",
   screeningRecord: [
     { label: "Records check", value: "Completed 28 Feb 2026" },
     { label: "Identity", value: "Verified 12 Jan 2026" },

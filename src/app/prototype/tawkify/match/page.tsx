@@ -93,8 +93,8 @@ export default function TawkifyMatchPage() {
             {/* Constraint check: the same component the matchmaker writes */}
             <section className={styles.panel} aria-label="Constraint check">
               <div className={styles.panelHead}>
-                <h2 className={styles.panelTitle}>Your file, checked</h2>
-                <span className={styles.factSmall}>SAME COMPONENT YOUR MATCHMAKER EDITS</span>
+                <h2 className={styles.panelTitle}>What you asked for, checked</h2>
+                <span className={styles.factSmall}>EVERY LINE CHECKED · 12 MAR</span>
               </div>
               <div className={styles.panelBody}>
                 <ConstraintRows rows={constraints} />
@@ -166,7 +166,7 @@ export default function TawkifyMatchPage() {
                     Accept Thursday
                   </button>
                   <button type="button" className={styles.pillGhost} style={{ border: "none", background: "none", padding: 0, cursor: "pointer" }}>
-                    Decline, with a reason that updates your file
+                    Pass, and tell Dana why
                   </button>
                 </div>
                 <p className={styles.factSmall}>
