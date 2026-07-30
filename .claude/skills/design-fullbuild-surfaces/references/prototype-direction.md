@@ -1,6 +1,6 @@
 # Opening a new prototype identity
 
-Scope: `public/prototype/<name>/` only. The Working Set under `src/app` is settled and this file does not apply to it.
+Scope: `public/prototype/<name>/` and `src/app/prototype/<name>/` only. The Working Set, meaning `src/app` outside `src/app/prototype`, is settled and this file does not apply to it.
 
 Each prototype in the corpus deliberately pulls in a different direction: technical-drawing minimalism, neo-brutalist collage, lab-instrument skeuomorphism, cinematic liquid metal, a generated nautical chart. There is no house palette, font or motion doctrine to inherit. What is inherited is the method below plus the always-on rules in `SKILL.md`.
 

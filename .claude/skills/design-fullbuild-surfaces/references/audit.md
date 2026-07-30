@@ -68,7 +68,7 @@ Tailwind class-name patterns are useless here; this repo has no Tailwind. Search
 - `opacity:\s*0?\.[0-9]` on text, which is usually A11Y-01
 - hex literals outside the `:root` token block, which is usually an undeclared accent
 - `Math.random`
-- `getBoundingClientRect` interleaved with style writes inside `useFrame`, `onUpdate`, `pointermove` or a scroll handler, or a scroll-invariant rect re-read every tick instead of cached. Known false positive: `DrawingSet.tsx` 60 to 61 reads two viewport-relative rects per scroll tick and writes once after both, behind the mount gate documented at 64 to 67. That is the defended pattern this rule points at, not a hit
+- `getBoundingClientRect` interleaved with style writes inside `useFrame`, `onUpdate`, `pointermove` or a scroll handler, or a scroll-invariant rect re-read every tick instead of cached. Known false positive: the `apply` callback in `DrawingSet.tsx` reads two viewport-relative rects per scroll tick and writes once after both, behind a `webglActive` mount gate documented in the comment above it. That is the defended pattern this rule points at, not a hit
 - `animation:\s*none` inside a `prefers-reduced-motion` block
 - selectors and `data-` attribute branches with no element that sets them, since there is no linter installed to catch dead code
 
