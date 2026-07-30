@@ -9,8 +9,8 @@ import s from './planting.module.css';
    L-101 — PLANTING PLAN, static floor. The finished flowerbed for the
    reduced-motion / no-WebGL path ONLY: when the R3F island runs, the live
    overgrowth (vines climbing the poured structure, Scene.tsx) owns the band
-   cell and StaticFloor unmounts this plate. Twelve flowers — one per schedule
-   entry, keyed 04.1–04.12 — stand fully drawn; live projects an open bloom,
+   cell and StaticFloor unmounts this plate. One flower per schedule entry,
+   keyed to its sheet number, stands fully drawn; live projects an open bloom,
    repo-only a closed bud. No growth driver, no dash state, no hydration
    flash: the server markup IS the finished end-state and never changes.
    ========================================================================= */

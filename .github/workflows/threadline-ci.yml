@@ -1,0 +1,107 @@
+name: Threadline CI
+
+on:
+  pull_request:
+    paths:
+      - "src/app/prototype/threadline/**"
+      - "src/components/threadline/**"
+      - "src/lib/threadline/**"
+      - "showcase/threadline/**"
+      - "tests/prototype-threadline.test.mjs"
+      - ".github/workflows/threadline-ci.yml"
+  push:
+    branches: [main]
+    tags: ["threadline-v*"]
+    paths:
+      - "src/app/prototype/threadline/**"
+      - "src/components/threadline/**"
+      - "src/lib/threadline/**"
+      - "showcase/threadline/**"
+      - "tests/prototype-threadline.test.mjs"
+      - ".github/workflows/threadline-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: threadline-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node --test tests/prototype-threadline.test.mjs
+      - run: npm run typecheck
+      - run: npm run build
+        env:
+          NEXT_DIST_DIR: .next-threadline
+
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: showcase/threadline/backend
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: showcase/threadline/backend/pom.xml
+      - run: mvn --batch-mode verify
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/threadline-v')
+    needs: [frontend, backend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
+    env:
+      ACR_NAME: ${{ vars.ACR_NAME }}
+      ACR_LOGIN_SERVER: ${{ vars.ACR_LOGIN_SERVER }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - uses: docker/setup-buildx-action@v3
+      - run: az acr login --name "$ACR_NAME"
+      - name: Build and publish immutable image
+        run: |
+          docker buildx build \
+            --file showcase/threadline/infra/Dockerfile \
+            --tag "$ACR_LOGIN_SERVER/threadline-api:sha-$GITHUB_SHA" \
+            --provenance=mode=max \
+            --sbom=true \
+            --push .
+      - name: Open reviewable GitOps promotion
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          branch="deploy/threadline-${GITHUB_REF_NAME}"
+          git switch -c "$branch"
+          sed -i "s/newTag: .*/newTag: \"sha-$GITHUB_SHA\"/" showcase/threadline/infra/k8s/overlays/prod/kustomization.yaml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add showcase/threadline/infra/k8s/overlays/prod/kustomization.yaml
+          git commit -m "deploy(threadline): promote $GITHUB_REF_NAME"
+          git push origin "$branch"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "deploy(threadline): promote $GITHUB_REF_NAME" \
+            --body "Promotes immutable image sha-$GITHUB_SHA. ArgoCD will reconcile only after review and merge."

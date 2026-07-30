@@ -44,7 +44,9 @@ export default function RailLogo({ className }: { className?: string }) {
     const pour = svg.querySelector<SVGPathElement>('path[data-pour]');
     if (!strokes.length || !pour) return;
 
-    // Hide before first paint so there is no flash of the finished mark.
+    // The mark ships drawn (no-JS floor), so the pre-paint CSS hold in
+    // globals.css covers it until this effect owns the hidden state; arming the
+    // svg in the same frame releases the hold with no flash of the finished mark.
     strokes.forEach((p) => {
       p.style.transition = 'none';
       p.style.strokeDasharray = '1';
@@ -52,6 +54,7 @@ export default function RailLogo({ className }: { className?: string }) {
     });
     pour.style.transition = 'none';
     pour.style.opacity = '0';
+    svg.setAttribute('data-ws-armed', '');
 
     let timer = 0;
     let begun = false;
@@ -92,7 +95,7 @@ export default function RailLogo({ className }: { className?: string }) {
   }, []);
 
   return (
-    <svg ref={ref} className={className} viewBox="0 0 100 100" aria-hidden="true">
+    <svg ref={ref} className={className} viewBox="0 0 100 100" aria-hidden="true" data-draw-hold>
       {STROKES.map(([d, wm], i) => (
         <path
           key={i}

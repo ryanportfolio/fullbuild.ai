@@ -14,14 +14,14 @@ import s from './shipped.module.css';
 /**
  * Structural stack, read as a building: floors are construction layers from
  * footing to envelope, not a difficulty ranking. Grouped from a full inventory
- * of the repos (2026-07-23); each row's title carries its proof.
+ * of the repos (re-audited 2026-07-26); each row's title carries its proof.
  */
 const STACK: { lvl: string; name: string; items: string; source: string }[] = [
   {
     lvl: 'L5',
     name: 'Envelope',
-    items: 'Vercel · Actions · CI gates',
-    source: 'Ship and gate: Vercel (fullbuild.ai, savetokens.tips), Replit autoscale (Truenote), GitHub Pages (tracebench), GitHub Actions CI and merge gates (SDLC Audit, SecureWall releases)',
+    items: 'Vercel · Railway · Docker · Actions · CI gates',
+    source: 'Ship and gate: Vercel (fullbuild.ai, savetokens.tips, CoreWise Academy), Railway (kinefractal.com web and nightly worker, willaicite, Fahrzeugmarkt API and Postgres), Docker and Compose (Fahrzeugmarkt, Kine Fractal worker), Replit autoscale (Truenote), GitHub Pages (tracebench), GitHub Actions CI and merge gates (SDLC Audit, SecureWall releases)',
   },
   {
     lvl: 'L4',
@@ -38,14 +38,14 @@ const STACK: { lvl: string; name: string; items: string; source: string }[] = [
   {
     lvl: 'L2',
     name: 'Frame',
-    items: 'Next.js · React · Astro · Node · Tauri',
-    source: 'Runtimes and UI frames: Next.js (fullbuild.ai), React 19 (Truenote, PixelSwarm), Astro (CoreWise Academy), Express + Drizzle (CoreWise), Tauri 2 desktop (PixelSwarm)',
+    items: 'Next.js · React · Vue · Astro · Node · Spring Boot · Tauri',
+    source: 'Runtimes and UI frames: Next.js (fullbuild.ai), React 19 (Truenote, PixelSwarm), Vue 3 + Pinia (Fahrzeugmarkt), Astro (CoreWise Academy, willaicite), Express + Drizzle (CoreWise), Spring Boot 3.5 + Spring Data JPA (Fahrzeugmarkt), Tauri 2 desktop (PixelSwarm)',
   },
   {
     lvl: 'L1',
     name: 'Footing',
-    items: 'TypeScript · Python · Rust · Go · C#',
-    source: 'Languages the work is poured in: TypeScript across the stack, Python (Kine Fractal, tracebench, Local PTT), Rust (RTK, STK), Go (research mirror), C# (SecureWall, ZipFlow)',
+    items: 'TypeScript · Python · Java · Rust · Go · C#',
+    source: 'Languages the work is poured in: TypeScript across the stack, Python (Kine Fractal, tracebench, Local PTT), Java 21 (Fahrzeugmarkt backend), Rust (RTK, STK), Go (research mirror), C# (SecureWall, ZipFlow)',
   },
 ];
 
@@ -76,7 +76,18 @@ export default function SheetFrame() {
               {STACK.map((f) => (
                 <div key={f.lvl} className={copy.specRow} title={f.source}>
                   <dt className={copy.specKey}>{f.lvl} · {f.name}</dt>
-                  <dd className={copy.specVal}>{f.items}</dd>
+                  {/* These rows wrap on narrow sheets. Two rules keep the wrap
+                      legible: a break may only fall AFTER a separator, never
+                      before one (which would open a line with a stray dot), and
+                      a two-word entry like Spring Boot never splits. Both are
+                      non-breaking spaces: one pins each · to the word it
+                      follows, one holds each entry together. */}
+                  <dd className={copy.specVal}>
+                    {f.items
+                      .split(' · ')
+                      .map((item) => item.replace(/ /g, '\u00a0'))
+                      .join('\u00a0· ')}
+                  </dd>
                 </div>
               ))}
             </dl>

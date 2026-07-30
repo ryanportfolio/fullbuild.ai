@@ -1,0 +1,1690 @@
+.shell {
+  --ink: #121b24;
+  --ink-soft: #283743;
+  --bone: #f1eee5;
+  --paper: #faf8f2;
+  --rule: #b9b9b0;
+  --muted: #5f6762;
+  --orange: #ec5b2a;
+  --orange-soft: #f4c7b5;
+  --blue: #285bd4;
+  --blue-soft: #cfdaf5;
+  /* Accent variants for text: --orange and --blue are tuned as fills and only
+     reach ~3.2:1 as small type. These carry the same hue past AA. */
+  --orange-deep: #c2400f;
+  --blue-deep: #1f4bb0;
+  --green: #20735a;
+  --green-soft: #c9ddd5;
+  --yellow: #d99b16;
+  --rail-width: 132px;
+  min-height: 100svh;
+  background: var(--bone);
+  color: var(--ink);
+  font-family: var(--font-archivo), Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.shell,
+.shell * {
+  box-sizing: border-box;
+}
+
+.shell button,
+.shell select {
+  font: inherit;
+}
+
+.shell button,
+.shell a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.shell button:focus-visible,
+.shell a:focus-visible,
+.shell select:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+}
+
+.rail {
+  position: fixed;
+  z-index: 20;
+  inset: 0 auto 0 0;
+  display: flex;
+  width: var(--rail-width);
+  min-height: 100svh;
+  padding: 18px 12px;
+  flex-direction: column;
+  align-items: stretch;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.brand {
+  display: flex;
+  min-height: 80px;
+  color: inherit;
+  text-decoration: none;
+  align-items: center;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.brand svg {
+  width: 36px;
+  height: 36px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+}
+
+.rail nav {
+  display: flex;
+  margin-top: 64px;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rail nav a {
+  display: flex;
+  min-height: 55px;
+  padding: 9px 6px;
+  border-left: 2px solid transparent;
+  color: #aab2b7;
+  text-decoration: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.rail nav a span {
+  color: #8b959d;
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 11px;
+}
+
+.rail nav a[aria-current] {
+  border-color: var(--orange);
+  color: #fff;
+}
+
+.railMeta {
+  margin-top: auto;
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 11px;
+  letter-spacing: 0.01em;
+}
+
+.railMeta > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #b8c0c5;
+  white-space: nowrap;
+}
+
+.railMeta > span i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6fc4a7;
+}
+
+.railMeta p {
+  margin: 18px 0 0;
+  color: #8b959d;
+  line-height: 1.7;
+}
+
+.main {
+  width: calc(100% - var(--rail-width));
+  min-height: 100svh;
+  margin-left: var(--rail-width);
+}
+
+.topbar {
+  display: flex;
+  min-height: 136px;
+  padding: 28px clamp(24px, 4vw, 64px);
+  border-bottom: 1px solid var(--ink);
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.eyebrow,
+.sectionIndex {
+  margin: 0;
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.surfaceLabel {
+  display: inline-flex;
+  min-height: 24px;
+  padding: 0 8px;
+  margin: 0 0 10px;
+  background: var(--ink);
+  color: #fff;
+  align-items: center;
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.eyebrow {
+  margin-bottom: 8px;
+  color: var(--blue);
+}
+
+.topbar h1 {
+  margin: 0;
+  font-family: var(--font-archivo), "Arial Narrow", Arial, sans-serif;
+  font-size: clamp(30px, 4vw, 58px);
+  font-stretch: condensed;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 0.94;
+  text-transform: uppercase;
+}
+
+.topbarActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.demoBadge,
+.resetButton,
+.storefrontLink {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--ink);
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.demoBadge {
+  display: inline-flex;
+  background: var(--orange-deep);
+  color: #fff;
+  align-items: center;
+}
+
+.resetButton {
+  cursor: pointer;
+  background: transparent;
+  color: var(--ink);
+}
+
+.storefrontLink {
+  display: inline-flex;
+  background: var(--blue);
+  color: #fff;
+  align-items: center;
+  text-decoration: none;
+}
+
+.launchStrip {
+  padding: 28px clamp(24px, 4vw, 64px) 34px;
+  border-bottom: 1px solid var(--ink);
+}
+
+.launchIntro {
+  display: grid;
+  margin-bottom: 26px;
+  grid-template-columns: minmax(140px, 0.45fr) 1.55fr;
+  gap: 28px;
+  align-items: flex-end;
+}
+
+.sectionIndex {
+  color: var(--muted);
+}
+
+.launchIntro h2,
+.panelHeading h2,
+.systemIntro h2 {
+  margin: 0;
+  font-family: var(--font-archivo), "Arial Narrow", Arial, sans-serif;
+  font-size: clamp(24px, 2.7vw, 40px);
+  font-stretch: condensed;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.launchIntro div > p {
+  max-width: 58ch;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.summaryGrid {
+  display: grid;
+  border-block: 1px solid var(--rule);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.summaryCard {
+  position: relative;
+  min-height: 126px;
+  padding: 18px 20px 16px;
+  border-right: 1px solid var(--rule);
+  overflow: hidden;
+}
+
+.summaryCard:last-child {
+  border-right: 0;
+}
+
+.summaryCard::after {
+  position: absolute;
+  inset: auto 0 0;
+  height: 4px;
+  background: var(--ink-soft);
+  content: "";
+}
+
+.summaryCard[data-tone="blue"]::after {
+  background: var(--blue);
+}
+
+.summaryCard[data-tone="green"]::after {
+  background: var(--green);
+}
+
+.summaryCard[data-tone="orange"]::after {
+  background: var(--orange);
+}
+
+.summaryCard p {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.summaryCard strong {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--font-archivo), "Arial Narrow", Arial, sans-serif;
+  font-size: clamp(34px, 3.4vw, 54px);
+  font-stretch: condensed;
+  letter-spacing: -0.06em;
+  line-height: 0.95;
+}
+
+.summaryCard span {
+  display: block;
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.workspace {
+  display: grid;
+  padding: 42px clamp(24px, 4vw, 64px) 56px;
+  grid-template-columns: minmax(0, 1fr) minmax(330px, 410px);
+  gap: clamp(28px, 4vw, 62px);
+  align-items: start;
+}
+
+.primary {
+  display: grid;
+  gap: 48px;
+}
+
+.panel {
+  min-width: 0;
+}
+
+.panelHeading {
+  display: flex;
+  min-height: 68px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--ink);
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.panelHeading .sectionIndex {
+  margin-bottom: 7px;
+}
+
+.count {
+  font-family: var(--font-archivo), "Arial Narrow", Arial, sans-serif;
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.microcopy,
+.liveState {
+  color: var(--muted);
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.exceptionList {
+  display: grid;
+  gap: 8px;
+}
+
+.exception {
+  display: grid;
+  min-width: 0;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  /* Cap the action column. On `auto` the long uppercase label sized the track and
+     the button swallowed ~half the card, starving the exception copy. */
+  grid-template-columns: minmax(0, 1fr) minmax(140px, 190px);
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.exception[data-severity="critical"] {
+  border-left: 5px solid var(--orange);
+}
+
+.exception[data-severity="warning"] {
+  border-left: 5px solid var(--yellow);
+}
+
+.exceptionSelect {
+  display: grid;
+  min-width: 0;
+  min-height: 106px;
+  padding: 16px;
+  border: 0;
+  cursor: pointer;
+  background: transparent;
+  color: inherit;
+  grid-template-columns: 34px minmax(0, 1fr) 24px;
+  gap: 12px;
+  text-align: left;
+}
+
+.exceptionRank {
+  padding-top: 1px;
+  color: var(--muted);
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 11px;
+}
+
+.exceptionCopy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.exceptionMeta {
+  color: var(--orange-deep);
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.exceptionCopy strong {
+  margin-top: 7px;
+  font-size: 16px;
+  line-height: 1.24;
+}
+
+.exceptionCopy > span:last-child {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.arrow {
+  font-size: 18px;
+}
+
+.resolveButton {
+  min-width: 0;
+  padding: 12px;
+  border: 0;
+  border-left: 1px solid var(--rule);
+  cursor: pointer;
+  background: var(--ink);
+  color: #fff;
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.retryHint {
+  display: flex;
+  min-width: 0;
+  padding: 12px;
+  border-left: 1px solid var(--rule);
+  color: var(--muted);
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.emptyState {
+  display: flex;
+  min-height: 116px;
+  padding: 24px;
+  border: 1px solid var(--green);
+  background: var(--green-soft);
+  align-items: center;
+  gap: 18px;
+}
+
+.emptyState > span {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--green);
+  border-radius: 50%;
+  color: var(--green);
+  place-items: center;
+}
+
+.emptyState p {
+  margin: 5px 0 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.tableScroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.styleTable {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.styleTable th {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--rule);
+  color: var(--muted);
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.styleTable th:first-child {
+  width: 45%;
+}
+
+.styleTable td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--rule);
+  font-variant-numeric: tabular-nums;
+}
+
+.styleTable tr[data-selected="true"] td {
+  background: var(--blue-soft);
+}
+
+.styleTable td:first-child {
+  position: relative;
+  padding: 0;
+}
+
+.styleTable td:first-child button {
+  display: flex;
+  width: 100%;
+  min-height: 62px;
+  padding: 10px 12px;
+  border: 0;
+  cursor: pointer;
+  background: transparent;
+  color: inherit;
+  flex-direction: column;
+  justify-content: center;
+  text-align: left;
+}
+
+.styleTable td:first-child button::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: transparent;
+  content: "";
+}
+
+.styleTable tr[data-selected="true"] td:first-child button::before {
+  background: var(--blue);
+}
+
+.styleTable td:first-child span {
+  color: var(--muted);
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 11px;
+}
+
+/* Muted only clears AA against the paper row, not the selected row's blue tint. */
+.styleTable tr[data-selected="true"] td:first-child span {
+  color: var(--ink-soft);
+}
+
+.styleTable td:first-child strong {
+  margin-top: 3px;
+  font-size: 15px;
+}
+
+.readinessCell {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 700;
+}
+
+.readinessCell i {
+  position: relative;
+  width: 48px;
+  height: 5px;
+  background: #d2d1ca;
+}
+
+.readinessCell i::after {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--progress);
+  background: var(--blue);
+  content: "";
+}
+
+.statusPill {
+  display: inline-flex;
+  min-height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--rule);
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.statusPill i,
+.eventState i,
+.liveState i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.statusPill[data-status="ready"] i {
+  background: var(--green);
+}
+
+.statusPill[data-status="blocked"] i {
+  border-radius: 0;
+  background: var(--orange);
+  transform: rotate(45deg);
+}
+
+.statusPill[data-status="at-risk"] i {
+  border-radius: 0;
+  background: var(--yellow);
+}
+
+.statusPill[data-status="in-progress"] i {
+  background: var(--blue);
+}
+
+.inspector {
+  position: sticky;
+  top: 20px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+}
+
+.inspectorTopline {
+  display: flex;
+  min-height: 38px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--rule);
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.inspectorTopline p {
+  margin: 0;
+}
+
+.inspectorTopline span {
+  color: var(--muted);
+}
+
+.garmentStage {
+  position: relative;
+  display: grid;
+  min-height: 280px;
+  border-bottom: 1px solid var(--ink);
+  background-color: #e4e0d6;
+  background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M24 0H0V24' fill='none' stroke='%23121b24' stroke-opacity='.08'/%3E%3C/svg%3E");
+  overflow: hidden;
+  place-items: center;
+}
+
+.garmentStage::before,
+.garmentStage::after {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: var(--ink);
+  content: "";
+}
+
+.garmentStage::before {
+  inset: 13px auto auto 13px;
+  border-top: 1px solid;
+  border-left: 1px solid;
+}
+
+.garmentStage::after {
+  inset: auto 13px 13px auto;
+  border-right: 1px solid;
+  border-bottom: 1px solid;
+}
+
+.garmentStage svg {
+  width: min(74%, 280px);
+  max-height: 260px;
+  color: var(--ink);
+}
+
+.garmentStage :global(.garmentMeasure) {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+.garmentStage :global(.garmentLabel) {
+  fill: var(--muted);
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 9px;
+  letter-spacing: 0.03em;
+}
+
+.swatches {
+  position: absolute;
+  inset: 16px 16px auto auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.swatches i {
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(18, 27, 36, 0.45);
+}
+
+.garmentCode {
+  position: absolute;
+  inset: auto auto 15px 16px;
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.inspectorTitle {
+  display: flex;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--rule);
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.inspectorTitle p {
+  margin: 0 0 4px;
+  color: var(--blue);
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.inspectorTitle h2 {
+  margin: 0;
+  font-family: var(--font-archivo), "Arial Narrow", Arial, sans-serif;
+  font-size: 25px;
+  font-stretch: condensed;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.inspectorTitle > strong {
+  font-family: var(--font-archivo), "Arial Narrow", Arial, sans-serif;
+  font-size: 40px;
+  letter-spacing: -0.06em;
+  line-height: 0.9;
+}
+
+.inspectorTitle > strong span {
+  font-size: 15px;
+}
+
+.styleFacts {
+  display: grid;
+  margin: 0;
+  border-bottom: 1px solid var(--rule);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.styleFacts div {
+  min-width: 0;
+  padding: 12px 14px;
+  border-right: 1px solid var(--rule);
+}
+
+.styleFacts div:last-child {
+  border-right: 0;
+}
+
+.styleFacts dt {
+  color: var(--muted);
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.styleFacts dd {
+  margin: 4px 0 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.milestones {
+  margin: 0;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--rule);
+  list-style: none;
+}
+
+.milestones li {
+  display: grid;
+  min-height: 31px;
+  border-bottom: 1px solid #d8d6ce;
+  align-items: center;
+  /* Last track is fixed, not auto: the blocked/at-risk markers are rotated 45deg,
+     so their painted box is ~1.41x the 10px element and would overflow `auto`. */
+  grid-template-columns: 28px minmax(0, 1fr) 16px;
+  font-size: 13px;
+}
+
+.milestones li:last-child {
+  border-bottom: 0;
+}
+
+.milestones li > span {
+  color: var(--muted);
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 10px;
+}
+
+.milestones li > i {
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--muted);
+  border-radius: 50%;
+  justify-self: center;
+}
+
+.milestones li[data-state="complete"] > i {
+  border-color: var(--green);
+  background: var(--green);
+}
+
+.milestones li[data-state="blocked"] > i {
+  border-color: var(--orange);
+  border-radius: 0;
+  background: var(--orange);
+  transform: rotate(45deg);
+}
+
+.milestones li[data-state="warning"] > i {
+  border-color: var(--yellow);
+  border-radius: 0;
+  background: var(--yellow);
+}
+
+.milestones li[data-state="pending"] {
+  color: var(--muted);
+}
+
+.blockerDetail {
+  display: flex;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--orange-soft);
+  flex-direction: column;
+}
+
+.blockerDetail p {
+  margin: 0;
+  color: #9a3618;
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.blockerDetail strong {
+  margin-top: 5px;
+  font-size: 13px;
+}
+
+.blockerDetail span {
+  margin-top: 7px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.freshness {
+  display: grid;
+  padding: 14px 20px 17px;
+  grid-template-columns: 1fr auto;
+  row-gap: 7px;
+}
+
+.freshness p {
+  margin: 0 0 3px;
+  color: var(--muted);
+  grid-column: 1 / -1;
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.freshness span {
+  display: contents;
+  font-size: 12px;
+}
+
+.freshness span::before {
+  content: none;
+}
+
+.freshness span i {
+  display: none;
+}
+
+.freshness span b {
+  color: var(--muted);
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 10px;
+  font-weight: 400;
+  text-align: right;
+}
+
+.pulse,
+.systemMap {
+  margin: 0 clamp(24px, 4vw, 64px);
+  padding: 42px 0 54px;
+  border-top: 1px solid var(--ink);
+}
+
+.liveState {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.liveState i {
+  background: var(--green);
+}
+
+.eventHeader,
+.eventList li {
+  display: grid;
+  grid-template-columns: minmax(140px, 0.85fr) minmax(240px, 1.4fr) minmax(150px, 0.8fr) minmax(150px, 0.7fr);
+  gap: 18px;
+}
+
+.eventHeader {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--rule);
+  color: var(--muted);
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.eventList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.eventList li {
+  min-height: 74px;
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--rule);
+  align-items: center;
+  font-size: 13px;
+}
+
+.eventList li > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.eventList time,
+.eventList code {
+  color: var(--muted);
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 11px;
+}
+
+/* The correlation id is the identifier worth reading; the retry suffix is the
+   aside. Rank them by weight rather than by dimming past AA. */
+.eventList code {
+  color: var(--ink-soft);
+}
+
+.eventList div > span {
+  color: var(--muted);
+}
+
+.eventList code span {
+  color: var(--muted);
+}
+
+.eventAction {
+  align-items: flex-end;
+}
+
+.eventState {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.eventState[data-state="healthy"] i {
+  background: var(--green);
+}
+
+.eventState[data-state="failed"] i {
+  border-radius: 0;
+  background: var(--orange);
+  transform: rotate(45deg);
+}
+
+.eventState[data-state="processing"] i {
+  border: 1px solid var(--blue);
+  background: transparent;
+}
+
+.eventAction button {
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  background: transparent;
+  color: var(--blue);
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.systemMap {
+  display: grid;
+  padding-bottom: 68px;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(0, 1.8fr);
+  gap: clamp(34px, 5vw, 80px);
+}
+
+.systemIntro > p:nth-of-type(2) {
+  max-width: 46ch;
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.systemIntro .sectionIndex {
+  margin-bottom: 8px;
+}
+
+.stackTags {
+  display: flex;
+  margin-top: 24px;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.stackTags span {
+  padding: 6px 8px;
+  border: 1px solid var(--rule);
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.flowMap {
+  display: grid;
+  padding: 20px;
+  border: 1px solid var(--ink);
+  background-color: var(--paper);
+  background-image: url("data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M32 0H0V32' fill='none' stroke='%23121b24' stroke-opacity='.055'/%3E%3C/svg%3E");
+  align-items: center;
+  grid-template-columns: minmax(118px, 1fr) 28px minmax(160px, 1.2fr) 28px minmax(118px, 0.9fr);
+  gap: 8px;
+}
+
+.sources,
+.destination {
+  display: grid;
+  gap: 7px;
+}
+
+.sources > div,
+.destination > div,
+.serviceNode {
+  display: flex;
+  padding: 11px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  flex-direction: column;
+}
+
+.sources span,
+.serviceNode p {
+  margin: 0 0 4px;
+  color: var(--blue);
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* This one sits on the tinted service node, not on paper. */
+.serviceNode p {
+  color: var(--blue-deep);
+}
+
+.sources strong,
+.destination strong {
+  font-size: 13px;
+}
+
+.sources small,
+.destination small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.flowArrow {
+  color: var(--blue);
+  font-family: var(--font-martian), "Courier New", monospace;
+  text-align: center;
+}
+
+.serviceNode {
+  border: 2px solid var(--blue);
+  background: var(--blue-soft);
+}
+
+.serviceNode strong {
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+
+.serviceNode span {
+  padding: 3px 0;
+  border-top: 1px solid rgba(40, 91, 212, 0.25);
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 10px;
+}
+
+.deliveryRail {
+  display: flex;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--blue);
+  color: var(--blue);
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+  grid-column: 1 / -1;
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 9px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.deliveryRail i {
+  font-style: normal;
+}
+
+.footer {
+  display: flex;
+  min-height: 82px;
+  padding: 0 clamp(24px, 4vw, 64px);
+  background: var(--ink);
+  color: #fff;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-martian), "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.footer a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  margin: -1px;
+  clip: rect(0, 0, 0, 0);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+@media (hover: hover) {
+  .rail nav a:hover {
+    color: #fff;
+  }
+
+  .resetButton:hover {
+    background: var(--ink);
+    color: #fff;
+  }
+
+  .exception:hover {
+    border-color: var(--ink);
+    transform: translateX(3px);
+  }
+
+  .styleTable tbody tr:hover td {
+    background: #e7e4dc;
+  }
+
+  .styleTable tbody tr[data-selected="true"]:hover td {
+    background: var(--blue-soft);
+  }
+
+  .eventAction button:hover,
+  .footer a:hover {
+    color: var(--orange);
+  }
+}
+
+@media (max-width: 1100px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 28px;
+  }
+
+  .systemMap {
+    grid-template-columns: 1fr;
+  }
+
+  .flowMap {
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 900px) {
+  .shell {
+    --rail-width: 0px;
+  }
+
+  .rail {
+    position: sticky;
+    top: 0;
+    display: grid;
+    width: 100%;
+    min-height: 64px;
+    padding: 8px 16px;
+    align-items: center;
+    grid-template-columns: auto 1fr auto;
+    gap: 24px;
+  }
+
+  .brand {
+    min-height: 48px;
+    flex-direction: row;
+  }
+
+  .brand svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .rail nav {
+    margin: 0;
+    flex-direction: row;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  .rail nav a {
+    min-height: 42px;
+    padding: 5px 10px;
+    border-bottom: 2px solid transparent;
+    border-left: 0;
+  }
+
+  .rail nav a span {
+    display: none;
+  }
+
+  .rail nav a[aria-current] {
+    border-color: var(--orange);
+  }
+
+  .railMeta {
+    margin: 0;
+  }
+
+  .railMeta p {
+    display: none;
+  }
+
+  .main {
+    width: 100%;
+    margin: 0;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .inspector {
+    position: relative;
+    top: auto;
+    display: grid;
+    grid-template-columns: minmax(260px, 0.8fr) minmax(330px, 1.2fr);
+  }
+
+  .inspectorTopline {
+    grid-column: 1 / -1;
+  }
+
+  .garmentStage {
+    min-height: 100%;
+    border-right: 1px solid var(--ink);
+    border-bottom: 0;
+    grid-row: 2 / span 6;
+  }
+
+  .pulse,
+  .systemMap {
+    padding-top: 34px;
+  }
+
+  .eventHeader,
+  .eventList li {
+    grid-template-columns: minmax(110px, 0.7fr) minmax(200px, 1.3fr) minmax(130px, 0.8fr) minmax(120px, 0.7fr);
+  }
+}
+
+@media (max-width: 620px) {
+  .rail {
+    grid-template-columns: 1fr auto;
+  }
+
+  .brand {
+    justify-self: start;
+  }
+
+  .brand span {
+    display: none;
+  }
+
+  .rail nav {
+    overflow-x: auto;
+    justify-content: flex-start;
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .rail nav a {
+    min-width: 66px;
+    align-items: center;
+  }
+
+  .railMeta {
+    justify-self: end;
+  }
+
+  .topbar {
+    min-height: 122px;
+    padding: 24px 16px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .topbarActions {
+    width: 100%;
+  }
+
+  .demoBadge,
+  .resetButton {
+    justify-content: center;
+    flex: 1;
+  }
+
+  .launchStrip {
+    padding: 24px 16px 28px;
+  }
+
+  .launchIntro {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .summaryGrid {
+    display: flex;
+    margin-right: -16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+
+  .summaryCard {
+    min-width: 188px;
+    scroll-snap-align: start;
+  }
+
+  .workspace {
+    padding: 32px 16px 42px;
+  }
+
+  .primary {
+    gap: 38px;
+  }
+
+  .panelHeading h2,
+  .launchIntro h2,
+  .systemIntro h2 {
+    font-size: 28px;
+  }
+
+  /* Style / Ready / Status / Launch need ~480px and a phone gives ~358, so the
+     old min-width parked Status and Launch behind a scroll with no affordance.
+     Reflow each row to a 2x2 block instead: nothing leaves the screen. */
+  .styleTable {
+    min-width: 0;
+  }
+
+  .styleTable thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    clip: rect(0, 0, 0, 0);
+    overflow: hidden;
+  }
+
+  .styleTable tbody,
+  .styleTable td {
+    display: block;
+  }
+
+  .styleTable tr {
+    display: grid;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--rule);
+    align-items: center;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px 12px;
+  }
+
+  .styleTable td {
+    padding: 0 12px;
+    border-bottom: 0;
+  }
+
+  .styleTable td[data-col="style"] {
+    grid-area: 1 / 1;
+    padding: 0;
+  }
+
+  .styleTable td[data-col="launch"] {
+    grid-area: 1 / 2;
+    justify-self: end;
+  }
+
+  .styleTable td[data-col="ready"] {
+    grid-area: 2 / 1;
+  }
+
+  .styleTable td[data-col="status"] {
+    grid-area: 2 / 2;
+    justify-self: end;
+  }
+
+  /* The column header is off-screen here, so name the date inline. */
+  .styleTable td[data-col="launch"]::before {
+    content: "Launch ";
+    color: var(--muted);
+    font-family: var(--font-martian), "Courier New", monospace;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .styleTable td:first-child button {
+    min-height: 0;
+    padding: 0 12px;
+  }
+
+  /* Selection reads on the row now that the cells are separated by gaps. */
+  .styleTable tr[data-selected="true"] td,
+  .styleTable tbody tr[data-selected="true"]:hover td {
+    background: transparent;
+  }
+
+  .styleTable tbody tr[data-selected="true"] {
+    background: var(--blue-soft);
+  }
+
+  .exception {
+    grid-template-columns: 1fr;
+  }
+
+  .exceptionSelect {
+    min-height: 112px;
+    grid-template-columns: 28px minmax(0, 1fr) 20px;
+  }
+
+  .resolveButton,
+  .retryHint {
+    min-width: 0;
+    min-height: 44px;
+    border-top: 1px solid var(--rule);
+    border-left: 0;
+  }
+
+  .inspector {
+    display: block;
+  }
+
+  .garmentStage {
+    min-height: 300px;
+    border-right: 0;
+    border-bottom: 1px solid var(--ink);
+  }
+
+  .pulse,
+  .systemMap {
+    margin-inline: 16px;
+  }
+
+  .eventHeader {
+    display: none;
+  }
+
+  .eventList li {
+    grid-template-columns: 0.8fr 1.2fr;
+    gap: 14px;
+  }
+
+  .eventList code {
+    grid-column: 1;
+  }
+
+  .eventAction {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .flowMap {
+    padding: 16px;
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .flowArrow {
+    transform: rotate(90deg);
+  }
+
+  .deliveryRail {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .deliveryRail i {
+    transform: rotate(90deg);
+  }
+
+  .footer {
+    padding: 18px 16px;
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 380px) {
+  .topbar h1 {
+    font-size: 28px;
+  }
+
+  .styleFacts {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .styleFacts div:nth-child(2) {
+    border-right: 0;
+  }
+
+  .styleFacts div:last-child {
+    border-top: 1px solid var(--rule);
+    grid-column: 1 / -1;
+  }
+
+  .eventList li {
+    grid-template-columns: 1fr;
+  }
+
+  .eventList code,
+  .eventAction {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .eventAction {
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .shell {
+    --rule: #5d625f;
+    --muted: #3f4642;
+  }
+
+  .demoBadge,
+  .resolveButton {
+    outline: 2px solid var(--ink);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell *,
+  .shell *::before,
+  .shell *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

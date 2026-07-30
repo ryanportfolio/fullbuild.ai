@@ -275,6 +275,10 @@ export default function DrawingSet({
           if (authored) el.dataset.wsDash = authored;
         });
         gsap.set(strokes, { attr: { 'stroke-dasharray': '1 1', 'stroke-dashoffset': 1 } });
+        // The dash hide is now this timeline's, so release each stroke from the
+        // pre-paint CSS hold (globals.css) in the same frame — the stroke never
+        // paints between the two states.
+        strokes.forEach((el) => el.setAttribute('data-ws-armed', ''));
         const ink = inkOf(sec);
         const crewed = Number(sec.dataset.state) === 1;
         // T-01 TRANSMITTAL is the set's second crewed sheet: the pen works its
@@ -438,7 +442,13 @@ export default function DrawingSet({
         (a, b) => Number(a.getAttribute('data-o') ?? 0) - Number(b.getAttribute('data-o') ?? 0),
       );
       // Attributes, not CSS — same px-mis-scale trap as the sheet strokes above.
-      if (sketch.length) gsap.set(sketch, { attr: { 'stroke-dasharray': '1 1', 'stroke-dashoffset': 1 } });
+      if (sketch.length) {
+        gsap.set(sketch, { attr: { 'stroke-dasharray': '1 1', 'stroke-dashoffset': 1 } });
+        // Release the site log from the pre-paint CSS hold now that the scrub
+        // owns its hidden state — same frame, so the record never shows itself
+        // finished before the pencil starts (globals.css).
+        sketch.forEach((el) => el.setAttribute('data-ws-armed', ''));
+      }
       const SKETCH_START = 0.03; // let the masthead hold the opening beat
       const SKETCH_END = 0.97; // last mark lands as the set bottoms out
       let sketchFront = 0;

@@ -76,10 +76,15 @@ function scrollTo(anchor: string) {
 export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
   const state = useWorkingSet((s) => s.state);
   const health = useWorkingSet((s) => s.health);
+  const pathname = usePathname();
   // On the standalone dispatch sheet the set's sheet counter, stage nav, and
   // service rows have nothing to point at; the block carries one instruction
   // home instead.
-  const onContact = usePathname() === '/contact';
+  const onContact = pathname === '/contact';
+  // App-router prototypes own their entire canvas and navigation. The portfolio
+  // drawing rail would otherwise cover their controls and violate both visual
+  // isolation and pointer access.
+  const onAppPrototype = pathname.startsWith('/prototype/');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [mounted, setMounted] = useState(false);
 
@@ -104,6 +109,8 @@ export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
   // Aggregate probe: count only once readings exist; missing = assume live.
   const probed = Object.keys(health).length > 0;
   const upCount = LIVE_PROJECTS.filter((p) => isUp(health, p.href)).length;
+
+  if (onAppPrototype) return null;
 
   return (
     <aside className={styles.rail} data-rail aria-label="Drawing set title block and navigation">

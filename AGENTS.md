@@ -12,6 +12,7 @@ This is the Codex boundary for repositories using the AI Operating System starte
 ## Capabilities
 
 - Inspect tools exposed in the current session before using subagents, browser control, connectors, or interactive input. Config flags alone are not proof.
+- For local web UI testing in Codex, use the in-app Codex Browser first. Use standalone Playwright only when Codex Browser cannot perform a necessary check or the user explicitly requests Playwright. This rule is Codex-only and does not change Claude Code's verification workflow.
 - Serial fallback is valid only when independence is not part of the deliverable. `impartial-review`, `advocate`, and `why` require fresh independent context; if unavailable, report the gap.
 - Claude `Workflow` programs are not Codex programs. Recreate their intent with exposed Codex agents or flag them blocked.
 - Keep critical Codex rules here rather than in project hooks, which require separate trust and can be disabled.

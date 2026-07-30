@@ -11,7 +11,7 @@ import s from './shipped.module.css';
 /* ============================================================================
    STATE 04 — SHIPPED. The drawing schedule.
 
-   Twelve real rows — every figure verified against the GitHub API, README
+   One real row per shipped drawing — every figure verified against the GitHub API, README
    claims, or the live site itself (sources ship as title attributes). The DOM
    pour: the same store value that drives the 3D section plane sweeps a poché
    waterline down this schedule; a row is "poured" when the line passes it, and
