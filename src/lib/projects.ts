@@ -230,9 +230,9 @@ export const PROJECTS: Project[] = [
   {
     id: 'agent-firmware',
     sheet: 'S-04.10',
-    title: 'Agent Firmware',
+    title: 'Harness Firmware',
     href: null,
-    repo: 'https://github.com/ryanportfolio/AI-Firmware',
+    repo: 'https://github.com/ryanportfolio/Harness-Firmware',
     live: false,
     role: 'author · kernel rules, skills, sync scripts',
     year: "'26",
