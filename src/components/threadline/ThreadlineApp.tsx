@@ -298,11 +298,18 @@ export function ThreadlineApp() {
                 <span className={styles.microcopy}>sorted by risk</span>
               </div>
               <div className={styles.tableScroll}>
-                <table className={styles.styleTable}>
-                  <thead>
-                    <tr><th>Style</th><th>Ready</th><th>Status</th><th>Launch</th></tr>
+                {/* Narrow screens reflow this table to a 2x2 grid per row, which drops the
+                    implicit table roles. The explicit roles keep it a table for assistive tech. */}
+                <table className={styles.styleTable} role="table">
+                  <thead role="rowgroup">
+                    <tr role="row">
+                      <th role="columnheader">Style</th>
+                      <th role="columnheader">Ready</th>
+                      <th role="columnheader">Status</th>
+                      <th role="columnheader">Launch</th>
+                    </tr>
                   </thead>
-                  <tbody>
+                  <tbody role="rowgroup">
                     {[...styleRows]
                       .sort((a, b) => {
                         const aSeverity = a.blockers[0] ? severityRank[a.blockers[0].severity] : 2;
@@ -310,21 +317,21 @@ export function ThreadlineApp() {
                         return aSeverity - bSeverity || readinessFor(a) - readinessFor(b);
                       })
                       .map((style) => (
-                        <tr key={style.id} data-selected={style.id === selectedId}>
-                          <td>
+                        <tr key={style.id} role="row" data-selected={style.id === selectedId}>
+                          <td role="cell" data-col="style">
                             <button type="button" onClick={() => selectStyle(style.id)} aria-pressed={style.id === selectedId}>
                               <span>{style.styleNumber}</span>
                               <strong>{style.name}</strong>
                             </button>
                           </td>
-                          <td>
+                          <td role="cell" data-col="ready">
                             <span className={styles.readinessCell}>
                               <i style={{ "--progress": `${readinessFor(style)}%` } as React.CSSProperties} />
                               {readinessFor(style)}%
                             </span>
                           </td>
-                          <td><StatusPill style={style} /></td>
-                          <td>{style.launchDate}</td>
+                          <td role="cell" data-col="status"><StatusPill style={style} /></td>
+                          <td role="cell" data-col="launch">{style.launchDate}</td>
                         </tr>
                       ))}
                   </tbody>
