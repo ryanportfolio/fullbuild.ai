@@ -1,0 +1,1105 @@
+/*
+  TAWKIFY MODERNIZATION CONCEPT: contract
+
+  Unofficial redesign concept for tawkify.com, built as a job application
+  artifact. Not affiliated with Tawkify. Three surfaces share this sheet:
+  /prototype/tawkify          the marketing story
+  /prototype/tawkify/match    the client's prepared introduction
+  /prototype/tawkify/desk     the matchmaker's caseload
+
+  Governing metaphor: the matchmaker's introduction ledger. The service is
+  professional casework of the heart: intake, curation, introduction,
+  debrief. The metaphor collapses without a human matchmaker preparing
+  one-to-one introductions, which is the point. The subject's own copy says
+  "stop swiping", so app vernacular (stacks, swipes, infinite feeds) is
+  banned below.
+
+  Palette, one accent per meaning:
+    --paper       #faf6ef  warm cream ground, the file itself
+    --paper-deep  #f1eadf  alternate ground for inset panels
+    --plum        #2e1f33  primary ink, Tawkify's purple DNA aged into ink
+    --plum-soft   #5c4a63  structural ink, secondary text (7.7:1 on paper)
+    --coral       #e4573d  THE INTRODUCTION. Fills and large CTA text only,
+                           white on coral is 3.6:1 so never small text
+    --coral-deep  #b93a22  coral for small text, 5.2:1 on paper
+    --sage-deep   #3d6b4f  confirmed positive outcomes only, 5.8:1 on paper
+    --rule        hairlines, de-emphasis is this token, never opacity on ink
+
+  Type roles:
+    Display   Archivo 640-700, tight tracking, fixed setting (no animated axis)
+    Kicker    Archivo 600, font-stretch 125%, uppercase, letterspaced, fixed
+    Body      Archivo 400-500
+    Measured  Martian Mono, quarantined to real facts: stats with sources,
+              file ids, timestamps, screen counts. Never decoration.
+
+  Grid: case-file layout. A centered reading measure with a mono annotation
+  column on wide viewports, hairline rules dividing ledger sections.
+
+  Motion verbs, nothing else ships:
+    INK     rules and underlines draw in once (scaleX), one-shot on intersect
+    FILE    ledger rows settle into place (14px rise + fade), staggered
+    REVEAL  the dossier opens. Signature element, exactly one, on /match
+  Ceilings: max 2 verbs concurrent per screen (3 reads busy), 1 REVEAL per
+  route (scarcity is the signature), pair-mark stroke count <= 12 (beyond
+  that it becomes illustration and competes with the type).
+
+  Ban list, this prototype only:
+    swipe and card-stack vernacular  the subject is anti-app
+    photography and generated imagery  repo law, every mark authored here
+    gradients, blur, glassmorphism  the file is flat paper and ink
+    emoji  warmth comes from palette and copy, not glyphs
+
+  Risk taken: rebuilding a photo-led lifestyle brand with zero photography.
+  Safer path displaced: placeholder-photo hero. Defense: warmth carried by
+  cream ground, plum ink, coral scarcity, and copy voice.
+
+  Reduced motion and no-JS resolve to the finished state: reveals are gated
+  behind [data-js] on the shell plus prefers-reduced-motion: no-preference,
+  so the default render is the finished page. The dossier and assist drafts
+  are native <details>, real content without JS.
+*/
+
+.shell {
+  --paper: #faf6ef;
+  --paper-deep: #f1eadf;
+  --plum: #2e1f33;
+  --plum-soft: #5c4a63;
+  --coral: #e4573d;
+  --coral-deep: #b93a22;
+  --sage-deep: #3d6b4f;
+  --rule: rgba(46, 31, 51, 0.16);
+  --rule-strong: rgba(46, 31, 51, 0.34);
+  --measure: 62rem;
+  min-height: 100svh;
+  background: var(--paper);
+  color: var(--plum);
+  font-family: var(--font-archivo), Arial, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+.shell *,
+.shell *::before,
+.shell *::after {
+  box-sizing: border-box;
+}
+
+.shell :is(h1, h2, h3, p, ul, ol, figure, blockquote) {
+  margin: 0;
+}
+
+.shell button {
+  font: inherit;
+}
+
+.shell a {
+  color: inherit;
+}
+
+.shell :is(a, button, summary):focus-visible {
+  outline: 2px solid var(--plum);
+  outline-offset: 3px;
+}
+
+.skipLink {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  z-index: 20;
+  padding: 0.6rem 1rem;
+  background: var(--plum);
+  color: var(--paper);
+  text-decoration: none;
+}
+
+.skipLink:focus-visible {
+  left: 0.75rem;
+  top: 0.75rem;
+}
+
+/* Measured voice */
+
+.mono {
+  font-family: var(--font-martian), 'Courier New', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  color: var(--plum-soft);
+}
+
+.kicker {
+  font-family: var(--font-archivo), Arial, sans-serif;
+  font-stretch: 125%;
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--coral-deep);
+}
+
+/* Concept topbar, shared by all three surfaces */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.85rem 1.5rem;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+}
+
+.wordmark {
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  text-decoration: none;
+}
+
+.wordmark span {
+  color: var(--coral-deep);
+}
+
+.conceptTag {
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.surfaceNav {
+  display: flex;
+  gap: 0.35rem;
+  margin-left: auto;
+}
+
+.surfaceLink {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  padding: 0.42rem 0.75rem;
+  border-radius: 2px;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--plum-soft);
+}
+
+.surfaceLink:hover {
+  color: var(--plum);
+  background: var(--paper-deep);
+}
+
+.surfaceLink[aria-current='page'] {
+  color: var(--paper);
+  background: var(--plum);
+}
+
+.surfaceLink[aria-current='page'] .mono {
+  color: var(--paper);
+}
+
+/* Case-file section frame */
+
+.sheet {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.section {
+  position: relative;
+  border-top: 1px solid var(--rule);
+  padding: 4.5rem 0 5rem;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.sectionTitle {
+  font-size: clamp(1.6rem, 3.2vw, 2.2rem);
+  font-weight: 660;
+  letter-spacing: -0.015em;
+  line-height: 1.12;
+  max-width: 26ch;
+}
+
+/* HERO */
+
+.hero {
+  padding: clamp(4rem, 9vw, 7.5rem) 0 clamp(3.5rem, 7vw, 6rem);
+}
+
+.heroKicker {
+  margin-bottom: 1.4rem;
+}
+
+.heroTitle {
+  font-size: clamp(2.6rem, 7vw, 5rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.02;
+  max-width: 15ch;
+}
+
+.inkUnderline {
+  position: relative;
+  white-space: nowrap;
+}
+
+.inkUnderline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.04em;
+  height: 0.09em;
+  background: var(--coral);
+  transform-origin: left center;
+}
+
+.heroDeck {
+  margin-top: 1.75rem;
+  max-width: 44ch;
+  font-size: clamp(1.05rem, 1.8vw, 1.25rem);
+  line-height: 1.5;
+  color: var(--plum-soft);
+}
+
+.heroRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 3rem;
+}
+
+.heroActions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-top: 2.5rem;
+}
+
+.ctaPrimary {
+  display: inline-block;
+  padding: 0.95rem 1.8rem;
+  background: var(--coral);
+  color: #fff;
+  font-weight: 640;
+  font-size: 1.15rem;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  border-radius: 2px;
+}
+
+.ctaPrimary:hover {
+  background: var(--coral-deep);
+}
+
+.ctaGhost {
+  font-weight: 560;
+  color: var(--plum);
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 0.25em;
+}
+
+.ctaGhost:hover {
+  text-decoration-color: var(--coral);
+}
+
+.pairMark {
+  flex: 0 0 auto;
+  width: clamp(150px, 22vw, 230px);
+  color: var(--plum);
+}
+
+.pairMark [data-stroke] {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.pairMark [data-stroke='tie'] {
+  stroke: var(--coral);
+}
+
+/* MANIFESTO */
+
+.manifesto {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: 2.5rem;
+}
+
+.manifestoLede {
+  font-size: clamp(1.35rem, 2.6vw, 1.8rem);
+  font-weight: 620;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  max-width: 24ch;
+}
+
+.manifestoBody {
+  display: grid;
+  gap: 1.1rem;
+  color: var(--plum-soft);
+  max-width: 52ch;
+}
+
+.manifestoBody strong {
+  color: var(--plum);
+  font-weight: 620;
+}
+
+/* LEDGER STEPS */
+
+.ledger {
+  display: grid;
+  border-top: 1px solid var(--rule-strong);
+}
+
+.ledgerRow {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr) minmax(0, 1.7fr) 13rem;
+  gap: 1.5rem;
+  align-items: baseline;
+  padding: 1.9rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.ledgerIndex {
+  font-family: var(--font-martian), 'Courier New', monospace;
+  font-size: 1rem;
+  color: var(--coral-deep);
+}
+
+.ledgerTitleWrap {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.ledgerKicker {
+  composes: kicker;
+  color: var(--plum-soft);
+  letter-spacing: 0.18em;
+}
+
+.ledgerTitle {
+  font-size: 1.25rem;
+  font-weight: 640;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.ledgerBody {
+  color: var(--plum-soft);
+  max-width: 46ch;
+}
+
+.ledgerNote {
+  composes: mono;
+  text-align: right;
+}
+
+/* STATS */
+
+.statsBand {
+  background: var(--plum);
+  color: var(--paper);
+  border-top: none;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2rem;
+}
+
+.stat {
+  display: grid;
+  gap: 0.55rem;
+  align-content: start;
+  border-left: 1px solid rgba(250, 246, 239, 0.28);
+  padding-left: 1.25rem;
+}
+
+.statValue {
+  font-family: var(--font-martian), 'Courier New', monospace;
+  font-size: clamp(1.5rem, 2.8vw, 2.1rem);
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 0.92rem;
+  line-height: 1.35;
+  color: rgba(250, 246, 239, 0.86);
+}
+
+.statSource {
+  font-family: var(--font-martian), 'Courier New', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.02em;
+  color: rgba(250, 246, 239, 0.62);
+}
+
+.statsFootnote {
+  margin-top: 2.5rem;
+  font-size: 0.85rem;
+  color: rgba(250, 246, 239, 0.72);
+  max-width: 60ch;
+}
+
+/* DEBRIEFS */
+
+.debriefGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.debriefCard {
+  display: grid;
+  gap: 1.4rem;
+  align-content: space-between;
+  padding: 1.6rem;
+  background: var(--paper-deep);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+}
+
+.debriefQuote {
+  font-size: 1.05rem;
+  line-height: 1.45;
+  font-weight: 480;
+}
+
+.debriefMeta {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.debriefNames {
+  font-weight: 640;
+  font-size: 0.95rem;
+}
+
+.debriefOutcome {
+  composes: mono;
+  color: var(--sage-deep);
+}
+
+/* CLOSING CTA */
+
+.closing {
+  text-align: left;
+  padding-bottom: 6rem;
+}
+
+.closingTitle {
+  font-size: clamp(2rem, 4.5vw, 3.1rem);
+  font-weight: 680;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  max-width: 18ch;
+}
+
+.closingDeck {
+  margin-top: 1.25rem;
+  color: var(--plum-soft);
+  max-width: 46ch;
+}
+
+/* FOOTER */
+
+.footer {
+  border-top: 1px solid var(--rule-strong);
+  padding: 2rem 0 3rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.footer a {
+  color: var(--plum);
+}
+
+.footerNote {
+  composes: mono;
+  max-width: 70ch;
+}
+
+/* ===================== MATCH SURFACE ===================== */
+
+.appHead {
+  padding: 3.25rem 0 2.25rem;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.appTitle {
+  font-size: clamp(1.9rem, 4vw, 2.7rem);
+  font-weight: 680;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  max-width: 22ch;
+}
+
+.appDeck {
+  color: var(--plum-soft);
+  max-width: 52ch;
+}
+
+.fileLine {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.dossier {
+  border: 1px solid var(--rule-strong);
+  border-radius: 3px;
+  background: var(--paper-deep);
+  margin-bottom: 3rem;
+}
+
+.dossierSummary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.5rem 1.75rem;
+}
+
+.dossierSummary::-webkit-details-marker {
+  display: none;
+}
+
+.dossierPrompt {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.dossierPromptTitle {
+  font-size: 1.3rem;
+  font-weight: 660;
+  letter-spacing: -0.01em;
+}
+
+.dossierSeal {
+  flex: 0 0 auto;
+  width: 3.1rem;
+  height: 3.1rem;
+  border-radius: 50%;
+  border: 2px solid var(--coral);
+  display: grid;
+  place-items: center;
+  color: var(--coral-deep);
+  font-family: var(--font-martian), 'Courier New', monospace;
+  font-size: 0.66rem;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dossier[open] .dossierSeal {
+  transform: rotate(90deg);
+  border-style: dashed;
+}
+
+.dossierBody {
+  border-top: 1px solid var(--rule);
+  padding: 2rem 1.75rem 2.25rem;
+  display: grid;
+  gap: 2.25rem;
+}
+
+.matchIdentity {
+  display: flex;
+  align-items: baseline;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.matchName {
+  font-size: clamp(2rem, 4.5vw, 2.9rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.matchFacts {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.signalGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.signalCard {
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: var(--paper);
+  padding: 1.15rem 1.25rem;
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+}
+
+.signalLabel {
+  font-weight: 640;
+  font-size: 0.98rem;
+}
+
+.signalEvidence {
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--plum-soft);
+}
+
+.assistTag {
+  composes: mono;
+  color: var(--coral-deep);
+}
+
+.narrative {
+  display: grid;
+  gap: 1rem;
+  max-width: 56ch;
+}
+
+.narrative p {
+  color: var(--plum);
+  line-height: 1.55;
+}
+
+.narrativeByline {
+  composes: mono;
+}
+
+.datePlan {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+  border-top: 1px solid var(--rule);
+  padding-top: 1.5rem;
+}
+
+.datePlanCell {
+  display: grid;
+  gap: 0.4rem;
+  align-content: start;
+}
+
+.datePlanLabel {
+  composes: kicker;
+  color: var(--plum-soft);
+  letter-spacing: 0.18em;
+}
+
+.datePlanValue {
+  font-weight: 620;
+  line-height: 1.3;
+}
+
+.datePlanDetail {
+  font-size: 0.9rem;
+  color: var(--plum-soft);
+  line-height: 1.45;
+}
+
+.matchActions {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+  border-top: 1px solid var(--rule);
+  padding-top: 1.5rem;
+}
+
+/* ===================== DESK SURFACE ===================== */
+
+.deskLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 2rem;
+  align-items: start;
+  padding-bottom: 4rem;
+}
+
+.deskPanel {
+  border: 1px solid var(--rule-strong);
+  border-radius: 3px;
+  background: var(--paper);
+}
+
+.deskPanelHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.deskPanelTitle {
+  font-size: 1.05rem;
+  font-weight: 660;
+}
+
+.caseScroll {
+  overflow-x: auto;
+}
+
+.caseTable {
+  width: 100%;
+  min-width: 26rem;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.caseTable th {
+  text-align: left;
+  font-family: var(--font-martian), 'Courier New', monospace;
+  font-weight: 400;
+  font-size: 0.64rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--plum-soft);
+  padding: 0.7rem 1.25rem 0.5rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.caseTable td {
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+
+.caseTable tr:last-child td {
+  border-bottom: none;
+}
+
+.caseId {
+  font-family: var(--font-martian), 'Courier New', monospace;
+  font-size: 0.72rem;
+  color: var(--plum-soft);
+  white-space: nowrap;
+}
+
+.caseClient {
+  font-weight: 620;
+  white-space: nowrap;
+}
+
+.caseStage {
+  white-space: nowrap;
+  font-size: 0.85rem;
+  color: var(--plum-soft);
+}
+
+.caseAction {
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.caseDue {
+  font-family: var(--font-martian), 'Courier New', monospace;
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+.caseDue[data-heat='urgent'] {
+  color: var(--coral-deep);
+}
+
+.caseDue[data-heat='attention'] {
+  color: var(--plum);
+}
+
+.caseDue[data-heat='calm'] {
+  color: var(--plum-soft);
+}
+
+.shortlistList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.shortlistItem {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.shortlistItem:last-child {
+  border-bottom: none;
+}
+
+.shortlistTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.shortlistName {
+  font-weight: 640;
+}
+
+.screenCount {
+  font-family: var(--font-martian), 'Courier New', monospace;
+  font-size: 0.72rem;
+}
+
+.screenCount[data-clear='true'] {
+  color: var(--sage-deep);
+}
+
+.shortlistStandout {
+  font-size: 0.88rem;
+  color: var(--plum-soft);
+  line-height: 1.45;
+}
+
+.shortlistFlag {
+  composes: mono;
+  color: var(--coral-deep);
+}
+
+.assistPanel {
+  border-color: var(--rule-strong);
+}
+
+.assistDetails {
+  display: block;
+}
+
+.assistSummary {
+  composes: dossierSummary;
+  padding: 1.1rem 1.25rem;
+}
+
+.assistBody {
+  border-top: 1px solid var(--rule);
+  padding: 1.25rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.assistDraft {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  background: var(--paper-deep);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 1rem 1.1rem;
+  min-height: 7.5rem;
+}
+
+.assistDraft [data-word] {
+  opacity: 1;
+}
+
+.assistRationale {
+  display: grid;
+  gap: 0.45rem;
+  padding-left: 1.1rem;
+}
+
+.assistRationale li {
+  font-size: 0.88rem;
+  color: var(--plum-soft);
+  line-height: 1.45;
+}
+
+.assistFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.assistApprove {
+  padding: 0.6rem 1.1rem;
+  background: var(--plum);
+  color: var(--paper);
+  border: none;
+  border-radius: 2px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.assistApprove:hover {
+  background: var(--plum-soft);
+}
+
+.assistApprove[data-approved='true'] {
+  background: var(--sage-deep);
+  cursor: default;
+}
+
+/* ===================== MOTION, gated ===================== */
+/* Default render is the finished page. Motion exists only when JS marked the
+   shell AND the user has not asked for reduced motion. */
+
+@media (prefers-reduced-motion: no-preference) {
+  .shell[data-js='true'] [data-reveal='rise'] {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+      opacity 0.6s ease,
+      transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: calc(var(--stagger, 0) * 90ms);
+  }
+
+  .shell[data-js='true'] [data-reveal='rise'][data-in='true'] {
+    opacity: 1;
+    transform: none;
+  }
+
+  .shell[data-js='true'] .inkUnderline::after {
+    transform: scaleX(0);
+    transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.35s;
+  }
+
+  .shell[data-js='true'] .inkUnderline[data-in='true']::after {
+    transform: scaleX(1);
+  }
+
+  .shell[data-js='true'] .dossierBody {
+    animation: none;
+  }
+
+  .shell[data-js='true'] .dossier[open] .dossierBody {
+    animation: dossierOpen 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @keyframes dossierOpen {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .shell[data-js='true'] .assistDraft [data-word][data-hidden='true'] {
+    opacity: 0;
+  }
+
+  .shell[data-js='true'] .assistDraft [data-word] {
+    transition: opacity 0.18s ease;
+  }
+}
+
+/* ===================== RESPONSIVE ===================== */
+
+@media (max-width: 980px) {
+  .deskLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .signalGrid,
+  .debriefGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 2.5rem;
+  }
+
+  .ledgerRow {
+    grid-template-columns: 3rem minmax(0, 1fr);
+    row-gap: 0.75rem;
+  }
+
+  .ledgerBody {
+    grid-column: 2;
+  }
+
+  .ledgerNote {
+    grid-column: 2;
+    text-align: left;
+  }
+
+  .manifesto {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .heroRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .datePlan {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    flex-wrap: wrap;
+    gap: 0.6rem 1rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .surfaceNav {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  /* The drawn underline needs one line; small screens wrap instead, so the
+     ink becomes a plain coral text-decoration and the ::after retires. */
+  .inkUnderline {
+    white-space: normal;
+    text-decoration-line: underline;
+    text-decoration-color: var(--coral);
+    text-decoration-thickness: 0.09em;
+    text-underline-offset: 0.08em;
+  }
+
+  .inkUnderline::after {
+    display: none;
+  }
+
+  .surfaceLink {
+    padding: 0.35rem 0.55rem;
+  }
+
+  .conceptTag {
+    display: none;
+  }
+
+  .sheet {
+    padding: 0 1rem;
+  }
+
+  .section {
+    padding: 3rem 0 3.5rem;
+  }
+
+  .caseTable th:nth-child(3),
+  .caseTable td:nth-child(3) {
+    display: none;
+  }
+}
