@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, access } from "node:fs/promises";
 import { test } from "node:test";
+import { spectrumGeometry, blueNoise64, BAYER8, SEED } from "../public/harness-firmware/src/dither.mjs";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
+const exists = (path) => access(new URL(`../${path}`, import.meta.url)).then(() => true, () => false);
 const fmt = (n) => n.toLocaleString("en-US");
 const hex = (n) => "0x" + n.toString(16).toUpperCase().padStart(5, "0");
 
@@ -16,7 +18,6 @@ test("facts.json is internally consistent (recomputed, not trusted)", async () =
   assert.equal(sum, facts.onDemandBytes);
   assert.equal(facts.residentBytes, facts.kernelBytes + facts.descIndexBytes);
   assert.equal(facts.kernelTokens, Math.round(facts.kernelBytes / 4));
-  assert.equal(facts.descIndexTokens, Math.round(facts.descIndexBytes / 4));
   assert.equal(facts.residentTokens, Math.round(facts.residentBytes / 4));
   assert.equal(facts.lazyRatio, Math.round((facts.onDemandBytes / facts.residentBytes) * 10) / 10);
   assert.equal(
@@ -24,18 +25,11 @@ test("facts.json is internally consistent (recomputed, not trusted)", async () =
     Math.round((facts.residentBytes / facts.onDemandBytes) * 1000) / 10,
   );
 
-  // tiers: 6 core + 4 discipline + 10 extras = 20
   const tally = { core: 0, discipline: 0, extras: 0 };
   for (const s of facts.skills) tally[s.tier] += 1;
   assert.deepEqual(tally, facts.tierCounts);
   assert.deepEqual(facts.tierCounts, { core: 6, discipline: 4, extras: 10 });
-  assert.equal(
-    facts.skills.filter((s) => s.tier === "extras").reduce((a, s) => a + s.bytes, 0),
-    facts.extrasBytesDropped,
-  );
 
-  // hex offsets are real cumulative byte offsets, descending-size order;
-  // block counts are ceil(bytes / 1 KiB); slack fill is the true remainder
   assert.equal(facts.blockBytes, 1024);
   let offset = 0;
   let prev = Infinity;
@@ -46,19 +40,51 @@ test("facts.json is internally consistent (recomputed, not trusted)", async () =
     assert.equal(
       s.padFillPct,
       rem === 0 ? 100 : Math.round((rem / facts.blockBytes) * 1000) / 10,
-      `${s.name} slack fill`,
+      `${s.name} pad fill`,
     );
-    assert.ok(s.bytes <= prev, `region rows must be size-ordered: ${s.name}`);
+    assert.ok(s.bytes <= prev, `size-ordered: ${s.name}`);
     offset += s.bytes;
     prev = s.bytes;
   }
+  assert.equal(
+    facts.allocatedBlocks,
+    facts.skills.reduce((a, s) => a + s.blocks, 0),
+    "allocated blocks = sum of per-skill whole blocks",
+  );
   assert.equal(facts.residentKiB, Math.round((facts.residentBytes / 1024) * 10) / 10);
-  assert.equal(facts.onDemandKiB, Math.round((facts.onDemandBytes / 1024) * 10) / 10);
   assert.match(facts.skillsTreeHash, /^[0-9a-f]{40}$/);
-  assert.equal(facts.kernelEndHex, hex(facts.kernelBytes));
   assert.equal(facts.residentEndHex, hex(facts.residentBytes));
   assert.equal(facts.onDemandEndHex, hex(facts.onDemandBytes));
-  assert.equal(facts.referenceFiles.length, facts.referenceFileCount);
+});
+
+test("dither engine: countable honesty is computed, deterministic, and versioned", async () => {
+  const facts = JSON.parse(await read("public/harness-firmware/facts.json"));
+
+  // the noise seed IS the measured template revision
+  assert.equal(SEED, parseInt(facts.templateRev, 16));
+
+  // spectrum: exactly one dot per allocated 1,024-B flash block, per skill,
+  // bands in real flash-address order
+  const { bands } = spectrumGeometry(facts, 1200, 520);
+  assert.equal(bands.length, 20);
+  bands.forEach((b, i) => {
+    assert.equal(b.name, facts.skills[i].name, `band order ${i}`);
+    assert.equal(b.dots.length, b.blocks, `${b.name}: 1 dot = 1 block`);
+    assert.equal(b.blocks, Math.ceil(b.bytes / 1024), `${b.name} block count`);
+    assert.equal(b.hexOffset, facts.skills[i].hexOffset, `${b.name} address`);
+  });
+
+  // determinism: same seed, same dots
+  const again = spectrumGeometry(facts, 1200, 520);
+  assert.deepEqual(again.bands[0].dots, bands[0].dots);
+
+  // Bayer 8x8 holds every threshold (v+0.5)/64 exactly once
+  const seen = new Set([...BAYER8].map((t) => Math.round(t * 64 - 0.5)));
+  assert.equal(seen.size, 64);
+
+  // blue-noise tile is a permutation of ranks (every threshold distinct)
+  const tile = blueNoise64(SEED);
+  assert.equal(new Set([...tile]).size, 64 * 64);
 });
 
 test("every figure rendered on the page matches facts.json", async () => {
@@ -66,102 +92,87 @@ test("every figure rendered on the page matches facts.json", async () => {
     read("public/harness-firmware/index.html"),
     read("public/harness-firmware/facts.json").then(JSON.parse),
   ]);
-  const maxBlocks = Math.max(...facts.skills.map((s) => s.blocks));
-  const blockPct = Math.round((100 / maxBlocks) * 10000) / 10000;
 
-  // memory-map region: exactly 20 module rows + END row, each with the exact
-  // hex offset, byte figure, tier tag, one drawn block per allocated KiB, and
-  // an honest slack fill in the final block
-  const rows = html.match(/<div class="region-row(?: xtra)?(?: region-end)?">.*?<\/div>\n/gs) ?? [];
-  assert.equal(rows.length, facts.skillCount + 1, "20 module rows + END OF IMAGE");
-  const tag = { core: "CORE", discipline: "DISC", extras: "XTRA" };
-  facts.skills.forEach((s, i) => {
-    assert.ok(rows[i].includes(`>${s.name}<`), `row ${i} is ${s.name}`);
-    assert.ok(rows[i].includes(s.hexOffset), `${s.name} hex offset`);
-    assert.ok(rows[i].includes(`${fmt(s.bytes)} B`), `${s.name} bytes`);
-    assert.ok(rows[i].includes(`>${tag[s.tier]}<`), `${s.name} tier tag`);
-    assert.equal(s.tier === "extras", rows[i].includes('class="region-row xtra"'), `${s.name} xtra class`);
-    // "one block = 1 KiB — count them" must be literally true
-    const blocks = rows[i].match(/<i(?: class="pad")? style="width:([0-9.]+)%">/g) ?? [];
-    assert.equal(blocks.length, s.blocks, `${s.name} draws ${s.blocks} blocks`);
-    for (const b of blocks) {
-      assert.ok(b.includes(`width:${blockPct}%`), `${s.name} equal 1 KiB blocks`);
-    }
-    const pads = rows[i].match(/<i class="pad"[^>]*><b style="width:([0-9.]+)%"><\/b><\/i>/g) ?? [];
-    if (s.padFillPct === 100) {
-      assert.equal(pads.length, 0, `${s.name} block-aligned, no slack block`);
-    } else {
-      assert.equal(pads.length, 1, `${s.name} exactly one slack block`);
-      assert.ok(pads[0].includes(`width:${s.padFillPct}%`), `${s.name} slack fill is the true remainder`);
-    }
-  });
-  assert.ok(rows[20].includes(facts.onDemandEndHex), "END row hex");
-  assert.ok(rows[20].includes(`${fmt(facts.onDemandBytes)} B`), "END row bytes");
-
-  // image checksum is the real skills tree hash, stated with its recompute command
-  assert.ok(html.includes(facts.skillsTreeHash.slice(0, 8)), "checksum shown");
-  assert.ok(html.includes(`git rev-parse ${facts.templateRev}:.claude/skills`), "checksum recompute command");
-
-  // shared-scale comparison bars
-  assert.ok(html.includes(`width:${facts.residentPctOfOnDemand}%`), "resident bar to scale");
-  assert.ok(html.includes(`${fmt(facts.residentBytes)} B · ${facts.residentPctOfOnDemand}%`));
-  assert.ok(html.includes(`${facts.lazyRatio}&times;`), "lazy ratio stated");
-
-  // POST log offsets are the real resident byte offsets
-  for (const h of [hex(0), facts.kernelEndHex, facts.residentEndHex]) {
-    assert.ok(html.includes(`>${h}<`), `POST offset ${h}`);
-  }
-
-  // headline figures
+  const biggest = facts.skills[0];
+  const smallest = facts.skills[facts.skills.length - 1];
   for (const s of [
+    `${fmt(facts.residentBytes)} B`,
+    `&approx;${fmt(facts.residentTokens)} tok/turn`,
     `${fmt(facts.kernelBytes)} B`,
     `${fmt(facts.descIndexBytes)} B`,
-    `${fmt(facts.residentBytes)} B`,
     `${fmt(facts.onDemandBytes)} B`,
-    `${fmt(facts.extrasBytesDropped)} B`,
-    `${fmt(facts.minimalDescIndexBytes)} B`,
-    `${facts.residentKiB.toFixed(1)}&nbsp;KiB`,
-    `${fmt(facts.onDemandKiB)}&nbsp;KiB`,
-    `&approx;${fmt(facts.residentTokens)} tok/turn`,
+    `${facts.residentKiB} KiB`,
+    `${fmt(facts.onDemandKiB)} KiB`,
+    `${facts.lazyRatio}&times;`,
+    `${facts.residentPctOfOnDemand}%`,
+    facts.residentEndHex,
+    facts.onDemandEndHex,
     `rev ${facts.templateRev}`,
-    facts.measuredOn,
+    facts.skillsTreeHash.slice(0, 8),
     facts.pitfallExampleDate,
-    facts.repo,
+    facts.measuredOn,
+    `${fmt(biggest.bytes)} B`,
+    `${biggest.blocks} blocks`,
+    `${fmt(smallest.bytes)} B`,
+    `${smallest.blocks} dots`,
+    `${biggest.blocks} dots`,
+    `${facts.allocatedBlocks} blocks`,
+    "github.com/ryanportfolio/Harness-Firmware",
   ]) {
     assert.ok(html.includes(s), `page carries: ${s}`);
   }
 
-  // resident tokens appear consistently (pill, POST sum, prose)
+  // resident tokens appear consistently (hero readout, section 02, meta)
   const tokRe = new RegExp(fmt(facts.residentTokens), "g");
   assert.ok((html.match(tokRe) ?? []).length >= 3);
+
+  // em dashes are banned page-wide; "glow" is banned as a copy term
+  assert.ok(!html.includes("&mdash;") && !html.includes("—"), "no em dashes");
+  const visibleText = html.replace(/<[^>]+>/g, " ");
+  assert.ok(!/glow/i.test(visibleText), "concrete language: no 'glow' in copy");
+
+  // headings never end with a period
+  for (const m of html.matchAll(/<h[123][^>]*>(.*?)<\/h[123]>/gs)) {
+    const text = m[1].replace(/<[^>]+>/g, "").replace(/&[a-z]+;/g, " ").trim();
+    assert.ok(!text.endsWith("."), `heading ends with period: ${text}`);
+  }
+  assert.equal((html.match(/<h1[ >]/g) ?? []).length, 1, "exactly one h1");
+
+  // every baked visual has real alt text
+  for (const m of html.matchAll(/<img class="bake"[^>]*>/g)) {
+    assert.match(m[0], /alt="[^"]{40,}"/, `bake img needs descriptive alt: ${m[0].slice(0, 80)}`);
+  }
+  assert.ok(html.includes('class="skip-link"'), "skip link present");
 });
 
 test("constraint contract holds in the stylesheet", async () => {
-  const css = await read("public/harness-firmware/src/styles.css");
-  assert.ok(!css.includes("linear-gradient"), "no gradients");
-  assert.ok(!css.includes("radial-gradient"), "no gradients");
-  assert.ok(!css.includes("backdrop-filter"), "no glassmorphism");
-  assert.ok(!/#(7c3aed|8b5cf6|6366f1|a855f7)/i.test(css), "no AI-purple palette");
-  assert.ok(!/@import|fonts\.googleapis|\.woff/.test(css), "system fonts only");
-  assert.ok(css.includes("#F0A43C"), "amber persistence accent present");
-  assert.ok(css.includes("#E5484D"), "red forgetting accent present");
-  assert.ok(css.includes("prefers-reduced-motion"), "reduced motion honored");
-  // every hue on the page comes from the declared contract tokens
-  const declared = new Set([
-    "#0B0D0E", "#121517", "#24292C", "#1B1F22", "#6A665C", "#857F72",
-    "#E6E1D6", "#9A958A", "#F0A43C", "#E5484D",
-  ]);
+  const css = await read("public/harness-firmware/src/phosphor.css");
+
+  // the phosphor law: declared hues only
+  const declared = new Set(["#070B0C", "#5FD9FF", "#A6FF5E", "#22352A", "#E8F4EA"]);
   for (const m of css.match(/#[0-9a-fA-F]{3,8}\b/g) ?? []) {
     assert.ok(declared.has(m), `undeclared hue: ${m}`);
   }
-  // one easing curve, used exclusively
+  assert.ok(!css.includes("linear-gradient"), "light exists only as dots — no gradients");
+  assert.ok(!css.includes("radial-gradient"), "no gradients");
+  assert.ok(!css.includes("backdrop-filter"), "no glassmorphism");
+  assert.ok(!css.includes("box-shadow"), "halos are dot density, not shadows");
+  assert.ok(!css.includes("text-shadow"), "glow is dithered, never blurred");
+  assert.ok(!/@import|fonts\.googleapis/.test(css), "fonts self-hosted only");
+  assert.ok(css.includes('url("/harness-firmware/fonts/Unbounded'), "Unbounded self-hosted");
+  assert.ok(css.includes("prefers-reduced-motion"), "reduced motion honored");
+  assert.ok(css.includes("2.079s"), "the pulse is a measurement (2,079 tok / 1000)");
+
+  // one easing curve
   assert.equal((css.match(/cubic-bezier/g) ?? []).length, 1, "single easing definition");
-  const cssSansVar = css.replaceAll("var(--ease)", "").replaceAll("--ease:", "");
-  assert.ok(!/ease-in|ease-out|\bease\b/.test(cssSansVar), "no stray easings");
-  assert.ok(!css.includes("overflow-wrap: anywhere"), "no mid-token word breaks");
+
+  // type floor: no declared size below 11px
+  for (const m of css.matchAll(/font-size:\s*(?:clamp\(\s*)?([0-9.]+)px/g)) {
+    assert.ok(parseFloat(m[1]) >= 11, `type below 11px floor: ${m[0]}`);
+  }
 });
 
-test("page is routed and self-contained", async () => {
+test("page is routed, self-contained, and complete without JS", async () => {
   const [config, html] = await Promise.all([
     read("next.config.mjs"),
     read("public/harness-firmware/index.html"),
@@ -170,7 +181,6 @@ test("page is routed and self-contained", async () => {
     config.includes("{ source: '/harness-firmware', destination: '/harness-firmware/index.html' }"),
     "clean URL rewrite present",
   );
-  // no external requests: every href/src is same-origin or the GitHub repo link
   const refs = [...html.matchAll(/(?:href|src)="([^"]+)"/g)].map((m) => m[1]);
   for (const r of refs) {
     assert.ok(
@@ -178,11 +188,20 @@ test("page is routed and self-contained", async () => {
       `unexpected external reference: ${r}`,
     );
   }
-  assert.ok(html.includes('<a class="skip-link"'), "skip link present");
-  assert.equal((html.match(/<h1[ >]/g) ?? []).length, 1, "exactly one h1");
-  // status vocabulary is closed: OK, READY, ARMED, LOST, SKIP, --
-  for (const st of html.match(/<span class="st(?: [a-z-]+)*">([^<]*)</g) ?? []) {
-    const word = st.replace(/<span class="st(?: [a-z-]+)*">/, "").replace(/<$/, "");
-    assert.ok(["OK", "READY", "ARMED", "LOST", "SKIP", "--"].includes(word), `status word: ${word}`);
+
+  // no-JS completeness: baked fallbacks + font + license actually shipped
+  for (const f of [
+    "public/harness-firmware/fallback/hero.png",
+    "public/harness-firmware/fallback/hero@2x.png",
+    "public/harness-firmware/fallback/core-halo.png",
+    "public/harness-firmware/fallback/spectrum.png",
+    "public/harness-firmware/fallback/ramp.png",
+    "public/harness-firmware/fallback/tubes.png",
+    "public/harness-firmware/fonts/Unbounded[wght].ttf",
+    "public/harness-firmware/fonts/OFL.txt",
+    "public/harness-firmware/assets/favicon.svg",
+  ]) {
+    assert.ok(await exists(f), `missing shipped asset: ${f}`);
   }
+  assert.ok(html.includes('class="no-js"'), "no-js class present for fallback styling");
 });

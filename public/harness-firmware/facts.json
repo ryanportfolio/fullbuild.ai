@@ -29,6 +29,7 @@
     "extras": 10
   },
   "extrasBytesDropped": 72719,
+  "allocatedBlocks": 182,
   "referenceFileCount": 6,
   "referenceFiles": [
     "secrets",
@@ -39,6 +40,10 @@
     "deployment"
   ],
   "pitfallExampleDate": "2026-07-18",
+  "pitfallEntry": {
+    "heading": "Local preview servers: stale or wrong site (2026-07-18)",
+    "file": ".claude/reference/pitfalls.md"
+  },
   "skills": [
     {
       "name": "writing-skills",
