@@ -231,18 +231,22 @@ export const PROJECTS: Project[] = [
     id: 'agent-firmware',
     sheet: 'S-04.10',
     title: 'Harness Firmware',
-    href: null,
+    href: 'https://fullbuild.ai/harness-firmware',
     repo: 'https://github.com/ryanportfolio/Harness-Firmware',
-    live: false,
+    live: true,
     role: 'author · kernel rules, skills, sync scripts',
     year: "'26",
     stack: ['PowerShell', 'JavaScript'],
     langs: ['PowerShell', 'JavaScript'],
     metrics: [
-      { label: 'bundled skills', value: '34', source: 'repo description' },
+      // Was 34, sourced from the repo description. The library really was 34,
+      // then 35, then the /doctor prune took it to 29 and then 20; the card
+      // was never updated. Counted from the tree rather than the prose:
+      // `git ls-tree -r 5224beb .claude/skills | grep -c SKILL.md` -> 20.
+      { label: 'bundled skills', value: '20', source: '.claude/skills at rev 5224beb' },
       { label: 'Repo', value: 'Instant', source: 'spawns a ready-to-work repo in one step' },
     ],
-    note: 'Self-syncing project template for AI coding agents. Instant repo creation with a built in rule kernel, 34 skills, efficient & durable memory. Super optimized token usage.',
+    note: 'Self-syncing project template for AI coding agents. Instant repo creation with a built in rule kernel, 20 skills, efficient and durable memory. Super optimized token usage.',
   },
   {
     id: 'agentic-audit',
