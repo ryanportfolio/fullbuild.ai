@@ -92,6 +92,8 @@ a:focus-visible, .cta:focus-visible {
   display: flex;
   align-items: center;
   overflow: hidden;
+  /* top clears the chrome, bottom clears the seed and scroll lines */
+  padding: 104px var(--pad-x) 82px;
 }
 .hero-field {
   position: absolute;
@@ -109,7 +111,6 @@ a:focus-visible, .cta:focus-visible {
 .hero-inner {
   position: relative;
   z-index: 2;
-  padding: 0 var(--pad-x);
 }
 .hero-name {
   font-size: 13px;
@@ -220,6 +221,18 @@ a:focus-visible, .cta:focus-visible {
 .hero-scroll .rm { display: none; }
 .no-js .hero-scroll .m { display: none; }
 .no-js .hero-scroll .rm { display: inline; }
+
+@media (max-height: 760px) and (min-width: 701px) {
+  .hero-title { font-size: clamp(48px, 10.5vw, 150px); }
+  .hero-sub { margin-top: 20px; }
+  .hero-row { margin-top: 24px; }
+  .hero-note { display: none; }
+  .key { margin-top: 14px; }
+}
+@media (max-height: 700px) and (max-width: 700px) {
+  .hero-note { display: none; }
+  .hero-inner { padding-top: 96px; }
+}
 
 /* ---------- the color law on data ---------- */
 [data-stat] {
