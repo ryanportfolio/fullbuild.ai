@@ -12,10 +12,10 @@
 |---|---|
 | Native | `brainstorming`, `caveman`, `enhance-prompt`, `forge-repo-ui-skill`, `handoff-audit`, `humanizer`, `purposeful-writing`, `recall`, `writing-plans` |
 | Adapted | `addskill`, `refine`, `fable-mode`, `init-project`, `lab`, `optimize-context`, `sync-starter`, `writing-skills` |
-| Capability-gated | `advocate`, `impartial-review`, `why` |
+| Capability-gated | `advocate`, `design-fullbuild-surfaces`, `impartial-review`, `why` |
 | Dangerous | `merge` |
 | Claude-only | None in the starter source set. |
 
-`advocate`, `impartial-review`, and `why` require fresh independent context; do not replace them with self-review and call it equivalent. `merge` becomes session-wide only after explicit `$merge` or an unambiguous auto-merge request. Current system, developer, sandbox, approval, and user instructions win. Resolve canonical resources from `.claude/skills/<name>/` and never claim a gated workflow ran unless its tools were used.
+`advocate`, `impartial-review`, and `why` require fresh independent context; do not replace them with self-review and call it equivalent. `design-fullbuild-surfaces` needs headless Playwright for its verification half; without it, design and audit still run, but report the visual check as unverified rather than substituting a preview pane or a CDP screenshot. `merge` becomes session-wide only after explicit `$merge` or an unambiguous auto-merge request. Current system, developer, sandbox, approval, and user instructions win. Resolve canonical resources from `.claude/skills/<name>/` and never claim a gated workflow ran unless its tools were used.
 
 `node .claude/scripts/test-codex-contract.mjs` verifies that every active skill has exactly one classification and that Codex routing metadata stays within its context budget.
