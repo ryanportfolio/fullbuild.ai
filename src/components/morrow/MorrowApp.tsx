@@ -188,7 +188,7 @@ export function MorrowApp() {
             type="button"
             className={styles.bagButton}
             onClick={openBag}
-            aria-label={`Open bag with ${bagCount} items`}
+            aria-label={`Open bag with ${bagCount} item${bagCount === 1 ? "" : "s"}`}
           >
             Bag <span>{String(bagCount).padStart(2, "0")}</span>
           </button>
@@ -210,11 +210,11 @@ export function MorrowApp() {
             <p>FW26 / City–Weather</p>
             <h1 id="morrow-heading">
               Outside
-              <span>changes.</span>
+              <span>changes</span>
             </h1>
             <p className={styles.heroLede}>
               Six pieces engineered for the distance between forecast and
-              street.
+              street
             </p>
             <a className={styles.heroCta} href="#collection">
               Shop the collection <span aria-hidden="true">↓</span>
@@ -228,7 +228,7 @@ export function MorrowApp() {
         <section className={styles.collectionIntro}>
           <div>
             <p className={styles.kicker}>Collection 09 / Released for commerce</p>
-            <h2>A wardrobe for unstable weather.</h2>
+            <h2>A wardrobe for unstable weather</h2>
           </div>
           <p>
             Light layers, controlled volume, and materials selected for daily
@@ -323,7 +323,7 @@ export function MorrowApp() {
           <div className={styles.fieldStatement}>
             <p className={styles.kicker}>Field notes / Product truth</p>
             <h2 id="field-notes-title">
-              The storefront only shows what the product team can stand behind.
+              The storefront only shows what the product team can stand behind
             </h2>
           </div>
           <div className={styles.noteGrid}>
@@ -368,7 +368,7 @@ export function MorrowApp() {
         </a>
         <div>
           <p>Customer storefront prototype</p>
-          <span>No checkout, account, payment, or live inventory connection.</span>
+          <span>No checkout, account, payment, or live inventory connection</span>
         </div>
         <a href="/">fullbuild.ai ↗</a>
       </footer>
@@ -412,7 +412,7 @@ export function MorrowApp() {
               />
             </label>
             <p>
-              Interaction simulation only. No live CLO or 3D asset connection.
+              Interaction simulation only, no live CLO or 3D asset connection
             </p>
           </div>
 
@@ -496,7 +496,7 @@ export function MorrowApp() {
             </button>
             {!selectedSize && (
               <p className={styles.selectionHint}>
-                Select an available size to continue.
+                Select an available size to continue
               </p>
             )}
 
@@ -591,7 +591,7 @@ export function MorrowApp() {
               <div className={styles.bagSummary}>
                 <span>Subtotal</span>
                 <strong>{formatPrice(bagSubtotal)}</strong>
-                <p>Taxes and delivery calculated at checkout.</p>
+                <p>Taxes and delivery calculated at checkout</p>
               </div>
               <button
                 type="button"
@@ -608,8 +608,8 @@ export function MorrowApp() {
           ) : (
             <div className={styles.emptyBag}>
               <span>00</span>
-              <h3>Your bag is empty.</h3>
-              <p>Choose a piece from City / Weather to exercise the flow.</p>
+              <h3>Your bag is empty</h3>
+              <p>Choose a piece from City / Weather to exercise the flow</p>
               <button
                 type="button"
                 onClick={() => bagDialog.current?.close()}
