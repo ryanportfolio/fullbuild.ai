@@ -111,6 +111,12 @@ a:focus-visible, .cta:focus-visible {
   z-index: 2;
   padding: 0 var(--pad-x);
 }
+.hero-name {
+  font-size: 13px;
+  letter-spacing: 0.34em;
+  color: color-mix(in srgb, var(--bone) 70%, transparent);
+  margin-bottom: 22px;
+}
 .hero-title {
   font-family: var(--display);
   font-weight: 900;
@@ -126,9 +132,35 @@ a:focus-visible, .cta:focus-visible {
 .hero-sub {
   margin-top: 28px;
   font-size: clamp(17px, 1.6vw, 21px);
-  max-width: 40ch;
+  max-width: 46ch;
   color: color-mix(in srgb, var(--bone) 88%, transparent);
 }
+.hero-sub b { font-weight: 600; color: var(--bone); }
+/* the decoder ring: two words and the whole colour law is legible */
+.hero-note {
+  margin-top: 24px;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--bone) 50%, transparent);
+}
+.key {
+  margin-top: 16px;
+  font-size: 12px;
+  display: flex;
+  gap: 26px;
+  flex-wrap: wrap;
+}
+.key span::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 9px;
+  vertical-align: 1px;
+}
+.k-green { color: color-mix(in srgb, var(--bone) 62%, transparent); }
+.k-green::before { background: var(--green); }
+.k-blue { color: color-mix(in srgb, var(--bone) 62%, transparent); }
+.k-blue::before { background: var(--blue); }
 .hero-row {
   margin-top: 36px;
   display: flex;
@@ -231,6 +263,11 @@ a:focus-visible, .cta:focus-visible {
   color: color-mix(in srgb, var(--bone) 45%, transparent);
   margin-bottom: 18px;
 }
+.gtag b {
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  color: var(--green);
+}
 h2 {
   font-family: var(--display);
   font-weight: 700;
@@ -288,8 +325,7 @@ h2.excited { color: var(--blue); transition: none; } /* the beam passes */
 .console-body .ln.dim { color: color-mix(in srgb, var(--bone) 42%, transparent); }
 .console-body .ln.cmd { color: var(--bone); }
 .console-body .ln.keep { color: var(--green); }
-.console-body .ln.die { color: var(--blue); }
-.console-body .ln.die .late { opacity: 0.45; }
+.console-body .ln.off { color: var(--blue); }
 .console-body .ln.boot { color: var(--blue); }
 .console-body .ln.gap { line-height: 1; }
 /* JS replay: the full transcript is latent residue before the session reads
@@ -300,7 +336,7 @@ h2.excited { color: var(--blue); transition: none; } /* the beam passes */
 .js-replay .ln.shown.dim { color: color-mix(in srgb, var(--bone) 42%, transparent); }
 .js-replay .ln.shown.cmd { color: var(--bone); }
 .js-replay .ln.shown.keep, .js-replay .ln.shown .keep { color: var(--green); }
-.js-replay .ln.shown.die, .js-replay .ln.shown.boot { color: var(--blue); }
+.js-replay .ln.shown.off, .js-replay .ln.shown.boot { color: var(--blue); }
 .js-replay .ln.cur, .js-replay .ln.cur .keep { color: var(--blue); }
 .js-replay .ln.cur::after { content: "\258D"; margin-left: 2px; }
 
@@ -315,12 +351,19 @@ h2.excited { color: var(--blue); transition: none; } /* the beam passes */
 .halo-numeral {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   pointer-events: none;
 }
+/* The ember is baked at (50%, 58%) of the field. Both offsets below are in
+   em, so they cancel the font-size term exactly: the decimal point lands on
+   the hot spot at every viewport width, from 390px to the 280px type cap.
+   Measured against Unbounded 900: dot centre sits 0.0128em left of and
+   0.25em below the lockup's box centre. */
 .halo-numeral .lockup {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  transform: translate(calc(-50% + 0.0128em), calc(-50% - 0.25em));
+  white-space: nowrap;
   font-family: var(--display);
   font-weight: 900;
   font-size: clamp(120px, 18vw, 280px);
@@ -335,6 +378,24 @@ h2.excited { color: var(--blue); transition: none; } /* the beam passes */
   margin-left: 0.14em;
 }
 .metrology { margin-top: 14px; line-height: 1.9; }
+
+/* the standing rules, quoted so a reader can judge them */
+.rules {
+  margin-top: 40px;
+  border-left: 2px solid var(--green);
+  padding: 4px 0 4px 26px;
+  max-width: 760px;
+}
+.rules figcaption { letter-spacing: 0.2em; margin-bottom: 18px; }
+.rules ul { list-style: none; }
+.rules li {
+  font-size: clamp(13px, 1.2vw, 15px);
+  line-height: 1.75;
+  color: var(--bone);
+  padding: 9px 0;
+}
+.rules li::before { content: "> "; color: var(--green); }
+.rules > p { margin-top: 16px; }
 
 /* ---------- 03 spectrum ---------- */
 .spectrum-stage canvas {
@@ -358,6 +419,30 @@ h2.excited { color: var(--blue); transition: none; } /* the beam passes */
   font-size: 13px;
   color: var(--green);
   min-height: 1.6em;
+}
+
+.skill-list {
+  list-style: none;
+  margin-top: 30px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(490px, 1fr));
+  gap: 0 44px;
+  font-size: 13px;
+}
+.skill-list li {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--bone) 7%, transparent);
+}
+.skill-list b { font-weight: 400; color: var(--green); }
+.skill-list span { color: color-mix(in srgb, var(--bone) 62%, transparent); }
+.skill-list em {
+  font-style: normal;
+  color: color-mix(in srgb, var(--bone) 45%, transparent);
+  white-space: nowrap;
 }
 
 /* ---------- 04 ramp ---------- */
@@ -396,6 +481,7 @@ h2.excited { color: var(--blue); transition: none; } /* the beam passes */
 }
 .slab-note { margin-top: 18px; }
 .slab-note a { color: color-mix(in srgb, var(--bone) 70%, transparent); }
+.slab-note b { font-weight: 400; color: var(--green); }
 .slab-steps {
   list-style: none;
   counter-reset: step;
@@ -501,7 +587,7 @@ h2.excited { color: var(--blue); transition: none; } /* the beam passes */
   h2 { font-size: clamp(34px, 10vw, 48px); }
   .hero { align-items: flex-start; }
   .hero-inner { padding-top: 128px; }
-  .hero-title { font-size: 22vw; letter-spacing: -0.02em; }
+  .hero-title { font-size: 20vw; letter-spacing: -0.02em; }
   .hero-row { gap: 20px; }
   .hero-seed { display: none; }
   .pan-hint {
@@ -523,6 +609,9 @@ h2.excited { color: var(--blue); transition: none; } /* the beam passes */
   .tag-b { left: 73.5%; top: 62%; }
   .slabs { grid-template-columns: 1fr; }
   .console-body { font-size: 12px; }
+  .skill-list { font-size: 12px; }
+  .skill-list li { grid-template-columns: minmax(0, 1fr) auto; }
+  .skill-list span { grid-column: 1 / -1; }
   .tubes-stage .tube-label {
     position: static;
     display: block;

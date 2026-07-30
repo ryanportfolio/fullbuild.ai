@@ -219,15 +219,15 @@ function stampDot(field, w, h, cx, cy, r, state) {
 // residue halo (the 175,102 B payload). The green amplitude is binary-searched
 // until lit-green / lit-residue matches the real byte ratio within 0.2%.
 export function renderCoreHalo(facts, w, h, tile) {
-  // burst rides the numeral's top-right shoulder, off the decimal axis
-  // (dead-center it stacked over the decimal dot and "8.1" read as "8:1");
-  // the residue halo stays centered behind the numeral
-  const cx = w * 0.615;
-  const cy = h * 0.3;
+  // the hot core sits exactly where the numeral's decimal point is pinned by
+  // phosphor.css, so the ember reads as that dot burning rather than a second
+  // dot-form beside it; the residue halo stays centred behind the numeral
+  const cx = w * 0.5;
+  const cy = h * 0.58;
   const hx = w / 2;
   const hy = h / 2;
   const haloSigma = Math.min(w, h) * 0.34;
-  const coreSigma = Math.min(w, h) * 0.055;
+  const coreSigma = Math.min(w, h) * 0.05;
   const target = facts.residentBytes / facts.onDemandBytes;
   // feather the halo at the image bounds so the panel has no hard seams
   const env = (x, y) => Math.min(1, Math.min(y, h - 1 - y) / (h * 0.14))

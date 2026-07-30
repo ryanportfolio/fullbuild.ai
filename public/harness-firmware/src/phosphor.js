@@ -9,7 +9,6 @@ import {
 document.documentElement.classList.remove('no-js');
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const TIER = { core: 'CORE', discipline: 'DISCIPLINE', extras: 'EXTRAS' };
 
 // ---------- reveal (kept from v1, the smooth staggered fade-in) ----------
 const reveals = [...document.querySelectorAll('.reveal')];
@@ -226,7 +225,7 @@ async function bootSpectrum() {
     if (!band || band.name === current) return;
     current = band.name;
     paint(reduced ? null : band.name);
-    readout.textContent = `${band.name} · ${band.bytes.toLocaleString('en-US')} B · ${band.blocks} blocks · ${TIER[band.tier]} · ${band.hexOffset}`;
+    readout.textContent = `${band.name} · ${band.bytes.toLocaleString('en-US')} B · ${band.blocks} blocks · ${band.hexOffset}`;
     if (!reduced) {
       clearTimeout(excite.decay);
       excite.decay = setTimeout(() => { paint(null); current = null; }, 700);
