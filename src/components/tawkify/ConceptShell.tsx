@@ -11,12 +11,26 @@ const surfaces = [
   { href: "/prototype/tawkify/desk", index: "03", label: "Matchmaker desk" },
 ];
 
+// The emerald infinity mark, redrawn as two linked loops.
+function Mark() {
+  return (
+    <svg viewBox="0 0 36 20" aria-hidden="true">
+      <path
+        d="M10 2.5 C 3 2.5, 3 17.5, 10 17.5 C 15 17.5, 16 10, 18 10 C 20 10, 21 2.5, 26 2.5 C 33 2.5, 33 17.5, 26 17.5 C 21 17.5, 20 10, 18 10 C 16 10, 15 2.5, 10 2.5 Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.4"
+      />
+    </svg>
+  );
+}
+
 export function ConceptShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const shellRef = useRef<HTMLDivElement>(null);
 
-  // Progressive reveal: mark the shell as JS-capable, then flip one-shot
-  // intersection flags. Without this effect the page renders finished.
+  // Progressive reveal: default render is the finished page; script marks the
+  // shell, then one-shot intersection flags drive SETTLE and RULE.
   useEffect(() => {
     const shell = shellRef.current;
     if (!shell) return;
@@ -31,7 +45,7 @@ export function ConceptShell({ children }: { children: ReactNode }) {
           }
         }
       },
-      { threshold: 0.15, rootMargin: "0px 0px -6% 0px" },
+      { threshold: 0.2, rootMargin: "0px 0px -6% 0px" },
     );
     targets.forEach((target) => io.observe(target));
     return () => io.disconnect();
@@ -42,38 +56,48 @@ export function ConceptShell({ children }: { children: ReactNode }) {
       <a href="#tawkify-main" className={styles.skipLink}>
         Skip to content
       </a>
-      <header className={styles.topbar}>
-        <Link href="/prototype/tawkify" className={styles.wordmark}>
-          tawkify
-        </Link>
-        <span className={`${styles.mono} ${styles.conceptTag}`}>unofficial concept</span>
-        <nav className={styles.surfaceNav} aria-label="Concept surfaces">
-          {surfaces.map((surface) => (
-            <Link
-              key={surface.href}
-              href={surface.href}
-              className={styles.surfaceLink}
-              aria-current={pathname === surface.href ? "page" : undefined}
-            >
-              <span className={styles.mono}>{surface.index}</span>
-              {surface.label}
-            </Link>
-          ))}
-        </nav>
+      <header className={`${styles.header} ${styles.onInk}`}>
+        <div className={styles.headerInner}>
+          <Link href="/prototype/tawkify" className={styles.wordmark}>
+            <Mark />
+            tawkify
+          </Link>
+          <span className={styles.conceptTag}>UNOFFICIAL CONCEPT</span>
+          <nav className={styles.surfaceNav} aria-label="Concept surfaces">
+            {surfaces.map((surface) => (
+              <Link
+                key={surface.href}
+                href={surface.href}
+                className={styles.surfaceLink}
+                aria-current={pathname === surface.href ? "page" : undefined}
+              >
+                <span className={styles.surfaceIndex}>{surface.index}</span>
+                {surface.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
       </header>
       <main id="tawkify-main">{children}</main>
-      <div className={styles.sheet}>
-        <footer className={styles.footer}>
-          <p className={styles.footerNote}>
+      <footer className={`${styles.band} ${styles.onInk}`} data-ground="ink" data-tier="s">
+        <div className={`${styles.bandInner} ${styles.footer}`}>
+          <p className={styles.footerLine}>
+            We only accept candidates we believe we can match.
+          </p>
+          <p className={styles.footerDisclaimer}>
             Unofficial modernization concept by{" "}
             <a href="https://fullbuild.ai">fullbuild.ai</a>, built as a job
-            application artifact. Not affiliated with or endorsed by Tawkify.
-            The real service lives at{" "}
-            <a href="https://tawkify.com">tawkify.com</a>. All people, files,
-            and conversations on the client and desk surfaces are invented.
+            application artifact. Not affiliated with or endorsed by Tawkify;
+            the real service lives at{" "}
+            <a href="https://tawkify.com">tawkify.com</a>. Prices and contract
+            terms shown are reconstructed from public reporting and are this
+            concept&apos;s proposal, not Tawkify&apos;s offer. Photo plates
+            mark slots for illustrative AI-generated imagery. Every person,
+            file, and conversation on the client and desk surfaces is
+            invented.
           </p>
-        </footer>
-      </div>
+        </div>
+      </footer>
     </div>
   );
 }
