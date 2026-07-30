@@ -214,11 +214,15 @@ export function ThreadlineApp() {
       <main id="top" className={styles.main}>
         <header className={styles.topbar}>
           <div>
+            <p className={styles.surfaceLabel}>INTERNAL DPC OPERATIONS PROTOTYPE</p>
             <p className={styles.eyebrow}>DPC / Launch control</p>
             <h1>FW26 / North America</h1>
           </div>
           <div className={styles.topbarActions}>
             <span className={styles.demoBadge}>SIMULATED DATA</span>
+            <a className={styles.storefrontLink} href="/prototype/morrow">
+              Customer storefront ↗
+            </a>
             <button type="button" className={styles.resetButton} onClick={resetDemo}>
               Reset demo
             </button>
@@ -230,7 +234,7 @@ export function ThreadlineApp() {
             <p className={styles.sectionIndex}>01 / Launch control</p>
             <div>
               <h2 id="launch-heading">48 days to line release</h2>
-              <p>One prioritized view across product, 3D, compliance, and commerce data.</p>
+              <p>For product development, sourcing, compliance, and launch teams: one prioritized view across product, 3D, compliance, and commerce data.</p>
             </div>
           </div>
           <div className={styles.summaryGrid}>
@@ -268,7 +272,7 @@ export function ThreadlineApp() {
                         </button>
                         {blocker.resolvableInDemo ? (
                           <button type="button" className={styles.resolveButton} onClick={() => resolveBlocker(blocker)}>
-                            Resolve demo issue
+                            Simulate: {blocker.resolutionAction}
                           </button>
                         ) : (
                           <span className={styles.retryHint}>Retry in pulse ↓</span>

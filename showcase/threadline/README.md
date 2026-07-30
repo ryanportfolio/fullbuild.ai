@@ -1,8 +1,14 @@
-# Threadline
+# Threadline + Morrow
 
 Threadline is an interview-ready prototype for an apparel Digital Product
 Creation (DPC) team: a launch-readiness control tower that turns product,
 material, compliance, 3D, and commerce events into one actionable view.
+
+Morrow is its customer-facing counterpart. It carries the same six styles,
+identifiers, colorways, material facts, care details, and traceability fields
+into an editorial storefront. Together, the two surfaces show a complete
+apparel data flow: internal teams approve product truth in Threadline, then
+customers discover and configure those products in Morrow.
 
 The interactive UI uses deterministic simulated data. The adjacent Spring Boot
 service, database migrations, CI workflow, container, AKS manifests, and ArgoCD
@@ -18,12 +24,16 @@ pretending that vendor systems or cloud infrastructure are connected.
 3. Select **Transit shell / MAT-214**. The style inspector connects the
    collection-level exception to its material, supplier, color, launch date, and
    milestone state.
-4. Choose **Resolve demo issue**. The blocker closes, style readiness
+4. Choose **Simulate: Attach verified finish declaration**. The explicit
+   simulation closes the blocker, style readiness
    recalculates, and the critical-exception count drops without a page reload.
 5. In **Integration pulse**, choose **Retry safely** on the failed Centric PLM
    event. The visible processing state becomes healthy and the affected style
    record advances.
-6. Close with the production path: signed and idempotent webhooks enter Spring
+6. Open **Customer storefront** to move from the internal operations surface to
+   Morrow. Quick-view the Transit shell, change its color, rotate the simulated
+   garment view, choose an available size, and add it to the local demo bag.
+7. Close with the production path: signed and idempotent webhooks enter Spring
    Boot, durable records land in PostgreSQL or SQL Server, GitHub Actions
    verifies and publishes an immutable image, and ArgoCD reconciles it into AKS.
 
@@ -35,6 +45,12 @@ The prototype is intentionally an exception workflow, not another reporting
 dashboard. Product managers get a launch-level answer, operators get a ranked
 queue and safe recovery action, and engineers get explicit integration,
 security, persistence, and deployment boundaries.
+
+Morrow is deliberately a separate customer experience rather than a skin on
+the operations dashboard. Its interaction model is product discovery,
+configuration, saved items, and a local demo bag; it does not expose operational
+exceptions to shoppers. Cross-links make the relationship legible during an
+interview without implying that either surface is production-connected.
 
 Centric PLM and CLO are represented as integration adapters rather than
 hard-coded dependencies. That keeps the core readiness model usable with other
@@ -62,7 +78,7 @@ flowchart LR
 | Job requirement | Evidence in this prototype |
 | --- | --- |
 | Java / Spring Boot | Boot 4 API, validation, JPA, security, Actuator, focused unit tests |
-| React / JavaScript | Responsive client-side workflow with selection, resolution, retry, reset, and live announcements |
+| React / JavaScript | Two responsive client workflows: internal exception handling and customer product discovery, configuration, favorites, and bag state |
 | PostgreSQL / SQL Server | Vendor-specific Flyway baselines and runtime profiles |
 | API integrations | HMAC verification, replay window, idempotency keys, payload hashing, durable integration-event state |
 | Secure, high-performance code | Entra JWT boundary, constant-time signature comparison, paged projections, cache headers, pooled connections, constrained containers |
@@ -125,6 +141,9 @@ npm run dev
 ```
 
 Open `http://localhost:3000/prototype/threadline`.
+
+The paired customer storefront is available at
+`http://localhost:3000/prototype/morrow`.
 
 ### Spring Boot API
 
