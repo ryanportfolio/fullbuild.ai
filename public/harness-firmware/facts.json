@@ -1,0 +1,204 @@
+{
+  "measuredOn": "2026-07-30",
+  "templateRev": "5224beb",
+  "measurement": "git objects at rev 5224beb; description values measured as written (folded lines space-joined, no trailing newline, YAML quoting included); tokens estimated at 4 bytes/token",
+  "skillsTreeHash": "97530c9e791583c821254f101ad59365ed8489ee",
+  "repo": "https://github.com/ryanportfolio/Harness-Firmware",
+  "repoIsTemplate": true,
+  "license": "MIT",
+  "blockBytes": 1024,
+  "kernelBytes": 5401,
+  "kernelTokens": 1350,
+  "descIndexBytes": 2916,
+  "descIndexTokens": 729,
+  "minimalDescIndexBytes": 1398,
+  "residentBytes": 8317,
+  "residentKiB": 8.1,
+  "residentTokens": 2079,
+  "residentEndHex": "0x0207D",
+  "kernelEndHex": "0x01519",
+  "onDemandBytes": 175102,
+  "onDemandKiB": 171,
+  "onDemandEndHex": "0x2ABFE",
+  "lazyRatio": 21.1,
+  "residentPctOfOnDemand": 4.7,
+  "skillCount": 20,
+  "tierCounts": {
+    "core": 6,
+    "discipline": 4,
+    "extras": 10
+  },
+  "extrasBytesDropped": 72719,
+  "referenceFileCount": 6,
+  "referenceFiles": [
+    "secrets",
+    "architecture",
+    "pitfalls",
+    "commands",
+    "tech-stack",
+    "deployment"
+  ],
+  "pitfallExampleDate": "2026-07-18",
+  "skills": [
+    {
+      "name": "writing-skills",
+      "bytes": 26286,
+      "tier": "discipline",
+      "blocks": 26,
+      "padFillPct": 67,
+      "hexOffset": "0x00000"
+    },
+    {
+      "name": "impartial-review",
+      "bytes": 20933,
+      "tier": "discipline",
+      "blocks": 21,
+      "padFillPct": 44.2,
+      "hexOffset": "0x066AE"
+    },
+    {
+      "name": "init-project",
+      "bytes": 13407,
+      "tier": "core",
+      "blocks": 14,
+      "padFillPct": 9.3,
+      "hexOffset": "0x0B873"
+    },
+    {
+      "name": "enhance-prompt",
+      "bytes": 9810,
+      "tier": "extras",
+      "blocks": 10,
+      "padFillPct": 58,
+      "hexOffset": "0x0ECD2"
+    },
+    {
+      "name": "why",
+      "bytes": 9121,
+      "tier": "extras",
+      "blocks": 9,
+      "padFillPct": 90.7,
+      "hexOffset": "0x11324"
+    },
+    {
+      "name": "merge",
+      "bytes": 8590,
+      "tier": "core",
+      "blocks": 9,
+      "padFillPct": 38.9,
+      "hexOffset": "0x136C5"
+    },
+    {
+      "name": "advocate",
+      "bytes": 7837,
+      "tier": "extras",
+      "blocks": 8,
+      "padFillPct": 65.3,
+      "hexOffset": "0x15853"
+    },
+    {
+      "name": "fable-mode",
+      "bytes": 7770,
+      "tier": "extras",
+      "blocks": 8,
+      "padFillPct": 58.8,
+      "hexOffset": "0x176F0"
+    },
+    {
+      "name": "lab",
+      "bytes": 7693,
+      "tier": "extras",
+      "blocks": 8,
+      "padFillPct": 51.3,
+      "hexOffset": "0x1954A"
+    },
+    {
+      "name": "humanizer",
+      "bytes": 7483,
+      "tier": "extras",
+      "blocks": 8,
+      "padFillPct": 30.8,
+      "hexOffset": "0x1B357"
+    },
+    {
+      "name": "handoff-audit",
+      "bytes": 7182,
+      "tier": "extras",
+      "blocks": 8,
+      "padFillPct": 1.4,
+      "hexOffset": "0x1D092"
+    },
+    {
+      "name": "purposeful-writing",
+      "bytes": 6383,
+      "tier": "extras",
+      "blocks": 7,
+      "padFillPct": 23.3,
+      "hexOffset": "0x1ECA0"
+    },
+    {
+      "name": "forge-repo-ui-skill",
+      "bytes": 6329,
+      "tier": "extras",
+      "blocks": 7,
+      "padFillPct": 18.1,
+      "hexOffset": "0x2058F"
+    },
+    {
+      "name": "optimize-context",
+      "bytes": 6253,
+      "tier": "core",
+      "blocks": 7,
+      "padFillPct": 10.6,
+      "hexOffset": "0x21E48"
+    },
+    {
+      "name": "writing-plans",
+      "bytes": 5812,
+      "tier": "discipline",
+      "blocks": 6,
+      "padFillPct": 67.6,
+      "hexOffset": "0x236B5"
+    },
+    {
+      "name": "brainstorming",
+      "bytes": 5755,
+      "tier": "discipline",
+      "blocks": 6,
+      "padFillPct": 62,
+      "hexOffset": "0x24D69"
+    },
+    {
+      "name": "addskill",
+      "bytes": 5678,
+      "tier": "core",
+      "blocks": 6,
+      "padFillPct": 54.5,
+      "hexOffset": "0x263E4"
+    },
+    {
+      "name": "sync-starter",
+      "bytes": 5081,
+      "tier": "core",
+      "blocks": 5,
+      "padFillPct": 96.2,
+      "hexOffset": "0x27A12"
+    },
+    {
+      "name": "recall",
+      "bytes": 4588,
+      "tier": "core",
+      "blocks": 5,
+      "padFillPct": 48,
+      "hexOffset": "0x28DEB"
+    },
+    {
+      "name": "caveman",
+      "bytes": 3111,
+      "tier": "extras",
+      "blocks": 4,
+      "padFillPct": 3.8,
+      "hexOffset": "0x29FD7"
+    }
+  ]
+}

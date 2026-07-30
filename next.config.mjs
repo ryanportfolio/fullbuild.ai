@@ -20,6 +20,8 @@ const nextConfig = {
   // onto their index.html files.
   async rewrites() {
     return [
+      // Harness Firmware product page — a static artifact like the prototypes.
+      { source: '/harness-firmware', destination: '/harness-firmware/index.html' },
       { source: '/prototype', destination: '/prototype/index.html' },
       { source: '/prototype/fault-line', destination: '/prototype/fault-line/index.html' },
       { source: '/prototype/assembly-line', destination: '/prototype/assembly-line/index.html' },

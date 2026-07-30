@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- flash chip: body, pin-1 notch, amber resident block -->
+  <rect x="5" y="5" width="22" height="22" fill="#121517" stroke="#9A958A" stroke-width="2"/>
+  <rect x="8" y="8" width="16" height="4" fill="#F0A43C"/>
+  <rect x="8" y="14" width="16" height="10" fill="#24292C"/>
+  <circle cx="9.5" cy="25" r="1.5" fill="#9A958A"/>
+</svg>

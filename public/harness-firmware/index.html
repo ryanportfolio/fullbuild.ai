@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Harness Firmware — firmware for your coding agent · fullbuild.ai</title>
+  <meta name="description" content="Harness Firmware is a portable operating layer for AI coding agents: standing rules, on-demand skills, and committed memory that survives the end of a session. 8.1 KiB resident, 171 KiB on call.">
+  <meta name="theme-color" content="#0B0D0E">
+  <meta name="color-scheme" content="dark">
+  <meta property="og:title" content="Harness Firmware — firmware for your coding agent">
+  <meta property="og:description" content="Flash a repo once; every session boots already knowing what the last one learned. ≈2,079 tokens resident per turn.">
+  <meta property="og:image" content="https://fullbuild.ai/harness-firmware/assets/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/svg+xml" href="/harness-firmware/assets/favicon.svg">
+  <link rel="stylesheet" href="/harness-firmware/src/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#work">skip to content</a>
+
+  <header class="site-head">
+    <a class="wordmark" href="/">fullbuild.ai</a>
+    <span class="head-title">HARNESS FIRMWARE</span>
+    <a class="head-link" href="https://github.com/ryanportfolio/Harness-Firmware">GitHub &rarr;</a>
+    <span class="status-pill">resident <b class="persist">&approx;2,079 tok/turn</b></span>
+  </header>
+
+  <main id="work">
+
+    <!-- ============ POST / HERO ============ -->
+    <section class="hero" aria-labelledby="hero-h">
+      <p class="kicker">FW rev <a class="quiet-link" href="https://github.com/ryanportfolio/Harness-Firmware">5224beb</a> · MIT · GitHub template</p>
+      <h1 id="hero-h">Firmware for<br>your coding agent.</h1>
+      <p class="lede">Harness Firmware is the layer that loads before the work starts: standing rules, on-demand skills, and committed memory that survives the end of a session. Flash it onto a repo, and every session boots already knowing what the last one learned.</p>
+
+      <figure class="log post-log">
+        <div class="log-title"><span>POWER-ON SELF-TEST</span><span class="log-src">ryanportfolio/Harness-Firmware</span></div>
+        <div class="log-row rv"><span class="addr">0x00000</span><span class="op">mount kernel</span><span class="obj">CLAUDE.md</span><span class="num persist">5,401 B</span><span class="mode">resident</span><span class="st">OK</span></div>
+        <div class="log-row rv"><span class="addr">0x01519</span><span class="op">index skills</span><span class="obj">20 descriptions</span><span class="num persist">2,916 B</span><span class="mode">resident</span><span class="st">OK</span></div>
+        <div class="log-row rv log-sum"><span class="addr">0x0207D</span><span class="op">end resident image</span><span class="obj">8,317 B total</span><span class="num persist">&approx;2,079 tok/turn</span><span class="mode">--</span><span class="st">READY</span></div>
+        <div class="log-row rv"><span class="addr">--</span><span class="op">attach playbooks</span><span class="obj">20 SKILL.md files</span><span class="num">175,102 B</span><span class="mode">on demand</span><span class="st">ARMED</span></div>
+        <div class="log-row rv"><span class="addr">--</span><span class="op">attach memory</span><span class="obj">.claude/reference/</span><span class="num">6 files</span><span class="mode">on demand</span><span class="st">ARMED</span></div>
+      </figure>
+      <p class="hero-hint">scroll to continue boot</p>
+    </section>
+
+    <!-- ============ 01 PERSISTENT MEMORY ============ -->
+    <section aria-labelledby="mem-h">
+      <div class="sec-head rv">
+        <p class="sec-label">SECTION 01 · PERSISTENT MEMORY</p>
+        <h2 id="mem-h">Memory that survives power-off.</h2>
+        <p class="sec-lede">An agent with no durable memory relearns the same gotcha in every session. Here, each lesson gets a committed home in the repo itself. It travels to every machine, every sandbox, and both runtimes, and it is mounted before the work that needs it.</p>
+      </div>
+
+      <div class="boot-compare">
+        <figure class="log cold rv">
+          <div class="log-title"><span>COLD BOOT · no firmware</span></div>
+          <div class="log-row"><span class="op">symptom</span><span class="obj wide">preview server shows an outdated site</span><span class="st">--</span></div>
+          <div class="log-row"><span class="op">probe</span><span class="obj wide">port reused by a server from a prior session</span><span class="st">--</span></div>
+          <div class="log-row"><span class="op">probe</span><span class="obj wide">edits live in a worktree it never served</span><span class="st">--</span></div>
+          <div class="log-row log-sum"><span class="op">result</span><span class="obj wide loss">known failure, rediscovered from zero</span><span class="st loss">LOST</span></div>
+        </figure>
+        <figure class="log warm rv">
+          <div class="log-title"><span>WARM BOOT · flashed</span></div>
+          <div class="log-row"><span class="op">mount</span><span class="obj wide">pitfalls.md · <span class="persist">&ldquo;stale preview server&rdquo; saved 2026-07-18</span></span><span class="st">OK</span></div>
+          <div class="log-row"><span class="op">apply</span><span class="obj wide">check the port before trusting the preview</span><span class="st">OK</span></div>
+          <div class="log-row"><span class="op">apply</span><span class="obj wide">confirm which checkout the server is serving</span><span class="st">OK</span></div>
+          <div class="log-row log-sum"><span class="op">result</span><span class="obj wide">failure class never re-entered</span><span class="st persist">SKIP</span></div>
+        </figure>
+      </div>
+
+      <p class="sec-note">That cold-boot transcript is the template&rsquo;s own recorded pitfall, dated 2026-07-18. <code class="cmd">/recall save</code> wrote it once. <code class="cmd">/sync-starter</code> can carry a generic lesson back to the template, so every <em>future</em> project boots with it too.</p>
+    </section>
+
+    <!-- ============ 02 MEMORY MAP ============ -->
+    <section aria-labelledby="map-h">
+      <div class="sec-head rv">
+        <p class="sec-label">SECTION 02 · MEMORY MAP</p>
+        <h2 id="map-h">8.1&nbsp;KiB resident. 171&nbsp;KiB on call.</h2>
+        <p class="sec-lede">Everything in the prompt makes every turn heavier, so the always-loaded layer stays small and <em>measured</em>. The kernel plus twenty one-line skill descriptions cost about 2,079 tokens per turn. The playbooks themselves stay on disk until a task calls one.</p>
+      </div>
+
+      <div class="scale-compare rv">
+        <div class="scale-row">
+          <span class="scale-name">ON DEMAND</span>
+          <div class="scale-track" aria-hidden="true"><div class="scale-bar" style="width:100%"></div></div>
+          <span class="scale-val">175,102 B</span>
+        </div>
+        <div class="scale-row">
+          <span class="scale-name">RESIDENT</span>
+          <div class="scale-track" aria-hidden="true"><div class="scale-bar persist-bg" style="width:4.7%"></div></div>
+          <span class="scale-val persist">8,317 B · 4.7%</span>
+        </div>
+        <p class="scale-cap">shared byte scale · lazy-load ratio 21.1&times; · measured from the template&rsquo;s git objects at rev 5224beb</p>
+      </div>
+
+      <figure class="region rv">
+        <div class="log-title"><span>ON-DEMAND REGION · 20 MODULES</span><span class="log-src">one block = 1 KiB · flash allocates whole blocks — the last shows its slack</span></div>
+        <div class="region-row"><span class="addr">0x00000</span><span class="rname">writing-skills</span><span class="rtag">DISC</span><span class="rtrack"><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i class="pad" style="width:3.8462%"><b style="width:67%"></b></i></span><span class="rval">26,286 B</span></div>
+        <div class="region-row"><span class="addr">0x066AE</span><span class="rname">impartial-review</span><span class="rtag">DISC</span><span class="rtrack"><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i class="pad" style="width:3.8462%"><b style="width:44.2%"></b></i></span><span class="rval">20,933 B</span></div>
+        <div class="region-row"><span class="addr">0x0B873</span><span class="rname">init-project</span><span class="rtag">CORE</span><span class="rtrack"><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i class="pad" style="width:3.8462%"><b style="width:9.3%"></b></i></span><span class="rval">13,407 B</span></div>
+        <div class="region-row xtra"><span class="addr">0x0ECD2</span><span class="rname">enhance-prompt</span><span class="rtag">XTRA</span><span class="rtrack"><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i class="pad" style="width:3.8462%"><b style="width:58%"></b></i></span><span class="rval">9,810 B</span></div>
+        <div class="region-row xtra"><span class="addr">0x11324</span><span class="rname">why</span><span class="rtag">XTRA</span><span class="rtrack"><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i class="pad" style="width:3.8462%"><b style="width:90.7%"></b></i></span><span class="rval">9,121 B</span></div>
+        <div class="region-row"><span class="addr">0x136C5</span><span class="rname">merge</span><span class="rtag">CORE</span><span class="rtrack"><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i class="pad" style="width:3.8462%"><b style="width:38.9%"></b></i></span><span class="rval">8,590 B</span></div>
+        <div class="region-row xtra"><span class="addr">0x15853</span><span class="rname">advocate</span><span class="rtag">XTRA</span><span class="rtrack"><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i class="pad" style="width:3.8462%"><b style="width:65.3%"></b></i></span><span class="rval">7,837 B</span></div>
+        <div class="region-row xtra"><span class="addr">0x176F0</span><span class="rname">fable-mode</span><span class="rtag">XTRA</span><span class="rtrack"><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i class="pad" style="width:3.8462%"><b style="width:58.8%"></b></i></span><span class="rval">7,770 B</span></div>
+        <div class="region-row xtra"><span class="addr">0x1954A</span><span class="rname">lab</span><span class="rtag">XTRA</span><span class="rtrack"><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i class="pad" style="width:3.8462%"><b style="width:51.3%"></b></i></span><span class="rval">7,693 B</span></div>
+        <div class="region-row xtra"><span class="addr">0x1B357</span><span class="rname">humanizer</span><span class="rtag">XTRA</span><span class="rtrack"><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i class="pad" style="width:3.8462%"><b style="width:30.8%"></b></i></span><span class="rval">7,483 B</span></div>
+        <div class="region-row xtra"><span class="addr">0x1D092</span><span class="rname">handoff-audit</span><span class="rtag">XTRA</span><span class="rtrack"><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i class="pad" style="width:3.8462%"><b style="width:1.4%"></b></i></span><span class="rval">7,182 B</span></div>
+        <div class="region-row xtra"><span class="addr">0x1ECA0</span><span class="rname">purposeful-writing</span><span class="rtag">XTRA</span><span class="rtrack"><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i class="pad" style="width:3.8462%"><b style="width:23.3%"></b></i></span><span class="rval">6,383 B</span></div>
+        <div class="region-row xtra"><span class="addr">0x2058F</span><span class="rname">forge-repo-ui-skill</span><span class="rtag">XTRA</span><span class="rtrack"><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i class="pad" style="width:3.8462%"><b style="width:18.1%"></b></i></span><span class="rval">6,329 B</span></div>
+        <div class="region-row"><span class="addr">0x21E48</span><span class="rname">optimize-context</span><span class="rtag">CORE</span><span class="rtrack"><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i class="pad" style="width:3.8462%"><b style="width:10.6%"></b></i></span><span class="rval">6,253 B</span></div>
+        <div class="region-row"><span class="addr">0x236B5</span><span class="rname">writing-plans</span><span class="rtag">DISC</span><span class="rtrack"><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i class="pad" style="width:3.8462%"><b style="width:67.6%"></b></i></span><span class="rval">5,812 B</span></div>
+        <div class="region-row"><span class="addr">0x24D69</span><span class="rname">brainstorming</span><span class="rtag">DISC</span><span class="rtrack"><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i class="pad" style="width:3.8462%"><b style="width:62%"></b></i></span><span class="rval">5,755 B</span></div>
+        <div class="region-row"><span class="addr">0x263E4</span><span class="rname">addskill</span><span class="rtag">CORE</span><span class="rtrack"><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i class="pad" style="width:3.8462%"><b style="width:54.5%"></b></i></span><span class="rval">5,678 B</span></div>
+        <div class="region-row"><span class="addr">0x27A12</span><span class="rname">sync-starter</span><span class="rtag">CORE</span><span class="rtrack"><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i class="pad" style="width:3.8462%"><b style="width:96.2%"></b></i></span><span class="rval">5,081 B</span></div>
+        <div class="region-row"><span class="addr">0x28DEB</span><span class="rname">recall</span><span class="rtag">CORE</span><span class="rtrack"><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i class="pad" style="width:3.8462%"><b style="width:48%"></b></i></span><span class="rval">4,588 B</span></div>
+        <div class="region-row xtra"><span class="addr">0x29FD7</span><span class="rname">caveman</span><span class="rtag">XTRA</span><span class="rtrack"><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i style="width:3.8462%"></i><i class="pad" style="width:3.8462%"><b style="width:3.8%"></b></i></span><span class="rval">3,111 B</span></div>
+        <div class="region-row region-end"><span class="addr">0x2ABFE</span><span class="rname">END OF IMAGE</span><span class="rtag"></span><span class="rsum">checksum 97530c9e — git tree hash of .claude/skills · verify: <code class="cmd">git rev-parse 5224beb:.claude/skills</code></span><span class="rval">175,102 B</span></div>
+      </figure>
+
+      <p class="sec-note">Three tiers ship: core&nbsp;6, discipline&nbsp;4, extras&nbsp;10. The <code class="cmd">minimal</code> preset unmaps the ten rows tagged XTRA, 72,719 B of the region, and trims the resident skill index to 1,398 B. And because every saved rule costs tokens on every turn, <code class="cmd">/optimize-context</code> exists to prune: a rule that stops earning its keep gets deleted.</p>
+    </section>
+
+    <!-- ============ 03 FLASH PROCEDURE ============ -->
+    <section aria-labelledby="flash-h">
+      <div class="sec-head rv">
+        <p class="sec-label">SECTION 03 · FLASH PROCEDURE</p>
+        <h2 id="flash-h">Add it to a repo you have, or spawn one that starts warm.</h2>
+        <p class="sec-lede">Path A drops the skill set into an existing project. Path B spawns a whole project with the full system: kernel, hooks, memory, and starter sync.</p>
+      </div>
+
+      <div class="flash-grid">
+        <div class="flash-card rv">
+          <p class="flash-name">A · SKILLS ONLY</p>
+          <pre class="codeblock"><code>/plugin marketplace add ryanportfolio/Harness-Firmware
+/plugin install claude-starter@claude-starter</code></pre>
+          <p class="flash-copy">Nothing else changes in your repo. It ships under its historical plugin id, <code class="cmd">claude-starter</code>; skills arrive namespaced.</p>
+        </div>
+        <div class="flash-card rv">
+          <p class="flash-name">B · FULL TEMPLATE</p>
+          <ol class="flash-steps">
+            <li><a href="https://github.com/ryanportfolio/Harness-Firmware/generate">use this template on GitHub</a></li>
+            <li>open the clone in Claude Code</li>
+            <li>run <code class="cmd">/init-project</code></li>
+          </ol>
+          <p class="flash-copy"><code class="cmd">/init-project</code> detects the stack and runs a short Q&amp;A. Then it fills in the verification and deploy rules, seeds the memory files, and prunes what you won&rsquo;t use before committing the setup.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 04 TARGETS ============ -->
+    <section aria-labelledby="targets-h">
+      <div class="sec-head rv">
+        <p class="sec-label">SECTION 04 · TARGETS</p>
+        <h2 id="targets-h">One image, two runtimes.</h2>
+        <p class="sec-lede">The same firmware flashes to Claude Code and to Codex. Claude Code runs the full system. Codex gets its own rules file, <code class="cmd">AGENTS.md</code>, written so Claude-only hooks and git automation never leak into it, and finds the same skills through thin generated adapter stubs. One source of truth, no duplicated playbooks.</p>
+      </div>
+
+      <figure class="targets rv">
+        <div class="t-image">
+          <p class="t-name">FIRMWARE IMAGE</p>
+          <p class="t-line">CLAUDE.md kernel</p>
+          <p class="t-line">.claude/skills/ <span class="t-tag">canonical</span></p>
+          <p class="t-line"><span class="persist">.claude/reference/</span> memory</p>
+          <p class="t-line">hooks · sync scripts</p>
+        </div>
+        <div class="t-wires" aria-hidden="true"><svg viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"><path d="M0 80 H36 V40 H116" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M0 80 H36 V120 H116" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="114" y="36" width="6" height="8" fill="currentColor"/><rect x="114" y="116" width="6" height="8" fill="currentColor"/><circle cx="0" cy="80" r="4" fill="currentColor"/></svg></div>
+        <div class="t-sockets">
+          <div class="t-socket">
+            <p class="t-name"><span class="t-role">FLASH TARGET A</span>CLAUDE CODE</p>
+            <p class="t-line">full system: kernel, hooks, skills, committed memory</p>
+          </div>
+          <div class="t-socket">
+            <p class="t-name"><span class="t-role">FLASH TARGET B</span>CODEX</p>
+            <p class="t-line">AGENTS.md boundary · generated .agents/skills/ adapters · no inherited hooks</p>
+          </div>
+        </div>
+      </figure>
+    </section>
+
+    <!-- ============ EXIT ============ -->
+    <section class="exit" aria-labelledby="exit-h">
+      <div class="sec-head rv">
+        <p class="sec-label">SOURCE</p>
+        <h2 id="exit-h">Open, auditable, MIT.</h2>
+      </div>
+      <div class="exit-grid">
+        <div class="rv">
+          <p class="sec-note">The whole system is a public GitHub template. Forked skills carry their origins and licenses in <code class="cmd">PROVENANCE.md</code>, notably Jesse Vincent&rsquo;s <em>superpowers</em> set (MIT). Health is checkable: <code class="cmd">doctor.mjs</code> audits hooks, skills, and adapter sync; <code class="cmd">context-weight.sh</code> prices the resident layer.</p>
+          <p class="exit-links">
+            <a class="btn" href="https://github.com/ryanportfolio/Harness-Firmware">ryanportfolio/Harness-Firmware &rarr;</a>
+            <a class="btn btn-quiet" href="/">fullbuild.ai &rarr;</a>
+          </p>
+        </div>
+        <figure class="log flash-log rv">
+          <div class="log-title"><span>FLASH LOG</span></div>
+          <div class="log-row"><span class="addr">2026-07-30</span><span class="obj wide">byte figures measured from git objects at rev 5224beb · tokens &approx; bytes/4</span><span class="st">OK</span></div>
+          <div class="log-row"><span class="addr">2026-07-30</span><span class="obj wide">read-back verify: <code class="cmd">tests/harness-firmware.test.mjs</code> checks every rendered figure against <code class="cmd">facts.json</code></span><span class="st">OK</span></div>
+        </figure>
+      </div>
+
+      <figure class="log shutdown rv">
+        <div class="log-title"><span>SHUTDOWN</span></div>
+        <div class="log-row"><span class="op">power-off</span><span class="obj wide">context window cleared</span><span class="st">--</span></div>
+        <div class="log-row"><span class="op">retained</span><span class="obj wide"><span class="persist">CLAUDE.md · .claude/skills/ · .claude/reference/</span> — committed, in the repo</span><span class="st">OK</span></div>
+        <div class="log-row log-sum"><span class="op">next boot</span><span class="obj wide">warm · resume at 0x00000</span><span class="st persist">READY</span></div>
+      </figure>
+
+      <footer class="colophon">
+        <p>a fullbuild.ai page &middot; typeface: whatever your machine shipped with — firmware uses what&rsquo;s already resident</p>
+      </footer>
+    </section>
+
+  </main>
+
+  <script type="module" src="/harness-firmware/src/boot.mjs"></script>
+</body>
+</html>
