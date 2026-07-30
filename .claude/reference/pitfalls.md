@@ -250,3 +250,13 @@ Browser cannot perform a necessary check or the user explicitly requests it.
 This rule is Codex-specific; Claude Code keeps its configured verification
 workflow. Browser choice does not replace the existing fresh-port and sentinel
 checks.
+
+## npm run build while dev server runs = dev server serves module errors (2026-07-30)
+
+Symptom: a previously working dev-server page starts returning
+`Error: Cannot find module './331.js'` from `.next/server/webpack-runtime.js`.
+Cause: `next build` and `next dev` share `.next/`; running a production build
+while the dev server is up replaces the chunk graph under the running server.
+Fix: kill the dev server, `rm -rf .next`, restart dev. Prevention: stop the
+dev server before any local `next build`, or skip the local build and let
+Vercel be the build gate (it already is authoritative for this repo).
