@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>phosphor baker</title>
+</head>
+<body>
+<script type="module">
+// Build-time baker page. scripts/bake-phosphor.mjs drives this in headless
+// chromium and writes the canvases out as the no-JS fallback PNGs.
+// Same module, same seed, same facts as the live page — one engine.
+import {
+  blueNoise64, heroState, renderSpectrum, renderCoreHalo,
+  renderTubes, fieldToRGBA, SEED,
+} from './dither.mjs';
+
+const facts = await (await fetch('/harness-firmware/facts.json')).json();
+const tile = blueNoise64(SEED);
+const bakes = {};
+const report = {};
+
+function toPNG(name, w, h, field) {
+  const cv = document.createElement('canvas');
+  cv.width = w;
+  cv.height = h;
+  const ctx = cv.getContext('2d');
+  const img = ctx.createImageData(w, h);
+  fieldToRGBA(field, img.data);
+  // opaque ground for standalone images
+  for (let i = 0; i < img.data.length; i += 4) {
+    if (img.data[i + 3] === 0) {
+      img.data[i] = 7; img.data[i + 1] = 11; img.data[i + 2] = 12; img.data[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  bakes[name] = cv.toDataURL('image/png');
+}
+
+// hero fallback: the same uniform ambient drift the JS steady state shows
+// (no glyph burn: the real HTML headline sits on top; no center blob: a
+// bounded glow mass reads as a stain behind live text)
+function heroField(w, h) {
+  const mask = new Float32Array(w * h).fill(0.25);
+  return heroState(mask, w, h, tile, () => 60, 0);
+}
+
+toPNG('hero', 720, 450, heroField(720, 450));
+toPNG('hero@2x', 1440, 900, heroField(1440, 900));
+
+{
+  const w = 1200; const h = 640;
+  const r = renderCoreHalo(facts, w, h, tile);
+  report.coreHalo = { greenLit: r.greenLit, residueLit: r.residueLit, ratio: r.ratio };
+  toPNG('core-halo', w, h, r.field);
+}
+{
+  const w = 1200; const h = 420;
+  const r = renderSpectrum(facts, w, h, tile);
+  report.spectrum = r.geo.bands.map((b) => ({ name: b.name, blocks: b.blocks, dots: b.dots.length }));
+  toPNG('spectrum', w, h, r.field);
+}
+{
+  const w = 1200; const h = 480;
+  const r = renderTubes(facts, w, h, tile);
+  toPNG('tubes', w, h, r.field);
+}
+
+window.__bakes = bakes;
+window.__report = report;
+window.__done = true;
+</script>
+</body>
+</html>
