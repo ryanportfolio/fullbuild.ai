@@ -238,3 +238,15 @@ the initial bake should also re-run on `document.fonts.ready`. Capture scripts:
 `window.__burnin.freeze()/step(ms)` gives deterministic frames for screenshots
 (occluded Playwright windows throttle rAF to ~1fps, which is a capture
 artifact, not a page bug).
+
+## Codex local UI verification uses Codex Browser first (2026-07-29)
+
+Symptom: a Codex session starts a separate Playwright workflow even though the
+in-app Codex Browser is available, splitting UI state across tools and making
+stale tabs or extra preview processes harder to diagnose. Fix: Codex must use
+the in-app Codex Browser for local navigation, screenshots, interaction checks,
+and responsive inspection. Standalone Playwright is a fallback only when Codex
+Browser cannot perform a necessary check or the user explicitly requests it.
+This rule is Codex-specific; Claude Code keeps its configured verification
+workflow. Browser choice does not replace the existing fresh-port and sentinel
+checks.
