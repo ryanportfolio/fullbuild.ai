@@ -1,0 +1,1606 @@
+/*
+  TAWKIFY MODERNIZATION CONCEPT: FAITHFUL REFRESH, WITH RECEIPTS
+
+  Unofficial redesign concept for tawkify.com, a job application artifact.
+  Not affiliated with Tawkify. Three routes share this sheet:
+  /prototype/tawkify          marketing home
+  /prototype/tawkify/match    the client's introduction
+  /prototype/tawkify/desk     the matchmaker's desk
+
+  Direction: evolution, not rebrand. Chosen by a judged panel over an
+  editorial-magazine and a product-forward direction; research audit pulled
+  the real site's CSS. Tawkify's equity is four palette tokens, cream on
+  near-black alternation, one emerald pill, a high-contrast serif over a
+  neutral grotesk, and oversized process numerals. All kept. Effort goes to
+  what is dated: the 4px-radius-vs-pill contradiction, one spacing value
+  repeated 18 times, 65 identical headings, stock photos over real clients,
+  and two live contrast bugs.
+
+  Palette. Four real tokens inherited verbatim, additions AA computed:
+    --cream-light #FBF5ED  quiet ground: explanation, spec, terms
+    --cream       #F6EADA  narrative ground, text on ink
+    --cream-deep  #DED5C7  commitment ground, money or decision bands only
+    --ink         #111111  primary ink and the proof ground, never #000
+    --ink-muted   #56524D  all secondary copy, solid not alpha, AA on all grounds
+    --cream-muted #C9BCA9  secondary copy on ink (10.1:1)
+    --emerald     #28B091  THE accent: primary CTA fill + logo only, never text
+                           on cream (2.3:1). Ink label on it is 6.9:1
+    --emerald-deep #0B5A47 CTA hover, focus ring, links, emerald-as-text form
+    --tan         #B2A085  decorative hairlines + plate mid-tone, never text on
+                           cream, legit caption color on ink (7.4:1)
+    --rule-strong #8A7A61  boundaries that bound interactive controls (>=3:1)
+  Product-only (never on the marketing route):
+    --panel #FFFCF6 elevation by ground, zero shadows
+    --flag  #540A13 constraint violated, overdue SLA (from the site's own
+            latent palette), --hold #4C5A48 in progress / awaiting approval
+    --plate-dark #1C1A17 plates on ink bands
+  Fixed at token level: primary pill carries a 2px ink keyline at EVERY state
+  (the real site's hover:bg-champagne dissolves at 1.23:1); muted text is a
+  solid, not black/50 (3.4:1 fail).
+
+  Type. Fraunces display (SOFT 0, WONK 0 pulls it onto Contralto's territory;
+  opsz set per role; italic for decks and pull quotes). Archivo body and UI
+  (wdth 100; wdth 85 only on desk table heads). Martian Mono NEVER SETS A
+  SENTENCE: only measured values, ids, timestamps, folios, footnotes. Claims
+  are serif, measurements are mono, the type says which is which.
+  Weight runs inversely to size: hero 400, numerals 300, subheads 600, no 700.
+  Inherited holds: no uppercase (mono slugs and stamps are the exception the
+  system declares), no letter-spacing on sans, no bold display.
+
+  Layout. 12-col grid, 1280 max, text never full bleed. Band rhythm in four
+  tiers (xs/s/m/l) replacing the single py-14/24. Radius: 0 for everything
+  except the pill's 9999px. Zero box-shadow anywhere: any shadow in a diff is
+  a defect. Ground changes carry meaning: cream-light explains, cream speaks,
+  cream-deep asks for a decision, ink promises. Desktop folio rail: mono
+  section marker per band.
+
+  Motion. One easing, two durations, four verbs: SETTLE (12px rise, one-shot),
+  RULE (eyebrow rule scaleX), LIFT (color/border feedback), ADVANCE (pipeline
+  stage fill, the only informational motion). Refused with reasons: counting
+  numerals (performs the unfalsifiable-statistic behavior the sentiment
+  research flags), parallax, scroll-jack, gradients, blur, any hover transform
+  beyond a 1.02 plate scale. Reduced motion and no-JS resolve to the finished
+  page; reveals exist only behind [data-js] + no-preference.
+
+  Imagery. Photo slots ship as toned plates whose mono slug IS the art
+  direction (subject, ratio, grading) for a later gpt-image-2 pass. Keyline
+  1px tan inset 12px. On /match the withheld portrait is not a placeholder,
+  it is the product: PHOTO WITHHELD · REVEAL AT YOUR CHOICE.
+
+  Risk taken: quiet is hard to sell; a skim can read this as a reskin. The
+  receipts row in the hero and the shared-component parity across routes are
+  the two screenshot-legible proofs. Displaced: plum/coral ledger rebrand
+  (better authored object, worse answer), editorial cover-line scale, dark
+  inversion, a third radius.
+*/
+
+.shell {
+  --cream-light: #fbf5ed;
+  --cream: #f6eada;
+  --cream-deep: #ded5c7;
+  --ink: #111111;
+  --ink-muted: #56524d;
+  --cream-muted: #c9bca9;
+  --emerald: #28b091;
+  --emerald-deep: #0b5a47;
+  --tan: #b2a085;
+  --rule-strong: #8a7a61;
+  --panel: #fffcf6;
+  --flag: #540a13;
+  --hold: #4c5a48;
+  --plate-dark: #1c1a17;
+  --plate-sand: #e8dcc8;
+  --ease: cubic-bezier(0.5, 0, 0.09, 1);
+  --dur-tap: 200ms;
+  --dur-enter: 700ms;
+  --band-xs-y: clamp(3rem, 6vw, 4.5rem);
+  --band-s-y: clamp(4rem, 8vw, 6rem);
+  --band-m-y: clamp(6rem, 11vw, 9rem);
+  --band-l-y: clamp(8rem, 15vw, 12.5rem);
+  min-height: 100svh;
+  overflow-x: clip;
+  background: var(--cream-light);
+  color: var(--ink);
+  font-family: var(--font-archivo), Arial, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.shell *,
+.shell *::before,
+.shell *::after {
+  box-sizing: border-box;
+}
+
+.shell :is(h1, h2, h3, p, ul, ol, dl, dd, figure, blockquote, table) {
+  margin: 0;
+}
+
+.shell button {
+  font: inherit;
+}
+
+.shell a {
+  color: inherit;
+}
+
+.shell :is(a, button, summary, input, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--emerald-deep);
+  outline-offset: 2px;
+}
+
+.onInk :is(a, button, summary):focus-visible {
+  outline-color: var(--emerald);
+}
+
+.skipLink {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  z-index: 60;
+  padding: 0.6rem 1rem;
+  background: var(--ink);
+  color: var(--cream);
+  text-decoration: none;
+}
+
+.skipLink:focus-visible {
+  left: 0.75rem;
+  top: 0.75rem;
+}
+
+/* ---------- Type roles ---------- */
+
+.display {
+  font-family: var(--font-fraunces), Georgia, 'Times New Roman', serif;
+  font-variation-settings: 'SOFT' 0, 'WONK' 0, 'opsz' 96;
+  font-weight: 400;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.h1 {
+  composes: display;
+  font-variation-settings: 'SOFT' 0, 'WONK' 0, 'opsz' 144;
+  font-size: clamp(2.75rem, 1.6rem + 4.6vw, 4.5rem);
+  line-height: 1.06;
+  letter-spacing: -0.01em;
+}
+
+.h2 {
+  composes: display;
+  font-size: clamp(2.125rem, 1.5rem + 2.6vw, 3.25rem);
+  max-width: 16ch;
+}
+
+.h3 {
+  composes: display;
+  font-variation-settings: 'SOFT' 0, 'WONK' 0, 'opsz' 24;
+  font-weight: 600;
+  font-size: 1.5rem;
+  line-height: 1.18;
+}
+
+.deck {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-variation-settings: 'SOFT' 0, 'WONK' 0, 'opsz' 32;
+  font-style: italic;
+  font-weight: 300;
+  font-size: clamp(1.25rem, 2.2vw, 1.625rem);
+  line-height: 1.35;
+  color: var(--ink-muted);
+}
+
+.pullQuote {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-variation-settings: 'SOFT' 0, 'WONK' 0, 'opsz' 48;
+  font-style: italic;
+  font-weight: 300;
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  line-height: 1.18;
+  text-indent: -0.45em;
+}
+
+.numeral {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-variation-settings: 'SOFT' 0, 'WONK' 0, 'opsz' 144;
+  font-weight: 300;
+  font-size: clamp(4.25rem, 3rem + 5vw, 6rem);
+  line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.proofValue {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-variation-settings: 'SOFT' 0, 'WONK' 0, 'opsz' 96;
+  font-weight: 400;
+  font-size: clamp(2.5rem, 4vw, 3.5rem);
+  line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.lead {
+  font-size: 1.25rem;
+  line-height: 1.5;
+}
+
+.eyebrow {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--ink-muted);
+}
+
+.fact {
+  font-family: var(--font-martian), 'Courier New', monospace;
+  font-size: 0.75rem;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums lining-nums;
+  color: var(--ink-muted);
+}
+
+.factSmall {
+  composes: fact;
+  font-size: 0.6875rem;
+}
+
+.muted {
+  color: var(--ink-muted);
+}
+
+/* ---------- Pills ---------- */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  border-radius: 9999px;
+  border: 2px solid var(--ink);
+  padding: 0.7rem 1.9rem;
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--dur-tap) var(--ease), color var(--dur-tap) var(--ease), border-color var(--dur-tap) var(--ease);
+}
+
+.pillPrimary {
+  composes: pill;
+  background: var(--emerald);
+  color: var(--ink);
+}
+
+.pillPrimary:hover {
+  background: var(--emerald-deep);
+  color: var(--cream);
+}
+
+.pillSecondary {
+  composes: pill;
+  background: transparent;
+  color: var(--ink);
+}
+
+.pillSecondary:hover {
+  background: var(--ink);
+  color: var(--cream);
+}
+
+.onInk .pillSecondary {
+  border-color: var(--cream);
+  color: var(--cream);
+}
+
+.onInk .pillSecondary:hover {
+  background: var(--cream);
+  color: var(--ink);
+}
+
+.pillGhost {
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 0.25em;
+  transition: text-decoration-color var(--dur-tap) var(--ease);
+}
+
+.pillGhost:hover {
+  text-decoration-color: var(--emerald-deep);
+}
+
+/* ---------- Header ---------- */
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--ink);
+  color: var(--cream);
+}
+
+.headerInner {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0.9rem clamp(1.5rem, 3vw, 2.5rem);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.wordmark {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-variation-settings: 'SOFT' 0, 'WONK' 0, 'opsz' 40;
+  font-weight: 600;
+  font-size: 1.35rem;
+  line-height: 1;
+  color: var(--cream);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wordmark svg {
+  width: 1.5rem;
+  height: 0.85rem;
+  color: var(--emerald);
+}
+
+.conceptTag {
+  composes: factSmall;
+  color: var(--cream-muted);
+  border: 1px solid var(--cream-muted);
+  border-radius: 2px;
+  padding: 0.2rem 0.5rem;
+  white-space: nowrap;
+}
+
+.surfaceNav {
+  margin-left: auto;
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.surfaceLink {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 9999px;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--cream-muted);
+  transition: color var(--dur-tap) var(--ease), background-color var(--dur-tap) var(--ease);
+}
+
+.surfaceLink:hover {
+  color: var(--cream);
+}
+
+.surfaceLink[aria-current='page'] {
+  background: var(--cream);
+  color: var(--ink);
+}
+
+.surfaceIndex {
+  font-family: var(--font-martian), monospace;
+  font-size: 0.65rem;
+}
+
+/* ---------- Band system ---------- */
+
+.band {
+  position: relative;
+}
+
+.band[data-ground='cream-light'] {
+  background: var(--cream-light);
+}
+
+.band[data-ground='cream'] {
+  background: var(--cream);
+}
+
+.band[data-ground='cream-deep'] {
+  background: var(--cream-deep);
+}
+
+.band[data-ground='ink'] {
+  background: var(--ink);
+  color: var(--cream);
+}
+
+.band[data-ground='ink'] .eyebrow,
+.band[data-ground='ink'] .deck,
+.band[data-ground='ink'] .fact,
+.band[data-ground='ink'] .factSmall,
+.band[data-ground='ink'] .muted {
+  color: var(--cream-muted);
+}
+
+.band[data-tier='xs'] {
+  padding-block: var(--band-xs-y);
+}
+
+.band[data-tier='s'] {
+  padding-block: var(--band-s-y);
+}
+
+.band[data-tier='m'] {
+  padding-block: var(--band-m-y);
+}
+
+.band[data-tier='l'] {
+  padding-block: var(--band-l-y);
+}
+
+.bandInner {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding-inline: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.folio {
+  position: absolute;
+  top: 2.5rem;
+  left: 1.25rem;
+  display: none;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-martian), monospace;
+  font-size: 0.6875rem;
+  letter-spacing: -0.02em;
+  color: var(--ink-muted);
+  writing-mode: horizontal-tb;
+}
+
+.folio::before {
+  content: '';
+  width: 24px;
+  height: 1px;
+  background: var(--tan);
+}
+
+.band[data-ground='ink'] .folio {
+  color: var(--tan);
+}
+
+@media (min-width: 1100px) {
+  .folio {
+    display: inline-flex;
+  }
+}
+
+.rule {
+  width: 24px;
+  height: 2px;
+  background: var(--emerald-deep);
+  margin-bottom: 0.9rem;
+  transform-origin: left center;
+}
+
+.band[data-ground='ink'] .rule {
+  background: var(--emerald);
+}
+
+.sectionHead {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: clamp(2rem, 4vw, 3.25rem);
+}
+
+/* ---------- Hero ---------- */
+
+.heroGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 6fr) minmax(0, 6fr);
+  gap: clamp(2rem, 4vw, 4rem);
+  align-items: center;
+}
+
+.heroCopy {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 34rem;
+}
+
+.heroActions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.receipts {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.receipts span {
+  font-family: var(--font-martian), 'Courier New', monospace;
+  font-size: 0.75rem;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums lining-nums;
+  color: var(--ink-muted);
+}
+
+/* ---------- Plates ---------- */
+
+.plate {
+  position: relative;
+  width: 100%;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.plate[data-tone='sand'] {
+  background: var(--plate-sand);
+}
+
+.plate[data-tone='creamDeep'] {
+  background: var(--cream-deep);
+}
+
+.plate[data-tone='tan'] {
+  background: var(--tan);
+}
+
+.plate[data-tone='dark'] {
+  background: var(--plate-dark);
+}
+
+.plate::before {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  border: 1px solid var(--tan);
+  pointer-events: none;
+}
+
+.plate[data-tone='dark']::before {
+  border-color: rgba(246, 234, 218, 0.2);
+}
+
+.plateSlug {
+  position: absolute;
+  left: 22px;
+  bottom: 20px;
+  right: 22px;
+  font-family: var(--font-martian), monospace;
+  font-size: 0.6875rem;
+  letter-spacing: -0.02em;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+.plate[data-tone='dark'] .plateSlug,
+.plate[data-tone='tan'] .plateSlug {
+  color: var(--plate-dark);
+}
+
+.plate[data-tone='dark'] .plateSlug {
+  color: var(--tan);
+}
+
+/* ---------- Manifesto / incentive band ---------- */
+
+.incentiveGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: start;
+}
+
+.incentiveBody {
+  display: grid;
+  gap: 1.1rem;
+  color: var(--cream-muted);
+  max-width: 52ch;
+}
+
+/* ---------- Matchmakers ---------- */
+
+.makerGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1.5rem, 2.5vw, 2.5rem);
+}
+
+.makerCard {
+  display: grid;
+  gap: 0.9rem;
+  align-content: start;
+}
+
+.makerMeta {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.makerLine {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+.continuityNote {
+  margin-top: clamp(2rem, 4vw, 3rem);
+  max-width: 62ch;
+  color: var(--ink-muted);
+}
+
+/* ---------- Process numerals ---------- */
+
+.stepGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(1.5rem, 2.5vw, 2.5rem);
+}
+
+.step {
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+}
+
+.step .numeral {
+  color: var(--ink);
+}
+
+.stepBody {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+/* ---------- Pricing ---------- */
+
+.priceScroll {
+  overflow-x: auto;
+}
+
+.priceTable {
+  width: 100%;
+  min-width: 34rem;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.priceTable th {
+  text-align: left;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--ink-muted);
+  padding: 0.7rem 1rem 0.6rem 0;
+  border-bottom: 1px solid var(--rule-strong);
+}
+
+.priceTable td {
+  padding: 1rem 1rem 1rem 0;
+  border-bottom: 1px solid var(--tan);
+  vertical-align: top;
+}
+
+.priceTable tr:last-child td {
+  border-bottom: none;
+}
+
+.priceName {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-variation-settings: 'SOFT' 0, 'WONK' 0, 'opsz' 24;
+  font-weight: 600;
+  font-size: 1.1rem;
+  white-space: nowrap;
+}
+
+.priceValue {
+  composes: fact;
+  font-size: 0.95rem;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.matchDefinition {
+  margin-top: 1.75rem;
+  max-width: 62ch;
+  color: var(--ink-muted);
+}
+
+/* ---------- Disclosure ---------- */
+
+.disclosure {
+  margin-top: clamp(2rem, 4vw, 3rem);
+  border-top: 1px solid var(--rule-strong);
+  padding-top: 1.5rem;
+  display: grid;
+  gap: 0.8rem;
+  max-width: 68ch;
+}
+
+.disclosure p {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--ink-muted);
+}
+
+/* ---------- Screening spec ---------- */
+
+.specGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: clamp(2rem, 4vw, 4rem);
+  align-items: start;
+}
+
+.specList {
+  display: grid;
+  gap: 0;
+}
+
+.specRow {
+  display: grid;
+  grid-template-columns: 11rem minmax(0, 1fr);
+  gap: 1.25rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--tan);
+}
+
+.specRow:last-child {
+  border-bottom: none;
+}
+
+.specRow dt {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.specRow dd {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+/* ---------- Stories ---------- */
+
+.storyLede {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: clamp(2rem, 4vw, 4rem);
+  align-items: end;
+  margin-bottom: clamp(2rem, 4vw, 3.5rem);
+}
+
+.storyPair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(1.5rem, 2.5vw, 2.5rem);
+  margin-top: clamp(1.5rem, 2.5vw, 2.5rem);
+}
+
+.storyCaption {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.storyFacts {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.storyQuote {
+  composes: pullQuote;
+  max-width: 24ch;
+  margin-left: 0.45em;
+}
+
+.inkDivider {
+  height: 1px;
+  background: rgba(246, 234, 218, 0.22);
+  margin-block: var(--band-s-y);
+}
+
+/* ---------- Proof numbers ---------- */
+
+.proofGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(1.5rem, 2.5vw, 2.5rem);
+}
+
+.proof {
+  display: grid;
+  gap: 0.6rem;
+  align-content: start;
+  border-left: 1px solid rgba(246, 234, 218, 0.28);
+  padding-left: 1.25rem;
+}
+
+.proofLabel {
+  font-size: 0.92rem;
+  line-height: 1.4;
+  color: var(--cream-muted);
+}
+
+.proofFootnote {
+  composes: factSmall;
+}
+
+/* ---------- Ratings ---------- */
+
+.ratingsRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1.5rem, 2.5vw, 2.5rem);
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.rating {
+  display: grid;
+  gap: 0.4rem;
+  border-top: 1px solid var(--rule-strong);
+  padding-top: 0.9rem;
+}
+
+.ratingValue {
+  composes: fact;
+  font-size: 1.15rem;
+  color: var(--ink);
+}
+
+.criticsBlock {
+  max-width: 62ch;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.criticsBlock p {
+  color: var(--ink-muted);
+}
+
+/* ---------- Ladder ---------- */
+
+.ladder {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1.5rem, 2.5vw, 2.5rem);
+  border-top: 1px solid var(--rule-strong);
+  padding-top: 1.5rem;
+}
+
+.ladderRung {
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+}
+
+.ladderIndex {
+  composes: fact;
+}
+
+/* ---------- Footer ---------- */
+
+.footer {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.footerLine {
+  color: var(--cream-muted);
+  font-size: 0.95rem;
+  max-width: 62ch;
+}
+
+.footerDisclaimer {
+  border-top: 1px solid rgba(246, 234, 218, 0.22);
+  padding-top: 1.5rem;
+  color: var(--cream-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  max-width: 72ch;
+}
+
+.footerDisclaimer a {
+  color: var(--cream);
+}
+
+/* ---------- Product shared ---------- */
+
+.appMain {
+  background: var(--cream-light);
+}
+
+.appLayout {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: clamp(1.5rem, 2.5vw, 2.5rem);
+  align-items: start;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--rule-strong);
+  border-radius: 0;
+}
+
+.panelHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--tan);
+}
+
+.panelTitle {
+  composes: h3;
+  font-size: 1.15rem;
+}
+
+.panelBody {
+  padding: 1.25rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.rail {
+  position: sticky;
+  top: 5rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.25rem 0.7rem;
+  font-family: var(--font-martian), monospace;
+  font-size: 0.65rem;
+  letter-spacing: -0.01em;
+  color: var(--cream-light);
+}
+
+.statusPill[data-state='hold'] {
+  background: var(--hold);
+}
+
+.statusPill[data-state='flag'] {
+  background: var(--flag);
+}
+
+.statusPill[data-state='done'] {
+  background: var(--emerald-deep);
+}
+
+/* Constraint rows: the same component on /match (read-only) and /desk */
+
+.constraintList {
+  display: grid;
+}
+
+.constraintRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) 4.5rem;
+  gap: 1rem;
+  align-items: baseline;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--tan);
+}
+
+.constraintRow:last-child {
+  border-bottom: none;
+}
+
+.constraintLabel {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.constraintCell {
+  composes: fact;
+  font-size: 0.78rem;
+}
+
+.constraintVerdict {
+  composes: fact;
+  font-size: 0.78rem;
+  text-align: right;
+}
+
+.constraintRow[data-verdict='pass'] .constraintVerdict {
+  color: var(--emerald-deep);
+}
+
+.constraintRow[data-verdict='override'] .constraintVerdict,
+.constraintRow[data-verdict='fail'] .constraintVerdict {
+  color: var(--flag);
+}
+
+.overrideReason {
+  grid-column: 1 / -1;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  border-left: 2px solid var(--flag);
+  padding-left: 0.9rem;
+}
+
+/* Approval stamp */
+
+.approvalStamp {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  border: 1px solid var(--rule-strong);
+  padding: 0.8rem 1rem;
+  background: var(--cream-light);
+}
+
+.stampPortrait {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--cream-deep);
+  border: 1px solid var(--tan);
+}
+
+.stampText {
+  composes: factSmall;
+  line-height: 1.6;
+}
+
+.stampText a {
+  color: var(--ink);
+}
+
+/* Timeline */
+
+.timeline {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.timelineTrack {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+}
+
+.timelineSeg {
+  height: 4px;
+  background: var(--cream-deep);
+}
+
+.timelineSeg[data-done='true'] {
+  background: var(--emerald-deep);
+}
+
+.timelineLabels {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.timelineLabel {
+  composes: factSmall;
+}
+
+.timelineLabel[data-current='true'] {
+  color: var(--ink);
+}
+
+.holdBanner {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+  border-left: 3px solid var(--hold);
+  background: var(--cream-light);
+  padding: 0.8rem 1rem;
+  font-size: 0.92rem;
+  color: var(--ink-muted);
+}
+
+/* ---------- /match specifics ---------- */
+
+.matchHead {
+  display: grid;
+  gap: 0.9rem;
+  padding-block: clamp(2rem, 4vw, 3rem) clamp(1.5rem, 2.5vw, 2rem);
+}
+
+.matchIdentity {
+  display: flex;
+  align-items: baseline;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.matchName {
+  composes: display;
+  font-variation-settings: 'SOFT' 0, 'WONK' 0, 'opsz' 96;
+  font-size: clamp(2.25rem, 4vw, 3rem);
+}
+
+.factRow {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.withheldGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.withheldCopy {
+  display: grid;
+  gap: 1rem;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  color: var(--ink-muted);
+}
+
+.revealControl {
+  justify-self: start;
+}
+
+.narrativeBlock {
+  display: grid;
+  gap: 1.1rem;
+  max-width: 58ch;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.narrativePull {
+  composes: pullQuote;
+  font-size: clamp(1.35rem, 2.2vw, 1.75rem);
+  max-width: 28ch;
+  margin-left: 0.45em;
+  padding-block: 0.5rem;
+}
+
+.dateGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.dateCell {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+}
+
+.dateCell dt {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--ink-muted);
+}
+
+.dateCell dd {
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.decisionRow {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ---------- /desk specifics ---------- */
+
+.deskBar {
+  background: var(--ink);
+  color: var(--cream);
+}
+
+.deskBarInner {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0.8rem clamp(1.5rem, 3vw, 2.5rem);
+  display: flex;
+  align-items: baseline;
+  gap: 1.75rem;
+  flex-wrap: wrap;
+}
+
+.deskBarName {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.deskCounter {
+  composes: factSmall;
+  color: var(--cream-muted);
+}
+
+.deskCounter strong {
+  color: var(--cream);
+  font-weight: 400;
+}
+
+.rosterList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rosterRow {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--tan);
+  transition: background-color var(--dur-tap) var(--ease);
+}
+
+.rosterRow:last-child {
+  border-bottom: none;
+}
+
+.rosterRow:hover {
+  background: var(--cream-light);
+}
+
+.rosterTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.rosterName {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.slaClock {
+  composes: factSmall;
+}
+
+.slaClock[data-late='true'] {
+  color: var(--flag);
+}
+
+.rosterMeta {
+  composes: factSmall;
+}
+
+.rosterObligation {
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+.deskContent {
+  display: grid;
+  gap: clamp(1.5rem, 2.5vw, 2rem);
+}
+
+.dossierGrid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(1.5rem, 4vw, 4rem);
+}
+
+.dossierCol {
+  display: grid;
+  gap: 0;
+  align-content: start;
+}
+
+.dossierColHead {
+  composes: eyebrow;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--rule-strong);
+  margin-bottom: 0.25rem;
+}
+
+.dossierRow {
+  font-size: 0.92rem;
+  line-height: 1.45;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--tan);
+}
+
+.dossierRow:last-child {
+  border-bottom: none;
+}
+
+.connectorSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.connectorSvg line {
+  stroke: var(--tan);
+  stroke-width: 1;
+}
+
+.queueTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.queueTable th {
+  text-align: left;
+  font-family: var(--font-archivo), Arial, sans-serif;
+  font-stretch: 85%;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  color: var(--ink-muted);
+  padding: 0.6rem 1rem 0.5rem 0;
+  border-bottom: 1px solid var(--rule-strong);
+}
+
+.queueTable td {
+  padding: 0.8rem 1rem 0.8rem 0;
+  border-bottom: 1px solid var(--tan);
+  vertical-align: top;
+  transition: background-color var(--dur-tap) var(--ease);
+}
+
+.queueTable tbody tr:hover td {
+  background: var(--cream-light);
+}
+
+.queueTable tr:last-child td {
+  border-bottom: none;
+}
+
+.queueName {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.queueFact {
+  composes: fact;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.queueFlagNote {
+  composes: factSmall;
+  color: var(--flag);
+  display: block;
+  margin-top: 0.3rem;
+  white-space: normal;
+}
+
+.assistField {
+  width: 100%;
+  min-height: 9rem;
+  resize: vertical;
+  border: 1px solid var(--rule-strong);
+  background: var(--cream-light);
+  padding: 0.9rem 1rem;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.assistWords span[data-hidden='true'] {
+  opacity: 0;
+}
+
+.assistLabel {
+  composes: factSmall;
+  color: var(--flag);
+}
+
+.assistActions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.buttonInk {
+  border: 2px solid var(--ink);
+  border-radius: 9999px;
+  background: var(--ink);
+  color: var(--cream-light);
+  padding: 0.55rem 1.3rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color var(--dur-tap) var(--ease), color var(--dur-tap) var(--ease);
+}
+
+.buttonInk:hover {
+  background: var(--emerald-deep);
+  border-color: var(--emerald-deep);
+}
+
+.buttonInk[data-state='done'] {
+  background: var(--emerald-deep);
+  border-color: var(--emerald-deep);
+  cursor: default;
+}
+
+.buttonQuiet {
+  border: 2px solid var(--rule-strong);
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--ink);
+  padding: 0.55rem 1.3rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color var(--dur-tap) var(--ease);
+}
+
+.buttonQuiet:hover {
+  border-color: var(--ink);
+}
+
+.ledgerList {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.ledgerRow {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.9rem;
+}
+
+.auditStrip {
+  border-top: 1px solid var(--rule-strong);
+  padding-top: 1rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.auditLine {
+  composes: factSmall;
+}
+
+/* ---------- Motion, gated ---------- */
+/* Default render is the finished page. Reveals exist only when JS marked the
+   shell and the user allows motion. */
+
+@media (prefers-reduced-motion: no-preference) {
+  .shell[data-js='true'] [data-reveal='settle'] {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity var(--dur-enter) var(--ease), transform var(--dur-enter) var(--ease);
+    transition-delay: calc(var(--stagger, 0) * 60ms);
+  }
+
+  .shell[data-js='true'] [data-reveal='settle'][data-in='true'] {
+    opacity: 1;
+    transform: none;
+  }
+
+  .shell[data-js='true'] .rule[data-reveal='rule'] {
+    transform: scaleX(0);
+    transition: transform var(--dur-enter) var(--ease);
+  }
+
+  .shell[data-js='true'] .rule[data-reveal='rule'][data-in='true'] {
+    transform: scaleX(1);
+  }
+
+  .shell[data-js='true'] .plate img,
+  .shell[data-js='true'] .plate {
+    transition: transform var(--dur-tap) var(--ease);
+  }
+
+  .shell[data-js='true'] .assistWords span {
+    transition: opacity 0.18s var(--ease);
+  }
+
+  .shell[data-js='true'] .timelineSeg {
+    transition: background-color 250ms var(--ease);
+  }
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1100px) {
+  .appLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rail {
+    position: static;
+  }
+}
+
+@media (max-width: 900px) {
+  .heroGrid,
+  .incentiveGrid,
+  .specGrid,
+  .storyLede,
+  .withheldGrid,
+  .dossierGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .makerGrid,
+  .ratingsRow,
+  .ladder {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 2rem;
+  }
+
+  .stepGrid,
+  .proofGrid,
+  .storyPair,
+  .dateGrid {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 2.25rem;
+  }
+
+  .constraintRow {
+    grid-template-columns: minmax(0, 1fr) 4.5rem;
+    row-gap: 0.3rem;
+  }
+
+  .constraintCell {
+    grid-column: 1;
+  }
+
+  .constraintVerdict {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .headerInner {
+    flex-wrap: wrap;
+    gap: 0.6rem 1rem;
+    padding-block: 0.7rem;
+  }
+
+  .surfaceNav {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .conceptTag {
+    display: none;
+  }
+
+  .pill {
+    white-space: normal;
+    text-align: center;
+  }
+
+  .queueScroll {
+    overflow-x: auto;
+  }
+
+  .queueTable {
+    min-width: 34rem;
+  }
+}
+
+.queueScroll {
+  overflow-x: auto;
+}
