@@ -341,7 +341,7 @@ h2.excited { color: var(--blue); transition: none; } /* the beam passes */
 .js-replay .ln.cur::after { content: "\258D"; margin-left: 2px; }
 
 /* ---------- 02 halo ---------- */
-.halo-stage, .ramp-stage, .tubes-stage, .spectrum-stage { position: relative; }
+.halo-stage, .tubes-stage, .spectrum-stage { position: relative; }
 .bake {
   display: block;
   width: 100%;
@@ -445,19 +445,44 @@ h2.excited { color: var(--blue); transition: none; } /* the beam passes */
   white-space: nowrap;
 }
 
-/* ---------- 04 ramp ---------- */
-.ramp-numeral {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--display);
-  font-weight: 900;
-  font-size: clamp(110px, 16vw, 260px);
-  color: var(--bone);
-  pointer-events: none;
+/* ---------- 04 practices ---------- */
+.practices {
+  list-style: none;
+  counter-reset: practice;
+  margin-top: 44px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 34px 56px;
+  max-width: 1120px;
 }
+.practices li {
+  counter-increment: practice;
+  border-top: 1px solid color-mix(in srgb, var(--bone) 12%, transparent);
+  padding-top: 18px;
+}
+.practices li::before {
+  content: counter(practice, decimal-leading-zero);
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--green);
+  margin-bottom: 12px;
+}
+.practices b {
+  display: block;
+  font-size: clamp(19px, 1.7vw, 23px);
+  font-weight: 600;
+  line-height: 1.25;
+  margin-bottom: 10px;
+}
+.practices span {
+  display: block;
+  font-size: clamp(15px, 1.2vw, 17px);
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--bone) 68%, transparent);
+}
+.practices em { font-style: normal; color: var(--green); }
 
 /* ---------- 05 slabs ---------- */
 .slabs {

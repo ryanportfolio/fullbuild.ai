@@ -153,7 +153,7 @@ test("constraint contract holds in the stylesheet", async () => {
   for (const m of css.match(/#[0-9a-fA-F]{3,8}\b/g) ?? []) {
     assert.ok(declared.has(m), `undeclared hue: ${m}`);
   }
-  assert.ok(!css.includes("linear-gradient"), "light exists only as dots — no gradients");
+  assert.ok(!css.includes("linear-gradient"), "light exists only as dots, no gradients");
   assert.ok(!css.includes("radial-gradient"), "no gradients");
   assert.ok(!css.includes("backdrop-filter"), "no glassmorphism");
   assert.ok(!css.includes("box-shadow"), "halos are dot density, not shadows");
@@ -195,7 +195,6 @@ test("page is routed, self-contained, and complete without JS", async () => {
     "public/harness-firmware/fallback/hero@2x.png",
     "public/harness-firmware/fallback/core-halo.png",
     "public/harness-firmware/fallback/spectrum.png",
-    "public/harness-firmware/fallback/ramp.png",
     "public/harness-firmware/fallback/tubes.png",
     "public/harness-firmware/fonts/Unbounded[wght].ttf",
     "public/harness-firmware/fonts/OFL.txt",

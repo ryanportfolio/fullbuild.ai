@@ -279,29 +279,6 @@ export function renderCoreHalo(facts, w, h, tile) {
   return { field, greenLit: g, residueLit: r, ratio: g / Math.max(1, r) };
 }
 
-// Lazy-ratio ramp: exponential luminance decay Bayer-dithered across the
-// width; the green head spans the true resident share of the width (4.7%),
-// the residue tail carries the remaining 95.3%.
-export function renderRamp(facts, w, h, tile) {
-  const field = new Uint8Array(w * h).fill(OFF);
-  const headW = (facts.residentPctOfOnDemand / 100) * w;
-  const tau = w / 4.2;
-  for (let y = 0; y < h; y += 1) {
-    const edge = 1 - Math.abs(y - h / 2) / (h / 2); // soft vertical envelope
-    for (let x = 0; x < w; x += 1) {
-      if (x <= headW) {
-        // crisp resident head: near-rectangular, dithered only at the rim
-        if (edge > 0.06 && Math.pow(edge, 0.12) * 1.4 > bayer(x, y)) field[y * w + x] = GREEN;
-      } else {
-        const L = Math.exp(-(x - headW) / tau) * Math.pow(edge, 0.6);
-        if (L > bayer(x, y) * 0.9) field[y * w + x] = RESIDUE;
-        else if (L * 0.5 > noiseAt(tile, x, y)) field[y * w + x] = RESIDUE;
-      }
-    }
-  }
-  return { field, headW };
-}
-
 // One image, two tubes: a green core splits into two dithered traces ending
 // in two scope faces. Traces are quadratic Beziers sampled densely; glow is
 // distance-falloff around the samples: density is the only "line weight".

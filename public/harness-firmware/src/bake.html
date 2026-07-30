@@ -10,7 +10,7 @@
 // chromium and writes the canvases out as the no-JS fallback PNGs.
 // Same module, same seed, same facts as the live page — one engine.
 import {
-  blueNoise64, heroState, renderSpectrum, renderCoreHalo, renderRamp,
+  blueNoise64, heroState, renderSpectrum, renderCoreHalo,
   renderTubes, fieldToRGBA, SEED,
 } from './dither.mjs';
 
@@ -58,12 +58,6 @@ toPNG('hero@2x', 1440, 900, heroField(1440, 900));
   const r = renderSpectrum(facts, w, h, tile);
   report.spectrum = r.geo.bands.map((b) => ({ name: b.name, blocks: b.blocks, dots: b.dots.length }));
   toPNG('spectrum', w, h, r.field);
-}
-{
-  const w = 1200; const h = 360;
-  const r = renderRamp(facts, w, h, tile);
-  report.ramp = { headW: r.headW };
-  toPNG('ramp', w, h, r.field);
 }
 {
   const w = 1200; const h = 480;
