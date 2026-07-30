@@ -19,6 +19,7 @@ test('Threadline is discoverable and exposes its complete product contract', asy
 
   for (const contract of [
     'THREADLINE',
+    'INTERNAL DPC OPERATIONS PROTOTYPE',
     'SIMULATED DATA',
     'Exception queue',
     'Collection readiness',
@@ -26,6 +27,7 @@ test('Threadline is discoverable and exposes its complete product contract', asy
     'System map',
     'aria-live',
     'Reset demo',
+    '/prototype/morrow',
   ]) {
     assert.match(app, new RegExp(contract));
   }
