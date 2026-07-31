@@ -115,15 +115,34 @@ export default function DrawingSet({
     // sketch's pencil): the set only ever gets MORE built, so scrolling back up
     // never un-earns depth the reader already reached.
     const html = document.documentElement;
+    // Two write channels for one ratchet. A --depth write on <html> invalidates
+    // the inherited custom property for EVERY element (~1.9k, 5-8ms of style
+    // recalc), and because --rule-sub feeds the full-viewport ground gradients,
+    // it also repaints and re-rasters the whole page — per scroll tick, that
+    // was the site's scroll jank (35fps -> 57fps measured headless). So:
+    //   smooth channel — every tick, but scoped to the rail, whose ruler head
+    //     (a 390px travel) is the one consumer that would visibly step;
+    //   quantized channel — <html> only when the ratchet crosses a 1/24 step.
+    //     Its consumers are the half-station grids, capped at 25% of a
+    //     0.16-alpha rule and eased by depth², so the largest possible step is
+    //     0.0033 absolute alpha — below perception.
+    const depthRail = document.querySelector<HTMLElement>('[data-rail]');
     let depth = 0;
+    let inkDepth = 0;
     // Normally already 0: layout.tsx zeroes it in a pre-paint head script so the
     // finished ground never flashes before hydration. Kept so the effect is
     // self-sufficient if that script is ever removed or fails.
     html.style.setProperty('--depth', '0');
+    depthRail?.style.setProperty('--depth', '0');
     const applyDepth = (p: number) => {
       if (p <= depth) return;
       depth = p;
-      html.style.setProperty('--depth', depth.toFixed(4));
+      depthRail?.style.setProperty('--depth', depth.toFixed(4));
+      const q = Math.floor(depth * 24) / 24;
+      if (q > inkDepth) {
+        inkDepth = q;
+        html.style.setProperty('--depth', q.toFixed(4));
+      }
     };
 
     // A 3D-rotated element is composited into one GPU texture and bilinear-
@@ -605,6 +624,7 @@ export default function DrawingSet({
       // The depth ratchet, the ledger scrub and the stamp's armed flag are all
       // direct writes too, so ctx.revert() above does not own them.
       html.style.removeProperty('--depth');
+      depthRail?.style.removeProperty('--depth');
       const rec = document.getElementById('rev');
       rec?.style.removeProperty('--rev');
       rec?.querySelector('[data-stamp]')?.removeAttribute('data-struck');

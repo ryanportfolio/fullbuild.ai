@@ -239,6 +239,32 @@ the initial bake should also re-run on `document.fonts.ready`. Capture scripts:
 (occluded Playwright windows throttle rAF to ~1fps, which is a capture
 artifact, not a page bug).
 
+## Per-frame custom-property writes on `<html>` are a full-document tax (2026-07-31)
+
+Symptom: scroll runs at ~35fps with >half of frames over 25ms; trace shows
+style recalc (not layout, not script) dominating, with repeated recalcs of the
+ENTIRE document (1859 elements, 5-8ms each). Cause: writing an inherited CSS
+custom property (`--depth`) to `document.documentElement` every scroll tick.
+Two costs compound: every element's computed style must update (custom props
+inherit), and any consumer painting a large surface (the `--rule-sub`
+`color-mix` in the html/body ground gradients) repaints + re-rasters the whole
+viewport per write.
+
+Fix pattern (DrawingSet.tsx `applyDepth`): split channels — per-frame writes go
+to the smallest subtree that visibly needs smoothness (the rail, for its ruler
+head), and the `<html>`-level write quantizes to ratchet steps (1/24) sized so
+the largest painted change per step is imperceptible (0.0033 alpha here).
+Result: 57fps, whole-document recalcs 173 -> 24 per scroll.
+
+Diagnosis method that found it (scripts preserved in this entry's PR #115):
+wrap `CSSStyleDeclaration.prototype.setProperty` / `setAttribute` via
+`page.addInitScript` to census per-frame writes, trace `UpdateLayoutTree`
+`elementCount` to see recalc scope, then A/B each suspect with an init-script
+patch before touching source. Headless-fps caveat: SwiftShader raster floors
+fps at ~35-40 regardless of variant, so main-thread trace sums (recalc,
+commit, raster COUNT) are the transferable metric, not raw fps — though a
+strong-enough fix (this one) still shows up as 57fps even there.
+
 ## Codex local UI verification uses Codex Browser first (2026-07-29)
 
 Symptom: a Codex session starts a separate Playwright workflow even though the
