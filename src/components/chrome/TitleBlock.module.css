@@ -458,4 +458,48 @@
     padding: 0.28rem 0.6rem;
     font-size: 0.55rem;
   }
+
+  /* MINIMIZED FOLD — once the reader is in the set (data-min from TitleBlock's
+     scroll hysteresis), the strip keeps only its essentials: contact, ground
+     toggle, and the PROTOTYPES CTA. Rows collapse rather than display:none so
+     the fold draws closed instead of popping; visibility flips at the fold's
+     end so no invisible control can take a tap or a tab stop. */
+  .nav,
+  .service,
+  .rev {
+    overflow: hidden;
+    max-height: 2.5rem;
+    transition:
+      max-height 0.25s var(--ease-draw),
+      opacity 0.25s var(--ease-draw),
+      padding-block 0.25s var(--ease-draw),
+      border-top-width 0.25s var(--ease-draw),
+      visibility 0s;
+  }
+  .rail[data-min='true'] .nav,
+  .rail[data-min='true'] .service,
+  .rail[data-min='true'] .rev {
+    max-height: 0;
+    opacity: 0;
+    padding-block: 0;
+    border-top-width: 0;
+    visibility: hidden;
+    transition:
+      max-height 0.25s var(--ease-draw),
+      opacity 0.25s var(--ease-draw),
+      padding-block 0.25s var(--ease-draw),
+      border-top-width 0.25s var(--ease-draw),
+      visibility 0s 0.25s;
+  }
+}
+
+@media (max-width: 900px) and (prefers-reduced-motion: reduce) {
+  .nav,
+  .service,
+  .rev,
+  .rail[data-min='true'] .nav,
+  .rail[data-min='true'] .service,
+  .rail[data-min='true'] .rev {
+    transition: none;
+  }
 }

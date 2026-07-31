@@ -87,11 +87,31 @@ export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
   const onAppPrototype = pathname.startsWith('/prototype/');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [mounted, setMounted] = useState(false);
+  // Compact strip fold (mobile only — CSS gates it under 900px). Full block at
+  // the top of the page for orientation; once the reader is in the set it folds
+  // to essentials. Hysteresis (fold past 80, unfold under 40) so a reader
+  // parked at the boundary never sees it buzz.
+  const [min, setMin] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     const cur = (document.documentElement.dataset.theme as 'light' | 'dark') || 'light';
     setTheme(cur);
+  }, []);
+
+  useEffect(() => {
+    let cur = false;
+    const onScroll = () => {
+      const y = window.scrollY;
+      const next = cur ? y > 40 : y > 80;
+      if (next !== cur) {
+        cur = next;
+        setMin(next);
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   const toggleTheme = () => {
@@ -113,7 +133,12 @@ export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
   if (onAppPrototype) return null;
 
   return (
-    <aside className={styles.rail} data-rail aria-label="Drawing set title block and navigation">
+    <aside
+      className={styles.rail}
+      data-rail
+      data-min={min ? 'true' : undefined}
+      aria-label="Drawing set title block and navigation"
+    >
       <svg className={styles.reg} viewBox="0 0 16 16" aria-hidden="true">
         <line x1="0" y1="8" x2="16" y2="8" stroke="currentColor" strokeWidth="1" />
         <line x1="8" y1="0" x2="8" y2="16" stroke="currentColor" strokeWidth="1" />
