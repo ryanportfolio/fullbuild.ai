@@ -1,0 +1,552 @@
+/* Halation. All values trace to .tmp/anti-slop-brand-spec.md.
+   Palette: closed set 2.1. Spacing: closed set 2.4 (4px only inside mono chips).
+   Durations: {180, 320, 700, 4000, 12000}ms. Easings: cubic-bezier(0.22,1,0.36,1),
+   linear, ease-in-out (breathing only). Safelight vars appear only in the
+   allowlisted selectors of 2.2. */
+
+.shell {
+  --bruised-black: #1a1410;
+  --falloff-edge: #16110d;
+  --bench: #2a221c;
+  --fiber: #f2e8da;
+  --fiber-dim: #b8ac9c;
+  --safelight: #e8481c;
+  --safelight-deep: #d13f16;
+  --stain-24: rgba(140, 107, 79, 0.24);
+  --silver: #6b635a;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  min-height: 100vh;
+  background: var(--bruised-black);
+  color: var(--fiber);
+  font-family: var(--font-archivo), sans-serif;
+  font-size: 16px;
+  line-height: 26px;
+}
+
+.shell *,
+.shell *::before,
+.shell *::after {
+  box-sizing: border-box;
+}
+
+.shell button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.shell a {
+  color: inherit;
+}
+
+.shell :is(button, a):focus-visible {
+  outline: 2px solid var(--safelight);
+  outline-offset: 2px;
+}
+
+/* ---- prototype bar (site convention, system register in mono) ---- */
+
+.prototypeBar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding: 8px 24px;
+  border-bottom: 1px solid var(--silver);
+  background: var(--bench);
+  color: var(--fiber-dim);
+  font-family: var(--font-martian), monospace;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.prototypeBar strong {
+  color: var(--fiber);
+  font-weight: 400;
+}
+
+.prototypeBar a {
+  text-decoration: none;
+  transition: color 180ms var(--ease);
+}
+
+.prototypeBar a:hover {
+  color: var(--fiber);
+}
+
+/* ---- frame ---- */
+
+.frame {
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 0 64px;
+}
+
+.main {
+  display: grid;
+  gap: 96px;
+  padding-bottom: 128px;
+}
+
+/* ---- masthead ---- */
+
+.masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px 0;
+}
+
+.wordmark {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.batchChip {
+  padding: 4px 8px;
+  background: var(--stain-24);
+  color: var(--fiber);
+  font-family: var(--font-martian), monospace;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ---- hero, inside the safelight falloff (spec 2.6, exact geometry) ---- */
+
+.hero {
+  background: radial-gradient(
+    1100px 700px at 50% 280px,
+    #2a221c 0%,
+    #16110d 78%
+  );
+  padding: 96px 0;
+}
+
+.kicker {
+  margin: 0 0 24px;
+  color: var(--fiber-dim);
+  font-family: var(--font-martian), monospace;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.display {
+  margin: 0 0 24px;
+  max-width: 720px;
+  font-size: clamp(40px, 9vw, 64px);
+  line-height: 1.03;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.heroBody {
+  margin: 0 0 48px;
+  max-width: 560px;
+}
+
+.cta {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 16px 32px;
+  border: 0;
+  background: var(--safelight);
+  color: var(--bruised-black);
+  text-align: left;
+  transition: background-color 180ms var(--ease);
+}
+
+.cta:hover,
+.cta:active {
+  background: var(--safelight-deep);
+}
+
+.ctaLabel {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 700;
+}
+
+.ctaSub {
+  font-family: var(--font-martian), monospace;
+  font-size: 14px;
+  line-height: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- bench panels, paper-fiber tooth (spec 2.6) ---- */
+
+.panel {
+  position: relative;
+  border: 1px solid var(--silver);
+  background: var(--bench);
+  padding: 32px;
+}
+
+.panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='tooth'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23tooth)'/%3E%3C/svg%3E");
+}
+
+.panel > * {
+  position: relative;
+}
+
+.panelHeading {
+  margin: 0 0 24px;
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+}
+
+/* ---- recipe panel ---- */
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 24px;
+}
+
+.chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 8px 16px;
+  border: 1px solid var(--silver);
+  background: transparent;
+  color: var(--fiber-dim);
+  transition:
+    color 180ms var(--ease),
+    border-color 180ms var(--ease);
+}
+
+.chip:hover {
+  color: var(--fiber);
+}
+
+.chipSelected {
+  border-color: var(--fiber);
+  color: var(--fiber);
+}
+
+.chipName {
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.chipIso {
+  font-family: var(--font-martian), monospace;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}
+
+.eiRow {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 32px;
+}
+
+.shell .eiButton {
+  padding: 8px 16px;
+  border: 1px solid var(--silver);
+  background: transparent;
+  color: var(--fiber-dim);
+  font-family: var(--font-martian), monospace;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition:
+    color 180ms var(--ease),
+    border-color 180ms var(--ease);
+}
+
+.eiButton:hover {
+  color: var(--fiber);
+}
+
+.eiSelected {
+  border-color: var(--fiber);
+  color: var(--fiber);
+}
+
+.readoutRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  margin: 0 0 32px;
+}
+
+.readoutLabel {
+  margin: 0 0 8px;
+  color: var(--fiber-dim);
+  font-family: var(--font-martian), monospace;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.readoutValue {
+  margin: 0;
+  font-family: var(--font-martian), monospace;
+  font-size: 20px;
+  line-height: 28px;
+  font-variant-numeric: tabular-nums;
+  animation: valueRise 320ms var(--ease);
+}
+
+@keyframes valueRise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.steps {
+  margin: 0;
+  padding: 0 0 0 24px;
+  display: grid;
+  gap: 8px;
+}
+
+.mono {
+  font-family: var(--font-martian), monospace;
+  font-size: 14px;
+  line-height: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* step numerals are digits too: the digit rule covers list markers */
+
+.steps li::marker {
+  font-family: var(--font-martian), monospace;
+  font-size: 14px;
+  color: var(--fiber-dim);
+}
+
+/* ---- agitation timeline ---- */
+
+.timelineMeta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 24px;
+  margin: 0 0 16px;
+  color: var(--fiber-dim);
+  font-family: var(--font-martian), monospace;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.track {
+  position: relative;
+  height: 48px;
+  border: 1px solid var(--silver);
+  overflow: hidden;
+  margin: 0 0 24px;
+}
+
+.zone {
+  position: absolute;
+  inset: 0;
+  width: 50%;
+  background: var(--stain-24);
+  transform-origin: left;
+  animation: trackFill 700ms var(--ease);
+}
+
+@keyframes trackFill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.tick {
+  position: absolute;
+  bottom: 0;
+  width: 2px;
+  height: 16px;
+  background: var(--safelight);
+  transform-origin: bottom;
+  animation: tickPulse 12000ms linear infinite;
+}
+
+@keyframes tickPulse {
+  0% {
+    transform: scaleY(1);
+  }
+  0.75% {
+    transform: scaleY(1.15);
+  }
+  1.5% {
+    transform: scaleY(1);
+  }
+  100% {
+    transform: scaleY(1);
+  }
+}
+
+.playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  background: var(--safelight);
+  animation:
+    sweep 12000ms linear infinite,
+    breathe 4000ms ease-in-out infinite;
+}
+
+@keyframes sweep {
+  from {
+    left: 0%;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+@keyframes breathe {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.72;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.compStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 32px;
+  color: var(--fiber);
+  font-family: var(--font-martian), monospace;
+  font-size: 14px;
+  line-height: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.compCell {
+  display: flex;
+  gap: 8px;
+}
+
+.compTemp {
+  color: var(--fiber-dim);
+}
+
+/* ---- bench notes ---- */
+
+.notesHeading {
+  margin: 0 0 16px;
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+}
+
+.noteBody {
+  margin: 0;
+  max-width: 720px;
+}
+
+/* meniscus divider: 1px silver rule, 24x3px safelight tick at the level line */
+
+.meniscus {
+  position: relative;
+  height: 1px;
+  margin: 48px 0;
+  background: var(--silver);
+}
+
+.meniscus::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: -1px;
+  width: 24px;
+  height: 3px;
+  background: var(--safelight);
+}
+
+.footerReadout {
+  margin: 48px 0 0;
+  color: var(--fiber-dim);
+  font-family: var(--font-martian), monospace;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- responsive (spec 2.4: gutters 24, panel padding 24, gaps 64) ---- */
+
+@media (max-width: 720px) {
+  .frame {
+    padding: 0 24px;
+  }
+
+  .main {
+    gap: 64px;
+    padding-bottom: 96px;
+  }
+
+  .hero {
+    padding: 64px 0;
+  }
+
+  .panel {
+    padding: 24px;
+  }
+
+  .readoutRow {
+    gap: 24px;
+  }
+}
+
+/* ---- reduced motion (spec 2.5): instant swaps, breathing stops,
+   sweep removed, track renders in its filled end state ---- */
+
+@media (prefers-reduced-motion: reduce) {
+  .shell *,
+  .shell *::before,
+  .shell *::after {
+    transition: none;
+    animation: none;
+  }
+
+  .playhead {
+    display: none;
+  }
+}
