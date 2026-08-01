@@ -29,7 +29,10 @@
 
    Grid: duplex. Fixed phone rail left, fluid console right, an 18px wire
    seam between them. Under 980px the duplex stacks, phone first, and the
-   wire turns horizontal.
+   wire turns horizontal. Below the duplex sits the annex, one measured
+   column carrying the mapping table, glossary and project notes: static,
+   no motion verb, and set apart by a rule rather than a panel so it reads
+   as the author's notes and not another instrument.
 
    Motion verbs, the only three
      TRAVEL  a pulse runs the wire seam when a message crosses it
@@ -726,11 +729,210 @@
   color: var(--bone-witness);
 }
 
+/* ---- annex ------------------------------------------------------------- */
+
+.annex {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: clamp(2rem, 5vw, 3.4rem) clamp(1rem, 3vw, 2.4rem)
+    clamp(3rem, 6vw, 4.5rem);
+  border-top: 1px solid var(--hairline);
+}
+
+.annexHeading {
+  margin: 0;
+  font-size: clamp(1.4rem, 2.6vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+}
+
+.annexLede {
+  max-width: 62ch;
+  margin: 0.7rem 0 0;
+  font-size: clamp(0.92rem, 0.9rem + 0.2vw, 1.02rem);
+  line-height: 1.55;
+  color: var(--bone-witness);
+}
+
+.annexMono {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  color: var(--signal);
+}
+
+.annexTableWrap {
+  margin-top: clamp(1.4rem, 3vw, 2.2rem);
+  overflow-x: auto;
+}
+
+.annexTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.annexTable thead th {
+  padding: 0 0.9rem 0.55rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--bone) 34%, var(--room));
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bone-witness);
+  white-space: nowrap;
+}
+
+.annexTable tbody th,
+.annexTable tbody td {
+  padding: 0.75rem 0.9rem 0.75rem 0;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 0.82rem;
+  font-weight: 400;
+  line-height: 1.5;
+  vertical-align: top;
+}
+
+.annexTable tbody th {
+  min-width: 15rem;
+  color: var(--bone);
+}
+
+.annexTable tbody td {
+  min-width: 13rem;
+  color: var(--bone-witness);
+}
+
+/* The practitioner column carries a copper tint, the palette's human line,
+   pulled back far enough that the Relay column stays the row's anchor. */
+.annexTable tbody td:last-child {
+  padding-right: 0;
+  color: color-mix(in srgb, var(--copper) 62%, var(--bone-witness));
+}
+
+.glossary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  margin: 1.1rem 0 0;
+  font-size: 0.78rem;
+  color: var(--bone-witness);
+}
+
+.glossaryRow {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 34ch;
+}
+
+.glossaryRow dt {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--bone);
+}
+
+.glossaryRow dd {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.annexColumns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: clamp(1.4rem, 3vw, 2.6rem);
+  margin-top: clamp(2rem, 4vw, 3rem);
+}
+
+.annexSubheading {
+  margin: 0 0 0.7rem;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bone-witness);
+}
+
+.annexSteps,
+.annexNotes {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--bone-witness);
+}
+
+.annexSteps li::marker,
+.annexNotes li::marker {
+  color: var(--signal);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+}
+
 /* ---- stacked duplex ---------------------------------------------------- */
 
 @media (max-width: 639px) {
   .prototypeBar span:not(.wordmark) {
     display: none;
+  }
+}
+
+/* Four columns cannot hold their measure on a phone, so each row becomes a
+   labelled block. The header row is dropped and its labels come back per
+   cell, which keeps one scroll direction on the page. */
+@media (max-width: 899px) {
+  .annexTable,
+  .annexTable tbody,
+  .annexTable tbody tr,
+  .annexTable tbody th,
+  .annexTable tbody td {
+    display: block;
+    width: auto;
+  }
+
+  .annexTable thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .annexTable tbody tr {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .annexTable tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .annexTable tbody th,
+  .annexTable tbody td {
+    min-width: 0;
+    padding: 0;
+    border-bottom: none;
+  }
+
+  .annexTable tbody td {
+    margin-top: 0.5rem;
+  }
+
+  .annexTable tbody td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 0.15rem;
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--bone) 42%, var(--room));
   }
 }
 
