@@ -73,7 +73,16 @@ function scrollTo(anchor: string) {
  * title block itself at the bottom. The IN SERVICE line is a live aggregate of
  * the health probe — a measurement, so it may spend the accent.
  */
-export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
+export default function TitleBlock({
+  rev,
+  sha,
+  prototypes,
+}: {
+  rev: string;
+  sha: string;
+  /** Rows counted off the prototype index at build time; null when unreadable. */
+  prototypes: number | null;
+}) {
   const state = useWorkingSet((s) => s.state);
   const health = useWorkingSet((s) => s.health);
   const pathname = usePathname();
@@ -290,10 +299,16 @@ export default function TitleBlock({ rev, sha }: { rev: string; sha: string }) {
         <a
           href="/prototype"
           className={styles.drafts}
-          aria-label="View design prototypes, 4 on file"
+          aria-label={
+            prototypes === null
+              ? 'View design prototypes'
+              : `View design prototypes, ${prototypes} on file`
+          }
         >
           <span>PROTOTYPES</span>
-          <span>04 →</span>
+          {/* Counted off the index itself, so adding a prototype is one edit and
+              the field cannot drift from what the gallery actually lists. */}
+          <span>{prototypes === null ? '·' : String(prototypes).padStart(2, '0')} →</span>
         </a>
           </>
         )}
