@@ -763,13 +763,33 @@
 
 .annexTableWrap {
   margin-top: clamp(1.4rem, 3vw, 2.2rem);
-  overflow-x: auto;
 }
 
+/* Fixed layout with declared column shares. An auto table sizes to its
+   min-content, which on a four-column measure overflows the page and hands
+   the reader a sideways scrollbar. The columns fit the width they are given
+   and the prose wraps instead. */
 .annexTable {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   text-align: left;
+}
+
+.annexTable thead th:nth-child(1) {
+  width: 28%;
+}
+
+.annexTable thead th:nth-child(2) {
+  width: 24%;
+}
+
+.annexTable thead th:nth-child(3) {
+  width: 22%;
+}
+
+.annexTable thead th:nth-child(4) {
+  width: 26%;
 }
 
 .annexTable thead th {
@@ -792,15 +812,14 @@
   font-weight: 400;
   line-height: 1.5;
   vertical-align: top;
+  overflow-wrap: anywhere;
 }
 
 .annexTable tbody th {
-  min-width: 15rem;
   color: var(--bone);
 }
 
 .annexTable tbody td {
-  min-width: 13rem;
   color: var(--bone-witness);
 }
 
