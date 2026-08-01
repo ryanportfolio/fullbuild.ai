@@ -213,6 +213,10 @@ test("The annex maps every Relay mechanism to its platform equivalent", async ()
   // The table restacks on a phone instead of scrolling sideways.
   assert.match(annex, /data-label=/);
   assert.match(styles, /content: attr\(data-label\)/);
+  // Column headings stay readable while the table passes under them, and a
+  // collapsed border would not travel with them.
+  assert.match(styles, /position: sticky/);
+  assert.doesNotMatch(styles, /thead th \{[^}]*border-bottom:/);
 });
 
 test("Copy honors the voice bans: no em dashes, no Math.random", async () => {

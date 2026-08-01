@@ -32,7 +32,9 @@
    wire turns horizontal. Below the duplex sits the annex, one measured
    column carrying the mapping table, glossary and project notes: static,
    no motion verb, and set apart by a rule rather than a panel so it reads
-   as the author's notes and not another instrument.
+   as the author's notes and not another instrument. Its column headings
+   stick to the top of the viewport while the table passes under them,
+   which is persistence rather than motion and animates nothing.
 
    Motion verbs, the only three
      TRAVEL  a pulse runs the wire seam when a message crosses it
@@ -792,9 +794,17 @@
   width: 26%;
 }
 
+/* The header row holds at the top of the viewport while the table passes
+   under it, so a row read halfway down still has its column names. The rule
+   is an inset shadow rather than a border: a collapsed border does not
+   travel with a sticky cell, and would be left behind at the table's top. */
 .annexTable thead th {
-  padding: 0 0.9rem 0.55rem 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--bone) 34%, var(--room));
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 0.8rem 0.9rem 0.55rem 0;
+  background: var(--room);
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--bone) 34%, var(--room));
   font-family: var(--mono);
   font-size: 0.6rem;
   font-weight: 500;
