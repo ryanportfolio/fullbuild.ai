@@ -5,7 +5,7 @@
  * policy, handover context) are exactly the parts worth showing. Plain .mjs so
  * node --test exercises the real module the UI imports.
  *
- * No Math.random anywhere: same inputs, same session, same confidences.
+ * No randomness anywhere: same inputs, same session, same confidences.
  */
 
 export const CONFIDENCE_THRESHOLD = 0.45;
