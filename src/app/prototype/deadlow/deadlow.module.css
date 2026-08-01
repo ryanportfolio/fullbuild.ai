@@ -1,0 +1,1378 @@
+/* ============================================================================
+   DEAD LOW, one screen, one question: is it on today, and what time at the ramp.
+   Every value traces to .tmp/anti-slop-brand-spec.md. Seven colors, two type
+   tokens, one 4px spacing scale, and one documented exception: anything inside
+   [data-metric] is drawn from tide height, so the drawing obeys the sea instead
+   of the grid.
+
+   Section 2.8 (commitments P1 to P6) governs the composition: the cross-section
+   is the page's ground rather than a figure on it, the route is the spine, and
+   the display line is set into the water field.
+   ========================================================================= */
+
+/* The sheet owns the whole surface. The portfolio ground, its ruled grid and
+   its focus ring are cleared for the length of this route, so the only colors
+   and families that resolve on this page are the ones the brand declares. */
+:global(html):has(.shell),
+:global(body):has(.shell) {
+  background-color: #e4e4d6;
+  background-image: none;
+  color: #0e1214;
+  /* fill is inherited and defaults to black, which is an eighth color even on
+     elements that never paint one. Every node on the sheet resolves to --ink. */
+  fill: #0e1214;
+  font-family: var(--font-archivo);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.shell {
+  /* 2.1: the seven tokens. No eighth color exists on this page. */
+  --ink: #0e1214;
+  --paper: #e4e4d6;
+  --drying: #9faf8c;
+  --water: #0b2e33;
+  --bill: #ff3b0f;
+  --leg: #f2a6b4;
+  --chalk: #fbfaf4;
+
+  /* 2.2: the scale, tier one (<= 640px). No clamp: three discrete tiers. */
+  --d1: 64px;
+  --d2: 40px;
+  --d3: 28px;
+  --b1: 26px;
+  --b2: 20px;
+  --b3: 16px;
+  --l1: 14px;
+  --l2: 12px;
+  /* The turn-back rule is --bill text, floored at 34px by 2.1. d3 is 28px on
+     this tier, so the rule takes d2 here and d3 above (spec amendment A3). */
+  --rule-step: var(--d2);
+  --rule-lh: 1;
+  --rule-track: -0.02em;
+  /* 2.3: section rhythm */
+  --rhythm: 64px;
+  /* 2.8 P1: the section's height is a viewport fraction, and the scale in
+     pixels per metre falls out of it. A52: the phone takes 92vh, so the whole
+     answer, the drawing, both horizons and the labelled surge stand inside a
+     390x844 fold. Both reviews called the repealed 76vh phone stack blocking:
+     the card filled the fold and the reader learned nothing about the water. */
+  --stage-h: 92vh;
+  /* 2.8 P5: the sheet's measure. One reading column on the phone and the
+     tablet; two fields on the desktop. */
+  --measure: 680px;
+
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  /* Inherited by every node that does not declare its own; the diagram's fills
+     are presentation attributes and still win. */
+  fill: var(--ink);
+  font-family: var(--font-archivo);
+  font-size: var(--b3);
+  line-height: 1.5;
+}
+
+@media (min-width: 641px) {
+  .shell {
+    --d1: 88px;
+    --d2: 56px;
+    --d3: 34px;
+    --rule-step: var(--d3);
+    --rule-lh: 1.1;
+    --rule-track: -0.01em;
+    --rhythm: 96px;
+    /* A52: 92vh at the tablet too. The muster card spans the whole reading
+       measure below 1024, so the section has to be tall enough that the card's
+       foot lands above the sea's own horizon at the page clock. At 80vh the
+       card stood on the observed level and hid the chip naming it. */
+    --stage-h: 92vh;
+  }
+}
+
+/* 2.8 P5 / A59: a full-bleed band that carries a ledger inside it. The refusal
+   stands on the seabed rather than inside the muster card. */
+.bandDrying {
+  background: var(--drying);
+}
+
+@media (min-width: 1024px) {
+  .shell {
+    --d1: 132px;
+    /* A49: 94vh, not 96. The masthead is 42px, so a 96vh section put the
+       readout strip and the datum tick below the fold at 1440x900, and the
+       reader saw a composition that closed off screen. At 94vh the strip
+       lands 12px clear and the drying ground of the walk shows under it, which
+       is the signal that there are three more screens of flat below. On the
+       3.5 m frame A51 crops to, 0.30 m draws at 84.6px, against P3's floor of
+       36 and the repealed build's 7.2. */
+    --stage-h: 94vh;
+    /* 24 + 680 + 48 + 576 + 24: side padding, the reading measure, the gutter,
+       the card field, side padding. 2.8 P5 derives it rather than picking it,
+       and A49 widens the card field from 424 to 576, four label columns, so the
+       card and the fact strip fit inside the section they stand on. */
+    --measure: 1352px;
+  }
+}
+
+/* 2.5.3: zero radius, zero elevation, on every element without exception. */
+.shell *,
+.shell *::before,
+.shell *::after {
+  box-sizing: border-box;
+  border-radius: 0;
+}
+
+/* :where() keeps these resets at zero specificity, so a type-step class still
+   owns the family and size on a button. */
+:where(.shell) button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+:where(.shell) a {
+  color: inherit;
+  text-decoration: none;
+}
+
+:where(.shell) figure,
+:where(.shell) ol,
+:where(.shell) h1,
+:where(.shell) h2,
+:where(.shell) p {
+  margin: 0;
+  padding: 0;
+}
+
+/* 2.4: interface state is instant, and focus is a drafted 1px box. */
+.shell :focus-visible {
+  outline: 1px solid var(--ink);
+  outline-offset: 4px;
+  transition: none;
+}
+
+/* Selection is painted state like any other, and the shell paints it in two
+   colors this brand does not own. The sheet claims it back (amendment A16). */
+.shell::selection,
+.shell ::selection {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* ---- structure ---------------------------------------------------------- */
+
+.main,
+.masthead,
+.band {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* The measure is centred by its parent rather than by auto margins: an auto
+   margin computes to a real pixel value that is off the 4px grid at almost
+   every viewport. */
+.container {
+  width: 100%;
+  max-width: var(--measure);
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+/* Full-bleed grounds: the field runs the width of the sheet, the reading
+   measure does not. 2.1 gives --drying and --water an area to hold. */
+.band {
+  width: 100%;
+  padding-top: 48px;
+  padding-bottom: 48px;
+  /* 2.1 hairline containment: a filled field always resolves at its border. */
+  border: 1px solid var(--ink);
+}
+
+.bandWater {
+  background: var(--water);
+  color: var(--chalk);
+}
+
+.section {
+  margin-top: var(--rhythm);
+}
+
+/* 2.8 P5: a ledger, not a column. A label field, a reading measure and a
+   margin field, so the sheet uses its width instead of stranding half of it. */
+.ledger {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+}
+
+@media (min-width: 1024px) {
+  .ledger {
+    grid-template-columns: 144px minmax(0, 680px) minmax(0, 1fr);
+    gap: 48px;
+  }
+}
+
+.ledgerLabel {
+  align-self: start;
+}
+
+/* Grid items default to min-width auto, which lets a long mono string push its
+   track wider than the measure. Both fields are named so the class exists and
+   the markup does not ship class="undefined". */
+.ledgerBody,
+.ledgerMargin {
+  min-width: 0;
+}
+
+/* ---- type steps --------------------------------------------------------- */
+
+.d1 {
+  font-family: var(--font-martian);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: var(--d1);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+}
+
+.d2 {
+  font-family: var(--font-martian);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: var(--d2);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.d3 {
+  font-family: var(--font-martian);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: var(--d3);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.b1 {
+  font-family: var(--font-archivo);
+  font-weight: 500;
+  font-size: var(--b1);
+  line-height: 1.35;
+}
+
+.b2 {
+  font-family: var(--font-archivo);
+  font-weight: 400;
+  font-size: var(--b2);
+  line-height: 1.5;
+}
+
+.b3 {
+  font-family: var(--font-archivo);
+  font-weight: 400;
+  font-size: var(--b3);
+  line-height: 1.5;
+}
+
+.b3mono {
+  font-family: var(--font-martian);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+  font-size: var(--b3);
+  line-height: 1.4;
+}
+
+/* 2.2 as amended by A38: the tier between the numerals and the caption. The
+   argument the page exists to make was being set at tick-mark size, so the
+   dimension callout and the instruction under the display line now have a step
+   of their own. No new size: b2 is already on the scale at all three tiers. */
+.b2mono {
+  font-family: var(--font-martian);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+  font-size: var(--b2);
+  line-height: 1.4;
+}
+
+.l1 {
+  font-family: var(--font-martian);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+  font-size: var(--l1);
+  line-height: 1.1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.l2 {
+  font-family: var(--font-martian);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+  font-size: var(--l2);
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+}
+
+/* 2.2: every digit run of two or more in prose is mono. The size comes from
+   the surrounding step; the weight does not, because 2.2 gives Martian 400 and
+   700 only and the lead paragraph is Archivo 500. */
+.num {
+  font-family: var(--font-martian);
+  font-variant-numeric: tabular-nums;
+  font-size: inherit;
+  font-weight: 400;
+}
+
+/* ---- masthead ----------------------------------------------------------- */
+
+.masthead {
+  width: 100%;
+  border-bottom: 1px solid var(--ink);
+}
+
+.mastheadInner {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.nav {
+  display: flex;
+  gap: 24px;
+}
+
+.navLink {
+  border-bottom: 1px solid var(--ink);
+  white-space: nowrap;
+}
+
+/* ---- the ground: the section, and the walk across it -------------------- */
+
+/* 2.8 P1 and P2. The track is the four miles. Its ground is the drying band
+   because that is what the reader is walking on, and its scroll length is the
+   walk's length: each leg below is worth its own share of the four miles. */
+.route {
+  position: relative;
+  width: 100%;
+  background: var(--drying);
+  border: 1px solid var(--ink);
+}
+
+/* The section stays under the reader for the length of the walk. Sticky is
+   layout, not motion: nothing is tweened and nothing eases.
+
+   No bottom rule (A44): a hairline across the foot of the stage closed the
+   composition and read as the end of the document, so the drying ground of the
+   walk now runs straight up to the readout strip and the reader can see there
+   is more flat below. */
+.stage {
+  position: sticky;
+  top: 0;
+  /* The legs scroll under the section, not over it. Both are positioned, so
+     without this the later element in the source wins and the ledger rows
+     paint across the card. */
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* A60: a definite height, not a floor. The display block is placed by a
+     percentage of the frame (P4), which needs the frame to be a known height
+     rather than whatever the content grew it to. */
+  height: var(--stage-h);
+  overflow: hidden;
+  background: var(--paper);
+}
+
+/* The drawing is the stage's ground, edge to edge, at every viewport. */
+.field {
+  position: absolute;
+  inset: 0;
+}
+
+.figure {
+  position: absolute;
+  inset: 0;
+}
+
+.chart {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 2.5.1: the nautical drying-sand convention, clipped to the ground it
+   describes: 2px ink dots at 12% alpha on an 8px grid. One element, one
+   background-image, and the only alpha on the page. The polygon is in
+   percentages on both axes now that the vertical scale is derived. */
+.stipple {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(14, 18, 20, 0.12) 1px, transparent 1px);
+  background-size: 8px 8px;
+  /* A51: the frame is cropped to the tidal zone, so the ramp and the shingle
+     stand above it and their points clamp to the top edge of the drawing. */
+  clip-path: polygon(
+    0 0%,
+    21.3235% 32.8571%,
+    40% 58.5714%,
+    60% 47.1429%,
+    77.5% 82.8571%,
+    92.5% 61.4286%,
+    100% 0%,
+    100% 100%,
+    0 100%
+  );
+  pointer-events: none;
+}
+
+/* A38. A level rail is the full height of the frame, carried down by the same
+   percentage the level plots at, so everything hung on it lands exactly on its
+   own horizon. One transform per horizon, the same mechanism the water band
+   already uses. */
+.rail {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 2;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Each horizon is named at its own end, in metres, in a --paper chip with an
+   ink hairline. A2 put the pair in the readout strip because --ink on --water
+   is 0.9:1 and a label riding the line was swallowed at high water; the chip
+   solves that directly at 14.67:1 and puts the number back where the reader is
+   looking. The sea's chip sits above its line and the almanac's below its own,
+   so the two never collide however small the gap draws. */
+/* A55. The whole callout stands in one lane, and which lane depends on where
+   the type is. On the phone the display block is left-aligned and 214px wide,
+   so the chips go hard right and wrap inside 96px, which clears the muster
+   clock by 40px at every clock value. From 641 the chips take the corridor
+   between the display line's measured advance and the card field: at 1024 the
+   clock advances 442px of the 680px reading measure, so 36% of the frame is
+   the first column that is empty terrain at every level the window reaches. */
+.horizon {
+  position: absolute;
+  top: 0;
+  right: 8px;
+  /* A57: 116px, not 96. With the almanac's chip gone from this lane the sea's
+     can take the width it needs to set "Sea 1.38 m," on one line and its state
+     on a second, instead of three ragged lines. The lane still opens at 266px
+     against the muster clock's 239px of ink, clearing it by 27px. */
+  width: 116px;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  padding: 4px 8px;
+}
+
+/* Amendment A56. The sea's chip takes the right lane on the phone. The lane
+   opens at 279px on a 390px frame and the muster clock's ink ends at 239px, so
+   it clears by 40px at every level the window reaches, rather than at most of
+   them. A57: the almanac's chip is hidden here and its level is carried by the
+   gap callout instead, because the callout hangs from the sea rail down to the
+   almanac's own line, so the two are adjacent by construction and a 100px lane
+   cannot hold both plus the sea. One object at the gap, not three. */
+.horizonAlmanac {
+  display: none;
+}
+
+/* The gap callout's own statement of the almanac level, phone only: it sits
+   inside the object that names the difference, so both numbers are read in one
+   place at the place the difference is drawn. The unit opts out of .l1's
+   uppercasing, because it is a measurement and the 0.30 m directly above it is
+   set lowercase; a page that argues from two levels cannot spell their unit two
+   ways one line apart. */
+.gapAlmanac {
+  display: block;
+  text-transform: none;
+}
+
+@media (min-width: 641px) {
+  .horizonAlmanac {
+    display: block;
+  }
+
+  .gapAlmanac {
+    display: none;
+  }
+
+  .horizon {
+    right: auto;
+    left: 50%;
+    width: auto;
+    white-space: nowrap;
+  }
+
+  .horizonAlmanac {
+    left: 50%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .horizon {
+    left: 36%;
+  }
+}
+
+/* The sea's chip stands above its own line. Written as bottom: 100% against the
+   rail rather than a translate, because A58 needs to flip it below the line at
+   high water and 2.4 forbids a transform on a state change; expressing the
+   normal position without a transform means the flip is a position change and
+   the rule stays intact. */
+.horizonSea {
+  top: auto;
+  bottom: 100%;
+}
+
+/* A58. High water, both regimes. Off frame, the level is over the 3.25 m the
+   drawing holds, so its line is not in the picture and its chip and the
+   dimension between the two go with it. Near the top, the sea is still inside
+   the frame but within a chip's height of the ceiling, so its chip stops
+   hanging above its own line and sits below it, inside the drawing rather than
+   over the station ruler. */
+.rail[data-off-frame='1'] .horizon,
+.rail[data-off-frame='1'] .gap {
+  display: none;
+}
+
+.rail[data-near-top='1'] .horizonSea {
+  top: 0;
+  bottom: auto;
+}
+
+/* The dimension goes with it. Once the chip has flipped below its own line the
+   two want the same space, and at that height there is no crossing to argue
+   about: the window runs at a metre or so and the surge only means something
+   near it. The measurement returns as the water drops back into the window. */
+.rail[data-near-top='1'] .gap {
+  display: none;
+}
+
+/* P3 as amended by A39 and A55: the disagreement, drawn as an object rather
+   than left as the absence between two lines. The box is exactly 0.30 m of the
+   3.50 m frame, so it IS the measurement and not a decoration of one, and it
+   hangs from the sea rail because the surge is constant and the band moves
+   with the water. At 1440 it draws 72.5px tall against the repealed 7.2px. */
+.gap {
+  position: absolute;
+  top: 0;
+  right: 8px;
+  width: 48px;
+  height: 8.5714%;
+  border: 1px solid var(--ink);
+}
+
+@media (min-width: 641px) {
+  .gap {
+    right: auto;
+    left: 50%;
+    width: 144px;
+  }
+}
+
+/* At 1024 the lane right of the muster clock is 915px wide, so the three parts
+   of the callout stand side by side across it: the level chips at 36 percent,
+   the dimension box at 52, the value right of that. Below 1024 the chips take
+   the same lane as the box, which does not collide because a chip rides above
+   its own line and the value hangs beside the box under it. */
+@media (min-width: 1024px) {
+  .gap {
+    left: 52%;
+  }
+}
+
+/* A55: the value stands beside the box it measures, at display scale. Both
+   reviews found the same defect and named it the same way: the argument was
+   drawn large and never said what it was, while the only statement of the
+   measurement was 13px of mono in the gutter. */
+.gapLabel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  display: block;
+  /* An explicit width, not a cap: an absolutely positioned box anchored only
+     at its right shrinks to its longest unbreakable word, which on the phone
+     is ALMANAC and is narrower than the value it stands under. */
+  width: 96px;
+  margin-top: 8px;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  padding: 4px;
+}
+
+@media (min-width: 641px) {
+  .gapLabel {
+    top: 50%;
+    right: auto;
+    left: 100%;
+    width: auto;
+    transform: translateY(-50%);
+    margin-top: 0;
+    margin-left: 16px;
+    padding: 4px 8px;
+    white-space: nowrap;
+  }
+}
+
+/* The one number on the drawing set at display scale, because it is the one
+   number the page exists to state. */
+.gapValue {
+  display: block;
+}
+
+@media (min-width: 641px) {
+  .gapValue {
+    font-size: var(--d3);
+  }
+}
+
+@media (min-width: 1024px) {
+  .gapValue {
+    font-size: var(--d2);
+  }
+}
+
+/* The unit sets one step under the label tier on the phone, so its longest
+   word fits the 96px the value needs and the callout stays two lines. */
+.gapUnit {
+  display: block;
+  font-size: var(--l2);
+}
+
+@media (min-width: 641px) {
+  .gapUnit {
+    font-size: var(--l1);
+  }
+}
+
+/* The metre staff, inside the frame at the left edge, where ink resolves at
+   8:1 or better against both the paper air and the drying ground.
+
+   A40: the staff now shows from 641px up rather than 1024px up. The drawing's
+   scale in pixels per metre is derived per viewport (P1), so the staff is what
+   makes the vertical unit readable rather than assumed, and hiding it on two
+   of three tiers left the figure asserting a scale it never published. The
+   phone still does without one, because the card stands in that margin at
+   390px and a staff you cannot read is worse than no staff; the phone takes
+   its unit from the named horizons and the 0.30 m dimension instead. */
+.gauge {
+  display: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 96px;
+}
+
+@media (min-width: 641px) {
+  .gauge {
+    display: block;
+  }
+}
+
+.gaugeLabel {
+  position: absolute;
+  left: 8px;
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+
+/* The tick runs off the label and into the drawing, the way a staff meets a
+   section. 4px of hairline, no more. */
+.gaugeLabel::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -8px;
+  width: 4px;
+  border-top: 1px solid var(--ink);
+}
+
+/* A41: the staff says what it is counting and the index says what it is not
+   counting. A chart that declares its own projection is not commenting on the
+   design, it is doing the oldest job a chart has. */
+.gaugeCaption {
+  position: absolute;
+  top: 24px;
+  left: 8px;
+  white-space: nowrap;
+}
+
+.axis {
+  position: absolute;
+  top: 4px;
+  right: 24px;
+  left: 24px;
+  height: 16px;
+}
+
+.axisMark {
+  position: absolute;
+  top: 0;
+}
+
+/* Hidden until 1024, for A40's reason applied to the horizontal: below the
+   desktop the card spans the whole reading measure and stands over this
+   caption, and a caption you can only read the tail of is worse than none. The
+   staff comes back at 641 because the frame's left margin clears the card
+   there; this one has to wait for the two-field layout. */
+.axisCaption {
+  display: none;
+  position: absolute;
+  top: 24px;
+  right: 0;
+  white-space: nowrap;
+}
+
+@media (min-width: 1024px) {
+  .axisCaption {
+    display: block;
+  }
+}
+
+/* 2.8 P2: the station the reader has reached. It sits on the bottom edge of
+   the frame, which is ground at every clock value, so it never lands on
+   --water.
+
+   A42: one row, 48px, never wrapping. The strip used to wrap to four rows on
+   the phone, where it ran into the display line and covered the datum tick,
+   which is the most important mark on a tidal figure. The two levels have left
+   it for the horizons they belong to, and the station number has arrived, so
+   the strip reads as row one of the same numbered list the legs continue. */
+.routeRead {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  gap: 16px;
+  height: 48px;
+  padding: 12px 24px;
+  overflow: hidden;
+  background: var(--paper);
+  border-top: 1px solid var(--ink);
+}
+
+/* One row, so what it holds is what fits. The phone keeps the number, the name
+   and the bed height; the tablet gains the distance and the note; only the
+   desktop has room for the strip's own label as well. */
+.routeLabel,
+.routeMeta {
+  display: none;
+}
+
+@media (min-width: 641px) {
+  .routeMeta {
+    display: block;
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+}
+
+@media (min-width: 1024px) {
+  .routeLabel {
+    display: block;
+  }
+}
+
+.routeNum {
+  flex: none;
+}
+
+.routeName {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.routeBed {
+  flex: none;
+}
+
+/* ---- the hero, standing on the ground ----------------------------------- */
+
+/* A60. The hero is two rows of the frame rather than a column with an auto
+   margin: the card stands in the top 60 percent and the display block opens at
+   the 60 percent line, which is where the observed level runs at the window's
+   clock values on the 3.5 m frame. P4 is therefore a property of the geometry
+   rather than of whatever the content happened to add up to. */
+.stageGrid {
+  position: relative;
+  /* The card and the type stand ON the drawing, so they occlude the level
+     chips riding under them rather than being painted over by them. */
+  z-index: 3;
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 60% minmax(0, 1fr);
+  padding-top: 24px;
+  padding-bottom: 48px;
+}
+
+.answer {
+  grid-row: 1;
+  align-self: start;
+}
+
+.headline {
+  grid-row: 2;
+  align-self: start;
+}
+
+/* A43. The one place the page raises its voice, and it says the thing the
+   reader came for: the time to be standing at the ramp. It used to say how
+   long the walk lasts, which is a question nobody in a car park is asking, and
+   the muster time was the smallest string in the card. */
+.display {
+  /* The longest word is five characters and the fit is measured, not hoped. */
+  overflow-wrap: break-word;
+}
+
+/* The instruction, directly under the time it belongs to. A55 keeps it and the
+   window line clear of the chip lane on the phone, where the frame is 375px
+   and the chips take the right 112 of it. */
+.standAt {
+  display: block;
+  margin-top: 16px;
+  padding-right: 144px;
+}
+
+/* The window, stated once on the whole page, under the time it starts from. */
+.windowLine {
+  display: block;
+  margin-top: 12px;
+  padding-right: 144px;
+}
+
+@media (min-width: 641px) {
+  .standAt,
+  .windowLine {
+    padding-right: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .stageGrid {
+    grid-template-columns: 680px minmax(0, 1fr);
+    column-gap: 48px;
+    /* The station index caption runs along the top of the frame at 1024 and
+       above, so the card field opens below it rather than clipping its tail. */
+    padding-top: 48px;
+  }
+
+  .headline {
+    grid-row: 2;
+    grid-column: 1;
+  }
+
+  .answer {
+    grid-row: 1;
+    grid-column: 2;
+  }
+}
+
+/* ---- the crossing window card ------------------------------------------- */
+
+/* 2.5.6: a two-pass print that did not quite line up. The wrapper carries no
+   border of its own, so the second outline's box origin is exactly +4, +4. */
+.cardWrap {
+  position: relative;
+}
+
+.cardWrap::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--ink);
+  pointer-events: none;
+}
+
+/* The phone padding is 16 rather than 24 for a reason that is measured, not
+   aesthetic: at 24 the card's inner measure sets the we-do-not-wait line five
+   lines deep, and that fifth line is what pushed the refusal under the 844px
+   fold. Above the phone the fold is not in question and the card gets its full
+   padding back. */
+.card {
+  position: relative;
+  background: var(--chalk);
+  border: 1px solid var(--ink);
+  padding: 16px;
+}
+
+.cardRow + .cardRow {
+  margin-top: 12px;
+}
+
+@media (min-width: 641px) {
+  .card {
+    padding: 24px;
+  }
+
+  .cardRow + .cardRow {
+    margin-top: 24px;
+  }
+}
+
+.cardLabel {
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* A56: the plain answer, first, and the largest non-numeric type on the sheet.
+   The repealed card opened with a second copy of the muster clock and left the
+   reader to infer whether the crossing was on at all from a running countdown. */
+.verdict {
+  display: block;
+}
+
+.countdown {
+  display: block;
+  color: var(--bill);
+}
+
+/* A45 as amended by A53: the clock control is a track across the day with the
+   crossing window lit on it, spanning the card, and the reader can drag the
+   water with a thumb. It was the only mechanic that could make the argument
+   kinetic and it shipped as three 12px form buttons in a 28px row. The buttons
+   stay, because a keyboard and a reduced-motion reader both need a step. */
+.scrub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--ink);
+}
+
+/* On the phone every part of the control takes its own row, so the label never
+   wraps mid-phrase and the three steps sit on one line under it. */
+.scrubLabel {
+  width: 100%;
+}
+
+/* The day, 10:30 to 16:30, with the window drawn on it to scale. */
+.trackBox {
+  position: relative;
+  width: 100%;
+  height: 32px;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+}
+
+.trackWindow {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--drying);
+  border: 1px solid var(--ink);
+}
+
+.slider {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+}
+
+/* The thumb is a hairline stake, not a control from another brand. Radius is
+   set here because a shadow-DOM pseudo-element is out of reach of the sheet's
+   own zero-radius reset. */
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 8px;
+  height: 32px;
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 0;
+}
+
+.slider::-moz-range-thumb {
+  width: 8px;
+  height: 32px;
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 0;
+}
+
+/* The key that says what the lit segment is. Hidden on the phone, where the
+   card has to end above the almanac horizon it would otherwise stand on. */
+.trackKey {
+  display: none;
+  width: 100%;
+}
+
+@media (min-width: 641px) {
+  .trackKey {
+    display: block;
+  }
+}
+
+@media (min-width: 1024px) {
+  .scrubLabel {
+    flex: 1;
+    width: auto;
+  }
+}
+
+/* 2.6: the refusal, at display size, in the one place --bill clears AA. A57
+   takes it out of the muster card and gives it a field of its own on the
+   seabed, so it stops competing with the countdown for first fixation. */
+.turnBack {
+  margin-top: 0;
+  color: var(--bill);
+  font-family: var(--font-martian);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: var(--rule-step);
+  line-height: var(--rule-lh);
+  letter-spacing: var(--rule-track);
+}
+
+.noWait {
+  margin-top: 16px;
+}
+
+/* The refusal band takes the sheet's rhythm off the section it stands under. */
+.ruleBand {
+  border-top: 0;
+}
+
+/* ---- fact readouts ------------------------------------------------------ */
+
+.factGroup {
+  margin-bottom: 24px;
+  background: var(--paper);
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+}
+
+.fact {
+  display: block;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.fact + .fact {
+  border-top: 1px solid var(--ink);
+}
+
+/* ---- the legs of the walk ----------------------------------------------- */
+
+.legs {
+  list-style: none;
+}
+
+/* A54. The legs give the walk its scroll length and the section is pinned over
+   them for the whole of it, so what they must not be is a stranded field: the
+   repealed build spent 1080px of the sheet on six hairline rows a hundred
+   pixels apart, with a 144px plot band between each. The track drops from
+   120vh to 64vh and every row carries its own bed profile column INSIDE it, so
+   the six columns read against one 3.50 m frame whatever a leg's scroll length
+   happens to be. */
+.leg {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  width: 100%;
+  padding-bottom: 16px;
+}
+
+/* The one place on the route you wade. It was styled exactly like the six rows
+   around it, so the single fact the ledger encodes could not be found in it. */
+.legWade {
+  border-top: 1px solid var(--ink);
+}
+
+/* A window of air with the seabed standing in it, at the same 3.50 m frame the
+   section is drawn on. An outlined drying column on drying ground was a plot
+   nobody could read. */
+.legPlot {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 48px;
+  height: 24px;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+}
+
+.legColumn {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: var(--drying);
+  border: 1px solid var(--ink);
+}
+
+/* One line, never two. A leg's height is its share of the four miles, and the
+   shortest of the six is 40px on the phone, so a row that wraps runs into the
+   leg below it. The phone therefore keeps the plot, the numbered name and the
+   bed height; the distance and the note ride the readout strip, which is where
+   the walking reader meets them anyway. */
+.legInner {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--ink);
+}
+
+.legName {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.legMeta {
+  display: none;
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+@media (min-width: 641px) {
+  .legMeta {
+    display: block;
+  }
+}
+
+.legBedWade {
+  font-size: var(--d3);
+}
+
+/* ---- prose -------------------------------------------------------------- */
+
+.lead {
+  margin-top: 0;
+}
+
+.para {
+  margin-top: 24px;
+}
+
+.footnote {
+  display: block;
+}
+
+.gloss {
+  display: block;
+  margin-top: 16px;
+}
+
+/* ---- tide range scale --------------------------------------------------- */
+
+/* A58: the range bar was two stacked rectangles 55px wide beside 900px of
+   unused sheet, which cannot carry the comparison its caption makes. It is now
+   drawn at the reading measure with both ranges labelled on their own bands. */
+.scaleWrap {
+  display: block;
+  margin-top: 0;
+}
+
+/* [data-metric]: heights here are metres times 24, not spacing decisions. */
+.scaleBar {
+  position: relative;
+  width: 100%;
+  max-width: 432px;
+  height: 182.4px; /* 7.6 m springs range */
+  border: 1px solid var(--ink);
+}
+
+.scaleMark {
+  position: absolute;
+  left: 8px;
+}
+
+.scaleMarkSprings {
+  top: 16px;
+}
+
+/* 4.4 m below the top of the bar is where the neap band's own rule runs: the
+   springs range less the neap range, at the same 24px per metre. */
+.scaleMarkNeap {
+  top: 105.6px;
+  padding-top: 4px;
+}
+
+.scaleNeap {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 76.8px; /* 3.2 m neap range */
+  border-top: 1px solid var(--ink);
+}
+
+/* 2.5: one of the two declared gestures. Pink because the bird is. */
+.scaleSprings {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 12px;
+  background: var(--leg);
+  border: 1px solid var(--ink);
+}
+
+.scaleKey {
+  display: block;
+  margin-top: 16px;
+}
+
+.scaleCause {
+  margin-top: 16px;
+}
+
+/* ---- disclosure --------------------------------------------------------- */
+
+.disclosure {
+  margin-top: 24px;
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+}
+
+.disclosureButton {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding-top: 16px;
+  padding-bottom: 16px;
+  text-align: left;
+}
+
+/* 2.4: the one generous movement on the page, spent on the thing people open. */
+.disclosurePanel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.disclosurePanel[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+
+.disclosureInner {
+  overflow: hidden;
+}
+
+.disclosureBody {
+  padding-bottom: 24px;
+}
+
+.disclosureLine + .disclosureLine {
+  margin-top: 16px;
+}
+
+/* ---- booking ------------------------------------------------------------ */
+
+.places {
+  display: block;
+}
+
+/* A45: the booking control was a 175x28 rectangle at 83 percent scroll depth,
+   smaller than the axis labels above it, on a page whose job is getting
+   somebody to a ramp. It now takes the full width of whatever field it stands
+   in, at 49px tall, and it appears twice: once in the card under the countdown
+   where the decision is made, and once at the foot where the argument ends. */
+.book {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  background: var(--bill);
+  border: 1px solid var(--ink);
+  padding: 12px;
+  text-align: left;
+}
+
+@media (min-width: 641px) {
+  .book {
+    margin-top: 24px;
+    padding: 16px;
+  }
+}
+
+.bookNote {
+  display: block;
+  margin-top: 16px;
+}
+
+/* ---- clock control ------------------------------------------------------ */
+
+.clockButton {
+  border: 1px solid var(--ink);
+  padding: 8px;
+}
+
+/* A valve is open or it is closed. 0ms, no curve, no transform. */
+.clockButton:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.navLink:hover,
+.disclosureButton:hover,
+.book:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* ---- footer ------------------------------------------------------------- */
+
+/* The sea closes the sheet, and it is given room to be the sea. */
+.footer {
+  margin-top: var(--rhythm);
+  padding-top: 64px;
+  padding-bottom: 96px;
+}
+
+.footerName {
+  display: block;
+}
+
+.footerLine {
+  display: block;
+  margin-top: 16px;
+}
+
+/* 2.4, reduced motion: the sea stops, the route stops being scroll-linked, and
+   the interface does not change at all. Written at higher specificity than the
+   app-wide reduced-motion rule so the one transitioning element resolves to a
+   true 0s rather than a token value. */
+@media (prefers-reduced-motion: reduce) {
+  .shell,
+  .shell *,
+  .shell *::before,
+  .shell *::after {
+    transition-duration: 0s !important;
+  }
+}
