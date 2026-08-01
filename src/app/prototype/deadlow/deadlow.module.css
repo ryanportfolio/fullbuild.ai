@@ -1,0 +1,748 @@
+/* ============================================================================
+   DEAD LOW, one screen, one question: is it on today, and what time at the ramp.
+   Every value traces to .tmp/anti-slop-brand-spec.md. Seven colors, two type
+   tokens, one 4px spacing scale, and one documented exception: anything inside
+   [data-metric] is drawn at 24px per metre of tide, so the drawing obeys the
+   sea instead of the grid.
+   ========================================================================= */
+
+/* The sheet owns the whole surface. The portfolio ground, its ruled grid and
+   its focus ring are cleared for the length of this route, so the only colors
+   and families that resolve on this page are the ones the brand declares. */
+:global(html):has(.shell),
+:global(body):has(.shell) {
+  background-color: #e4e4d6;
+  background-image: none;
+  color: #0e1214;
+  /* fill is inherited and defaults to black, which is an eighth color even on
+     elements that never paint one. Every node on the sheet resolves to --ink. */
+  fill: #0e1214;
+  font-family: var(--font-archivo);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.shell {
+  /* 2.1: the seven tokens. No eighth color exists on this page. */
+  --ink: #0e1214;
+  --paper: #e4e4d6;
+  --drying: #9faf8c;
+  --water: #0b2e33;
+  --bill: #ff3b0f;
+  --leg: #f2a6b4;
+  --chalk: #fbfaf4;
+
+  /* 2.2: the scale, tier one (<= 640px). No clamp: three discrete tiers. */
+  --d1: 64px;
+  --d2: 40px;
+  --d3: 28px;
+  --b1: 26px;
+  --b2: 20px;
+  --b3: 16px;
+  --l1: 14px;
+  --l2: 12px;
+  /* The turn-back rule is --bill text, floored at 34px by 2.1. d3 is 28px on
+     this tier, so the rule takes d2 here and d3 above (spec amendment A3). */
+  --rule-step: var(--d2);
+  --rule-lh: 1;
+  --rule-track: -0.02em;
+  /* 2.3: section rhythm */
+  --rhythm: 64px;
+
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  /* Inherited by every node that does not declare its own; the diagram's fills
+     are presentation attributes and still win. */
+  fill: var(--ink);
+  font-family: var(--font-archivo);
+  font-size: var(--b3);
+  line-height: 1.5;
+}
+
+@media (min-width: 641px) {
+  .shell {
+    --d1: 88px;
+    --d2: 56px;
+    --d3: 34px;
+    --rule-step: var(--d3);
+    --rule-lh: 1.1;
+    --rule-track: -0.01em;
+    --rhythm: 96px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .shell {
+    --d1: 132px;
+  }
+}
+
+/* 2.5.3: zero radius, zero elevation, on every element without exception. */
+.shell *,
+.shell *::before,
+.shell *::after {
+  box-sizing: border-box;
+  border-radius: 0;
+}
+
+/* :where() keeps these resets at zero specificity, so a type-step class still
+   owns the family and size on a button. */
+:where(.shell) button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+:where(.shell) a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* 2.4: interface state is instant, and focus is a drafted 1px box. */
+.shell :focus-visible {
+  outline: 1px solid var(--ink);
+  outline-offset: 4px;
+  transition: none;
+}
+
+/* Selection is painted state like any other, and the shell paints it in two
+   colors this brand does not own. The sheet claims it back (amendment A16). */
+.shell::selection,
+.shell ::selection {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* ---- structure ---------------------------------------------------------- */
+
+/* A tide table page is narrow, and so is this. The measure is centred by its
+   parent rather than by auto margins: an auto margin computes to a real pixel
+   value that is off the 4px grid at almost every viewport. */
+.main,
+.masthead,
+.band,
+.clock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 680px;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+/* Full-bleed grounds: the field runs the width of the sheet, the reading
+   measure does not. 2.1 gives --drying and --water an area to hold. */
+.band {
+  width: 100%;
+  padding-top: 48px;
+  padding-bottom: 48px;
+  /* 2.1 hairline containment: a filled field always resolves at its border. */
+  border: 1px solid var(--ink);
+}
+
+.bandDrying {
+  background: var(--drying);
+}
+
+.bandWater {
+  background: var(--water);
+  color: var(--chalk);
+}
+
+.section {
+  margin-top: var(--rhythm);
+}
+
+/* ---- type steps --------------------------------------------------------- */
+
+.d1 {
+  font-family: var(--font-martian);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: var(--d1);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+}
+
+.d2 {
+  font-family: var(--font-martian);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: var(--d2);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.d3 {
+  font-family: var(--font-martian);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: var(--d3);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.b1 {
+  font-family: var(--font-archivo);
+  font-weight: 500;
+  font-size: var(--b1);
+  line-height: 1.35;
+}
+
+.b2 {
+  font-family: var(--font-archivo);
+  font-weight: 400;
+  font-size: var(--b2);
+  line-height: 1.5;
+}
+
+.b3 {
+  font-family: var(--font-archivo);
+  font-weight: 400;
+  font-size: var(--b3);
+  line-height: 1.5;
+}
+
+.b3mono {
+  font-family: var(--font-martian);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+  font-size: var(--b3);
+  line-height: 1.4;
+}
+
+.l1 {
+  font-family: var(--font-martian);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+  font-size: var(--l1);
+  line-height: 1.1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.l2 {
+  font-family: var(--font-martian);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+  font-size: var(--l2);
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+}
+
+/* 2.2: every digit run of two or more is mono, wherever it appears. The size
+   comes from the surrounding step; the weight does not, because 2.2 gives
+   Martian 400 and 700 only and the lead paragraph is Archivo 500. */
+.num {
+  font-family: var(--font-martian);
+  font-variant-numeric: tabular-nums;
+  font-size: inherit;
+  font-weight: 400;
+}
+
+/* ---- masthead ----------------------------------------------------------- */
+
+.masthead {
+  width: 100%;
+  border-bottom: 1px solid var(--ink);
+}
+
+.mastheadInner {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.nav {
+  display: flex;
+  gap: 24px;
+}
+
+.navLink {
+  border-bottom: 1px solid var(--ink);
+  white-space: nowrap;
+}
+
+/* ---- hero --------------------------------------------------------------- */
+
+.hero {
+  padding-top: 16px;
+}
+
+.kicker {
+  display: block;
+}
+
+.display {
+  margin-top: 12px;
+  /* The one place the page raises its voice. The longest word is seven
+     characters and the fit is measured, not hoped. */
+  overflow-wrap: break-word;
+}
+
+/* ---- the crossing window card ------------------------------------------- */
+
+/* 2.5.6: a two-pass print that did not quite line up. The wrapper carries no
+   border of its own, so the second outline's box origin is exactly +4, +4. */
+.cardWrap {
+  position: relative;
+  margin-top: 24px;
+}
+
+.cardWrap::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--ink);
+  pointer-events: none;
+}
+
+/* The phone padding is 16 rather than 24 for a reason that is measured, not
+   aesthetic: at 24 the card's inner measure is 277px, which sets the
+   we-do-not-wait line at d3 to fourteen glyphs a line and five lines deep, and
+   that fifth line is what pushed the refusal under the 844px fold. 16 gives 293
+   and four lines. Above the phone the fold is not in question and the card gets
+   its full padding back. */
+.card {
+  position: relative;
+  background: var(--chalk);
+  border: 1px solid var(--ink);
+  padding: 16px;
+}
+
+/* Tight on the phone so the refusal clears the fold, generous above it. */
+.cardRow + .cardRow {
+  margin-top: 12px;
+}
+
+@media (min-width: 641px) {
+  .card {
+    padding: 24px;
+  }
+
+  .cardRow + .cardRow {
+    margin-top: 24px;
+  }
+}
+
+.cardLabel {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.cardValue {
+  display: block;
+}
+
+.countdown {
+  display: block;
+  color: var(--bill);
+}
+
+.cardNote {
+  display: block;
+  margin-top: 4px;
+}
+
+/* 2.6: the refusal, at display size, in the one place --bill clears AA. */
+.turnBack {
+  margin-top: 16px;
+  color: var(--bill);
+  font-family: var(--font-martian);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: var(--rule-step);
+  line-height: var(--rule-lh);
+  letter-spacing: var(--rule-track);
+}
+
+.noWait {
+  margin-top: 16px;
+}
+
+/* ---- fact readouts ------------------------------------------------------ */
+
+.factGroup {
+  margin-top: 24px;
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+}
+
+.fact {
+  display: block;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.fact + .fact {
+  border-top: 1px solid var(--ink);
+}
+
+/* ---- the cross-section -------------------------------------------------- */
+
+/* The staff sits outside the frame, on paper, because ink cannot be read over
+   --water: a gauge you can only read at low tide is not a gauge. */
+.figureRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.gauge {
+  position: relative;
+  flex: none;
+  width: 32px;
+  height: 262px;
+}
+
+.gaugeLabel {
+  position: absolute;
+  right: 0;
+  transform: translateY(-50%);
+}
+
+/* The tick bridges the gap and lands on the frame, the way a staff meets a
+   section. 4px of hairline, no more. */
+.gaugeLabel::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -8px;
+  width: 4px;
+  border-top: 1px solid var(--ink);
+}
+
+.figureCol {
+  flex: 1;
+  min-width: 0;
+}
+
+.figure {
+  position: relative;
+  border: 1px solid var(--ink);
+  overflow: hidden;
+}
+
+.axis {
+  position: relative;
+  height: 16px;
+  margin-top: 4px;
+}
+
+.axisMark {
+  position: absolute;
+  top: 0;
+}
+
+.chart {
+  display: block;
+  width: 100%;
+  height: 260px;
+}
+
+/* 2.5.1: the nautical drying-sand convention, clipped to the ground it
+   describes: 2px ink dots at 12% alpha on an 8px grid. One element, one
+   background-image, and the only alpha on the page. */
+.stipple {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(14, 18, 20, 0.12) 1px, transparent 1px);
+  background-size: 8px 8px;
+  clip-path: polygon(
+    0 83.2px,
+    21.3235% 181.6px,
+    40% 203.2px,
+    60% 193.6px,
+    77.5% 223.6px,
+    92.5% 205.6px,
+    100% 102.4px,
+    100% 260px,
+    0 260px
+  );
+  pointer-events: none;
+}
+
+.annotations {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Rides the water line, always on the dry side of it, and centred over the open
+   middle of the section where neither shore is climbing through the text. */
+.seaTag {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.seaTagLine {
+  display: block;
+}
+
+.stationStrip {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.footnote {
+  display: block;
+  margin-top: 16px;
+}
+
+.gloss {
+  display: block;
+  margin-top: 16px;
+}
+
+/* ---- route stations ----------------------------------------------------- */
+
+.stationHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 24px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--ink);
+}
+
+.stationList {
+  list-style: none;
+}
+
+.stationRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--ink);
+}
+
+.stationName {
+  display: block;
+}
+
+.stationMeta {
+  display: block;
+  margin-top: 4px;
+}
+
+.stationHeight {
+  white-space: nowrap;
+}
+
+/* ---- tide range scale --------------------------------------------------- */
+
+.scaleWrap {
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+/* [data-metric]: heights here are metres times 24, not spacing decisions. */
+.scaleBar {
+  position: relative;
+  flex: none;
+  width: 48px;
+  height: 182.4px; /* 7.6 m springs range */
+  border: 1px solid var(--ink);
+}
+
+.scaleNeap {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 76.8px; /* 3.2 m neap range */
+  border-top: 1px solid var(--ink);
+}
+
+/* 2.5: one of the two declared gestures. Pink because the bird is. */
+.scaleSprings {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 12px;
+  background: var(--leg);
+  border: 1px solid var(--ink);
+}
+
+.scaleKeys {
+  flex: 1;
+}
+
+.scaleKey {
+  display: block;
+}
+
+.scaleKey + .scaleKey {
+  margin-top: 8px;
+}
+
+.scaleCause {
+  margin-top: 16px;
+}
+
+/* ---- prose -------------------------------------------------------------- */
+
+.lead {
+  margin-top: 24px;
+}
+
+.para {
+  margin-top: 24px;
+}
+
+/* ---- disclosure --------------------------------------------------------- */
+
+.disclosure {
+  margin-top: 24px;
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+}
+
+.disclosureButton {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding-top: 16px;
+  padding-bottom: 16px;
+  text-align: left;
+}
+
+/* 2.4: the one generous movement on the page, spent on the thing people open. */
+.disclosurePanel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.disclosurePanel[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+
+.disclosureInner {
+  overflow: hidden;
+}
+
+.disclosureBody {
+  padding-bottom: 24px;
+}
+
+.disclosureLine + .disclosureLine {
+  margin-top: 16px;
+}
+
+/* ---- booking ------------------------------------------------------------ */
+
+.places {
+  display: block;
+  margin-top: 24px;
+}
+
+.book {
+  display: inline-block;
+  margin-top: 24px;
+  background: var(--bill);
+  border: 1px solid var(--ink);
+  padding: 16px;
+}
+
+.bookNote {
+  display: block;
+  margin-top: 16px;
+}
+
+/* ---- clock control ------------------------------------------------------ */
+
+.clock {
+  width: 100%;
+  margin-top: var(--rhythm);
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+}
+
+.clockInner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 16px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.clockLabel {
+  flex: 1;
+  min-width: 144px;
+}
+
+.clockButton {
+  border: 1px solid var(--ink);
+  padding: 8px;
+}
+
+/* A valve is open or it is closed. 0ms, no curve, no transform. */
+.clockButton:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.navLink:hover,
+.disclosureButton:hover,
+.book:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* ---- footer ------------------------------------------------------------- */
+
+/* The sea closes the sheet, and it is given room to be the sea. */
+.footer {
+  padding-top: 64px;
+  padding-bottom: 96px;
+}
+
+.footerName {
+  display: block;
+}
+
+.footerLine {
+  display: block;
+  margin-top: 16px;
+}
+
+/* 2.4, reduced motion: the sea stops, the interface does not change at all.
+   Written at higher specificity than the app-wide reduced-motion rule so the
+   one transitioning element resolves to a true 0s rather than a token value. */
+@media (prefers-reduced-motion: reduce) {
+  .shell,
+  .shell *,
+  .shell *::before,
+  .shell *::after {
+    transition-duration: 0s !important;
+  }
+}
