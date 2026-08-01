@@ -139,9 +139,12 @@ const PROJECT_STEPS = [
 ];
 
 const GLOSSARY = [
-  ["ACD", "the router that assigns conversations to human agents, by skill and queue"],
-  ["NLU", "the layer that turns an utterance into an intent plus extracted values"],
-  ["MCP", "the protocol that lets an outside AI call platform functions as tools"],
+  ["ACD", "the router that hands conversations to human agents, by skill and queue"],
+  [
+    "NLU",
+    "the layer that reads what the customer wrote, works out what they want, and pulls the details out of it",
+  ],
+  ["MCP", "the standard that lets an outside AI call a platform's functions as tools"],
 ];
 
 export function StackMap() {
@@ -151,9 +154,8 @@ export function StackMap() {
         What Relay maps to in Cognigy and CXone
       </h2>
       <p className={styles.annexLede}>
-        Every piece above was built by hand, and every piece has a name in the
-        platforms this category ships on. Same row, same idea, three
-        vocabularies.
+        Every piece above was built by hand, and every piece has a name in
+        Cognigy, CXone and Omilia. Same row, same idea, three vocabularies.
       </p>
 
       <div className={styles.annexTableWrap}>
