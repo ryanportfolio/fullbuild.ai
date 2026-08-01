@@ -1,0 +1,789 @@
+/* =============================================================================
+   RELAY · contract
+
+   Subject: one proactive contact-center AI run for Hollowell Power & Light,
+   trigger to outbound conversation to NLU to human handover to wrap-up.
+   Reader: a hiring manager who lives in Cognigy and NICE CXone screens.
+   Job: prove the author can build the product category from scratch in JS.
+
+   Governing metaphor: both ends of the wire. The customer's phone on the
+   left, the switch-room console on the right, and every message crosses the
+   seam between them and decomposes into intent, confidence and entities.
+   Remove the routed conversation and the page collapses, which is the test.
+
+   Palette (6 named values, one meaning each)
+     --room     #14181d  switch-room graphite, console ground
+     --bone     #edf1ee  ink on graphite, phone ground
+     --signal   #ffb45e  wallboard amber, live machine signal only
+     --copper   #d98a66  the human line: agent presence, suggested replies
+     --trip     #e5484d  policy tripwire (vulnerable customer, double miss)
+     --hollowell #2d5f9e river blue, the brand voice on the customer side
+   Panel faces are derived from room+bone via color-mix, never new hues.
+   De-emphasis is a token (--bone-witness), never bare opacity on ink.
+
+   Type roles (both fixed settings, no animated axes)
+     Archivo (var(--font-archivo)): every human and brand voice string
+     Martian Mono (var(--font-martian)): machine facts only: event ids,
+     intents, confidences, entities, wallboard numbers. If a person would
+     say it aloud on the phone, it is never set in mono.
+
+   Grid: duplex. Fixed phone rail left, fluid console right, an 18px wire
+   seam between them. Under 980px the duplex stacks, phone first, and the
+   wire turns horizontal.
+
+   Motion verbs, the only three
+     TRAVEL  a pulse runs the wire seam when a message crosses it
+     LIGHT   ledger rows and flow nodes illuminate when state enters them
+     HAND    the handover desk slides onto the console when a person takes
+             the line
+   Reduced motion resolves every verb to its finished state: lit stays lit,
+   the desk sits in place, the pulse simply does not run. Nothing hides.
+
+   Bans
+     No avatars, no emoji, no headset clipart: the people here are text.
+     No typing dots without a real pending reply behind them.
+     No invented metrics: every number on the console is computed from the
+     session (engine.mjs), or it renders the empty witness instead.
+     No gradients: switch rooms are flat paint.
+
+   Signature element: the wire seam and the decomposition either side of it.
+   Everything else stays quiet so the seam can spend the boldness.
+
+   The risk: a split screen can read as two demos glued together. The safer
+   layout was one chat with an inspector drawer. Displaced because the
+   lockstep of the two panes IS the argument: same moment, both faces.
+   ========================================================================== */
+
+.shell {
+  --room: #14181d;
+  --bone: #edf1ee;
+  --signal: #ffb45e;
+  --copper: #d98a66;
+  --trip: #e5484d;
+  --hollowell: #2d5f9e;
+  --panel: color-mix(in srgb, var(--bone) 5%, var(--room));
+  --hairline: color-mix(in srgb, var(--bone) 16%, var(--room));
+  --bone-witness: color-mix(in srgb, var(--bone) 62%, var(--room));
+  --mono: var(--font-martian), monospace;
+
+  min-height: 100svh;
+  background: var(--room);
+  color: var(--bone);
+  font-family: var(--font-archivo), sans-serif;
+}
+
+.shell :focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+.skipLink {
+  position: absolute;
+  left: -999px;
+  top: 0.5rem;
+  z-index: 10;
+  padding: 0.4rem 0.7rem;
+  background: var(--signal);
+  color: var(--room);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  text-decoration: none;
+}
+
+.skipLink:focus-visible {
+  left: 0.5rem;
+}
+
+/* ---- chrome ------------------------------------------------------------ */
+
+.prototypeBar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.55rem clamp(1rem, 3vw, 2.4rem);
+  border-bottom: 1px solid var(--hairline);
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bone-witness);
+}
+
+.prototypeBar strong {
+  color: var(--bone);
+  font-weight: 600;
+}
+
+.prototypeBar a {
+  margin-left: auto;
+  color: var(--signal);
+  text-decoration: none;
+}
+
+.masthead {
+  display: flex;
+  align-items: baseline;
+  gap: 1.1rem;
+  padding: clamp(1.2rem, 3vw, 2rem) clamp(1rem, 3vw, 2.4rem) 0.4rem;
+}
+
+.wordmark {
+  font-size: clamp(1.9rem, 4vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.mastheadSub {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--bone-witness);
+}
+
+/* ---- duplex ------------------------------------------------------------ */
+
+.duplex {
+  display: grid;
+  grid-template-columns: minmax(320px, 400px) 18px minmax(0, 1fr);
+  align-items: start;
+  gap: 0;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: clamp(1rem, 2.5vw, 1.8rem) clamp(1rem, 3vw, 2.4rem)
+    clamp(2rem, 4vw, 3rem);
+}
+
+.wire {
+  position: relative;
+  align-self: stretch;
+  min-height: 100%;
+}
+
+.wire::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: var(--hairline);
+}
+
+/* TRAVEL: one pulse per crossing message, keyed so each send re-runs it */
+.pulse {
+  position: absolute;
+  left: 50%;
+  top: 6%;
+  width: 8px;
+  height: 8px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: var(--signal);
+  animation: travel 620ms ease-in forwards;
+}
+
+@keyframes travel {
+  from {
+    top: 6%;
+    opacity: 1;
+  }
+  to {
+    top: 90%;
+    opacity: 0;
+  }
+}
+
+/* ---- phone ------------------------------------------------------------- */
+
+.phone {
+  display: flex;
+  flex-direction: column;
+  height: min(680px, calc(100svh - 12rem));
+  min-height: 480px;
+  background: var(--bone);
+  color: var(--room);
+  border: 1px solid color-mix(in srgb, var(--room) 25%, var(--bone));
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.phoneSms {
+  background: color-mix(in srgb, #cfd8cc 38%, var(--bone));
+}
+
+.phoneHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--room) 14%, var(--bone));
+  background: color-mix(in srgb, var(--room) 4%, var(--bone));
+}
+
+.phoneBrand {
+  font-weight: 700;
+  font-size: 0.86rem;
+  letter-spacing: 0.01em;
+}
+
+.channelChip {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+}
+
+.thread {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.9rem;
+}
+
+.bubbleRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+}
+
+.bubbleRowOut {
+  align-items: flex-end;
+}
+
+.bubble {
+  max-width: 85%;
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  border-radius: 10px;
+}
+
+.bubbleAssistant {
+  background: color-mix(in srgb, var(--hollowell) 7%, white);
+  border: 1px solid color-mix(in srgb, var(--hollowell) 30%, white);
+  border-bottom-left-radius: 3px;
+}
+
+.phoneSms .bubbleAssistant {
+  background: white;
+  border-color: color-mix(in srgb, var(--room) 16%, white);
+  border-radius: 6px;
+}
+
+.bubbleAgent {
+  background: white;
+  border: 1px solid color-mix(in srgb, var(--copper) 55%, white);
+  border-left: 3px solid var(--copper);
+  border-bottom-left-radius: 3px;
+}
+
+.bubbleCustomer {
+  background: var(--hollowell);
+  color: var(--bone);
+  border-bottom-right-radius: 3px;
+}
+
+.agentTag {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--copper) 78%, var(--room));
+}
+
+.systemLine {
+  margin: 0.15rem 0;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  color: color-mix(in srgb, var(--room) 58%, var(--bone));
+}
+
+.typing {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  width: max-content;
+}
+
+.typing span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--room) 45%, var(--bone));
+  animation: blink 900ms infinite both;
+}
+
+.typing span:nth-child(2) {
+  animation-delay: 150ms;
+}
+
+.typing span:nth-child(3) {
+  animation-delay: 300ms;
+}
+
+@keyframes blink {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem 0.2rem;
+}
+
+.quickChip {
+  padding: 0.35rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--hollowell) 55%, var(--bone));
+  border-radius: 999px;
+  background: transparent;
+  color: color-mix(in srgb, var(--hollowell) 85%, var(--room));
+  font-family: inherit;
+  font-size: 0.74rem;
+  cursor: pointer;
+}
+
+.quickChip:hover {
+  background: color-mix(in srgb, var(--hollowell) 12%, var(--bone));
+}
+
+.composer {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.7rem 0.9rem 0.9rem;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--room) 28%, var(--bone));
+  border-radius: 8px;
+  background: white;
+  color: var(--room);
+  font-family: inherit;
+  font-size: 0.86rem;
+}
+
+.input:disabled {
+  background: transparent;
+  color: color-mix(in srgb, var(--room) 55%, var(--bone));
+}
+
+.sendButton {
+  padding: 0.55rem 0.9rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--hollowell);
+  color: var(--bone);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sendButton:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ---- console ----------------------------------------------------------- */
+
+.console {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1rem 0 0 clamp(0.2rem, 1vw, 0.8rem);
+  min-width: 0;
+}
+
+.consoleBlock {
+  background: var(--panel);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  padding: 0.8rem 0.9rem;
+}
+
+.consoleHeading {
+  margin: 0 0 0.6rem;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bone-witness);
+}
+
+.ledger {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ledgerRow {
+  display: grid;
+  grid-template-columns: 5.2rem 1fr auto;
+  gap: 0.7rem;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.03em;
+  color: var(--bone-witness);
+}
+
+/* LIGHT: the armed event ignites and stays lit */
+.ledgerFired {
+  color: var(--signal);
+  animation: ignite 700ms ease-out both;
+}
+
+@keyframes ignite {
+  from {
+    background: color-mix(in srgb, var(--signal) 22%, transparent);
+  }
+  to {
+    background: transparent;
+  }
+}
+
+.ledgerKind {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ledgerState {
+  letter-spacing: 0.08em;
+}
+
+.flowSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.flowEdge {
+  stroke: color-mix(in srgb, var(--bone) 14%, var(--room));
+  stroke-width: 1;
+}
+
+.flowEdgeLit {
+  stroke: color-mix(in srgb, var(--signal) 55%, var(--room));
+}
+
+.flowNode {
+  fill: transparent;
+  stroke: color-mix(in srgb, var(--bone) 22%, var(--room));
+  stroke-width: 1;
+}
+
+.flowNodeSeen {
+  stroke: color-mix(in srgb, var(--bone) 65%, var(--room));
+}
+
+/* LIGHT: the active node carries the only solid fill on the graph */
+.flowNodeActive {
+  fill: var(--signal);
+  stroke: var(--signal);
+}
+
+.flowLabel {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  fill: var(--bone-witness);
+}
+
+.flowLabelActive {
+  fill: var(--room);
+  font-weight: 700;
+}
+
+.nluRead {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.nluUtterance {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.confRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.confIntent {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--signal);
+}
+
+.confBarTrack {
+  height: 6px;
+  background: color-mix(in srgb, var(--bone) 12%, var(--room));
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.confBarFill {
+  display: block;
+  height: 100%;
+  background: var(--signal);
+}
+
+.confValue {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+}
+
+.contextNote {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--bone-witness);
+}
+
+.runnerUp,
+.matchRow {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--bone-witness);
+}
+
+.entityRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.entityChip {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  padding: 0.18rem 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--bone) 32%, var(--room));
+  border-radius: 3px;
+}
+
+.sentimentRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--bone-witness);
+}
+
+.sentimentTrack {
+  position: relative;
+  height: 2px;
+  background: color-mix(in srgb, var(--bone) 18%, var(--room));
+}
+
+.sentimentNeedle {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 8px;
+  background: var(--bone);
+}
+
+.emptyLine {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  color: var(--bone-witness);
+}
+
+/* HAND: the desk slides onto the console when a person takes the line */
+.desk {
+  border-left: 3px solid var(--copper);
+  animation: hand 420ms ease-out both;
+}
+
+@keyframes hand {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.deskReason {
+  margin: 0 0 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.03em;
+  color: var(--copper);
+}
+
+.deskReasonTrip {
+  color: var(--trip);
+}
+
+.deskSummary {
+  margin: 0 0 0.6rem;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  line-height: 1.5;
+  color: var(--bone-witness);
+}
+
+.deskHint {
+  margin: 0 0 0.45rem;
+  font-size: 0.78rem;
+  color: var(--bone);
+}
+
+.suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.suggestion {
+  text-align: left;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--copper) 55%, var(--room));
+  border-radius: 6px;
+  background: transparent;
+  color: var(--bone);
+  font-family: inherit;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.suggestion:hover {
+  background: color-mix(in srgb, var(--copper) 16%, var(--room));
+}
+
+.wrapCard {
+  border-left: 3px solid var(--bone);
+}
+
+.dispositionList {
+  margin: 0 0 0.5rem;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--bone);
+}
+
+.wrapMeta {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--bone-witness);
+}
+
+.wallboard {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  padding: 0.6rem 0.2rem 0;
+  border-top: 1px solid var(--hairline);
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+  color: var(--bone-witness);
+}
+
+/* ---- stacked duplex ---------------------------------------------------- */
+
+@media (max-width: 639px) {
+  .prototypeBar span:not(.wordmark) {
+    display: none;
+  }
+}
+
+@media (max-width: 979px) {
+  .duplex {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wire {
+    min-height: 18px;
+  }
+
+  .wire::before {
+    inset: 50% 0 auto 0;
+    width: auto;
+    height: 2px;
+    transform: translateY(-50%);
+  }
+
+  .pulse {
+    display: none;
+  }
+
+  .phone {
+    height: min(560px, 78svh);
+  }
+
+  .console {
+    padding-left: 0;
+  }
+}
+
+/* ---- reduced motion: finished states, nothing hidden ------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse {
+    animation: none;
+    opacity: 0;
+  }
+
+  .ledgerFired {
+    animation: none;
+    background: transparent;
+  }
+
+  .desk {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .typing span {
+    animation: none;
+    opacity: 0.6;
+  }
+}
