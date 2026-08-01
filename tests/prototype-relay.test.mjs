@@ -183,6 +183,38 @@ test("Relay is discoverable and ships its contract", async () => {
   assert.match(styles, /Signature/);
 });
 
+test("The annex maps every Relay mechanism to its platform equivalent", async () => {
+  const [annex, app, styles] = await Promise.all([
+    read("src/components/relay/StackMap.tsx"),
+    read("src/components/relay/RelayApp.tsx"),
+    read("src/app/prototype/relay/relay.module.css"),
+  ]);
+
+  assert.match(app, /<StackMap \/>/);
+  for (const platform of ["Cognigy", "NICE CXone", "Omilia", "On a client project"]) {
+    assert.match(annex, new RegExp(platform));
+  }
+  // Every mechanism the demo shows has a row, so the annex cannot drift
+  // away from the engine it describes.
+  for (const mechanism of [
+    "Event ledger",
+    "Flow reducer",
+    "Keyword scorer",
+    "Entity extractors",
+    "optin_confirm",
+    "Escalation rules",
+    "Handover packet",
+    "Suggested replies",
+    "SMS mid-conversation",
+    "Wrap card",
+  ]) {
+    assert.ok(annex.includes(mechanism), `annex is missing ${mechanism}`);
+  }
+  // The table restacks on a phone instead of scrolling sideways.
+  assert.match(annex, /data-label=/);
+  assert.match(styles, /content: attr\(data-label\)/);
+});
+
 test("Copy honors the voice bans: no em dashes, no Math.random", async () => {
   const files = await Promise.all([
     read("src/lib/relay/engine.mjs"),
@@ -191,6 +223,7 @@ test("Copy honors the voice bans: no em dashes, no Math.random", async () => {
     read("src/components/relay/PhonePane.tsx"),
     read("src/components/relay/ConsolePane.tsx"),
     read("src/components/relay/FlowGraph.tsx"),
+    read("src/components/relay/StackMap.tsx"),
   ]);
   for (const content of files) {
     assert.ok(!content.includes("—"), "em dash found");
