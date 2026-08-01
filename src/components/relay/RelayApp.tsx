@@ -10,6 +10,7 @@ import {
 import { createScenario, getChips } from "@/lib/relay/scenario.mjs";
 import { PhonePane, type Message } from "@/components/relay/PhonePane";
 import { ConsolePane } from "@/components/relay/ConsolePane";
+import { StackMap } from "@/components/relay/StackMap";
 import styles from "@/app/prototype/relay/relay.module.css";
 
 type Session = ReturnType<typeof createSession>;
@@ -222,6 +223,8 @@ export function RelayApp() {
           elapsed={elapsed}
         />
       </main>
+
+      <StackMap />
     </div>
   );
 }
