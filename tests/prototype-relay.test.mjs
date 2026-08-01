@@ -73,6 +73,11 @@ test("Medical equipment trips the vulnerable-customer policy handover", () => {
   );
   assert.equal(session.handover.suggestedReplies.length, 3);
   assert.match(session.handover.suggestedReplies[0], /medical support register/);
+
+  // The close in human mode still reaches the WRAP UP node.
+  ({ session } = ingest(session, "Thank you, that's a relief"));
+  assert.ok(session.wrapup);
+  assert.equal(session.nodeId, "wrap");
 });
 
 test("Two consecutive low-confidence reads hand the line to a human", () => {

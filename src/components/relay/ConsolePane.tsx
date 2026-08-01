@@ -83,18 +83,35 @@ export function ConsolePane({
         {lastRead ? (
           <div className={styles.nluRead}>
             <p className={styles.nluUtterance}>&ldquo;{lastRead.text}&rdquo;</p>
-            <div className={styles.confRow}>
-              <span className={styles.confIntent}>{lastRead.top.id}</span>
-              <span className={styles.confBarTrack}>
-                <span
-                  className={styles.confBarFill}
-                  style={{ width: percent(lastRead.top.confidence) }}
-                />
-              </span>
-              <span className={styles.confValue}>
-                {percent(lastRead.top.confidence)}
-              </span>
-            </div>
+            {lastRead.resolved &&
+            lastRead.resolved !== lastRead.top.id &&
+            lastRead.resolved !== "fallback" ? (
+              // A context slot answered the open question; a confidence bar
+              // over the keyword ranking would be the wrong number to show.
+              <div className={styles.confRow}>
+                <span className={styles.confIntent}>{lastRead.resolved}</span>
+                <span className={styles.contextNote}>
+                  context slot · expected answer
+                </span>
+              </div>
+            ) : (
+              <div className={styles.confRow}>
+                <span className={styles.confIntent}>
+                  {lastRead.resolved === "fallback"
+                    ? `fallback · best ${lastRead.top.id}`
+                    : lastRead.top.id}
+                </span>
+                <span className={styles.confBarTrack}>
+                  <span
+                    className={styles.confBarFill}
+                    style={{ width: percent(lastRead.top.confidence) }}
+                  />
+                </span>
+                <span className={styles.confValue}>
+                  {percent(lastRead.top.confidence)}
+                </span>
+              </div>
+            )}
             {lastRead.ranked[1] && lastRead.ranked[1].confidence > 0 ? (
               <p className={styles.runnerUp}>
                 runner-up {lastRead.ranked[1].id}{" "}

@@ -326,6 +326,7 @@ function routeHumanMode(next, read, events) {
     read.top.id === "thanks_done"
   ) {
     read.resolved = "thanks_done";
+    next.nodeId = "wrap";
     next.wrapup = buildWrapup(next);
     events.push({ type: "wrapup", wrapup: next.wrapup });
   }

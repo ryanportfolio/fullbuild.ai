@@ -561,6 +561,12 @@
   font-size: 0.66rem;
 }
 
+.contextNote {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--bone-witness);
+}
+
 .runnerUp,
 .matchRow {
   margin: 0;
@@ -721,6 +727,12 @@
 }
 
 /* ---- stacked duplex ---------------------------------------------------- */
+
+@media (max-width: 639px) {
+  .prototypeBar span:not(.wordmark) {
+    display: none;
+  }
+}
 
 @media (max-width: 979px) {
   .duplex {

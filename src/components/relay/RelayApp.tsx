@@ -64,10 +64,15 @@ export function RelayApp() {
   }, [uiWrapup]);
 
   useEffect(() => {
-    setVisited((prior) =>
-      prior.includes(session.nodeId) ? prior : [...prior, session.nodeId],
-    );
-  }, [session.nodeId]);
+    setVisited((prior) => {
+      // The medical branch passes through POLICY and lands on HANDOVER in
+      // one ingest; light the intermediate node too.
+      const additions = [session.nodeId];
+      if (session.flags.vulnerable) additions.push("policy");
+      const fresh = additions.filter((node) => !prior.includes(node));
+      return fresh.length ? [...prior, ...fresh] : prior;
+    });
+  }, [session.nodeId, session.flags.vulnerable]);
 
   const addMessage = useCallback((message: Omit<Message, "id">) => {
     setMessages((prior) => [...prior, { ...message, id: nextId() }]);
@@ -190,8 +195,8 @@ export function RelayApp() {
           channel={uiChannel}
           messages={messages}
           typing={typing}
-          wrapped={session.mode === "wrapped"}
-          chips={busy ? [] : getChips(session)}
+          wrapped={session.mode === "wrapped" || Boolean(uiWrapup)}
+          chips={busy || uiWrapup ? [] : getChips(session)}
           onSend={sendCustomer}
         />
 
