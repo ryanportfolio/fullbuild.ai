@@ -3,6 +3,7 @@ import { Archivo, Martian_Mono } from 'next/font/google';
 import './globals.css';
 import TitleBlock from '@/components/chrome/TitleBlock';
 import { GIT } from '@/lib/git';
+import { PROTOTYPE_COUNT } from '@/lib/prototypes';
 
 // Self-hosted at build by Next (no runtime CDN). Archivo carries the width axis
 // so the display voice can letter in EXPANDED caps; Martian Mono is the
@@ -113,7 +114,7 @@ export default function RootLayout({
       </head>
       <body>
         {children}
-        <TitleBlock rev={GIT.rev} sha={GIT.sha} />
+        <TitleBlock rev={GIT.rev} sha={GIT.sha} prototypes={PROTOTYPE_COUNT} />
       </body>
     </html>
   );
