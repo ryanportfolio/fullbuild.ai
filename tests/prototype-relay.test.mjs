@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
+import { readFile, stat } from "node:fs/promises";
+import { join } from "node:path";
 import { test } from "node:test";
 
 import {
@@ -310,9 +312,55 @@ test("Copy honors the voice bans: no em dashes, no Math.random", async () => {
     read("src/components/relay/FlowGraph.tsx"),
     read("src/components/relay/StackMap.tsx"),
     read("src/components/relay/ProofLedger.tsx"),
+    read("src/components/relay/SessionExhibit.tsx"),
   ]);
   for (const content of files) {
     assert.ok(!content.includes("—"), "em dash found");
     assert.ok(!content.includes("Math.random"), "unseeded randomness found");
   }
+});
+
+test("The session exhibit ships the file it points at, and stays still", async () => {
+  const exhibit = await read("src/components/relay/SessionExhibit.tsx");
+
+  // Both assets have to exist, or the block renders a broken poster over a
+  // dead play button and the page's whole closing argument is a 404.
+  for (const [, path] of exhibit.matchAll(/"(\/prototype\/relay\/[^"]+)"/g)) {
+    await stat(join(process.cwd(), "public", path));
+  }
+
+  // The annex carries no motion verb: nothing here may start on its own.
+  assert.match(exhibit, /preload="none"/);
+  assert.doesNotMatch(exhibit, /\bautoPlay\b/);
+  assert.doesNotMatch(exhibit, /\bloop\b/);
+
+  // The stated length has to match the file the reader actually gets.
+  const claimed = Number((exhibit.match(/const SECONDS = (\d+)/) ?? [])[1]);
+  const probed = execFileSync(
+    "ffprobe",
+    [
+      "-v", "error",
+      "-show_entries", "format=duration",
+      "-of", "csv=p=0",
+      "public/prototype/relay/session.mp4",
+    ],
+    { encoding: "utf8" },
+  );
+  assert.ok(
+    Math.abs(Number(probed) - claimed) < 1,
+    `exhibit says ${claimed}s, file is ${Number(probed).toFixed(2)}s`,
+  );
+
+  // No audio track, which is what the play control promises the reader.
+  const streams = execFileSync(
+    "ffprobe",
+    [
+      "-v", "error",
+      "-show_entries", "stream=codec_type",
+      "-of", "csv=p=0",
+      "public/prototype/relay/session.mp4",
+    ],
+    { encoding: "utf8" },
+  );
+  assert.doesNotMatch(streams, /audio/);
 });
