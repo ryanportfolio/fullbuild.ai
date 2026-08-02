@@ -113,7 +113,7 @@ const ROWS: MappingRow[] = [
   {
     relay: (
       <>
-        <Mono>18</Mono> tests on the engine and its contract, run with{" "}
+        <Mono>19</Mono> tests on the engine and its contract, run with{" "}
         <Mono>node --test</Mono>
       </>
     ),

@@ -35,8 +35,21 @@
    as the author's notes and not another instrument. Its column headings
    stick to the top of the viewport while the table passes under them,
    which is persistence rather than motion and animates nothing. The annex
-   closes on the proof ledger: the same scenario rebuilt as a real Cognigy
-   agent, shown as the run report of its regression suite rather than a
+   closes on two exhibits of the same tenant, each opening on the same mono
+   strip: what ran, when, and what came of it.
+
+   The first is the session, recorded against the public webchat endpoint and
+   laid out as a duplex, footage where the phone sits at the top of the page
+   and the note where the console reads, stacking at the same 980px. It is a
+   poster until the reader presses play, because the annex carries no motion
+   verb and nothing on this block moves on its own; preload="none" means the
+   file never crosses the wire for a reader who does not ask. The play control
+   refuses --signal, since amber marks the machine deciding something and a
+   button decides nothing. The footage stops where the second exhibit starts,
+   so the page is the rest of it: one conversation above, all eight branches
+   below.
+
+   The second is the run report of the regression suite, rather than a
    paragraph claiming it passed. Eight rows, one per playbook, each carrying
    the line a customer typed, what the platform decided about it, and a score
    that reads down the right edge as a column. Every count including the
@@ -966,6 +979,195 @@
 .proofLink:focus-visible {
   border-color: var(--signal);
   color: var(--signal);
+}
+
+/* ---- exhibit one: the session ------------------------------------------- */
+
+/* The footage is a duplex on purpose: the webchat sits left where the phone
+   sits at the top of the page, and the note reads right where the console
+   reads. Same seam, one screen further down. It stacks at the same 980px the
+   duplex above it stacks at, footage first.
+
+   Portrait, because that is the shape the thing actually is. No chrome is
+   drawn around it beyond the recess it sits in, since the recording already
+   carries the platform's own frame, and the page has no business redrawing a
+   vendor's UI. */
+.session {
+  display: grid;
+  grid-template-columns: minmax(0, 520px) minmax(0, 1fr);
+  gap: clamp(1.4rem, 3vw, 2.8rem);
+  align-items: stretch;
+  margin-top: clamp(1.2rem, 2.6vw, 1.7rem);
+}
+
+.sessionStage {
+  position: relative;
+  background: color-mix(in srgb, var(--bone) 3%, var(--room));
+  border: 1px solid var(--hairline);
+}
+
+.sessionVideo {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* The whole poster is the target, not a small button floating on it. */
+.sessionPlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  /* Flat scrim, never a gradient. It has to be heavy enough that the poster
+     reads as a dimmed plate waiting on the reader, not as live text with a
+     button dropped on top of it. */
+  background: color-mix(in srgb, var(--room) 76%, transparent);
+  border: 0;
+  cursor: pointer;
+  font-family: var(--mono);
+  color: var(--bone);
+}
+
+.sessionPlayInner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--bone) 55%, var(--room));
+  background: var(--room);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sessionPlayMark {
+  width: 0.6rem;
+  height: 0.7rem;
+}
+
+/* One control, not a stack of two plates: the length and the silence are
+   conditions of the same button, so they sit inside its border. */
+.sessionPlayMeta {
+  padding-left: 0.75rem;
+  margin-left: 0.15rem;
+  border-left: 1px solid color-mix(in srgb, var(--bone) 30%, var(--room));
+  font-size: 0.58rem;
+  letter-spacing: 0.09em;
+  color: var(--bone-witness);
+  text-transform: none;
+}
+
+/* --signal stays out of this control. Amber on this page means the machine
+   decided something, and a play button decides nothing. */
+.sessionPlay:hover .sessionPlayInner,
+.sessionPlay:focus-visible .sessionPlayInner {
+  border-color: var(--bone);
+}
+
+/* The grid column is the measure. Nothing in here carries its own max-width,
+   because the moment the prose and the beat table disagree the block reads as
+   two widths stacked and the rule under the handoff stops short of both.
+   (A rem cap would not help: the root here is fluid, so it lands wherever the
+   viewport puts it rather than where the column is.) */
+.sessionNote {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.sessionNote p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--bone-witness);
+}
+
+/* The line that points at the table below, so it is set apart from the two
+   above it that describe what is on screen. */
+/* The console reading of the footage: what the tenant calls each beat, beside
+   what the reader is watching happen. Same split as the top of the page, so
+   the right column carries its own weight instead of running out of copy. */
+.sessionBeats {
+  margin: 0.35rem 0 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.sessionBeat {
+  display: grid;
+  grid-template-columns: minmax(0, 11.2rem) minmax(0, 1fr);
+  gap: 0.15rem 1.1rem;
+  align-items: baseline;
+  padding: 0.62rem 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.sessionBeat dt {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.03em;
+  color: var(--signal);
+}
+
+/* A node the author placed is not the machine deciding, so it does not take
+   amber even though it is just as literal a name. */
+.sessionBeat dt.sessionBeatQuiet {
+  color: var(--bone-witness);
+}
+
+.sessionBeat dd {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--bone-witness);
+}
+
+@media (max-width: 519px) {
+  .sessionBeat {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Falls to the foot of the column so it lands level with the end of the
+   footage, which is the point it is making: the recording stops here and the
+   table takes over. */
+.sessionNote .sessionHandoff {
+  margin-top: auto;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--hairline);
+  color: var(--bone);
+}
+
+@media (max-width: 979px) {
+  .sessionNote .sessionHandoff {
+    margin-top: 0.35rem;
+  }
+}
+
+/* Same strip as the run header below, so the two exhibits read as a pair.
+   It stops short of --signal: a recording is not the platform deciding
+   anything, it is only the platform running. */
+.sessionBadge {
+  padding: 0.22rem 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--bone) 45%, var(--room));
+  color: var(--bone-witness);
+}
+
+@media (max-width: 979px) {
+  .session {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sessionStage {
+    max-width: 520px;
+  }
+}
+
+/* Two exhibits need a wider break between them than a paragraph does. */
+.session + .runHeader {
+  margin-top: clamp(2.2rem, 4.4vw, 3.4rem);
 }
 
 .runHeader {

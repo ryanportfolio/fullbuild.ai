@@ -1,6 +1,12 @@
 import styles from "@/app/prototype/relay/relay.module.css";
 
-/* The proof block is the run itself, not a paragraph about it.
+import { SessionExhibit } from "./SessionExhibit";
+
+/* The block closes the page on two exhibits of the same tenant: the session
+   running, then the suite that holds it to its answers. Both open on the same
+   mono strip, what ran, when, and what came of it, so they read as a pair.
+
+   The proof block is the run itself, not a paragraph about it.
    ROWS transcribes playbookRunResults.json from ryanportfolio/cx-lab, the
    2026-08-02 execution of `cognigy run playbooks`. Every number printed
    below is derived from ROWS: nothing here is a typed total, so the ledger
@@ -131,12 +137,20 @@ export function ProofLedger() {
     <section className={styles.proof} aria-labelledby="proof-heading">
       <div className={styles.proofTop}>
         <h3 id="proof-heading" className={styles.proofHeading}>
-          Playbook run · Relay on Cognigy
+          Relay on Cognigy
         </h3>
         <a className={styles.proofLink} href={REPO} target="_blank" rel="noreferrer">
           Read the build on GitHub
         </a>
       </div>
+
+      <div className={styles.runHeader}>
+        <span className={styles.runCommand}>webchat endpoint</span>
+        <span className={styles.runStamp}>2026-08-02</span>
+        <span className={styles.sessionBadge}>one unbroken session</span>
+      </div>
+
+      <SessionExhibit />
 
       <div className={styles.runHeader}>
         <span className={styles.runCommand}>cognigy run playbooks</span>
