@@ -225,6 +225,30 @@ export function StackMap() {
           </ul>
         </div>
       </div>
+
+      <div className={styles.annexProof}>
+        <h3 className={styles.annexSubheading}>The Cognigy column runs for real</h3>
+        <p className={styles.annexProofBody}>
+          This same scenario now exists as a working Cognigy agent: the flow
+          built through the REST API, the eight intents trained, the medical
+          lexicon filling its slot, and eight native Playbooks asserting
+          intent, slot and reply text, all green. The whole tenant is
+          snapshotted to a public repo you can read or restore.
+        </p>
+        <div className={styles.annexProofRow}>
+          <a
+            className={styles.annexProofLink}
+            href="https://github.com/ryanportfolio/cx-lab"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Read the build on GitHub
+          </a>
+          <span className={styles.annexProofFacts}>
+            ryanportfolio/cx-lab · 8 playbooks · 8 of 8 green · 2026-08-02
+          </span>
+        </div>
+      </div>
     </section>
   );
 }
