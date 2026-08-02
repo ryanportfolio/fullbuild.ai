@@ -9,6 +9,7 @@ const loadTrack = document.querySelector('.load-state__track i');
 const chapters = [...document.querySelectorAll('[data-chapter-index]')];
 const railItems = [...document.querySelectorAll('[data-rail-index]')];
 const mapPulse = document.querySelector('.exchange-map__pulse');
+const mapBranches = [...document.querySelectorAll('.exchange-map__branch')];
 const root = document.documentElement;
 
 // Decoder and motion constants stay visible because they are the tuning surface.
@@ -132,8 +133,6 @@ function requestSeek(time) {
 function updateChapterState(progress) {
   const lastIndex = Math.max(0, chapters.length - 1);
   const chapterInterval = lastIndex ? 1 / lastIndex : 1;
-  const holdRadius = chapterInterval * 0.3;
-  const fadeRadius = chapterInterval * 0.4;
 
   let nearestIndex = 0;
   for (let index = 1; index < chapters.length; index += 1) {
@@ -144,6 +143,15 @@ function updateChapterState(progress) {
 
   const states = chapters.map((chapter, index) => {
     const anchor = CHAPTER_ANCHORS[index];
+    // Anchors are not evenly spaced, so each chapter's hold and fade scale to
+    // its tightest neighbor gap. Otherwise the film beat beside a moved anchor
+    // collapses to a fraction of the others.
+    const gap = Math.min(
+      index > 0 ? anchor - CHAPTER_ANCHORS[index - 1] : Infinity,
+      index < lastIndex ? CHAPTER_ANCHORS[index + 1] - anchor : Infinity,
+    );
+    const holdRadius = gap * 0.3;
+    const fadeRadius = gap * 0.4;
     const distance = Math.abs(progress - anchor);
     const transition = clamp((distance - holdRadius) / (fadeRadius - holdRadius));
     const signedTransition = Math.sign(progress - anchor) * transition;
@@ -233,6 +241,9 @@ function renderFrame(now, force = false) {
   video.style.setProperty('--py', `${pointerY.toFixed(2)}px`);
 
   mapPulse.style.strokeDashoffset = String(1 - shownProgress);
+  // The branches thread outward as the pulse passes each fork node.
+  mapBranches[0].style.strokeDashoffset = String(1 - clamp((shownProgress - 0.14) / 0.26));
+  mapBranches[1].style.strokeDashoffset = String(1 - clamp((shownProgress - 0.4) / 0.28));
 
   updateChapterState(shownProgress);
 

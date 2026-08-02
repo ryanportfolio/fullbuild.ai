@@ -3,7 +3,7 @@ MARANATHA / THE LIVING EXCHANGE CONTRACT
 Palette: Humus #17130F is the living ground; Root #E9E0CB is readable matter; Chlorophyll #43563B is established growth; Water #AAC7C1 is passive transfer; Sap #D2A044 marks active exchange and nothing else.
 Type roles: Newsreader carries belief, prayer, and large display text with a fixed optical character; Archivo Narrow carries field labels, locations, and the farm's own language. No axis is animated state.
 Grid: a fixed field rail records the journey while one open specimen column moves between left and right over the film.
-Motion verbs: DESCEND moves the camera and pulse; TRANSFER passes emphasis between chapters; SURFACE resolves the film and invitation.
+Motion verbs: DESCEND moves the camera and pulse; THREAD branches the system line; TRANSFER passes emphasis between chapters; SURFACE resolves the film and invitation.
 Pacing: each chapter holds fully still for more than one viewport before TRANSFER begins; the film receives a clean beat between chapters.
 Ban list: no wellness beige, fantasy bioluminescence, floating leaves, drone montage, generic eco gradients, stat cards, glass treatment, or opaque full-screen copy panels.
 Signature element: the supplied macro film is one uninterrupted water journey and the page's only cinematic surface.
@@ -300,9 +300,10 @@ html[data-media-error="true"] .film-stage::after {
   text-transform: uppercase;
 }
 
+/* Sized to fill the rail so the root branches carry real stroke weight. */
 .exchange-map {
-  width: 2.3rem;
-  height: min(38vh, 21rem);
+  width: 100%;
+  height: min(56vh, 30rem);
   margin: 1rem auto;
   overflow: visible;
 }
@@ -313,14 +314,20 @@ html[data-media-error="true"] .film-stage::after {
   stroke-linecap: square;
 }
 
-.exchange-map__bed {
+.exchange-map__bed,
+.exchange-map__branch {
   stroke: var(--water);
-  stroke-width: 0.8;
+  stroke-width: 1.15;
 }
 
 .exchange-map__pulse {
   stroke: var(--sap);
   stroke-width: 2.1;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+}
+
+.exchange-map__branch {
   stroke-dasharray: 1 1;
   stroke-dashoffset: 1;
 }
@@ -968,7 +975,8 @@ h2 {
     transform: translate3d(0, -50%, 0);
   }
 
-  .exchange-map__pulse {
+  .exchange-map__pulse,
+  .exchange-map__branch {
     stroke-dashoffset: 0 !important;
   }
 }

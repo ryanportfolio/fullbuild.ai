@@ -57,7 +57,8 @@ test('Maranatha ships one complete progressive-enhancement experience', async ()
   assert.match(script, /loadedmetadata/);
   assert.match(script, /video\.duration/);
   assert.match(script, /Math\.exp/);
-  assert.match(script, /const holdRadius = chapterInterval \* 0\.3/);
+  assert.match(script, /const holdRadius = gap \* 0\.3/);
+  assert.match(script, /const CHAPTER_ANCHORS = \[0, 0\.27, 0\.5, 0\.75, 1\]/);
   assert.match(script, /video\.seeking/);
   assert.match(script, /seeked/);
   assert.match(script, /requestVideoFrameCallback/);
