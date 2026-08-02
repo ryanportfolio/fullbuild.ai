@@ -1,0 +1,84 @@
+import assert from 'node:assert/strict';
+import { access, readFile, stat } from 'node:fs/promises';
+import { test } from 'node:test';
+
+const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
+const file = (path) => new URL(`../${path}`, import.meta.url);
+
+test('Maranatha ships one complete progressive-enhancement experience', async () => {
+  const [page, styles, script, config] = await Promise.all([
+    read('public/prototype/maranatha/index.html'),
+    read('public/prototype/maranatha/src/styles.css'),
+    read('public/prototype/maranatha/src/app.mjs'),
+    read('next.config.mjs'),
+  ]);
+
+  for (const section of ['surface', 'mycelium', 'root', 'canopy', 'table']) {
+    assert.match(page, new RegExp(`data-section="${section}"`));
+  }
+  assert.equal((page.match(/<h1[ >]/g) ?? []).length, 1, 'exactly one h1');
+  assert.match(page, /<h1>Our Story<\/h1>/);
+  assert.match(page, /<video[^>]+id="farm-film"[^>]+muted[^>]+playsinline[^>]+preload="auto"/s);
+  assert.match(page, /src="\/prototype\/maranatha\/assets\/farm1-48-scrub\.mp4"/);
+  assert.match(page, /class="skip-link"/);
+  assert.match(page, /<svg[^>]+class="exchange-map"[^>]+aria-label=/s);
+  assert.match(page, /data-lens="earth"/);
+  assert.match(page, /https:\/\/maranatha\.farm\/pages\/our-story/);
+  assert.match(page, /https:\/\/maranatha\.farm\/collections\/all/);
+  assert.match(page, /Healthy food<br>that is delicious/);
+  assert.match(page, /Michele and her family moved to the Somerset Hills of New Jersey/);
+  assert.match(page, /She felt a calling to combine her love for food with healing the land/);
+  assert.doesNotMatch(page, /Healing the land<br>one season at a time/);
+  assert.match(page, /“Maranatha” means<br>Come, O Lord/);
+  assert.doesNotMatch(page, /Follow the exchange|One drop|Surface water|Independent concept|Built by fullbuild\.ai/i);
+  assert.match(page, /<noscript>/);
+  assert.doesNotMatch(page, /\u2014/);
+  for (const match of page.matchAll(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/gs)) {
+    const text = match[1].replace(/<[^>]+>/g, '').trim();
+    assert.ok(!text.endsWith('.'), `heading ends with a period: ${text}`);
+  }
+
+  assert.match(styles, /^\/\*\nMARANATHA \/ THE LIVING EXCHANGE CONTRACT/m);
+  assert.match(styles, /@font-face[\s\S]+newsreader-latin\.woff2/);
+  assert.match(styles, /@font-face[\s\S]+archivo-narrow-latin\.woff2/);
+  assert.match(styles, /@media \(max-width: 720px\)/);
+  assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(styles, /min-height: 180svh/);
+  assert.match(styles, /:focus-visible/);
+  assert.doesNotMatch(styles, /@import|fonts\.googleapis|backdrop-filter|filter:\s*blur/);
+  assert.doesNotMatch(styles, /linear-gradient|radial-gradient|conic-gradient/);
+
+  assert.match(script, /loadedmetadata/);
+  assert.match(script, /video\.duration/);
+  assert.match(script, /Math\.exp/);
+  assert.match(script, /const holdRadius = chapterInterval \* 0\.3/);
+  assert.match(script, /video\.seeking/);
+  assert.match(script, /seeked/);
+  assert.match(script, /requestVideoFrameCallback/);
+  assert.match(script, /window\.__maranathaCapture/);
+  assert.equal((script.match(/requestAnimationFrame\(/g) ?? []).length, 1, 'one rAF authority');
+  assert.doesNotMatch(script, /Math\.random|setInterval/);
+
+  assert.match(
+    config,
+    /\{ source: '\/prototype\/maranatha', destination: '\/prototype\/maranatha\/index\.html' \}/,
+  );
+});
+
+test('Maranatha ships the supplied film and local type assets', async () => {
+  for (const path of [
+    'public/prototype/maranatha/assets/farm1.mp4',
+    'public/prototype/maranatha/assets/farm1-48-scrub.mp4',
+    'public/prototype/maranatha/assets/fonts/newsreader-latin.woff2',
+    'public/prototype/maranatha/assets/fonts/newsreader-italic-latin.woff2',
+    'public/prototype/maranatha/assets/fonts/archivo-narrow-latin.woff2',
+    'public/prototype/maranatha/assets/favicon.svg',
+  ]) {
+    await access(file(path));
+  }
+  const video = await stat(file('public/prototype/maranatha/assets/farm1.mp4'));
+  assert.equal(video.size, 37_416_199, 'the supplied film is copied byte-for-byte');
+  const scrubVideo = await stat(file('public/prototype/maranatha/assets/farm1-48-scrub.mp4'));
+  assert.ok(scrubVideo.size > 5_000_000, 'the scrub encode is unexpectedly small');
+  assert.ok(scrubVideo.size < video.size, 'the scrub encode should be lighter than the source');
+});
