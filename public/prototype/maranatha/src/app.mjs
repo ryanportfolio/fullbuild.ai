@@ -10,6 +10,10 @@ const chapters = [...document.querySelectorAll('[data-chapter-index]')];
 const railItems = [...document.querySelectorAll('[data-rail-index]')];
 const mapPulse = document.querySelector('.exchange-map__pulse');
 const mapBranches = [...document.querySelectorAll('.exchange-map__branch')];
+const loopCanvas = document.querySelector('.exchange-loop');
+const loopCtx = loopCanvas ? loopCanvas.getContext('2d') : null;
+const loopShell = document.querySelector('.system-lens');
+const loopNameRow = document.querySelector('.exchange-names');
 const root = document.documentElement;
 
 // Decoder and motion constants stay visible because they are the tuning surface.
@@ -29,6 +33,30 @@ const LOAD_STATE_TIMEOUT_MS = 6000;
 // Chapter two sits past the quarter mark so its copy holds over the emerging
 // green instead of the dark root mass at exactly 25% of the film.
 const CHAPTER_ANCHORS = [0, 0.27, 0.5, 0.75, 1];
+const CANOPY_INDEX = 3;
+
+// The interdependence loop, tuned in the lab. Lengths are pixels except where
+// noted; LABEL_EM scales with the page's fluid root so the ring's labels track
+// the rest of the type.
+const LOOP = {
+  RADIUS: 0.485,
+  TILT_DEGREES: 29,
+  SPIN_DEGREES_PER_SECOND: 0.6,
+  WAVE: 0.1,
+  WAVE_FREQUENCY: 3,
+  DEPTH: 6,
+  LINE: 2.6,
+  FAR_ALPHA: 0.25,
+  NEAR_ALPHA: 0.85,
+  PULSE_LENGTH: 0.16,
+  PULSE_TURNS_PER_SECOND: 0.06,
+  PULSE_WEIGHT: 4,
+  NODE_RADIUS: 5,
+  LABEL_EM: 0.488,
+  LABEL_TRACKING: 0.1,
+  LABEL_GAP: 16,
+};
+const LOOP_NODES = ['soil', 'flock', 'gardens', 'terraces', 'mushroom yards', 'silvopastures', 'your home'];
 
 const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 const finePointerQuery = window.matchMedia('(pointer: fine)');
@@ -211,6 +239,196 @@ function updateChapterState(progress) {
   });
 }
 
+// ---- interdependence loop -------------------------------------------------
+// One closed curve carrying the farm's own parts, projected in perspective and
+// depth sorted so the far arc recedes. Drawn from the page's single animation
+// loop; it never opens one of its own.
+let loopClock = 0;
+let loopPresence = 0;
+let loopRootSize = 16;
+let loopNamesBeside = null;
+let loopLitName = -1;
+
+const loopNameSpans = LOOP_NODES.map((name) => {
+  const span = document.createElement('span');
+  span.textContent = name;
+  loopNameRow?.appendChild(span);
+  return span;
+});
+
+function setLoopNameRow(beside, litIndex) {
+  if (!loopShell) return;
+  if (beside !== loopNamesBeside) {
+    loopNamesBeside = beside;
+    loopShell.dataset.names = beside ? 'off' : 'on';
+  }
+  if (beside || litIndex === loopLitName) return;
+  loopLitName = litIndex;
+  loopNameSpans.forEach((span, index) => {
+    if (index === litIndex) span.dataset.lit = 'true';
+    else span.removeAttribute('data-lit');
+  });
+}
+
+function loopRadius(width, height, labelPx, labelsBeside) {
+  loopCtx.font = `700 ${labelPx}px "Archivo Narrow", sans-serif`;
+  let widest = 0;
+  if (labelsBeside) {
+    for (const name of LOOP_NODES) {
+      widest = Math.max(widest, loopCtx.measureText(name.toUpperCase()).width);
+    }
+  }
+  const margin = Math.min(widest + LOOP.LABEL_GAP + 6, width * 0.28);
+  const tilt = Math.abs(Math.sin((LOOP.TILT_DEGREES * Math.PI) / 180));
+  const magnify = LOOP.DEPTH / Math.max(0.15, LOOP.DEPTH - 1);
+  const halfHeight = height / 2 - labelPx * 0.8 - 4;
+  const vertical = Math.max(0.12, (tilt + LOOP.WAVE) * magnify);
+  const fitted = Math.max(
+    20,
+    Math.min((width / 2 - margin) / magnify, halfHeight / vertical),
+  );
+  return (LOOP.RADIUS / 0.44) * fitted;
+}
+
+function loopPoint(turn, spin, radius, width, height) {
+  const angle = turn * Math.PI * 2;
+  const x = Math.cos(angle) * radius;
+  const z = Math.sin(angle) * radius;
+  const y = Math.sin(angle * LOOP.WAVE_FREQUENCY) * LOOP.WAVE * radius;
+  const cosSpin = Math.cos(spin);
+  const sinSpin = Math.sin(spin);
+  const spunX = x * cosSpin + z * sinSpin;
+  const spunZ = -x * sinSpin + z * cosSpin;
+  const tilt = (LOOP.TILT_DEGREES * Math.PI) / 180;
+  const tiltedY = y * Math.cos(tilt) - spunZ * Math.sin(tilt);
+  const tiltedZ = y * Math.sin(tilt) + spunZ * Math.cos(tilt);
+  const distance = LOOP.DEPTH * radius;
+  const scale = distance / (distance + tiltedZ);
+  return {
+    x: width / 2 + spunX * scale,
+    y: height / 2 + tiltedY * scale,
+    scale,
+    z: tiltedZ,
+  };
+}
+
+function loopPulse(turn, head) {
+  let behind = turn - head;
+  behind -= Math.floor(behind);
+  if (behind > LOOP.PULSE_LENGTH) return 0;
+  const along = 1 - behind / LOOP.PULSE_LENGTH;
+  return along * along;
+}
+
+function drawExchangeLoop(elapsed) {
+  if (!loopCtx) return;
+  const presence = Number(chapters[CANOPY_INDEX].style.getPropertyValue('--reveal')) || 0;
+  loopPresence = presence;
+  // The stylesheet owns the drawing's box; this only reads it.
+  const width = loopCanvas.clientWidth;
+  const height = loopCanvas.clientHeight;
+  if (!width || !height) return;
+
+  const ratio = Math.min(2, window.devicePixelRatio || 1);
+  if (loopCanvas.width !== Math.round(width * ratio) || loopCanvas.height !== Math.round(height * ratio)) {
+    loopCanvas.width = Math.round(width * ratio);
+    loopCanvas.height = Math.round(height * ratio);
+    loopRootSize = parseFloat(getComputedStyle(root).fontSize) || 16;
+  }
+  loopCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  loopCtx.clearRect(0, 0, width, height);
+  setLoopNameRow(width >= 430, loopLitName);
+  if (presence <= 0.001) return;
+
+  const still = reducedMotionQuery.matches;
+  if (!still) loopClock += elapsed;
+  const spin = ((still ? 0 : loopClock) * LOOP.SPIN_DEGREES_PER_SECOND * Math.PI) / 180;
+  const head = still ? 0.82 : (loopClock * LOOP.PULSE_TURNS_PER_SECOND) % 1;
+
+  const labelPx = LOOP.LABEL_EM * loopRootSize;
+  // There is only room beside every node on a wide panel; on a phone the names
+  // move to their own row and light there as the exchange reaches them.
+  const labelsBeside = width >= 430;
+  const radius = loopRadius(width, height, labelPx, labelsBeside);
+  if (!labelsBeside) {
+    const reached = Math.round(head * LOOP_NODES.length) % LOOP_NODES.length;
+    setLoopNameRow(false, reached);
+  }
+
+  const SEGMENTS = 220;
+  const segments = [];
+  for (let index = 0; index < SEGMENTS; index += 1) {
+    const from = loopPoint(index / SEGMENTS, spin, radius, width, height);
+    const to = loopPoint((index + 1) / SEGMENTS, spin, radius, width, height);
+    segments.push({ from, to, z: (from.z + to.z) / 2, turn: (index + 0.5) / SEGMENTS });
+  }
+  segments.sort((a, b) => a.z - b.z);
+
+  const depthAlpha = (z) => {
+    const near = (z / radius + 1) / 2;
+    return (LOOP.FAR_ALPHA + (LOOP.NEAR_ALPHA - LOOP.FAR_ALPHA) * (1 - near)) * presence;
+  };
+
+  loopCtx.lineCap = 'butt';
+  for (const segment of segments) {
+    const alpha = depthAlpha(segment.z);
+    loopCtx.beginPath();
+    loopCtx.moveTo(segment.from.x, segment.from.y);
+    loopCtx.lineTo(segment.to.x, segment.to.y);
+    loopCtx.strokeStyle = `rgba(170, 199, 193, ${alpha.toFixed(3)})`;
+    loopCtx.lineWidth = LOOP.LINE * segment.from.scale;
+    loopCtx.stroke();
+
+    const lit = loopPulse(segment.turn, head);
+    if (lit > 0.002) {
+      loopCtx.beginPath();
+      loopCtx.moveTo(segment.from.x, segment.from.y);
+      loopCtx.lineTo(segment.to.x, segment.to.y);
+      loopCtx.strokeStyle = `rgba(210, 160, 68, ${(lit * Math.min(1, alpha * 2.4)).toFixed(3)})`;
+      loopCtx.lineWidth = LOOP.PULSE_WEIGHT * segment.from.scale;
+      loopCtx.stroke();
+    }
+  }
+
+  const marks = LOOP_NODES
+    .map((name, index) => {
+      const turn = index / LOOP_NODES.length;
+      return { name, turn, point: loopPoint(turn, spin, radius, width, height) };
+    })
+    .sort((a, b) => a.point.z - b.point.z);
+
+  loopCtx.font = `700 ${labelPx}px "Archivo Narrow", sans-serif`;
+  loopCtx.textBaseline = 'middle';
+  loopCtx.letterSpacing = `${(LOOP.LABEL_TRACKING * labelPx).toFixed(2)}px`;
+
+  for (const mark of marks) {
+    const alpha = depthAlpha(mark.point.z);
+    const lit = loopPulse(mark.turn, head);
+    loopCtx.beginPath();
+    loopCtx.arc(mark.point.x, mark.point.y, LOOP.NODE_RADIUS * mark.point.scale, 0, Math.PI * 2);
+    loopCtx.fillStyle = '#17130F';
+    loopCtx.fill();
+    loopCtx.lineWidth = Math.max(0.6, 1.2 * mark.point.scale);
+    loopCtx.strokeStyle = lit > 0.05
+      ? `rgba(210, 160, 68, ${Math.min(presence, alpha + lit).toFixed(3)})`
+      : `rgba(233, 224, 203, ${alpha.toFixed(3)})`;
+    loopCtx.stroke();
+
+    const shown = labelsBeside ? 1 : lit;
+    if (shown < 0.04) continue;
+    const right = mark.point.x >= width / 2;
+    loopCtx.textAlign = right ? 'left' : 'right';
+    loopCtx.fillStyle = lit > 0.05
+      ? `rgba(210, 160, 68, ${(Math.min(presence, alpha + lit) * shown).toFixed(3)})`
+      : `rgba(233, 224, 203, ${(Math.min(presence * 0.92, alpha + 0.12) * shown).toFixed(3)})`;
+    loopCtx.fillText(
+      mark.name.toUpperCase(),
+      mark.point.x + (right ? LOOP.LABEL_GAP : -LOOP.LABEL_GAP) * mark.point.scale,
+      mark.point.y,
+    );
+  }
+}
+
 function renderFrame(now, force = false) {
   const elapsed = clamp((now - lastFrameTime) / 1000, 0, MAX_FRAME_DELTA_SECONDS);
   lastFrameTime = now;
@@ -246,6 +464,7 @@ function renderFrame(now, force = false) {
   mapBranches[1].style.strokeDashoffset = String(1 - clamp((shownProgress - 0.4) / 0.28));
 
   updateChapterState(shownProgress);
+  drawExchangeLoop(elapsed);
 
   if (metadataReady) {
     const filmProgress = reducedMotionQuery.matches ? 1 : shownProgress;
@@ -254,6 +473,9 @@ function renderFrame(now, force = false) {
 }
 
 function isSettled() {
+  // The loop's pulse is the one thing on the page that keeps time, so frames
+  // continue only while it is actually on screen and motion is welcome.
+  if (loopCtx && loopPresence > 0.001 && !reducedMotionQuery.matches) return false;
   return displayProgress === targetProgress
     && pointerX === targetPointerX
     && pointerY === targetPointerY

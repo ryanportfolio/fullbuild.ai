@@ -429,7 +429,18 @@ main {
 }
 
 .chapter__content--wide {
-  width: min(44rem, 62vw);
+  width: min(31.6rem, 62vw);
+}
+
+/* Interdependence reads as one closed exchange, so its panel lets more film
+   through than the text chapters do. */
+.chapter--canopy .chapter__content::before {
+  background: rgba(23, 19, 15, 0.5);
+}
+
+.chapter--canopy h2 {
+  max-width: 14ch;
+  font-size: clamp(3rem, 7.2vw, 5.2rem);
 }
 
 .hero-copy {
@@ -543,8 +554,78 @@ h2 {
 }
 
 .system-lens {
-  margin-top: 2rem;
+  margin-top: 1.6rem;
+}
+
+.exchange-loop {
+  display: block;
+  width: 100%;
+  height: 210px;
+}
+
+/* Without scripting there is no canvas, so the written claims carry the
+   chapter; with it they stay in the accessibility tree behind the drawing. */
+.has-js .lens-claims,
+.exchange-reading {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.no-js .exchange-loop,
+.no-js .lens-caption,
+.no-js .exchange-names,
+.no-js .exchange-reading {
+  display: none;
+}
+
+/* On a narrow panel the ring has no room for labels beside its nodes, so the
+   farm's parts are named in a row that lights as the exchange reaches them. */
+.exchange-names {
+  display: none;
+  margin: 0.7rem 0 0;
+  color: var(--root-dim);
+  font: 700 0.7rem/1.85 "Archivo Narrow", sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.system-lens[data-names="on"] .exchange-names {
+  display: block;
+}
+
+.exchange-names span {
+  white-space: nowrap;
+  transition: color 0.4s linear;
+}
+
+.exchange-names span::after {
+  color: var(--water);
+  content: " \00B7 ";
+}
+
+.exchange-names span:last-child::after {
+  content: "";
+}
+
+.exchange-names span[data-lit="true"] {
+  color: var(--sap);
+}
+
+.no-js .system-lens {
   border-top: 1px solid var(--water);
+}
+
+.lens-caption {
+  max-width: 40ch;
+  margin: 0.9rem 0 0;
+  font-size: 0.864rem;
+  line-height: 1.35;
 }
 
 .lens-panel {
@@ -764,6 +845,10 @@ h2 {
     width: auto;
   }
 
+  .exchange-loop {
+    height: 168px;
+  }
+
   .hero-copy::before {
     display: block;
   }
@@ -948,6 +1033,21 @@ h2 {
   .lens-panel p {
     font-size: 0.85rem;
     line-height: 1.25;
+  }
+
+  .exchange-loop {
+    height: 132px;
+  }
+
+  .exchange-names {
+    margin-top: 0.55rem;
+    font-size: 0.64rem;
+    line-height: 1.7;
+  }
+
+  .lens-caption {
+    margin-top: 0.6rem;
+    font-size: 0.8rem;
   }
 
   .final-copy__actions {

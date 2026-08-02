@@ -33,6 +33,9 @@ test('Maranatha ships one complete progressive-enhancement experience', async ()
   assert.match(page, /unsuccessful successionary forest, invasive plants, and eroding soil/);
   assert.match(page, /pastured in rotation as multi-species flocks/);
   assert.match(page, /Farmers are compensated fairly/);
+  assert.match(page, /<canvas class="exchange-loop" aria-hidden="true">/);
+  assert.match(page, /class="exchange-reading"/);
+  assert.match(page, /even if they live in an apartment/);
   assert.doesNotMatch(page, /Healing the land<br>one season at a time/);
   assert.match(page, /“Maranatha” means<br>Come, O Lord/);
   assert.match(page, /The first Christian prayer\. We honor God in all things\./);
@@ -65,6 +68,9 @@ test('Maranatha ships one complete progressive-enhancement experience', async ()
   assert.match(script, /window\.__maranathaCapture/);
   assert.match(script, /visibilitychange/);
   assert.match(script, /saveData/);
+  assert.match(script, /const LOOP_NODES = \['soil', 'flock', 'gardens', 'terraces', 'mushroom yards', 'silvopastures', 'your home'\]/);
+  assert.match(script, /drawExchangeLoop\(elapsed\)/);
+  assert.equal((script.match(/getContext\('2d'\)/g) ?? []).length, 1, 'one drawing surface');
   assert.equal((script.match(/requestAnimationFrame\(/g) ?? []).length, 1, 'one rAF authority');
   assert.doesNotMatch(script, /Math\.random|setInterval/);
 
