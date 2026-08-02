@@ -141,6 +141,20 @@ export function ProofLedger() {
         </h3>
         <a className={styles.proofLink} href={REPO} target="_blank" rel="noreferrer">
           Read the build on GitHub
+          {/* Says the link leaves the page, and keeps the filled plate from
+              reading as one more status chip. */}
+          <svg
+            className={styles.proofLinkMark}
+            viewBox="0 0 10 10"
+            aria-hidden="true"
+          >
+            <path
+              d="M1 9 L9 1 M3.4 1 L9 1 L9 6.6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.4"
+            />
+          </svg>
         </a>
       </div>
 
