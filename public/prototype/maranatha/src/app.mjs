@@ -14,6 +14,8 @@ const loopCanvas = document.querySelector('.exchange-loop');
 const loopCtx = loopCanvas ? loopCanvas.getContext('2d') : null;
 const loopShell = document.querySelector('.system-lens');
 const loopNameRow = document.querySelector('.exchange-names');
+const fallowCanvas = document.querySelector('.fallow-line');
+const fallowCtx = fallowCanvas ? fallowCanvas.getContext('2d') : null;
 const root = document.documentElement;
 
 // Decoder and motion constants stay visible because they are the tuning surface.
@@ -33,7 +35,34 @@ const LOAD_STATE_TIMEOUT_MS = 6000;
 // Chapter two sits past the quarter mark so its copy holds over the emerging
 // green instead of the dark root mass at exactly 25% of the film.
 const CHAPTER_ANCHORS = [0, 0.27, 0.5, 0.75, 1];
+const ROOT_INDEX = 2;
 const CANOPY_INDEX = 3;
+
+// The land chapter's broken line, tuned in the lab. The pulse descends, stops
+// at the gap, fades, rests, and starts again.
+const FALLOW = {
+  STRANDS: 6,
+  BREAK_AT: 0.37,
+  GAP: 0.07,
+  FRAY: 0.54,
+  CROSS: 1.1,
+  DISSOLVE: 0.74,
+  SWAY: 0.16,
+  SWAY_FREQUENCY: 2.2,
+  DRIFT_DEGREES_PER_SECOND: 2.2,
+  TILT_DEGREES: 0,
+  DEPTH: 4,
+  LINE: 1.4,
+  FAR_ALPHA: 0.37,
+  NEAR_ALPHA: 0.67,
+  PULSE_PER_SECOND: 0.34,
+  PULSE_LENGTH: 0.14,
+  PULSE_WEIGHT: 2.6,
+  DIE_SECONDS: 2,
+  REST_SECONDS: 1.6,
+  LABEL_EM: 0.728,
+  LABEL: 'fallow',
+};
 
 // The interdependence loop, tuned in the lab. Lengths are pixels except where
 // noted; LABEL_EM scales with the page's fluid root so the ring's labels track
@@ -323,7 +352,13 @@ function loopPulse(turn, head) {
 function drawExchangeLoop(elapsed) {
   if (!loopCtx) return;
   const presence = Number(chapters[CANOPY_INDEX].style.getPropertyValue('--reveal')) || 0;
+  const wasVisible = loopPresence > 0.001;
   loopPresence = presence;
+  // Same as the fallow line: no layout reads while the chapter is off screen.
+  if (presence <= 0.001) {
+    if (wasVisible) loopCtx.clearRect(0, 0, loopCanvas.width, loopCanvas.height);
+    return;
+  }
   // The stylesheet owns the drawing's box; this only reads it.
   const width = loopCanvas.clientWidth;
   const height = loopCanvas.clientHeight;
@@ -338,7 +373,6 @@ function drawExchangeLoop(elapsed) {
   loopCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
   loopCtx.clearRect(0, 0, width, height);
   setLoopNameRow(width >= 430, loopLitName);
-  if (presence <= 0.001) return;
 
   const still = reducedMotionQuery.matches;
   if (!still) loopClock += elapsed;
@@ -370,25 +404,37 @@ function drawExchangeLoop(elapsed) {
   };
 
   loopCtx.lineCap = 'butt';
+  // Batched the same way as the fallow line: a handful of paths, not hundreds.
+  const ring = new Map();
+  const trail = new Map();
+  const bucket = (store, alpha, lineWidth, segment) => {
+    const key = `${Math.round(alpha * 40)}|${Math.round(lineWidth * 8)}`;
+    let batch = store.get(key);
+    if (!batch) {
+      batch = { alpha: Math.round(alpha * 40) / 40, width: Math.round(lineWidth * 8) / 8, path: new Path2D() };
+      store.set(key, batch);
+    }
+    batch.path.moveTo(segment.from.x, segment.from.y);
+    batch.path.lineTo(segment.to.x, segment.to.y);
+  };
+
   for (const segment of segments) {
     const alpha = depthAlpha(segment.z);
-    loopCtx.beginPath();
-    loopCtx.moveTo(segment.from.x, segment.from.y);
-    loopCtx.lineTo(segment.to.x, segment.to.y);
-    loopCtx.strokeStyle = `rgba(170, 199, 193, ${alpha.toFixed(3)})`;
-    loopCtx.lineWidth = LOOP.LINE * segment.from.scale;
-    loopCtx.stroke();
-
-    const lit = loopPulse(segment.turn, head);
-    if (lit > 0.002) {
-      loopCtx.beginPath();
-      loopCtx.moveTo(segment.from.x, segment.from.y);
-      loopCtx.lineTo(segment.to.x, segment.to.y);
-      loopCtx.strokeStyle = `rgba(210, 160, 68, ${(lit * Math.min(1, alpha * 2.4)).toFixed(3)})`;
-      loopCtx.lineWidth = LOOP.PULSE_WEIGHT * segment.from.scale;
-      loopCtx.stroke();
-    }
+    if (alpha > 0.004) bucket(ring, alpha, LOOP.LINE * segment.from.scale, segment);
+    const lit = loopPulse(segment.turn, head) * Math.min(1, alpha * 2.4);
+    if (lit > 0.004) bucket(trail, lit, LOOP.PULSE_WEIGHT * segment.from.scale, segment);
   }
+
+  const paint = (store, red, green, blue) => {
+    const batches = [...store.values()].sort((a, b) => a.alpha - b.alpha);
+    for (const batch of batches) {
+      loopCtx.strokeStyle = `rgba(${red}, ${green}, ${blue}, ${batch.alpha.toFixed(3)})`;
+      loopCtx.lineWidth = batch.width;
+      loopCtx.stroke(batch.path);
+    }
+  };
+  paint(ring, 170, 199, 193);
+  paint(trail, 210, 160, 68);
 
   const marks = LOOP_NODES
     .map((name, index) => {
@@ -429,6 +475,181 @@ function drawExchangeLoop(elapsed) {
   }
 }
 
+// ---- the fallow break ------------------------------------------------------
+// The same living line as the rail and the loop, interrupted. The pulse
+// descends, reaches the gap, and dies there; the strands below never rejoin.
+let fallowClock = 0;
+let fallowPresence = 0;
+let fallowRootSize = 16;
+
+function fallowStrandPoint(along, strand, height, reach) {
+  const y = (along - 0.5) * height * 0.92;
+  const swayX = Math.sin(along * FALLOW.SWAY_FREQUENCY * Math.PI * 2) * FALLOW.SWAY * reach;
+  const swayZ = Math.cos(along * FALLOW.SWAY_FREQUENCY * Math.PI * 2) * FALLOW.SWAY * reach * 0.8;
+  if (strand < 0) return { x: swayX, y, z: swayZ };
+
+  const resume = FALLOW.BREAK_AT + FALLOW.GAP;
+  const below = Math.max(0, (along - resume) / Math.max(0.001, 1 - resume));
+  const seed = (strand + 1) * 1.7;
+  const side = (strand % 2 ? 1 : -1) * (1 + Math.floor(strand / 2) * 0.7);
+  const spread = side * FALLOW.FRAY * reach * below;
+  const weave = Math.sin(below * Math.PI * (1.4 + FALLOW.CROSS * 3) + seed) * FALLOW.CROSS * reach * 0.5 * below;
+  const weaveZ = Math.cos(below * Math.PI * (1.1 + FALLOW.CROSS * 2) + seed) * FALLOW.CROSS * reach * 0.45 * below;
+  return { x: swayX + spread + weave, y, z: swayZ + weaveZ };
+}
+
+function fallowProject(point, drift, width, height, reach) {
+  const cosDrift = Math.cos(drift);
+  const sinDrift = Math.sin(drift);
+  const x = point.x * cosDrift + point.z * sinDrift;
+  const z = -point.x * sinDrift + point.z * cosDrift;
+  const tilt = (FALLOW.TILT_DEGREES * Math.PI) / 180;
+  const y = point.y * Math.cos(tilt) - z * Math.sin(tilt);
+  const depth = point.y * Math.sin(tilt) + z * Math.cos(tilt);
+  const distance = FALLOW.DEPTH * reach;
+  const scale = distance / (distance + depth);
+  return { x: width / 2 + x * scale, y: height / 2 + y * scale, scale, z: depth };
+}
+
+function drawFallowLine(elapsed) {
+  if (!fallowCtx) return;
+  const presence = Number(chapters[ROOT_INDEX].style.getPropertyValue('--reveal')) || 0;
+  const wasVisible = fallowPresence > 0.001;
+  fallowPresence = presence;
+  // Reading the box forces layout, so stay out of the way entirely while the
+  // chapter is off screen; clear once on the way out.
+  if (presence <= 0.001) {
+    if (wasVisible) fallowCtx.clearRect(0, 0, fallowCanvas.width, fallowCanvas.height);
+    return;
+  }
+  const width = fallowCanvas.clientWidth;
+  const height = fallowCanvas.clientHeight;
+  if (!width || !height) return;
+
+  const ratio = Math.min(2, window.devicePixelRatio || 1);
+  if (fallowCanvas.width !== Math.round(width * ratio) || fallowCanvas.height !== Math.round(height * ratio)) {
+    fallowCanvas.width = Math.round(width * ratio);
+    fallowCanvas.height = Math.round(height * ratio);
+    fallowRootSize = parseFloat(getComputedStyle(root).fontSize) || 16;
+  }
+  fallowCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  fallowCtx.clearRect(0, 0, width, height);
+
+  const still = reducedMotionQuery.matches;
+  if (!still) fallowClock += elapsed;
+  const reach = Math.min(width, height) * 0.42;
+  const drift = ((still ? 0 : fallowClock) * FALLOW.DRIFT_DEGREES_PER_SECOND * Math.PI) / 180;
+
+  // Still readers get the moment the pulse has already arrived and stopped.
+  let head = FALLOW.BREAK_AT;
+  let pulseAlpha = 1;
+  if (!still) {
+    const travel = FALLOW.BREAK_AT / FALLOW.PULSE_PER_SECOND;
+    const cycle = travel + FALLOW.DIE_SECONDS + FALLOW.REST_SECONDS;
+    const phase = fallowClock % cycle;
+    if (phase < travel) head = phase * FALLOW.PULSE_PER_SECOND;
+    else if (phase < travel + FALLOW.DIE_SECONDS) pulseAlpha = 1 - (phase - travel) / FALLOW.DIE_SECONDS;
+    else pulseAlpha = 0;
+  }
+
+  const depthAlpha = (z, fade) => {
+    const near = (z / (reach * 1.6) + 1) / 2;
+    return clamp(FALLOW.FAR_ALPHA + (FALLOW.NEAR_ALPHA - FALLOW.FAR_ALPHA) * (1 - near)) * fade * presence;
+  };
+
+  const STEPS = 150;
+  const segments = [];
+  for (let index = 0; index < STEPS; index += 1) {
+    const from = (index / STEPS) * FALLOW.BREAK_AT;
+    const to = ((index + 1) / STEPS) * FALLOW.BREAK_AT;
+    segments.push({
+      from: fallowProject(fallowStrandPoint(from, -1, height, reach), drift, width, height, reach),
+      to: fallowProject(fallowStrandPoint(to, -1, height, reach), drift, width, height, reach),
+      along: from,
+      living: true,
+      fade: 1,
+    });
+  }
+  const resume = FALLOW.BREAK_AT + FALLOW.GAP;
+  for (let strand = 0; strand < FALLOW.STRANDS; strand += 1) {
+    for (let index = 0; index < STEPS; index += 1) {
+      const from = resume + (index / STEPS) * (1 - resume);
+      const to = resume + ((index + 1) / STEPS) * (1 - resume);
+      const along = (from - resume) / Math.max(0.001, 1 - resume);
+      // A deterministic stipple thins the strands as the soil gives way.
+      if (FALLOW.DISSOLVE > 0 && ((index * 7 + strand * 13) % 11) / 11 < FALLOW.DISSOLVE * along * 0.9) continue;
+      segments.push({
+        from: fallowProject(fallowStrandPoint(from, strand, height, reach), drift, width, height, reach),
+        to: fallowProject(fallowStrandPoint(to, strand, height, reach), drift, width, height, reach),
+        along: from,
+        living: false,
+        fade: Math.max(0, 1 - FALLOW.DISSOLVE * along),
+      });
+    }
+  }
+  segments.sort((a, b) => a.from.z - b.from.z);
+
+  fallowCtx.lineCap = 'butt';
+  // A thousand individual strokes would starve the scrub, so segments are
+  // batched into a few paths keyed by rounded alpha and width, then drawn
+  // dimmest first to keep the far strands behind the near ones.
+  const bed = new Map();
+  const pulse = new Map();
+  const bucket = (store, alpha, lineWidth, segment) => {
+    const key = `${Math.round(alpha * 40)}|${Math.round(lineWidth * 8)}`;
+    let batch = store.get(key);
+    if (!batch) {
+      batch = { alpha: Math.round(alpha * 40) / 40, width: Math.round(lineWidth * 8) / 8, path: new Path2D() };
+      store.set(key, batch);
+    }
+    batch.path.moveTo(segment.from.x, segment.from.y);
+    batch.path.lineTo(segment.to.x, segment.to.y);
+  };
+
+  for (const segment of segments) {
+    const alpha = depthAlpha(segment.from.z, segment.fade);
+    if (alpha > 0.004) bucket(bed, alpha, FALLOW.LINE * segment.from.scale, segment);
+
+    if (!segment.living || pulseAlpha <= 0) continue;
+    const behind = head - segment.along;
+    if (behind < 0 || behind >= FALLOW.PULSE_LENGTH) continue;
+    const along = 1 - behind / FALLOW.PULSE_LENGTH;
+    const lit = along * along * pulseAlpha * Math.min(1, alpha * 2.6);
+    if (lit > 0.004) bucket(pulse, lit, FALLOW.PULSE_WEIGHT * segment.from.scale, segment);
+  }
+
+  const paint = (store, red, green, blue) => {
+    const batches = [...store.values()].sort((a, b) => a.alpha - b.alpha);
+    for (const batch of batches) {
+      fallowCtx.strokeStyle = `rgba(${red}, ${green}, ${blue}, ${batch.alpha.toFixed(3)})`;
+      fallowCtx.lineWidth = batch.width;
+      fallowCtx.stroke(batch.path);
+    }
+  };
+  paint(bed, 170, 199, 193);
+  paint(pulse, 210, 160, 68);
+
+  const stop = fallowProject(fallowStrandPoint(FALLOW.BREAK_AT, -1, height, reach), drift, width, height, reach);
+  const arrived = head >= FALLOW.BREAK_AT - 0.02 ? pulseAlpha : 0;
+  fallowCtx.beginPath();
+  fallowCtx.arc(stop.x, stop.y, 2.4 * stop.scale, 0, Math.PI * 2);
+  fallowCtx.fillStyle = '#17130F';
+  fallowCtx.fill();
+  fallowCtx.lineWidth = Math.max(0.6, 1.1 * stop.scale);
+  fallowCtx.strokeStyle = arrived > 0
+    ? `rgba(210, 160, 68, ${Math.min(presence, 0.5 + arrived).toFixed(3)})`
+    : `rgba(233, 224, 203, ${depthAlpha(stop.z, 0.7).toFixed(3)})`;
+  fallowCtx.stroke();
+
+  const labelPx = FALLOW.LABEL_EM * fallowRootSize;
+  fallowCtx.font = `700 ${labelPx}px "Archivo Narrow", sans-serif`;
+  fallowCtx.letterSpacing = `${(labelPx * 0.12).toFixed(2)}px`;
+  fallowCtx.textBaseline = 'middle';
+  fallowCtx.textAlign = 'left';
+  fallowCtx.fillStyle = `rgba(233, 224, 203, ${(presence * (0.35 + arrived * 0.5)).toFixed(3)})`;
+  fallowCtx.fillText(FALLOW.LABEL.toUpperCase(), stop.x + 12 * stop.scale, stop.y);
+}
+
 function renderFrame(now, force = false) {
   const elapsed = clamp((now - lastFrameTime) / 1000, 0, MAX_FRAME_DELTA_SECONDS);
   lastFrameTime = now;
@@ -464,6 +685,7 @@ function renderFrame(now, force = false) {
   mapBranches[1].style.strokeDashoffset = String(1 - clamp((shownProgress - 0.4) / 0.28));
 
   updateChapterState(shownProgress);
+  drawFallowLine(elapsed);
   drawExchangeLoop(elapsed);
 
   if (metadataReady) {
@@ -473,9 +695,10 @@ function renderFrame(now, force = false) {
 }
 
 function isSettled() {
-  // The loop's pulse is the one thing on the page that keeps time, so frames
-  // continue only while it is actually on screen and motion is welcome.
-  if (loopCtx && loopPresence > 0.001 && !reducedMotionQuery.matches) return false;
+  // The two drawn chapters keep their own time, so frames continue only while
+  // one of them is actually on screen and motion is welcome.
+  if (!reducedMotionQuery.matches
+    && ((loopCtx && loopPresence > 0.001) || (fallowCtx && fallowPresence > 0.001))) return false;
   return displayProgress === targetProgress
     && pointerX === targetPointerX
     && pointerY === targetPointerY
