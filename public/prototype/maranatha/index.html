@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Our Story · Maranatha Farm</title>
+  <meta name="description" content="A regenerative forest farm in the Somerset Hills of New Jersey, healing the land one season at a time">
+  <meta name="theme-color" content="#17130F">
+  <meta name="color-scheme" content="dark">
+  <meta property="og:title" content="Our Story · Maranatha Farm">
+  <meta property="og:description" content="A regenerative forest farm in the Somerset Hills of New Jersey, healing the land one season at a time">
+  <link rel="icon" type="image/svg+xml" href="/prototype/maranatha/assets/favicon.svg">
+  <link rel="stylesheet" href="/prototype/maranatha/src/styles.css">
+  <script>document.documentElement.className='has-js'</script>
+</head>
+<body>
+  <a class="skip-link" href="#story">Skip to main content</a>
+
+  <div class="film-stage" aria-hidden="true">
+    <video id="farm-film" muted playsinline preload="auto" disablepictureinpicture>
+      <source src="/prototype/maranatha/assets/farm1-48-scrub.mp4" type="video/mp4">
+    </video>
+    <div class="film-shade"></div>
+    <div class="film-grain"></div>
+  </div>
+
+  <div class="load-state" role="status" aria-live="polite">
+    <span class="load-state__label">Our Story</span>
+    <span class="load-state__track" aria-hidden="true"><i></i></span>
+  </div>
+
+  <header class="site-header">
+    <a class="brand" href="#surface" aria-label="Maranatha Farm">
+      <span class="brand__mark" aria-hidden="true">M</span>
+      <span>Maranatha Farm</span>
+    </a>
+    <p class="site-header__place">Somerset Hills of New Jersey</p>
+    <a class="site-header__shop" href="https://maranatha.farm/collections/all-products" target="_blank" rel="noreferrer">All Products</a>
+  </header>
+
+  <nav class="field-rail" aria-label="Our Story">
+    <p class="field-rail__title">Our Story</p>
+    <svg class="exchange-map" viewBox="0 0 44 430" role="img" aria-label="Interdependence of the earth, animals, and people">
+      <path class="exchange-map__bed" d="M22 10 C20 58 26 81 21 120 C15 165 33 184 22 226 C12 263 29 300 22 340 C18 368 22 395 22 420" pathLength="1" />
+      <path class="exchange-map__pulse" d="M22 10 C20 58 26 81 21 120 C15 165 33 184 22 226 C12 263 29 300 22 340 C18 368 22 395 22 420" pathLength="1" />
+      <path class="exchange-map__branch exchange-map__branch--one" d="M21 120 C8 128 7 142 3 151 M21 120 C35 127 35 142 41 151" pathLength="1" />
+      <path class="exchange-map__branch exchange-map__branch--two" d="M22 226 C7 235 7 249 2 260 M22 226 C36 235 37 248 42 259" pathLength="1" />
+      <g class="exchange-map__nodes" aria-hidden="true">
+        <circle cx="22" cy="10" r="3"></circle>
+        <circle cx="21" cy="120" r="3"></circle>
+        <circle cx="22" cy="226" r="3"></circle>
+        <circle cx="22" cy="340" r="3"></circle>
+        <circle cx="22" cy="420" r="3"></circle>
+      </g>
+    </svg>
+    <ol>
+      <li data-rail-index="0"><a href="#surface">Our Story</a></li>
+      <li data-rail-index="1"><a href="#mycelium">Healthy Food</a></li>
+      <li data-rail-index="2"><a href="#root">The Land</a></li>
+      <li data-rail-index="3"><a href="#canopy">Interdependence</a></li>
+      <li data-rail-index="4"><a href="#table">Our Prayer</a></li>
+    </ol>
+  </nav>
+
+  <main id="story">
+    <section id="surface" class="chapter chapter--surface" data-section="surface" data-chapter-index="0">
+      <div class="chapter__content hero-copy">
+        <p class="eyebrow">Our Roots</p>
+        <h1>Our Story</h1>
+        <p class="hero-copy__lede">A regenerative forest farm in the Somerset Hills of New Jersey, healing the land one season at a time.</p>
+      </div>
+    </section>
+
+    <section id="mycelium" class="chapter chapter--mycelium" data-section="mycelium" data-chapter-index="1">
+      <div class="chapter__content chapter__content--right">
+        <p class="eyebrow">Where It All Began</p>
+        <h2>Healthy food<br>that is delicious</h2>
+        <p>Nature and plants heal us. Food is medicine.</p>
+        <blockquote class="story-quote">“Eating is an agricultural act.”</blockquote>
+      </div>
+    </section>
+
+    <section id="root" class="chapter chapter--root" data-section="root" data-chapter-index="2">
+      <div class="chapter__content">
+        <p class="eyebrow">In 2015</p>
+        <h2>Michele and her family moved to the Somerset Hills of New Jersey</h2>
+        <p>She felt a calling to combine her love for food with healing the land that was allowed to go fallow after being farmed more than ninety years ago.</p>
+      </div>
+    </section>
+
+    <section id="canopy" class="chapter chapter--canopy" data-section="canopy" data-chapter-index="3">
+      <div class="chapter__content chapter__content--right chapter__content--wide">
+        <p class="eyebrow">Interdependence</p>
+        <h2>Earth · animals · people</h2>
+        <p class="chapter-intro">We honor the interdependence of the earth, animals, and people.</p>
+
+        <div class="system-lens" data-lens-root>
+          <div class="system-lens__controls" role="group" aria-label="Earth, animals, and people">
+            <button type="button" data-lens="earth" aria-pressed="true">Earth</button>
+            <button type="button" data-lens="animals" aria-pressed="false">Animals</button>
+            <button type="button" data-lens="people" aria-pressed="false">People</button>
+          </div>
+          <div class="system-lens__panels" aria-live="polite">
+            <article class="lens-panel is-active" data-lens-panel="earth">
+              <h3>Heal the land</h3>
+              <p>Our goal is to get back to basics.</p>
+            </article>
+            <article class="lens-panel" data-lens-panel="animals">
+              <h3>High standard of care</h3>
+              <p>We believe in a high standard of care for the animals who feed us.</p>
+            </article>
+            <article class="lens-panel" data-lens-panel="people">
+              <h3>Inspire others</h3>
+              <p>It is our intention to inspire others to do what they can.</p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="table" class="chapter chapter--table" data-section="table" data-chapter-index="4">
+      <div class="chapter__content final-copy">
+        <p class="eyebrow">Our Prayer</p>
+        <h2>“Maranatha” means<br>Come, O Lord</h2>
+        <p>We honor God in all things.</p>
+        <blockquote class="story-quote">“This is food the way God intended it to be.”</blockquote>
+        <div class="final-copy__actions">
+          <a class="primary-action" href="https://maranatha.farm/collections/all-products" target="_blank" rel="noreferrer">All Products</a>
+          <a class="text-link" href="https://maranatha.farm/pages/our-story" target="_blank" rel="noreferrer">Our Story</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a href="https://maranatha.farm/pages/our-story" target="_blank" rel="noreferrer">Our Story</a>
+    <p>Maranatha Farm</p>
+    <a href="https://maranatha.farm/collections/all-products" target="_blank" rel="noreferrer">All Products</a>
+  </footer>
+
+  <noscript>
+    <p class="noscript-note">A regenerative forest farm in the Somerset Hills of New Jersey, healing the land one season at a time.</p>
+  </noscript>
+
+  <script type="module" src="/prototype/maranatha/src/app.mjs"></script>
+</body>
+</html>

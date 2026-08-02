@@ -16,6 +16,7 @@ const types = new Map([
   ['.mjs', 'text/javascript; charset=utf-8'],
   ['.json', 'application/json; charset=utf-8'],
   ['.svg', 'image/svg+xml'],
+  ['.mp4', 'video/mp4'],
   ['.ttf', 'font/ttf'],
   ['.woff2', 'font/woff2'],
 ]);
@@ -27,10 +28,47 @@ const server = createServer(async (request, response) => {
     if (file !== root && !file.startsWith(`${root}${sep}`)) throw new Error('outside root');
     if ((await stat(file)).isDirectory()) file = resolve(file, 'index.html');
     const body = await readFile(file);
-    response.writeHead(200, {
-      'Content-Type': types.get(extname(file).toLowerCase()) ?? 'application/octet-stream',
+    const extension = extname(file).toLowerCase();
+    const range = extension === '.mp4' ? request.headers.range : null;
+    const headers = {
+      'Content-Type': types.get(extension) ?? 'application/octet-stream',
       'Cache-Control': 'no-store',
-    });
+      'Content-Length': body.length,
+    };
+
+    if (range) {
+      const match = /^bytes=(\d*)-(\d*)$/.exec(range);
+      if (!match || (!match[1] && !match[2])) {
+        response.writeHead(416, { 'Content-Range': `bytes */${body.length}` });
+        response.end();
+        return;
+      }
+      const suffixLength = !match[1] && match[2] ? Number(match[2]) : null;
+      const start = suffixLength === null
+        ? Number(match[1])
+        : Math.max(0, body.length - suffixLength);
+      const end = suffixLength === null && match[2]
+        ? Number(match[2])
+        : body.length - 1;
+      if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end < start || start >= body.length) {
+        response.writeHead(416, { 'Content-Range': `bytes */${body.length}` });
+        response.end();
+        return;
+      }
+      const last = Math.min(end, body.length - 1);
+      const chunk = body.subarray(start, last + 1);
+      response.writeHead(206, {
+        ...headers,
+        'Accept-Ranges': 'bytes',
+        'Content-Range': `bytes ${start}-${last}/${body.length}`,
+        'Content-Length': chunk.length,
+      });
+      response.end(chunk);
+      return;
+    }
+
+    if (extension === '.mp4') headers['Accept-Ranges'] = 'bytes';
+    response.writeHead(200, headers);
     response.end(body);
   } catch {
     response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
