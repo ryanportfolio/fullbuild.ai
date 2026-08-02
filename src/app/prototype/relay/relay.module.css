@@ -58,7 +58,9 @@
    on the author's own evidence. The medical row spends its character offsets
    instead of printing them, slicing the utterance so the phrase the slot
    filler caught is marked in place. Each row id links to the playbook file
-   it came from, which is the only hover on the block.
+   it came from. Those ids and the repo button are the block's only links,
+   and the button is the only filled element on the page, because it sat in
+   the same outline as the status badge under it and read as a caption.
 
    Motion verbs, the only three
      TRAVEL  a pulse runs the wire seam when a message crosses it
@@ -975,10 +977,34 @@
   white-space: nowrap;
 }
 
+/* The one control on the block, and it used to wear the same outline as the
+   status badge directly under it, so the only clickable thing here read as a
+   label. Filling it is the loudest affordance available without spending a
+   reserved hue: --bone is ink, and nothing else on this page is filled, so a
+   solid one cannot be mistaken for a caption. */
+.proofLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.92rem 1.45rem;
+  border: 1px solid var(--bone);
+  background: var(--bone);
+  font-size: 0.84rem;
+  letter-spacing: 0.1em;
+  color: var(--room);
+}
+
+.proofLinkMark {
+  width: 0.62rem;
+  height: 0.62rem;
+  flex: none;
+}
+
 .proofLink:hover,
 .proofLink:focus-visible {
-  border-color: var(--signal);
-  color: var(--signal);
+  border-color: color-mix(in srgb, var(--bone) 82%, var(--room));
+  background: color-mix(in srgb, var(--bone) 82%, var(--room));
+  color: var(--room);
 }
 
 /* ---- exhibit one: the session ------------------------------------------- */
