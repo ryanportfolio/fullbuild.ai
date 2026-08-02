@@ -3,7 +3,7 @@ MARANATHA / THE LIVING EXCHANGE CONTRACT
 Palette: Humus #17130F is the living ground; Root #E9E0CB is readable matter; Chlorophyll #43563B is established growth; Water #AAC7C1 is passive transfer; Sap #D2A044 marks active exchange and nothing else.
 Type roles: Newsreader carries belief, prayer, and large display text with a fixed optical character; Archivo Narrow carries field labels, locations, and the farm's own language. No axis is animated state.
 Grid: a fixed field rail records the journey while one open specimen column moves between left and right over the film.
-Motion verbs: DESCEND moves the camera and pulse; THREAD branches the system line; TRANSFER passes emphasis between chapters; SURFACE resolves the film and invitation.
+Motion verbs: DESCEND moves the camera and pulse; TRANSFER passes emphasis between chapters; SURFACE resolves the film and invitation.
 Pacing: each chapter holds fully still for more than one viewport before TRANSFER begins; the film receives a clean beat between chapters.
 Ban list: no wellness beige, fantasy bioluminescence, floating leaves, drone montage, generic eco gradients, stat cards, glass treatment, or opaque full-screen copy panels.
 Signature element: the supplied macro film is one uninterrupted water journey and the page's only cinematic surface.
@@ -226,7 +226,7 @@ html[data-media-error="true"] .film-stage::after {
   grid-template-columns: 12.5rem 1fr auto;
   align-items: center;
   border-bottom: 1px solid rgba(233, 224, 203, 0.28);
-  background: rgba(23, 19, 15, 0.7);
+  background: rgba(23, 19, 15, 0.8);
   font: 700 0.76rem/1 "Archivo Narrow", sans-serif;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -286,7 +286,7 @@ html[data-media-error="true"] .film-stage::after {
   padding: 1.25rem 0.85rem 1rem;
   flex-direction: column;
   border-right: 1px solid rgba(233, 224, 203, 0.28);
-  background: rgba(23, 19, 15, 0.7);
+  background: rgba(23, 19, 15, 0.8);
   font-family: "Archivo Narrow", sans-serif;
 }
 
@@ -313,8 +313,7 @@ html[data-media-error="true"] .film-stage::after {
   stroke-linecap: square;
 }
 
-.exchange-map__bed,
-.exchange-map__branch {
+.exchange-map__bed {
   stroke: var(--water);
   stroke-width: 0.8;
 }
@@ -322,11 +321,6 @@ html[data-media-error="true"] .film-stage::after {
 .exchange-map__pulse {
   stroke: var(--sap);
   stroke-width: 2.1;
-  stroke-dasharray: 1 1;
-  stroke-dashoffset: 1;
-}
-
-.exchange-map__branch {
   stroke-dasharray: 1 1;
   stroke-dashoffset: 1;
 }
@@ -388,10 +382,11 @@ main {
   padding: clamp(1.25rem, 2.5vw, 2.25rem);
 }
 
+/* Centered in the band below the fixed header, not the raw viewport. */
 .has-js .chapter__content {
   position: fixed;
   z-index: 4;
-  top: 50%;
+  top: calc(50% + 2.25rem);
   right: auto;
   left: calc(var(--rail) + var(--gutter));
   margin: 0;
@@ -404,13 +399,12 @@ main {
   left: auto;
 }
 
-.has-js .chapter[data-active="false"] .chapter__content {
-  visibility: hidden;
+/* Hidden chapters stay in the accessibility tree; the clip-path fully conceals them. */
+.has-js .chapter[data-visible="false"] .chapter__content {
   pointer-events: none;
 }
 
-.has-js .chapter[data-active="true"] .chapter__content {
-  visibility: visible;
+.has-js .chapter[data-visible="true"] .chapter__content {
   pointer-events: auto;
 }
 
@@ -428,7 +422,7 @@ main {
 }
 
 .chapter__content--wide {
-  width: min(50rem, 76vw);
+  width: min(44rem, 62vw);
 }
 
 .hero-copy {
@@ -512,12 +506,33 @@ h2 {
 
 .story-quote {
   max-width: 28ch;
-  margin: 1.8rem 0 0;
-  padding: 0.8rem 0 0.8rem 1rem;
+  margin: 1.4rem 0 0;
+  padding: 0.6rem 0 0.6rem 1rem;
   border-left: 1px solid var(--sap);
   color: var(--root);
   font-size: 1.08rem;
   font-style: italic;
+}
+
+.story-quote cite {
+  display: block;
+  margin-top: 0.55rem;
+  color: var(--water);
+  font: 700 0.68rem/1 "Archivo Narrow", sans-serif;
+  font-style: normal;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.visually-hidden {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .system-lens {
@@ -525,48 +540,16 @@ h2 {
   border-top: 1px solid var(--water);
 }
 
-.system-lens__controls {
-  display: flex;
-  border-bottom: 1px solid var(--water);
-}
-
-.system-lens__controls button {
-  min-height: 2.8rem;
-  padding: 0 1rem;
-  border: 0;
-  border-right: 1px solid var(--water);
-  background: transparent;
-  color: var(--root-dim);
-  cursor: pointer;
-  font: 700 0.75rem/1 "Archivo Narrow", sans-serif;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.system-lens__controls button[aria-pressed="true"] {
-  background: var(--sap);
-  color: var(--humus);
-}
-
-.system-lens__panels {
-  min-height: 8.5rem;
-  padding: 1rem 0 0;
-}
-
 .lens-panel {
   display: grid;
-  grid-template-columns: minmax(8rem, 0.42fr) minmax(0, 1fr);
+  padding-top: 1.1rem;
+  grid-template-columns: minmax(8rem, 0.3fr) minmax(0, 1fr);
   gap: 1rem;
 }
 
 .lens-panel + .lens-panel {
-  margin-top: 1rem;
-  padding-top: 1rem;
+  margin-top: 1.1rem;
   border-top: 1px solid rgba(170, 199, 193, 0.48);
-}
-
-.has-js .lens-panel:not(.is-active) {
-  display: none;
 }
 
 .lens-panel h3 {
@@ -585,12 +568,26 @@ h2 {
   align-items: flex-end;
 }
 
+/* The finale shares its viewport with the footer: center between header and footer. */
+.has-js .chapter--table .chapter__content {
+  top: calc(50% - 0.25rem);
+}
+
 .final-copy {
   width: min(56rem, 78vw);
 }
 
+/* Hang the opening quote so the display stack keeps a flush left edge. */
 .final-copy h2 {
   max-width: 11ch;
+  text-indent: -0.5ch;
+}
+
+@supports (hanging-punctuation: first) {
+  .final-copy h2 {
+    text-indent: 0;
+    hanging-punctuation: first;
+  }
 }
 
 .final-copy__actions {
@@ -692,6 +689,14 @@ h2 {
   }
 }
 
+/* Between 721 and 900px the lens ball's glare sits behind the bare hero copy. */
+@media (min-width: 721px) and (max-width: 900px) {
+  .hero-copy h1,
+  .hero-copy__lede {
+    text-shadow: 0 0.05em 1.4rem rgba(23, 19, 15, 0.9), 0 0 0.4rem rgba(23, 19, 15, 0.65);
+  }
+}
+
 @media (max-width: 720px) {
   :root {
     --gutter: 1rem;
@@ -780,11 +785,6 @@ h2 {
     top: calc(50% - 1.85rem);
   }
 
-  .system-lens__controls button {
-    flex: 1;
-    padding: 0 0.45rem;
-  }
-
   .lens-panel {
     display: block;
   }
@@ -832,13 +832,42 @@ h2 {
   }
 
   h2 {
-    font-size: clamp(3.5rem, 6vw, 5.5rem);
+    font-size: clamp(3.2rem, 5.4vw, 5rem);
+  }
+
+  .chapter--canopy h2 {
+    font-size: clamp(2.9rem, 4.6vw, 4.2rem);
+  }
+
+  .final-copy h2 {
+    font-size: clamp(3rem, 5vw, 4.6rem);
+  }
+
+  .story-quote {
+    font-size: 1rem;
   }
 
   .chapter__content > p:not(.eyebrow),
   .chapter-intro {
     margin-top: 1rem;
     font-size: 1.05rem;
+  }
+
+  .lens-panel {
+    padding-top: 0.75rem;
+  }
+
+  .lens-panel + .lens-panel {
+    margin-top: 0.75rem;
+  }
+
+  .lens-panel h3 {
+    font-size: 1.15rem;
+  }
+
+  .lens-panel p {
+    font-size: 0.95rem;
+    line-height: 1.3;
   }
 
   .hero-copy__lede {
@@ -850,10 +879,6 @@ h2 {
   .system-lens,
   .final-copy__actions {
     margin-top: 1.25rem;
-  }
-
-  .system-lens__panels {
-    min-height: 6.6rem;
   }
 }
 
@@ -894,21 +919,28 @@ h2 {
   .story-quote,
   .system-lens,
   .final-copy__actions {
-    margin-top: 0.85rem;
+    margin-top: 0.7rem;
   }
 
-  .system-lens__controls button {
-    min-height: 2.45rem;
-    font-size: 0.66rem;
+  .chapter--canopy h2 {
+    font-size: clamp(2.35rem, 11vw, 3rem);
   }
 
-  .system-lens__panels {
-    min-height: 6.2rem;
-    padding-top: 0.7rem;
+  .lens-panel {
+    padding-top: 0.5rem;
+  }
+
+  .lens-panel + .lens-panel {
+    margin-top: 0.5rem;
   }
 
   .lens-panel h3 {
-    font-size: 1.2rem;
+    font-size: 1.05rem;
+  }
+
+  .lens-panel p {
+    font-size: 0.85rem;
+    line-height: 1.25;
   }
 
   .final-copy__actions {
@@ -936,8 +968,7 @@ h2 {
     transform: translate3d(0, -50%, 0);
   }
 
-  .exchange-map__pulse,
-  .exchange-map__branch {
+  .exchange-map__pulse {
     stroke-dashoffset: 0 !important;
   }
 }

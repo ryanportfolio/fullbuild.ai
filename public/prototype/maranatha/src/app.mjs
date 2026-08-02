@@ -9,17 +9,25 @@ const loadTrack = document.querySelector('.load-state__track i');
 const chapters = [...document.querySelectorAll('[data-chapter-index]')];
 const railItems = [...document.querySelectorAll('[data-rail-index]')];
 const mapPulse = document.querySelector('.exchange-map__pulse');
-const mapBranches = [...document.querySelectorAll('.exchange-map__branch')];
 const root = document.documentElement;
 
 // Decoder and motion constants stay visible because they are the tuning surface.
 const SCROLL_DAMPING = 11;
+const FLICK_DAMPING_BOOST = 26;
+const FLICK_DEADZONE_FRAMES = 8;
+const FLICK_SPAN_FRAMES = 15;
 const POINTER_DAMPING = 8;
 const VIDEO_FRAME_RATE = 48;
 const FRAME_DURATION_SECONDS = 1 / VIDEO_FRAME_RATE;
 const SEEK_THRESHOLD_SECONDS = FRAME_DURATION_SECONDS * 0.45;
 const TARGET_CHANGE_SECONDS = FRAME_DURATION_SECONDS * 0.45;
+const SETTLE_THRESHOLD_SECONDS = FRAME_DURATION_SECONDS * 0.6;
 const MAX_FRAME_DELTA_SECONDS = 0.05;
+const LOAD_STATE_TIMEOUT_MS = 6000;
+
+// Chapter two sits past the quarter mark so its copy holds over the emerging
+// green instead of the dark root mass at exactly 25% of the film.
+const CHAPTER_ANCHORS = [0, 0.27, 0.5, 0.75, 1];
 
 const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 const finePointerQuery = window.matchMedia('(pointer: fine)');
@@ -37,6 +45,7 @@ let activeChapter = -1;
 let lastFrameTime = performance.now();
 let frameId = 0;
 let running = true;
+let loopIdle = false;
 
 let seekSequence = 0;
 let issuedSequence = 0;
@@ -45,6 +54,8 @@ let pendingSeek = null;
 let latestRequestedTime = -1;
 
 const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
+
+const chapterFocusables = chapters.map((chapter) => [...chapter.querySelectorAll('a, button')]);
 
 function readPageProgress() {
   const maximum = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
@@ -122,17 +133,28 @@ function updateChapterState(progress) {
   const lastIndex = Math.max(0, chapters.length - 1);
   const chapterInterval = lastIndex ? 1 / lastIndex : 1;
   const holdRadius = chapterInterval * 0.3;
-  const fadeRadius = chapterInterval * 0.5;
-  const nearestIndex = Math.min(lastIndex, Math.floor(progress * lastIndex + 0.499999));
+  const fadeRadius = chapterInterval * 0.4;
+
+  let nearestIndex = 0;
+  for (let index = 1; index < chapters.length; index += 1) {
+    if (Math.abs(progress - CHAPTER_ANCHORS[index]) < Math.abs(progress - CHAPTER_ANCHORS[nearestIndex])) {
+      nearestIndex = index;
+    }
+  }
+
   const states = chapters.map((chapter, index) => {
-    const anchor = index * chapterInterval;
+    const anchor = CHAPTER_ANCHORS[index];
     const distance = Math.abs(progress - anchor);
     const transition = clamp((distance - holdRadius) / (fadeRadius - holdRadius));
     const signedTransition = Math.sign(progress - anchor) * transition;
     const rawReveal = reducedMotionQuery.matches ? 1 : 1 - transition;
-    const reveal = reducedMotionQuery.matches
+    let reveal = reducedMotionQuery.matches
       ? 1
       : rawReveal * rawReveal * (3 - 2 * rawReveal);
+    // Snap the smoothstep tails so a collapsed panel never survives as a
+    // sub-pixel band over the film during its clean beats.
+    if (reveal < 0.001) reveal = 0;
+    else if (reveal > 0.999) reveal = 1;
     const hidden = ((1 - reveal) * 100).toFixed(3);
     return {
       reveal,
@@ -148,6 +170,13 @@ function updateChapterState(progress) {
     chapter.style.setProperty('--clip-top', state.clipTop);
     chapter.style.setProperty('--clip-bottom', state.clipBottom);
     chapter.style.setProperty('--shift', state.shift);
+    const visible = String(state.reveal > 0);
+    if (chapter.dataset.visible !== visible) {
+      chapter.dataset.visible = visible;
+      for (const focusable of chapterFocusables[index]) {
+        focusable.tabIndex = state.reveal > 0 ? 0 : -1;
+      }
+    }
   });
 
   const presence = states[nearestIndex]?.reveal ?? 0;
@@ -156,11 +185,15 @@ function updateChapterState(progress) {
   filmShade.style.opacity = shade.toFixed(4);
 
   if (nearestIndex === activeChapter) return;
+  // Hysteresis: parking exactly on a boundary must not flicker the rail
+  // highlight or chatter aria-current announcements every frame.
+  if (activeChapter !== -1) {
+    const advantage = Math.abs(progress - CHAPTER_ANCHORS[activeChapter])
+      - Math.abs(progress - CHAPTER_ANCHORS[nearestIndex]);
+    if (advantage < chapterInterval * 0.04) return;
+  }
   activeChapter = nearestIndex;
 
-  chapters.forEach((chapter, index) => {
-    chapter.dataset.active = String(index === activeChapter);
-  });
   railItems.forEach((item, index) => {
     const active = index === activeChapter;
     item.dataset.active = String(active);
@@ -175,11 +208,24 @@ function renderFrame(now, force = false) {
   lastFrameTime = now;
   targetProgress = readPageProgress();
 
-  const scrollAlpha = force ? 1 : 1 - Math.exp(-SCROLL_DAMPING * elapsed);
+  // Micro-scroll keeps the verified one-frame feel; the boost term only wakes
+  // for flick-sized errors so catch-up lands while the gesture still owns it.
+  const errorFrames = Math.abs(targetProgress - displayProgress) * videoDuration / FRAME_DURATION_SECONDS;
+  const flick = clamp((errorFrames - FLICK_DEADZONE_FRAMES) / FLICK_SPAN_FRAMES);
+  const damping = SCROLL_DAMPING + FLICK_DAMPING_BOOST * flick;
+  const scrollAlpha = force ? 1 : 1 - Math.exp(-damping * elapsed);
   const pointerAlpha = force ? 1 : 1 - Math.exp(-POINTER_DAMPING * elapsed);
   displayProgress += (targetProgress - displayProgress) * scrollAlpha;
+  if (reducedMotionQuery.matches
+    || Math.abs(targetProgress - displayProgress) * videoDuration < SETTLE_THRESHOLD_SECONDS) {
+    displayProgress = targetProgress;
+  }
   pointerX += (targetPointerX - pointerX) * pointerAlpha;
   pointerY += (targetPointerY - pointerY) * pointerAlpha;
+  if (Math.abs(targetPointerX - pointerX) < 0.05 && Math.abs(targetPointerY - pointerY) < 0.05) {
+    pointerX = targetPointerX;
+    pointerY = targetPointerY;
+  }
 
   const shownProgress = reducedMotionQuery.matches ? targetProgress : displayProgress;
   siteHeader.style.setProperty('--scroll-progress', shownProgress.toFixed(5));
@@ -187,8 +233,6 @@ function renderFrame(now, force = false) {
   video.style.setProperty('--py', `${pointerY.toFixed(2)}px`);
 
   mapPulse.style.strokeDashoffset = String(1 - shownProgress);
-  mapBranches[0].style.strokeDashoffset = String(1 - clamp((shownProgress - 0.12) / 0.26));
-  mapBranches[1].style.strokeDashoffset = String(1 - clamp((shownProgress - 0.36) / 0.3));
 
   updateChapterState(shownProgress);
 
@@ -198,15 +242,32 @@ function renderFrame(now, force = false) {
   }
 }
 
+function isSettled() {
+  return displayProgress === targetProgress
+    && pointerX === targetPointerX
+    && pointerY === targetPointerY
+    && !pendingSeek
+    && !video.seeking;
+}
+
 function scheduleFrame() {
   if (!running || frameId) return;
+  if (loopIdle) {
+    // Waking from idle: restart the clock so the first frame does not consume
+    // a stale multi-frame elapsed and overshoot the damping.
+    lastFrameTime = performance.now();
+    loopIdle = false;
+  }
   frameId = requestFrame(tick);
 }
 
 function tick(now) {
   frameId = 0;
   renderFrame(now);
-  scheduleFrame();
+  // Idle when converged: the loop stops burning frames while the reader dwells
+  // on a chapter; any scroll, pointer, or resize event rearms it.
+  if (isSettled()) loopIdle = true;
+  else scheduleFrame();
 }
 
 function freeze() {
@@ -234,15 +295,19 @@ function setProgress(value) {
   targetProgress = progress;
   displayProgress = progress;
   renderFrame(performance.now(), true);
+  scheduleFrame();
 }
 
-video.addEventListener('loadedmetadata', () => {
+function handleMetadata() {
   videoDuration = Number.isFinite(video.duration) ? video.duration : 0;
   metadataReady = videoDuration > 0;
   video.pause();
   updateBufferReadout();
   renderFrame(performance.now(), true);
-});
+  scheduleFrame();
+}
+
+video.addEventListener('loadedmetadata', handleMetadata);
 
 video.addEventListener('progress', updateBufferReadout);
 video.addEventListener('loadeddata', markFilmReady, { once: true });
@@ -256,8 +321,38 @@ video.addEventListener('seeked', () => {
   if (next && next.id > issuedSequence) commitSeek(next);
 });
 
+// The film is 17.6MB: fetch it eagerly only when the visitor has not asked to
+// save data, and never leave the loading card blocking the story forever.
+if (navigator.connection?.saveData) {
+  const requestFilm = () => {
+    if (video.readyState < 2 && !root.dataset.mediaError) {
+      video.preload = 'auto';
+      video.load();
+    }
+  };
+  window.addEventListener('wheel', requestFilm, { passive: true, once: true });
+  window.addEventListener('touchstart', requestFilm, { passive: true, once: true });
+} else if (video.readyState < 2) {
+  video.preload = 'auto';
+  video.load();
+}
+
+window.setTimeout(() => {
+  if (!loadState.hidden && root.dataset.mediaError !== 'true') {
+    loadState.hidden = true;
+  }
+}, LOAD_STATE_TIMEOUT_MS);
+
+// A cached film can be ready before this module runs, in which case the media
+// events above have already fired and will never re-fire.
+if (video.readyState >= 1) handleMetadata();
+if (video.readyState >= 2) markFilmReady();
+
+window.addEventListener('scroll', scheduleFrame, { passive: true });
+
 window.addEventListener('resize', () => {
-  renderFrame(performance.now(), true);
+  // A non-forced nudge: iOS URL-bar collapse must not snap the damped film.
+  scheduleFrame();
 }, { passive: true });
 
 if (finePointerQuery.matches) {
@@ -265,11 +360,13 @@ if (finePointerQuery.matches) {
     if (reducedMotionQuery.matches) return;
     targetPointerX = (event.clientX / window.innerWidth - 0.5) * -9;
     targetPointerY = (event.clientY / window.innerHeight - 0.5) * -6;
+    scheduleFrame();
   }, { passive: true });
 
   document.documentElement.addEventListener('pointerleave', () => {
     targetPointerX = 0;
     targetPointerY = 0;
+    scheduleFrame();
   }, { passive: true });
 }
 
@@ -277,23 +374,33 @@ reducedMotionQuery.addEventListener('change', () => {
   targetPointerX = 0;
   targetPointerY = 0;
   renderFrame(performance.now(), true);
+  scheduleFrame();
 });
 
-for (const button of document.querySelectorAll('[data-lens]')) {
-  button.addEventListener('click', () => {
-    const lens = button.dataset.lens;
-    for (const control of document.querySelectorAll('[data-lens]')) {
-      control.setAttribute('aria-pressed', String(control === button));
-    }
-    for (const panel of document.querySelectorAll('[data-lens-panel]')) {
-      panel.classList.toggle('is-active', panel.dataset.lensPanel === lens);
-    }
+// Rail and brand navigation cuts straight to the chapter frame instead of
+// whipping the film through every scene in between.
+for (const link of document.querySelectorAll('.field-rail a, .brand')) {
+  link.addEventListener('click', (event) => {
+    const hash = link.getAttribute('href');
+    if (!hash || !hash.startsWith('#')) return;
+    const section = document.querySelector(hash);
+    const index = chapters.indexOf(section);
+    if (index === -1) return;
+    event.preventDefault();
+    setProgress(CHAPTER_ANCHORS[index]);
+    history.replaceState(null, '', hash);
+    section.setAttribute('tabindex', '-1');
+    section.focus({ preventScroll: true });
   });
 }
 
 window.addEventListener('pagehide', freeze);
 window.addEventListener('pageshow', (event) => {
   if (event.persisted) thaw();
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) freeze();
+  else thaw();
 });
 
 if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') {
@@ -302,6 +409,7 @@ if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') {
 
 document.fonts.ready.then(() => {
   renderFrame(performance.now(), true);
+  scheduleFrame();
 });
 renderFrame(performance.now(), true);
 scheduleFrame();

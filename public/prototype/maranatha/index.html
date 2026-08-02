@@ -17,7 +17,7 @@
   <a class="skip-link" href="#story">Skip to main content</a>
 
   <div class="film-stage" aria-hidden="true">
-    <video id="farm-film" muted playsinline preload="auto" disablepictureinpicture>
+    <video id="farm-film" muted playsinline preload="metadata" poster="/prototype/maranatha/assets/poster.jpg" disablepictureinpicture>
       <source src="/prototype/maranatha/assets/farm1-48-scrub.mp4" type="video/mp4">
     </video>
     <div class="film-shade"></div>
@@ -40,11 +40,9 @@
 
   <nav class="field-rail" aria-label="Our Story">
     <p class="field-rail__title">Our Story</p>
-    <svg class="exchange-map" viewBox="0 0 44 430" role="img" aria-label="Interdependence of the earth, animals, and people">
+    <svg class="exchange-map" viewBox="0 0 44 430" role="img" aria-label="Progress through the story, from the surface to the table">
       <path class="exchange-map__bed" d="M22 10 C20 58 26 81 21 120 C15 165 33 184 22 226 C12 263 29 300 22 340 C18 368 22 395 22 420" pathLength="1" />
       <path class="exchange-map__pulse" d="M22 10 C20 58 26 81 21 120 C15 165 33 184 22 226 C12 263 29 300 22 340 C18 368 22 395 22 420" pathLength="1" />
-      <path class="exchange-map__branch exchange-map__branch--one" d="M21 120 C8 128 7 142 3 151 M21 120 C35 127 35 142 41 151" pathLength="1" />
-      <path class="exchange-map__branch exchange-map__branch--two" d="M22 226 C7 235 7 249 2 260 M22 226 C36 235 37 248 42 259" pathLength="1" />
       <g class="exchange-map__nodes" aria-hidden="true">
         <circle cx="22" cy="10" r="3"></circle>
         <circle cx="21" cy="120" r="3"></circle>
@@ -63,6 +61,7 @@
   </nav>
 
   <main id="story">
+    <p class="visually-hidden">The film behind these words follows water through the farm in one continuous close-up: resting on cracked bark, sinking through soil among the roots, rising through a green stem, and settling on a leaf in evening light.</p>
     <section id="surface" class="chapter chapter--surface" data-section="surface" data-chapter-index="0">
       <div class="chapter__content hero-copy">
         <p class="eyebrow">Our Roots</p>
@@ -75,8 +74,8 @@
       <div class="chapter__content chapter__content--right">
         <p class="eyebrow">Where It All Began</p>
         <h2>Healthy food<br>that is delicious</h2>
-        <p>Nature and plants heal us. Food is medicine.</p>
-        <blockquote class="story-quote">“Eating is an agricultural act.”</blockquote>
+        <p>Healthy soil makes healthy food. We are what we eat ate.</p>
+        <blockquote class="story-quote">“Eating is an agricultural act.”<cite>Wendell Berry</cite></blockquote>
       </div>
     </section>
 
@@ -84,7 +83,7 @@
       <div class="chapter__content">
         <p class="eyebrow">In 2015</p>
         <h2>Michele and her family moved to the Somerset Hills of New Jersey</h2>
-        <p>She felt a calling to combine her love for food with healing the land that was allowed to go fallow after being farmed more than ninety years ago.</p>
+        <p>She felt a calling to combine her love for food with healing the land that was allowed to go fallow after being farmed more than ninety years ago. The fallow years left behind an unsuccessful successionary forest, invasive plants, and eroding soil.</p>
       </div>
     </section>
 
@@ -94,26 +93,19 @@
         <h2>Earth · animals · people</h2>
         <p class="chapter-intro">We honor the interdependence of the earth, animals, and people.</p>
 
-        <div class="system-lens" data-lens-root>
-          <div class="system-lens__controls" role="group" aria-label="Earth, animals, and people">
-            <button type="button" data-lens="earth" aria-pressed="true">Earth</button>
-            <button type="button" data-lens="animals" aria-pressed="false">Animals</button>
-            <button type="button" data-lens="people" aria-pressed="false">People</button>
-          </div>
-          <div class="system-lens__panels" aria-live="polite">
-            <article class="lens-panel is-active" data-lens-panel="earth">
-              <h3>Heal the land</h3>
-              <p>Our goal is to get back to basics.</p>
-            </article>
-            <article class="lens-panel" data-lens-panel="animals">
-              <h3>High standard of care</h3>
-              <p>We believe in a high standard of care for the animals who feed us.</p>
-            </article>
-            <article class="lens-panel" data-lens-panel="people">
-              <h3>Inspire others</h3>
-              <p>It is our intention to inspire others to do what they can.</p>
-            </article>
-          </div>
+        <div class="system-lens">
+          <article class="lens-panel">
+            <h3>Heal the land</h3>
+            <p>Our goal is to get back to basics.</p>
+          </article>
+          <article class="lens-panel">
+            <h3>High standard of care</h3>
+            <p>We believe in a high standard of care for the animals who feed us, pastured in rotation as multi-species flocks.</p>
+          </article>
+          <article class="lens-panel">
+            <h3>Inspire others</h3>
+            <p>Farmers are compensated fairly. It is our intention to inspire others to do what they can.</p>
+          </article>
         </div>
       </div>
     </section>
@@ -122,7 +114,7 @@
       <div class="chapter__content final-copy">
         <p class="eyebrow">Our Prayer</p>
         <h2>“Maranatha” means<br>Come, O Lord</h2>
-        <p>We honor God in all things.</p>
+        <p>The first Christian prayer. We honor God in all things.</p>
         <blockquote class="story-quote">“This is food the way God intended it to be.”</blockquote>
         <div class="final-copy__actions">
           <a class="primary-action" href="https://maranatha.farm/collections/all-products" target="_blank" rel="noreferrer">All Products</a>

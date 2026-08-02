@@ -18,18 +18,24 @@ test('Maranatha ships one complete progressive-enhancement experience', async ()
   }
   assert.equal((page.match(/<h1[ >]/g) ?? []).length, 1, 'exactly one h1');
   assert.match(page, /<h1>Our Story<\/h1>/);
-  assert.match(page, /<video[^>]+id="farm-film"[^>]+muted[^>]+playsinline[^>]+preload="auto"/s);
+  assert.match(page, /<video[^>]+id="farm-film"[^>]+muted[^>]+playsinline[^>]+preload="metadata"[^>]+poster="\/prototype\/maranatha\/assets\/poster\.jpg"/s);
   assert.match(page, /src="\/prototype\/maranatha\/assets\/farm1-48-scrub\.mp4"/);
   assert.match(page, /class="skip-link"/);
   assert.match(page, /<svg[^>]+class="exchange-map"[^>]+aria-label=/s);
-  assert.match(page, /data-lens="earth"/);
+  assert.match(page, /class="visually-hidden"/);
   assert.match(page, /https:\/\/maranatha\.farm\/pages\/our-story/);
   assert.match(page, /https:\/\/maranatha\.farm\/collections\/all/);
   assert.match(page, /Healthy food<br>that is delicious/);
+  assert.match(page, /We are what we eat ate/);
+  assert.match(page, /<cite>Wendell Berry<\/cite>/);
   assert.match(page, /Michele and her family moved to the Somerset Hills of New Jersey/);
   assert.match(page, /She felt a calling to combine her love for food with healing the land/);
+  assert.match(page, /unsuccessful successionary forest, invasive plants, and eroding soil/);
+  assert.match(page, /pastured in rotation as multi-species flocks/);
+  assert.match(page, /Farmers are compensated fairly/);
   assert.doesNotMatch(page, /Healing the land<br>one season at a time/);
   assert.match(page, /“Maranatha” means<br>Come, O Lord/);
+  assert.match(page, /The first Christian prayer\. We honor God in all things\./);
   assert.doesNotMatch(page, /Follow the exchange|One drop|Surface water|Independent concept|Built by fullbuild\.ai/i);
   assert.match(page, /<noscript>/);
   assert.doesNotMatch(page, /\u2014/);
@@ -56,6 +62,8 @@ test('Maranatha ships one complete progressive-enhancement experience', async ()
   assert.match(script, /seeked/);
   assert.match(script, /requestVideoFrameCallback/);
   assert.match(script, /window\.__maranathaCapture/);
+  assert.match(script, /visibilitychange/);
+  assert.match(script, /saveData/);
   assert.equal((script.match(/requestAnimationFrame\(/g) ?? []).length, 1, 'one rAF authority');
   assert.doesNotMatch(script, /Math\.random|setInterval/);
 
@@ -69,6 +77,7 @@ test('Maranatha ships the supplied film and local type assets', async () => {
   for (const path of [
     'public/prototype/maranatha/assets/farm1.mp4',
     'public/prototype/maranatha/assets/farm1-48-scrub.mp4',
+    'public/prototype/maranatha/assets/poster.jpg',
     'public/prototype/maranatha/assets/fonts/newsreader-latin.woff2',
     'public/prototype/maranatha/assets/fonts/newsreader-italic-latin.woff2',
     'public/prototype/maranatha/assets/fonts/archivo-narrow-latin.woff2',
