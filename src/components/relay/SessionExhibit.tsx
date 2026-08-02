@@ -99,11 +99,6 @@ export function SessionExhibit() {
           Once node firing on first contact, and every message after it crosses
           the intent switch to exactly one branch.
         </p>
-        <p>
-          Nothing is mocked. Those replies came back from the tenant while the
-          recording ran, which is why the pauses between them are uneven.
-        </p>
-
         <dl className={styles.sessionBeats}>
           {BEATS.map((beat) => (
             <div key={beat.name} className={styles.sessionBeat}>
