@@ -213,6 +213,14 @@ test("The annex maps every Relay mechanism to its platform equivalent", async ()
   // The table restacks on a phone instead of scrolling sideways.
   assert.match(annex, /data-label=/);
   assert.match(styles, /content: attr\(data-label\)/);
+  // The proof block is the page's one outbound door, and its facts stay
+  // countable: eight playbooks, all green, dated.
+  assert.equal(
+    (annex.match(/https:\/\/github\.com\/ryanportfolio\/cx-lab/g) ?? []).length,
+    1,
+  );
+  assert.match(annex, /8 playbooks · 8 of 8 green · 2026-08-02/);
+  assert.match(styles, /\.annexProofLink:hover/);
   // Column headings stay readable while the table passes under them, and a
   // collapsed border would not travel with them.
   assert.match(styles, /position: sticky/);

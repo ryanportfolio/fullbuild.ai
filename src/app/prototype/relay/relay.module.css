@@ -34,7 +34,10 @@
    no motion verb, and set apart by a rule rather than a panel so it reads
    as the author's notes and not another instrument. Its column headings
    stick to the top of the viewport while the table passes under them,
-   which is persistence rather than motion and animates nothing.
+   which is persistence rather than motion and animates nothing. The annex
+   closes on the proof block, the page's one outbound door: a bordered mono
+   link to the public repo where the Cognigy column runs for real, hover
+   answered with LIGHT alone.
 
    Motion verbs, the only three
      TRAVEL  a pulse runs the wire seam when a message crosses it
@@ -901,6 +904,57 @@
   color: var(--signal);
   font-family: var(--mono);
   font-size: 0.72rem;
+}
+
+/* The proof block closes the annex: the one outbound door on the page, set
+   behind its own rule like every other note. The link takes signal on hover
+   because the repo is machine evidence, not the human line, and it moves
+   nothing, LIGHT only. */
+.annexProof {
+  max-width: 62ch;
+  margin-top: clamp(2rem, 4vw, 3rem);
+  padding-top: clamp(1.2rem, 2.5vw, 1.8rem);
+  border-top: 1px solid var(--hairline);
+}
+
+.annexProofBody {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--bone-witness);
+}
+
+.annexProofRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.9rem 1.4rem;
+  margin-top: 1.1rem;
+}
+
+.annexProofLink {
+  display: inline-block;
+  padding: 0.55rem 1.05rem;
+  border: 1px solid var(--bone);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bone);
+  text-decoration: none;
+}
+
+.annexProofLink:hover,
+.annexProofLink:focus-visible {
+  border-color: var(--signal);
+  color: var(--signal);
+}
+
+.annexProofFacts {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+  color: var(--bone-witness);
 }
 
 /* ---- stacked duplex ---------------------------------------------------- */
