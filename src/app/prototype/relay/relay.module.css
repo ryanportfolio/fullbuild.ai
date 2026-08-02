@@ -35,9 +35,17 @@
    as the author's notes and not another instrument. Its column headings
    stick to the top of the viewport while the table passes under them,
    which is persistence rather than motion and animates nothing. The annex
-   closes on the proof block, the page's one outbound door: a bordered mono
-   link to the public repo where the Cognigy column runs for real, hover
-   answered with LIGHT alone.
+   closes on the proof ledger: the same scenario rebuilt as a real Cognigy
+   agent, shown as the run report of its regression suite rather than a
+   paragraph claiming it passed. Eight rows, one per playbook, each carrying
+   the line a customer typed, what the platform decided about it, and a score
+   that reads down the right edge as a column. Every count including the
+   verdict is derived from those rows, so a failing run would print itself
+   rather than needing an edit: the console's no-invented-metrics rule turned
+   on the author's own evidence. The medical row spends its character offsets
+   instead of printing them, slicing the utterance so the phrase the slot
+   filler caught is marked in place. Each row id links to the playbook file
+   it came from, which is the only hover on the block.
 
    Motion verbs, the only three
      TRAVEL  a pulse runs the wire seam when a message crosses it
@@ -906,55 +914,259 @@
   font-size: 0.72rem;
 }
 
-/* The proof block closes the annex: the one outbound door on the page, set
-   behind its own rule like every other note. The link takes signal on hover
-   because the repo is machine evidence, not the human line, and it moves
-   nothing, LIGHT only. */
-.annexProof {
-  max-width: 62ch;
-  margin-top: clamp(2rem, 4vw, 3rem);
-  padding-top: clamp(1.2rem, 2.5vw, 1.8rem);
+/* ---- proof ledger ------------------------------------------------------ */
+
+/* The annex closes on the run itself rather than a paragraph about it. A test
+   report is machine speech, so the report's own columns are mono, with one
+   exception that carries the whole idea: the line a customer typed stays in
+   Archivo, exactly as it does on the phone six feet up the page. Signal is
+   spent only where the platform decided something, which is why the fallback
+   row and its score take the witness token instead. The medical row takes
+   --trip because that row is the policy tripwire, the same red the console
+   spends when the rule fires. Static: no verb, nothing animates. The only
+   hover on the block belongs to the links, which are real. */
+
+.proof {
+  margin-top: clamp(2.4rem, 5vw, 3.6rem);
+  padding-top: clamp(1.3rem, 2.6vw, 1.9rem);
   border-top: 1px solid var(--hairline);
 }
 
-.annexProofBody {
-  margin: 0;
-  font-size: 0.88rem;
-  line-height: 1.55;
-  color: var(--bone-witness);
-}
-
-.annexProofRow {
+.proofTop {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.9rem 1.4rem;
-  margin-top: 1.1rem;
+  justify-content: space-between;
+  gap: 0.9rem 1.6rem;
 }
 
-.annexProofLink {
-  display: inline-block;
-  padding: 0.55rem 1.05rem;
-  border: 1px solid var(--bone);
+/* The closing argument of the page does not get the same voice as the notes
+   above it, so this heading takes ink weight the annex subheadings do not. */
+.proofHeading {
+  margin: 0;
+  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--bone);
+}
+
+.proofLink {
+  padding: 0.55rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--bone) 45%, var(--room));
   font-family: var(--mono);
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--bone);
+  color: var(--bone-witness);
   text-decoration: none;
+  white-space: nowrap;
 }
 
-.annexProofLink:hover,
-.annexProofLink:focus-visible {
+.proofLink:hover,
+.proofLink:focus-visible {
   border-color: var(--signal);
   color: var(--signal);
 }
 
-.annexProofFacts {
+.runHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.1rem;
+  margin-top: clamp(1.2rem, 2.6vw, 1.7rem);
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--bone) 30%, var(--room));
   font-family: var(--mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.05em;
+  font-size: 0.64rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.runCommand {
+  color: var(--bone);
+}
+
+.runStamp {
+  margin-right: auto;
   color: var(--bone-witness);
+}
+
+.runVerdict {
+  padding: 0.22rem 0.55rem;
+  border: 1px solid var(--signal);
+  color: var(--signal);
+}
+
+/* The block can report a bad run. Nothing here hard-codes the good one. */
+.runVerdictBad {
+  padding: 0.22rem 0.55rem;
+  border: 1px solid var(--trip);
+  color: var(--trip);
+}
+
+/* Narration is the author speaking, so it is not mono. */
+.runOpener {
+  margin: 0.75rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--bone-witness);
+}
+
+.runOpenerSaid {
+  color: var(--bone);
+}
+
+.runLedger {
+  margin: 0.9rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.runRow,
+.runRowTrip {
+  display: grid;
+  grid-template-columns: 4.7rem minmax(0, 1fr);
+  gap: 0 0.85rem;
+  padding: 0.66rem 0.2rem 0.68rem 0.85rem;
+  border-bottom: 1px solid var(--hairline);
+  border-left: 2px solid color-mix(in srgb, var(--signal) 28%, transparent);
+}
+
+.runRowTrip {
+  border-left-color: color-mix(in srgb, var(--trip) 42%, transparent);
+}
+
+.runIndex {
+  padding-top: 0.2rem;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  color: var(--bone-witness);
+  text-decoration: none;
+}
+
+.runIndex:hover,
+.runIndex:focus-visible {
+  color: var(--signal);
+}
+
+.runBody {
+  min-width: 0;
+}
+
+.runSaid {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  color: var(--bone);
+}
+
+/* The slot span, marked in place. The offsets in the run report cut this
+   phrase out of the sentence, so the number is doing work rather than being
+   printed at the reader. */
+/* Marked, not underlined: the row ids beside it are real links, and a rule
+   under these words would read as one more. The customer's own words stay in
+   ink and the machine's catch is the ground under them. */
+.runSpan {
+  padding: 0.05em 0.2em;
+  /* A phrase that wraps is still one catch, so both fragments keep the mark's
+     own padding instead of one stepped block. */
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  background: color-mix(in srgb, var(--trip) 22%, transparent);
+  color: var(--bone);
+}
+
+.runResult {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.7rem;
+  margin: 0.4rem 0 0;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+}
+
+.runResolved {
+  color: var(--signal);
+}
+
+.runQuiet {
+  color: var(--bone-witness);
+}
+
+.runCapture {
+  color: var(--trip);
+}
+
+.runTypes {
+  color: color-mix(in srgb, var(--bone) 45%, var(--room));
+}
+
+/* One bordered element per row, all three characters wide, so the eight
+   scores line up as a column instead of a ragged badge cluster. Reading down
+   it sums to the 16 probe asserts the footer counts. */
+.runScore,
+.runScoreQuiet {
+  margin-left: auto;
+  padding: 0.14rem 0.42rem;
+  border: 1px solid color-mix(in srgb, var(--signal) 38%, transparent);
+  color: var(--signal);
+}
+
+.runScoreQuiet {
+  border-color: color-mix(in srgb, var(--bone) 26%, var(--room));
+  color: var(--bone-witness);
+}
+
+.runTotals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.5rem;
+  margin: 1.1rem 0 0;
+  font-family: var(--mono);
+}
+
+.runTotals > div {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.runTotals dt {
+  font-size: 0.56rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bone-witness);
+}
+
+.runTotals dd {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--bone);
+}
+
+/* Under 640px the resolved intent takes the whole line, which drops the
+   assert types and the score onto one line together on every row. Letting
+   them wrap only when they happened to overflow left the eight rows with a
+   stuttering rhythm, the score inline on some and dropped on others. */
+@media (max-width: 639px) {
+  .runRow,
+  .runRowTrip {
+    grid-template-columns: 4.2rem minmax(0, 1fr);
+    gap: 0 0.6rem;
+  }
+
+  .runResolved,
+  .runQuiet {
+    flex-basis: 100%;
+  }
+
+  .runScore,
+  .runScoreQuiet {
+    margin-left: 0;
+  }
 }
 
 /* ---- stacked duplex ---------------------------------------------------- */
