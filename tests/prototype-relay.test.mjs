@@ -213,18 +213,91 @@ test("The annex maps every Relay mechanism to its platform equivalent", async ()
   // The table restacks on a phone instead of scrolling sideways.
   assert.match(annex, /data-label=/);
   assert.match(styles, /content: attr\(data-label\)/);
-  // The proof block is the page's one outbound door, and its facts stay
-  // countable: eight playbooks, all green, dated.
-  assert.equal(
-    (annex.match(/https:\/\/github\.com\/ryanportfolio\/cx-lab/g) ?? []).length,
-    1,
-  );
-  assert.match(annex, /8 playbooks · 8 of 8 green · 2026-08-02/);
-  assert.match(styles, /\.annexProofLink:hover/);
+  assert.match(annex, /<ProofLedger \/>/);
   // Column headings stay readable while the table passes under them, and a
   // collapsed border would not travel with them.
   assert.match(styles, /position: sticky/);
   assert.doesNotMatch(styles, /thead th \{[^}]*border-bottom:/);
+});
+
+// Ground truth from playbookRunResults.json in ryanportfolio/cx-lab, the
+// 2026-08-02 run of `cognigy run playbooks`. If the ledger on the page ever
+// stops reconciling to these, the page is claiming a run that did not happen.
+const RUN = { playbooks: 8, steps: 16, asserts: 32, opener: 2 };
+
+test("The proof ledger reconciles to the run it reports", async () => {
+  const source = await read("src/components/relay/ProofLedger.tsx");
+
+  const rows = source.match(/\n {4}id: "relay-\d\d",/g) ?? [];
+  assert.equal(rows.length, RUN.playbooks, "row count drifted from the run");
+
+  const assertLists = source.match(/asserts: \[[^\]]*\]/g) ?? [];
+  assert.equal(assertLists.length, RUN.playbooks);
+  const probeAsserts = assertLists.reduce(
+    (total, list) => total + (list.match(/"/g) ?? []).length / 2,
+    0,
+  );
+
+  // Two per opener, because every playbook asserts the announce before it
+  // probes its branch. This is the arithmetic the footer prints.
+  assert.equal(
+    probeAsserts + RUN.playbooks * RUN.opener,
+    RUN.asserts,
+    "the ledger's assert marks no longer add up to the run's 32",
+  );
+  assert.equal(RUN.playbooks * 2, RUN.steps);
+  assert.match(source, /const OPENER = \{ utterance: "Hi, who is this", asserts: 2 \}/);
+
+  // Every printed total is derived, including the verdict. A hard-coded zero
+  // would let the page keep claiming a clean run after a dirty one.
+  assert.match(source, /ROWS\.reduce\(/);
+  assert.match(source, /const STEPS = ROWS\.length \* 2/);
+  assert.match(source, /const FAILED =\n\s+ROWS\.reduce\(/);
+  assert.doesNotMatch(source, /<dd>0<\/dd>/);
+
+  // The medical row's offsets are load-bearing: they slice the utterance, so
+  // if they drift the wrong words get marked on the page.
+  const medical = source.match(
+    /utterance: "(There's an oxygen concentrator at home)",\n\s+resolved: "medical_equipment",\n\s+span: \[(\d+), (\d+)\]/,
+  );
+  assert.ok(medical, "the medical row lost its span");
+  const [, utterance, start, end] = medical;
+  assert.equal(
+    utterance.slice(Number(start), Number(end)),
+    "oxygen concentrator",
+    "the span no longer cuts the phrase the slot filler caught",
+  );
+  assert.match(source, /trip: true/);
+
+  // Each row links to its own playbook file, so the id and the file it points
+  // at have to agree or the link lands on a 404.
+  const pairs = [...source.matchAll(/id: "(relay-\d\d)",\n\s+file: "([^"]+)"/g)];
+  assert.equal(pairs.length, RUN.playbooks);
+  for (const [, id, file] of pairs) {
+    assert.ok(file.startsWith(`${id}-`), `${file} does not belong to ${id}`);
+    assert.ok(file.endsWith(".json"), `${file} is not a playbook definition`);
+  }
+
+  // The repo root is written once and the def path derives from it.
+  assert.equal(
+    (source.match(/https:\/\/github\.com\/ryanportfolio\/cx-lab/g) ?? []).length,
+    1,
+  );
+});
+
+// The annex quotes its own test count back to the reader. Counting the suite
+// here means the number cannot rot the next time a case is added: this test
+// fails until the page is corrected.
+test("The annex quotes the real size of this suite", async () => {
+  const [annex, suite] = await Promise.all([
+    read("src/components/relay/StackMap.tsx"),
+    read("tests/prototype-relay.test.mjs"),
+  ]);
+  const actual = (suite.match(/^test\(/gm) ?? []).length;
+  const claimed = Number(
+    (annex.match(/<Mono>(\d+)<\/Mono> tests on the engine/) ?? [])[1],
+  );
+  assert.equal(claimed, actual, `annex says ${claimed} tests, suite has ${actual}`);
 });
 
 test("Copy honors the voice bans: no em dashes, no Math.random", async () => {
@@ -236,6 +309,7 @@ test("Copy honors the voice bans: no em dashes, no Math.random", async () => {
     read("src/components/relay/ConsolePane.tsx"),
     read("src/components/relay/FlowGraph.tsx"),
     read("src/components/relay/StackMap.tsx"),
+    read("src/components/relay/ProofLedger.tsx"),
   ]);
   for (const content of files) {
     assert.ok(!content.includes("—"), "em dash found");

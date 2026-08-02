@@ -1,5 +1,7 @@
 import styles from "@/app/prototype/relay/relay.module.css";
 
+import { ProofLedger } from "./ProofLedger";
+
 /* The annex below the demo. Every row is a piece of Relay that exists a few
    feet up the page, named beside its equivalent in the platforms this
    category actually ships on. Mono is reserved for literal identifiers, the
@@ -110,7 +112,7 @@ const ROWS: MappingRow[] = [
   {
     relay: (
       <>
-        <Mono>15</Mono> behavioral tests on the engine, run with{" "}
+        <Mono>18</Mono> tests on the engine and its contract, run with{" "}
         <Mono>node --test</Mono>
       </>
     ),
@@ -226,29 +228,7 @@ export function StackMap() {
         </div>
       </div>
 
-      <div className={styles.annexProof}>
-        <h3 className={styles.annexSubheading}>The Cognigy column runs for real</h3>
-        <p className={styles.annexProofBody}>
-          This same scenario now exists as a working Cognigy agent: the flow
-          built through the REST API, the eight intents trained, the medical
-          lexicon filling its slot, and eight native Playbooks asserting
-          intent, slot and reply text, all green. The whole tenant is
-          snapshotted to a public repo you can read or restore.
-        </p>
-        <div className={styles.annexProofRow}>
-          <a
-            className={styles.annexProofLink}
-            href="https://github.com/ryanportfolio/cx-lab"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Read the build on GitHub
-          </a>
-          <span className={styles.annexProofFacts}>
-            ryanportfolio/cx-lab · 8 playbooks · 8 of 8 green · 2026-08-02
-          </span>
-        </div>
-      </div>
+      <ProofLedger />
     </section>
   );
 }
