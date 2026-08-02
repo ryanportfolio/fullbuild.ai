@@ -57,7 +57,8 @@ const ROWS: MappingRow[] = [
   },
   {
     relay: "Entity extractors: phone, time, equipment terms",
-    cognigy: "Slots and lexicons attached to intents",
+    cognigy:
+      "Lexicon keyphrases carry the slot, which fills on any message, independent of the intent",
     cxone: "Omilia miniApps each collect one thing: address, card, date",
     client:
       "Define lexicons for the client's vocabulary, attach slot fillers to questions",
