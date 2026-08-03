@@ -226,7 +226,7 @@ html[data-media-error="true"] .film-stage::after {
   grid-template-columns: 12.5rem 1fr auto;
   align-items: center;
   border-bottom: 1px solid rgba(233, 224, 203, 0.28);
-  background: rgba(23, 19, 15, 0.7);
+  background: rgba(23, 19, 15, 0.8);
   font: 700 0.76rem/1 "Archivo Narrow", sans-serif;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -286,7 +286,7 @@ html[data-media-error="true"] .film-stage::after {
   padding: 1.25rem 0.85rem 1rem;
   flex-direction: column;
   border-right: 1px solid rgba(233, 224, 203, 0.28);
-  background: rgba(23, 19, 15, 0.7);
+  background: rgba(23, 19, 15, 0.8);
   font-family: "Archivo Narrow", sans-serif;
 }
 
@@ -300,9 +300,10 @@ html[data-media-error="true"] .film-stage::after {
   text-transform: uppercase;
 }
 
+/* Sized to fill the rail so the root branches carry real stroke weight. */
 .exchange-map {
-  width: 2.3rem;
-  height: min(38vh, 21rem);
+  width: 100%;
+  height: min(56vh, 30rem);
   margin: 1rem auto;
   overflow: visible;
 }
@@ -316,7 +317,7 @@ html[data-media-error="true"] .film-stage::after {
 .exchange-map__bed,
 .exchange-map__branch {
   stroke: var(--water);
-  stroke-width: 0.8;
+  stroke-width: 1.15;
 }
 
 .exchange-map__pulse {
@@ -388,10 +389,11 @@ main {
   padding: clamp(1.25rem, 2.5vw, 2.25rem);
 }
 
+/* Centered in the band below the fixed header, not the raw viewport. */
 .has-js .chapter__content {
   position: fixed;
   z-index: 4;
-  top: 50%;
+  top: calc(50% + 2.25rem);
   right: auto;
   left: calc(var(--rail) + var(--gutter));
   margin: 0;
@@ -404,13 +406,12 @@ main {
   left: auto;
 }
 
-.has-js .chapter[data-active="false"] .chapter__content {
-  visibility: hidden;
+/* Hidden chapters stay in the accessibility tree; the clip-path fully conceals them. */
+.has-js .chapter[data-visible="false"] .chapter__content {
   pointer-events: none;
 }
 
-.has-js .chapter[data-active="true"] .chapter__content {
-  visibility: visible;
+.has-js .chapter[data-visible="true"] .chapter__content {
   pointer-events: auto;
 }
 
@@ -428,7 +429,18 @@ main {
 }
 
 .chapter__content--wide {
-  width: min(50rem, 76vw);
+  width: min(31.6rem, 62vw);
+}
+
+/* Interdependence reads as one closed exchange, so its panel lets more film
+   through than the text chapters do. */
+.chapter--canopy .chapter__content::before {
+  background: rgba(23, 19, 15, 0.5);
+}
+
+.chapter--canopy h2 {
+  max-width: 14ch;
+  font-size: clamp(3rem, 7.2vw, 5.2rem);
 }
 
 .hero-copy {
@@ -479,22 +491,93 @@ h2 {
 
 .chapter--root h2 {
   max-width: 15ch;
-  font-size: clamp(3rem, 5.4vw, 6rem);
+  font-size: clamp(2.6rem, 4.4vw, 3.16rem);
   line-height: 0.94;
+}
+
+/* The land chapter carries the wound, so its panel sits closer to the film.
+   It widened when the body copy grew, to keep the long paragraph off the
+   bottom of the band rather than shrinking the type back down. */
+.chapter--root .chapter__content {
+  width: min(36rem, 72vw);
+}
+
+.chapter--root .chapter__content::before {
+  background: rgba(23, 19, 15, 0.62);
+}
+
+/* The break is a vertical figure. Stacked under the paragraph it only ever gets
+   the height left over, so where there is width it stands beside the text at
+   full height instead. */
+@media (min-width: 1200px) {
+  .chapter--root .chapter__content {
+    display: grid;
+    width: min(56rem, 62vw);
+    grid-template-rows: auto auto 1fr;
+    grid-template-columns: minmax(0, 1fr) 15rem;
+    column-gap: 2rem;
+    align-items: start;
+  }
+
+  .chapter--root .chapter__content > :not(.fallow-figure) {
+    grid-column: 1;
+  }
+
+  /* The rows are explicit because 1 / -1 cannot span implicit ones, and the
+     figure would otherwise stretch the eyebrow's row to its own height. */
+  .chapter--root .fallow-figure {
+    position: relative;
+    grid-row: 1 / -1;
+    grid-column: 2;
+    align-self: stretch;
+    min-height: 20rem;
+  }
+
+  /* Taken out of flow so the paragraph alone sets the panel height and the
+     break runs the full depth of the column beside it. */
+  .chapter--root .fallow-line {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+  }
+}
+
+.transfer-line {
+  display: block;
+  width: 100%;
+  height: 190px;
+  margin-top: 1.25rem;
+}
+
+.no-js .transfer-figure {
+  display: none;
+}
+
+.fallow-line {
+  display: block;
+  width: 100%;
+  height: 196px;
+  margin-top: 1rem;
+}
+
+.no-js .fallow-figure {
+  display: none;
 }
 
 .chapter__content > p:not(.eyebrow),
 .chapter-intro {
-  max-width: 34ch;
+  max-width: 40ch;
   margin: 1.5rem 0 0;
   color: var(--root);
-  font-size: clamp(1.05rem, 1.5vw, 1.35rem);
-  line-height: 1.35;
+  font-size: clamp(1.22rem, 2.05vw, 1.8rem);
+  line-height: 1.32;
 }
 
 .hero-copy__lede {
-  max-width: 39ch !important;
-  font-size: clamp(1.16rem, 1.8vw, 1.55rem) !important;
+  max-width: 42ch !important;
+  font-size: clamp(1.35rem, 2.4vw, 2.1rem) !important;
 }
 
 .text-link {
@@ -510,63 +593,126 @@ h2 {
   text-transform: uppercase;
 }
 
+/* The pull quote stays above the body size, so the two do not invert. */
 .story-quote {
-  max-width: 28ch;
-  margin: 1.8rem 0 0;
-  padding: 0.8rem 0 0.8rem 1rem;
+  max-width: 34ch;
+  margin: 1.2rem 0 0;
+  padding: 0.6rem 0 0.6rem 1rem;
   border-left: 1px solid var(--sap);
   color: var(--root);
-  font-size: 1.08rem;
+  font-size: clamp(1.3rem, 2.2vw, 1.95rem);
   font-style: italic;
 }
 
-.system-lens {
-  margin-top: 2rem;
-  border-top: 1px solid var(--water);
-}
-
-.system-lens__controls {
-  display: flex;
-  border-bottom: 1px solid var(--water);
-}
-
-.system-lens__controls button {
-  min-height: 2.8rem;
-  padding: 0 1rem;
-  border: 0;
-  border-right: 1px solid var(--water);
-  background: transparent;
-  color: var(--root-dim);
-  cursor: pointer;
-  font: 700 0.75rem/1 "Archivo Narrow", sans-serif;
-  letter-spacing: 0.08em;
+.story-quote cite {
+  display: block;
+  margin-top: 0.55rem;
+  color: var(--water);
+  font: 700 0.68rem/1 "Archivo Narrow", sans-serif;
+  font-style: normal;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
-.system-lens__controls button[aria-pressed="true"] {
-  background: var(--sap);
-  color: var(--humus);
+.visually-hidden {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-.system-lens__panels {
-  min-height: 8.5rem;
-  padding: 1rem 0 0;
+.system-lens {
+  margin-top: 1.6rem;
+}
+
+.exchange-loop {
+  display: block;
+  width: 100%;
+  height: 192px;
+}
+
+/* Without scripting there is no canvas, so the written claims carry the
+   chapter; with it they stay in the accessibility tree behind the drawing. */
+.has-js .lens-claims,
+.exchange-reading {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.no-js .exchange-loop,
+.no-js .lens-caption,
+.no-js .exchange-names,
+.no-js .exchange-reading {
+  display: none;
+}
+
+/* On a narrow panel the ring has no room for labels beside its nodes, so the
+   farm's parts are named in a row that lights as the exchange reaches them. */
+.exchange-names {
+  display: none;
+  margin: 0.7rem 0 0;
+  color: var(--root-dim);
+  font: 700 0.7rem/1.85 "Archivo Narrow", sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.system-lens[data-names="on"] .exchange-names {
+  display: block;
+}
+
+.exchange-names span {
+  white-space: nowrap;
+  transition: color 0.4s linear;
+}
+
+/* The separator carries the row's only break opportunities, so it may not
+   inherit the name's nowrap or the seven names run off a phone screen. */
+.exchange-names span::after {
+  color: var(--water);
+  content: " \00B7 ";
+  white-space: normal;
+}
+
+.exchange-names span:last-child::after {
+  content: "";
+}
+
+.exchange-names span[data-lit="true"] {
+  color: var(--sap);
+}
+
+.no-js .system-lens {
+  border-top: 1px solid var(--water);
+}
+
+.lens-caption {
+  max-width: 44ch;
+  margin: 0.9rem 0 0;
+  font-size: clamp(1rem, 1.5vw, 1.3rem);
+  line-height: 1.32;
 }
 
 .lens-panel {
   display: grid;
-  grid-template-columns: minmax(8rem, 0.42fr) minmax(0, 1fr);
+  padding-top: 1.1rem;
+  grid-template-columns: minmax(8rem, 0.3fr) minmax(0, 1fr);
   gap: 1rem;
 }
 
 .lens-panel + .lens-panel {
-  margin-top: 1rem;
-  padding-top: 1rem;
+  margin-top: 1.1rem;
   border-top: 1px solid rgba(170, 199, 193, 0.48);
-}
-
-.has-js .lens-panel:not(.is-active) {
-  display: none;
 }
 
 .lens-panel h3 {
@@ -585,17 +731,31 @@ h2 {
   align-items: flex-end;
 }
 
+/* The finale shares its viewport with the footer: center between header and footer. */
+.has-js .chapter--table .chapter__content {
+  top: calc(50% - 0.25rem);
+}
+
 .final-copy {
   width: min(56rem, 78vw);
 }
 
+/* Hang the opening quote so the display stack keeps a flush left edge. */
 .final-copy h2 {
   max-width: 11ch;
+  text-indent: -0.5ch;
+}
+
+@supports (hanging-punctuation: first) {
+  .final-copy h2 {
+    text-indent: 0;
+    hanging-punctuation: first;
+  }
 }
 
 .final-copy__actions {
   display: flex;
-  margin-top: 2.2rem;
+  margin-top: 1.8rem;
   gap: 1.2rem;
   align-items: center;
   flex-wrap: wrap;
@@ -692,6 +852,14 @@ h2 {
   }
 }
 
+/* Between 721 and 900px the lens ball's glare sits behind the bare hero copy. */
+@media (min-width: 721px) and (max-width: 900px) {
+  .hero-copy h1,
+  .hero-copy__lede {
+    text-shadow: 0 0.05em 1.4rem rgba(23, 19, 15, 0.9), 0 0 0.4rem rgba(23, 19, 15, 0.65);
+  }
+}
+
 @media (max-width: 720px) {
   :root {
     --gutter: 1rem;
@@ -752,6 +920,20 @@ h2 {
     width: auto;
   }
 
+  .exchange-loop {
+    height: 168px;
+  }
+
+  .fallow-line {
+    height: 176px;
+    margin-top: 0.9rem;
+  }
+
+  .transfer-line {
+    height: 168px;
+    margin-top: 0.9rem;
+  }
+
   .hero-copy::before {
     display: block;
   }
@@ -771,18 +953,16 @@ h2 {
   }
 
   .chapter__content > p:not(.eyebrow),
-  .chapter-intro,
+  .chapter-intro {
+    font-size: 1.24rem !important;
+  }
+
   .hero-copy__lede {
-    font-size: 1.03rem !important;
+    font-size: 1.34rem !important;
   }
 
   .has-js .chapter--table .chapter__content {
     top: calc(50% - 1.85rem);
-  }
-
-  .system-lens__controls button {
-    flex: 1;
-    padding: 0 0.45rem;
   }
 
   .lens-panel {
@@ -832,17 +1012,46 @@ h2 {
   }
 
   h2 {
-    font-size: clamp(3.5rem, 6vw, 5.5rem);
+    font-size: clamp(3.2rem, 5.4vw, 5rem);
+  }
+
+  .chapter--canopy h2 {
+    font-size: clamp(2.9rem, 4.6vw, 4.2rem);
+  }
+
+  .final-copy h2 {
+    font-size: clamp(3rem, 5vw, 4.6rem);
+  }
+
+  .story-quote {
+    font-size: clamp(1.2rem, 1.75vw, 1.55rem);
   }
 
   .chapter__content > p:not(.eyebrow),
   .chapter-intro {
     margin-top: 1rem;
-    font-size: 1.05rem;
+    font-size: clamp(1.14rem, 1.65vw, 1.5rem);
+  }
+
+  .lens-panel {
+    padding-top: 0.75rem;
+  }
+
+  .lens-panel + .lens-panel {
+    margin-top: 0.75rem;
+  }
+
+  .lens-panel h3 {
+    font-size: 1.15rem;
+  }
+
+  .lens-panel p {
+    font-size: 0.95rem;
+    line-height: 1.3;
   }
 
   .hero-copy__lede {
-    font-size: 1.18rem !important;
+    font-size: 1.42rem !important;
   }
 
   .text-link,
@@ -852,8 +1061,18 @@ h2 {
     margin-top: 1.25rem;
   }
 
-  .system-lens__panels {
-    min-height: 6.6rem;
+  .fallow-line {
+    height: 112px;
+    margin-top: 0.7rem;
+  }
+
+  .transfer-line {
+    height: 148px;
+    margin-top: 0.8rem;
+  }
+
+  .exchange-loop {
+    height: 172px;
   }
 }
 
@@ -886,7 +1105,7 @@ h2 {
   .chapter-intro,
   .hero-copy__lede {
     margin-top: 0.8rem;
-    font-size: 0.9rem !important;
+    font-size: 1.08rem !important;
     line-height: 1.28;
   }
 
@@ -894,21 +1113,53 @@ h2 {
   .story-quote,
   .system-lens,
   .final-copy__actions {
-    margin-top: 0.85rem;
+    margin-top: 0.7rem;
   }
 
-  .system-lens__controls button {
-    min-height: 2.45rem;
-    font-size: 0.66rem;
+  .chapter--canopy h2 {
+    font-size: clamp(2.35rem, 11vw, 3rem);
   }
 
-  .system-lens__panels {
-    min-height: 6.2rem;
-    padding-top: 0.7rem;
+  .lens-panel {
+    padding-top: 0.5rem;
+  }
+
+  .lens-panel + .lens-panel {
+    margin-top: 0.5rem;
   }
 
   .lens-panel h3 {
-    font-size: 1.2rem;
+    font-size: 1.05rem;
+  }
+
+  .lens-panel p {
+    font-size: 0.85rem;
+    line-height: 1.25;
+  }
+
+  .exchange-loop {
+    height: 132px;
+  }
+
+  .fallow-line {
+    height: 94px;
+    margin-top: 0.7rem;
+  }
+
+  .transfer-line {
+    height: 118px;
+    margin-top: 0.7rem;
+  }
+
+  .exchange-names {
+    margin-top: 0.55rem;
+    font-size: 0.64rem;
+    line-height: 1.7;
+  }
+
+  .lens-caption {
+    margin-top: 0.6rem;
+    font-size: 0.96rem;
   }
 
   .final-copy__actions {
