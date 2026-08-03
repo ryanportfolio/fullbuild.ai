@@ -254,13 +254,13 @@ test("The proof ledger reconciles to the run it reports", async () => {
   // would let the page keep claiming a clean run after a dirty one.
   assert.match(source, /ROWS\.reduce\(/);
   assert.match(source, /const STEPS = ROWS\.length \* 2/);
-  assert.match(source, /const FAILED =\n\s+ROWS\.reduce\(/);
+  assert.match(source, /const FAILED =\r?\n\s+ROWS\.reduce\(/);
   assert.doesNotMatch(source, /<dd>0<\/dd>/);
 
   // The medical row's offsets are load-bearing: they slice the utterance, so
   // if they drift the wrong words get marked on the page.
   const medical = source.match(
-    /utterance: "(There's an oxygen concentrator at home)",\n\s+resolved: "medical_equipment",\n\s+span: \[(\d+), (\d+)\]/,
+    /utterance: "(There's an oxygen concentrator at home)",\r?\n\s+resolved: "medical_equipment",\r?\n\s+span: \[(\d+), (\d+)\]/,
   );
   assert.ok(medical, "the medical row lost its span");
   const [, utterance, start, end] = medical;
@@ -273,7 +273,7 @@ test("The proof ledger reconciles to the run it reports", async () => {
 
   // Each row links to its own playbook file, so the id and the file it points
   // at have to agree or the link lands on a 404.
-  const pairs = [...source.matchAll(/id: "(relay-\d\d)",\n\s+file: "([^"]+)"/g)];
+  const pairs = [...source.matchAll(/id: "(relay-\d\d)",\r?\n\s+file: "([^"]+)"/g)];
   assert.equal(pairs.length, RUN.playbooks);
   for (const [, id, file] of pairs) {
     assert.ok(file.startsWith(`${id}-`), `${file} does not belong to ${id}`);
