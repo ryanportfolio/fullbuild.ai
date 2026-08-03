@@ -49,7 +49,7 @@ test('Maranatha ships one complete progressive-enhancement experience', async ()
     assert.ok(!text.endsWith('.'), `heading ends with a period: ${text}`);
   }
 
-  assert.match(styles, /^\/\*\nMARANATHA \/ THE LIVING EXCHANGE CONTRACT/m);
+  assert.match(styles, /^\/\*\r?\nMARANATHA \/ THE LIVING EXCHANGE CONTRACT/m);
   assert.match(styles, /@font-face[\s\S]+newsreader-latin\.woff2/);
   assert.match(styles, /@font-face[\s\S]+archivo-narrow-latin\.woff2/);
   assert.match(styles, /@media \(max-width: 720px\)/);
