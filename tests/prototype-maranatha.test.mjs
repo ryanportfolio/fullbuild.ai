@@ -35,7 +35,8 @@ test('Maranatha ships one complete progressive-enhancement experience', async ()
   assert.match(page, /Farmers are compensated fairly/);
   assert.match(page, /<canvas class="exchange-loop" aria-hidden="true">/);
   assert.match(page, /<canvas class="fallow-line" aria-hidden="true">/);
-  assert.equal((page.match(/class="exchange-reading"/g) ?? []).length, 2, 'both drawings are described in text');
+  assert.match(page, /<canvas class="transfer-line" aria-hidden="true">/);
+  assert.equal((page.match(/class="exchange-reading"/g) ?? []).length, 3, 'every drawing is described in text');
   assert.match(page, /even if they live in an apartment/);
   assert.doesNotMatch(page, /Healing the land<br>one season at a time/);
   assert.match(page, /“Maranatha” means<br>Come, O Lord/);
@@ -74,7 +75,10 @@ test('Maranatha ships one complete progressive-enhancement experience', async ()
   assert.match(script, /const LOOP_NODES = \['soil', 'flock', 'gardens', 'terraces', 'mushroom yards', 'silvopastures', 'your home'\]/);
   assert.match(script, /drawExchangeLoop\(elapsed\)/);
   assert.match(script, /drawFallowLine\(elapsed\)/);
+  assert.match(script, /drawTransferLine\(elapsed\)/);
+  assert.match(script, /const TRANSFER_NODES = \['soil', 'plant', 'animal', 'you'\]/);
   assert.match(script, /BREAK_AT: 0\.37/);
+  assert.match(script, /FORK_AT: 0\.34/);
   assert.equal((script.match(/requestAnimationFrame\(/g) ?? []).length, 1, 'one rAF authority');
   assert.doesNotMatch(script, /Math\.random|setInterval/);
 

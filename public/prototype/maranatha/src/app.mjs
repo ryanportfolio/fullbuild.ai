@@ -16,6 +16,8 @@ const loopShell = document.querySelector('.system-lens');
 const loopNameRow = document.querySelector('.exchange-names');
 const fallowCanvas = document.querySelector('.fallow-line');
 const fallowCtx = fallowCanvas ? fallowCanvas.getContext('2d') : null;
+const transferCanvas = document.querySelector('.transfer-line');
+const transferCtx = transferCanvas ? transferCanvas.getContext('2d') : null;
 const root = document.documentElement;
 
 // Decoder and motion constants stay visible because they are the tuning surface.
@@ -35,8 +37,43 @@ const LOAD_STATE_TIMEOUT_MS = 6000;
 // Chapter two sits past the quarter mark so its copy holds over the emerging
 // green instead of the dark root mass at exactly 25% of the film.
 const CHAPTER_ANCHORS = [0, 0.27, 0.5, 0.75, 1];
+const MYCELIUM_INDEX = 1;
 const ROOT_INDEX = 2;
 const CANOPY_INDEX = 3;
+
+// Chapter two's open transfer, tuned in the lab. The line runs off both edges
+// of the frame, forks once at the plant, and rejoins at you. Lengths are in
+// units of the frame; LABEL_EM scales with the page's fluid root.
+const TRANSFER = {
+  SPAN: 0.86,
+  RISE: 0.6,
+  WAVE: 0.34,
+  WAVE_FREQUENCY: 1.15,
+  DEPTH_WAVE: 0.5,
+  FORK_AT: 0.34,
+  FORK_END: 0.93,
+  FORK_SPREAD: 0.42,
+  FORK_DEPTH: 0.7,
+  SWING_DEGREES: 9,
+  SWING_SECONDS: 16,
+  TILT_DEGREES: 18,
+  DEPTH: 6,
+  LINE: 2.2,
+  FAR_ALPHA: 0.28,
+  NEAR_ALPHA: 0.85,
+  NODE_RADIUS: 4.5,
+  END_FADE: 0.1,
+  PULSE_PER_SECOND: 0.22,
+  PULSE_LENGTH: 0.16,
+  PULSE_WEIGHT: 3.6,
+  REST_SECONDS: 1.2,
+  LABEL_EM: 0.61,
+  LABEL_TRACKING: 0.1,
+  LABEL_GAP: 15,
+  LABEL_FLOOR: 11,
+  STILL_HEAD: 0.62,
+};
+const TRANSFER_NODES = ['soil', 'plant', 'animal', 'you'];
 
 // The land chapter's broken line, tuned in the lab. The pulse descends, stops
 // at the gap, fades, rests, and starts again.
@@ -650,6 +687,201 @@ function drawFallowLine(elapsed) {
   fallowCtx.fillText(FALLOW.LABEL.toUpperCase(), stop.x + 12 * stop.scale, stop.y);
 }
 
+// ---- the open transfer -----------------------------------------------------
+// The same living line, whole and passing through. It enters off one edge and
+// leaves off the other, so chapter three's break has something to break.
+let transferClock = 0;
+let transferPresence = 0;
+let transferRootSize = 16;
+const transferFrame = { unitX: 1, unitY: 1, distance: 1, spread: 1 };
+
+function transferPoint(along, branch) {
+  const x = (along - 0.5) * 2 * transferFrame.unitX * TRANSFER.SPAN;
+  let y = Math.sin(along * TRANSFER.WAVE_FREQUENCY * Math.PI * 2) * TRANSFER.WAVE * transferFrame.unitY;
+  let z = Math.cos(along * TRANSFER.WAVE_FREQUENCY * Math.PI * 2)
+    * TRANSFER.DEPTH_WAVE * TRANSFER.WAVE * transferFrame.unitY;
+  if (branch === 1) {
+    const across = clamp((along - TRANSFER.FORK_AT) / Math.max(0.001, TRANSFER.FORK_END - TRANSFER.FORK_AT));
+    const bow = Math.sin(across * Math.PI);
+    y += bow * TRANSFER.FORK_SPREAD * transferFrame.unitY;
+    z += bow * TRANSFER.FORK_DEPTH * transferFrame.unitY * 0.5;
+  }
+  return { x, y, z };
+}
+
+function transferProject(point, swing, width, height) {
+  const cosSwing = Math.cos(swing);
+  const sinSwing = Math.sin(swing);
+  const x = point.x * cosSwing + point.z * sinSwing;
+  const swung = -point.x * sinSwing + point.z * cosSwing;
+  const tilt = (TRANSFER.TILT_DEGREES * Math.PI) / 180;
+  const y = point.y * Math.cos(tilt) - swung * Math.sin(tilt);
+  const depth = point.y * Math.sin(tilt) + swung * Math.cos(tilt);
+  // The line is far wider than it is deep, so depth is keyed to the horizontal
+  // unit; the clamp keeps the swing from ever carrying it behind the camera.
+  const distance = transferFrame.distance;
+  const scale = distance / (distance + Math.max(depth, -0.8 * distance));
+  return { x: width / 2 + x * scale, y: height / 2 + y * scale, scale, z: depth };
+}
+
+// Both ends run past the frame, so they fade rather than stop.
+function transferEndFade(along) {
+  if (TRANSFER.END_FADE <= 0) return 1;
+  return Math.min(1, Math.min(along, 1 - along) / TRANSFER.END_FADE);
+}
+
+function transferLit(along, head, pulseAlpha) {
+  if (head === null) return 0;
+  const behind = head - along;
+  if (behind < 0 || behind >= TRANSFER.PULSE_LENGTH) return 0;
+  const front = 1 - behind / TRANSFER.PULSE_LENGTH;
+  return front * front * pulseAlpha;
+}
+
+function drawTransferLine(elapsed) {
+  if (!transferCtx) return;
+  const presence = Number(chapters[MYCELIUM_INDEX].style.getPropertyValue('--reveal')) || 0;
+  const wasVisible = transferPresence > 0.001;
+  transferPresence = presence;
+  if (presence <= 0.001) {
+    if (wasVisible) transferCtx.clearRect(0, 0, transferCanvas.width, transferCanvas.height);
+    return;
+  }
+  const width = transferCanvas.clientWidth;
+  const height = transferCanvas.clientHeight;
+  if (!width || !height) return;
+
+  const ratio = Math.min(2, window.devicePixelRatio || 1);
+  if (transferCanvas.width !== Math.round(width * ratio) || transferCanvas.height !== Math.round(height * ratio)) {
+    transferCanvas.width = Math.round(width * ratio);
+    transferCanvas.height = Math.round(height * ratio);
+    transferRootSize = parseFloat(getComputedStyle(root).fontSize) || 16;
+  }
+  transferCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  transferCtx.clearRect(0, 0, width, height);
+
+  const still = reducedMotionQuery.matches;
+  if (!still) transferClock += elapsed;
+  const labelPx = Math.max(TRANSFER.LABEL_EM * transferRootSize, TRANSFER.LABEL_FLOOR);
+
+  // The frame is sized so the widest reach of the swing still lands inside the
+  // canvas, with the labels' own band reserved under the line.
+  const reach = TRANSFER.SPAN * Math.abs(Math.sin((TRANSFER.SWING_DEGREES * Math.PI) / 180)) + 0.12;
+  const magnify = TRANSFER.DEPTH / Math.max(0.3, TRANSFER.DEPTH - reach);
+  const riseAmount = Math.max(0.15, TRANSFER.WAVE + TRANSFER.FORK_SPREAD
+    + (TRANSFER.DEPTH_WAVE * TRANSFER.WAVE + TRANSFER.FORK_DEPTH * 0.5) * 0.4);
+  transferFrame.unitX = Math.max(1, (width / 2 - 6) / (TRANSFER.SPAN * magnify));
+  transferFrame.unitY = Math.max(1, (height / 2 - (labelPx * 1.15 + TRANSFER.LABEL_GAP))
+    / (magnify * riseAmount)) * TRANSFER.RISE;
+  transferFrame.distance = TRANSFER.DEPTH * transferFrame.unitX;
+
+  // An open line seen edge on would collapse to a point, so it swings and
+  // returns rather than revolving.
+  const swing = still
+    ? 0
+    : (Math.sin((transferClock * Math.PI * 2) / TRANSFER.SWING_SECONDS) * TRANSFER.SWING_DEGREES * Math.PI) / 180;
+  transferFrame.spread = Math.max(1,
+    transferFrame.unitY * riseAmount * Math.abs(Math.sin((TRANSFER.TILT_DEGREES * Math.PI) / 180))
+    + transferFrame.unitY * (TRANSFER.DEPTH_WAVE * TRANSFER.WAVE + TRANSFER.FORK_DEPTH * 0.5)
+    + transferFrame.unitX * TRANSFER.SPAN * Math.abs(Math.sin(swing)));
+
+  // Still readers get the pulse just past the fork, with both routes carrying.
+  let head = TRANSFER.STILL_HEAD;
+  let pulseAlpha = 1;
+  if (!still) {
+    const travel = (1 + 2 * TRANSFER.PULSE_LENGTH) / TRANSFER.PULSE_PER_SECOND;
+    const phase = transferClock % (travel + TRANSFER.REST_SECONDS);
+    if (phase < travel) head = -TRANSFER.PULSE_LENGTH + phase * TRANSFER.PULSE_PER_SECOND;
+    else pulseAlpha = 0;
+  }
+
+  const depthAlpha = (z, fade) => {
+    const near = (z / transferFrame.spread + 1) / 2;
+    return clamp(TRANSFER.FAR_ALPHA + (TRANSFER.NEAR_ALPHA - TRANSFER.FAR_ALPHA) * (1 - near)) * fade * presence;
+  };
+
+  const STEPS = 140;
+  const segments = [];
+  for (let branch = 0; branch < 2; branch += 1) {
+    const start = branch === 1 ? TRANSFER.FORK_AT : 0;
+    const end = branch === 1 ? TRANSFER.FORK_END : 1;
+    if (end - start < 0.01) continue;
+    for (let index = 0; index < STEPS; index += 1) {
+      const from = start + (index / STEPS) * (end - start);
+      const to = start + ((index + 1) / STEPS) * (end - start);
+      segments.push({
+        from: transferProject(transferPoint(from, branch), swing, width, height),
+        to: transferProject(transferPoint(to, branch), swing, width, height),
+        along: from,
+        fade: transferEndFade(from),
+      });
+    }
+  }
+  segments.sort((a, b) => a.from.z - b.from.z);
+
+  transferCtx.lineCap = 'butt';
+  const bed = new Map();
+  const pulse = new Map();
+  const bucket = (store, alpha, lineWidth, segment) => {
+    const key = `${Math.round(alpha * 40)}|${Math.round(lineWidth * 8)}`;
+    let batch = store.get(key);
+    if (!batch) {
+      batch = { alpha: Math.round(alpha * 40) / 40, width: Math.round(lineWidth * 8) / 8, path: new Path2D() };
+      store.set(key, batch);
+    }
+    batch.path.moveTo(segment.from.x, segment.from.y);
+    batch.path.lineTo(segment.to.x, segment.to.y);
+  };
+
+  for (const segment of segments) {
+    const alpha = depthAlpha(segment.from.z, segment.fade);
+    if (alpha > 0.004) bucket(bed, alpha, TRANSFER.LINE * segment.from.scale, segment);
+    const lit = transferLit(segment.along, head, pulseAlpha) * segment.fade * Math.min(1, alpha * 2.6);
+    if (lit > 0.004) bucket(pulse, lit, TRANSFER.PULSE_WEIGHT * segment.from.scale, segment);
+  }
+
+  const paint = (store, red, green, blue) => {
+    const batches = [...store.values()].sort((a, b) => a.alpha - b.alpha);
+    for (const batch of batches) {
+      transferCtx.strokeStyle = `rgba(${red}, ${green}, ${blue}, ${batch.alpha.toFixed(3)})`;
+      transferCtx.lineWidth = batch.width;
+      transferCtx.stroke(batch.path);
+    }
+  };
+  paint(bed, 170, 199, 193);
+  paint(pulse, 210, 160, 68);
+
+  // The nodes ride the trunk: soil before the fork, the animal inside it, you
+  // where the two routes meet again.
+  const middle = (TRANSFER.FORK_AT + TRANSFER.FORK_END) / 2;
+  const stops = [Math.max(0.04, TRANSFER.FORK_AT - 0.28), TRANSFER.FORK_AT, middle, TRANSFER.FORK_END];
+  transferCtx.font = `700 ${labelPx}px "Archivo Narrow", sans-serif`;
+  transferCtx.letterSpacing = `${(labelPx * TRANSFER.LABEL_TRACKING).toFixed(2)}px`;
+  transferCtx.textBaseline = 'top';
+  transferCtx.textAlign = 'center';
+  for (let index = 0; index < TRANSFER_NODES.length; index += 1) {
+    const along = stops[index];
+    const at = transferProject(transferPoint(along, 0), swing, width, height);
+    const lit = transferLit(along, head, pulseAlpha);
+    const fade = transferEndFade(along);
+    transferCtx.beginPath();
+    transferCtx.arc(at.x, at.y, TRANSFER.NODE_RADIUS * at.scale, 0, Math.PI * 2);
+    transferCtx.fillStyle = '#17130F';
+    transferCtx.fill();
+    transferCtx.lineWidth = Math.max(0.6, 1.1 * at.scale);
+    transferCtx.strokeStyle = lit > 0
+      ? `rgba(210, 160, 68, ${Math.min(presence, 0.55 + lit).toFixed(3)})`
+      : `rgba(233, 224, 203, ${depthAlpha(at.z, 0.75 * fade).toFixed(3)})`;
+    transferCtx.stroke();
+
+    const base = depthAlpha(at.z, 0.62 * fade);
+    transferCtx.fillStyle = lit > 0
+      ? `rgba(210, 160, 68, ${Math.min(presence, base + lit * 0.8).toFixed(3)})`
+      : `rgba(233, 224, 203, ${base.toFixed(3)})`;
+    transferCtx.fillText(TRANSFER_NODES[index].toUpperCase(), at.x, at.y + TRANSFER.LABEL_GAP * at.scale);
+  }
+}
+
 function renderFrame(now, force = false) {
   const elapsed = clamp((now - lastFrameTime) / 1000, 0, MAX_FRAME_DELTA_SECONDS);
   lastFrameTime = now;
@@ -685,6 +917,7 @@ function renderFrame(now, force = false) {
   mapBranches[1].style.strokeDashoffset = String(1 - clamp((shownProgress - 0.4) / 0.28));
 
   updateChapterState(shownProgress);
+  drawTransferLine(elapsed);
   drawFallowLine(elapsed);
   drawExchangeLoop(elapsed);
 
@@ -695,10 +928,12 @@ function renderFrame(now, force = false) {
 }
 
 function isSettled() {
-  // The two drawn chapters keep their own time, so frames continue only while
-  // one of them is actually on screen and motion is welcome.
+  // The drawn chapters keep their own time, so frames continue only while one
+  // of them is actually on screen and motion is welcome.
   if (!reducedMotionQuery.matches
-    && ((loopCtx && loopPresence > 0.001) || (fallowCtx && fallowPresence > 0.001))) return false;
+    && ((loopCtx && loopPresence > 0.001)
+      || (fallowCtx && fallowPresence > 0.001)
+      || (transferCtx && transferPresence > 0.001))) return false;
   return displayProgress === targetProgress
     && pointerX === targetPointerX
     && pointerY === targetPointerY
