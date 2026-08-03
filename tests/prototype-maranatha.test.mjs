@@ -53,6 +53,8 @@ test('Maranatha ships one complete progressive-enhancement experience', async ()
   assert.match(styles, /@font-face[\s\S]+archivo-narrow-latin\.woff2/);
   assert.match(styles, /@media \(max-width: 720px\)/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(styles, /font-size: clamp\(1\.22rem, 2\.05vw, 1\.8rem\)/, 'body copy holds its enlarged scale');
+  assert.match(styles, /@media \(min-width: 1200px\)/, 'the break stands beside the land copy on wide screens');
   assert.match(styles, /min-height: 180svh/);
   assert.match(styles, /:focus-visible/);
   assert.doesNotMatch(styles, /@import|fonts\.googleapis|backdrop-filter|filter:\s*blur/);

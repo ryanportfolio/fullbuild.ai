@@ -495,19 +495,59 @@ h2 {
   line-height: 0.94;
 }
 
-/* The land chapter carries the wound, so its panel sits closer to the film. */
+/* The land chapter carries the wound, so its panel sits closer to the film.
+   It widened when the body copy grew, to keep the long paragraph off the
+   bottom of the band rather than shrinking the type back down. */
 .chapter--root .chapter__content {
-  width: min(25.28rem, 72vw);
+  width: min(36rem, 72vw);
 }
 
 .chapter--root .chapter__content::before {
   background: rgba(23, 19, 15, 0.62);
 }
 
+/* The break is a vertical figure. Stacked under the paragraph it only ever gets
+   the height left over, so where there is width it stands beside the text at
+   full height instead. */
+@media (min-width: 1200px) {
+  .chapter--root .chapter__content {
+    display: grid;
+    width: min(56rem, 62vw);
+    grid-template-rows: auto auto 1fr;
+    grid-template-columns: minmax(0, 1fr) 15rem;
+    column-gap: 2rem;
+    align-items: start;
+  }
+
+  .chapter--root .chapter__content > :not(.fallow-figure) {
+    grid-column: 1;
+  }
+
+  /* The rows are explicit because 1 / -1 cannot span implicit ones, and the
+     figure would otherwise stretch the eyebrow's row to its own height. */
+  .chapter--root .fallow-figure {
+    position: relative;
+    grid-row: 1 / -1;
+    grid-column: 2;
+    align-self: stretch;
+    min-height: 20rem;
+  }
+
+  /* Taken out of flow so the paragraph alone sets the panel height and the
+     break runs the full depth of the column beside it. */
+  .chapter--root .fallow-line {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+  }
+}
+
 .fallow-line {
   display: block;
   width: 100%;
-  height: 168px;
+  height: 196px;
   margin-top: 1rem;
 }
 
@@ -517,16 +557,16 @@ h2 {
 
 .chapter__content > p:not(.eyebrow),
 .chapter-intro {
-  max-width: 34ch;
+  max-width: 40ch;
   margin: 1.5rem 0 0;
   color: var(--root);
-  font-size: clamp(1.05rem, 1.5vw, 1.35rem);
-  line-height: 1.35;
+  font-size: clamp(1.22rem, 2.05vw, 1.8rem);
+  line-height: 1.32;
 }
 
 .hero-copy__lede {
-  max-width: 39ch !important;
-  font-size: clamp(1.16rem, 1.8vw, 1.55rem) !important;
+  max-width: 42ch !important;
+  font-size: clamp(1.35rem, 2.4vw, 2.1rem) !important;
 }
 
 .text-link {
@@ -542,13 +582,14 @@ h2 {
   text-transform: uppercase;
 }
 
+/* The pull quote stays above the body size, so the two do not invert. */
 .story-quote {
-  max-width: 28ch;
-  margin: 1.4rem 0 0;
+  max-width: 34ch;
+  margin: 1.2rem 0 0;
   padding: 0.6rem 0 0.6rem 1rem;
   border-left: 1px solid var(--sap);
   color: var(--root);
-  font-size: 1.08rem;
+  font-size: clamp(1.3rem, 2.2vw, 1.95rem);
   font-style: italic;
 }
 
@@ -580,7 +621,7 @@ h2 {
 .exchange-loop {
   display: block;
   width: 100%;
-  height: 210px;
+  height: 192px;
 }
 
 /* Without scripting there is no canvas, so the written claims carry the
@@ -624,9 +665,12 @@ h2 {
   transition: color 0.4s linear;
 }
 
+/* The separator carries the row's only break opportunities, so it may not
+   inherit the name's nowrap or the seven names run off a phone screen. */
 .exchange-names span::after {
   color: var(--water);
   content: " \00B7 ";
+  white-space: normal;
 }
 
 .exchange-names span:last-child::after {
@@ -642,10 +686,10 @@ h2 {
 }
 
 .lens-caption {
-  max-width: 40ch;
+  max-width: 44ch;
   margin: 0.9rem 0 0;
-  font-size: 0.864rem;
-  line-height: 1.35;
+  font-size: clamp(1rem, 1.5vw, 1.3rem);
+  line-height: 1.32;
 }
 
 .lens-panel {
@@ -700,7 +744,7 @@ h2 {
 
 .final-copy__actions {
   display: flex;
-  margin-top: 2.2rem;
+  margin-top: 1.8rem;
   gap: 1.2rem;
   align-items: center;
   flex-wrap: wrap;
@@ -870,7 +914,7 @@ h2 {
   }
 
   .fallow-line {
-    height: 200px;
+    height: 176px;
     margin-top: 0.9rem;
   }
 
@@ -893,9 +937,12 @@ h2 {
   }
 
   .chapter__content > p:not(.eyebrow),
-  .chapter-intro,
+  .chapter-intro {
+    font-size: 1.24rem !important;
+  }
+
   .hero-copy__lede {
-    font-size: 1.03rem !important;
+    font-size: 1.34rem !important;
   }
 
   .has-js .chapter--table .chapter__content {
@@ -961,13 +1008,13 @@ h2 {
   }
 
   .story-quote {
-    font-size: 1rem;
+    font-size: clamp(1.2rem, 1.75vw, 1.55rem);
   }
 
   .chapter__content > p:not(.eyebrow),
   .chapter-intro {
     margin-top: 1rem;
-    font-size: 1.05rem;
+    font-size: clamp(1.14rem, 1.65vw, 1.5rem);
   }
 
   .lens-panel {
@@ -988,7 +1035,7 @@ h2 {
   }
 
   .hero-copy__lede {
-    font-size: 1.18rem !important;
+    font-size: 1.42rem !important;
   }
 
   .text-link,
@@ -1037,7 +1084,7 @@ h2 {
   .chapter-intro,
   .hero-copy__lede {
     margin-top: 0.8rem;
-    font-size: 0.9rem !important;
+    font-size: 1.08rem !important;
     line-height: 1.28;
   }
 
@@ -1074,7 +1121,7 @@ h2 {
   }
 
   .fallow-line {
-    height: 132px;
+    height: 94px;
     margin-top: 0.7rem;
   }
 
@@ -1086,7 +1133,7 @@ h2 {
 
   .lens-caption {
     margin-top: 0.6rem;
-    font-size: 0.8rem;
+    font-size: 0.96rem;
   }
 
   .final-copy__actions {
