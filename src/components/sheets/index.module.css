@@ -203,21 +203,27 @@
   min-width: 1.5rem;
 }
 
-/* The dot: filled revision-red ONLY for live + probe-passing; else a drawn
-   outline. The one accent, spent on the one semantic. */
-.dot,
-.dotSample {
-  width: 0.5rem;
-  height: 0.5rem;
+/* The status mark: a hand-drawn icon of the thing itself, inked revision-red
+   ONLY for live + probe-passing; graphite otherwise. The one accent, still
+   spent on the one semantic — the drawing says WHAT, the ink says WHETHER. */
+.icon {
+  width: 1.05rem;
+  height: 1.05rem;
   flex: none;
-  border-radius: 50%;
-  border: 1px solid var(--ink-graphite);
-  background: transparent;
+  overflow: visible;
 }
-.dot[data-live='true'],
-.dotSample[data-live='true'] {
-  border-color: var(--accent-live);
-  background: var(--accent-live);
+.icon path,
+.legendMark path {
+  stroke: var(--ink-graphite);
+  fill: none;
+  stroke-width: 1.4px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.15s var(--ease-draw);
+}
+.icon[data-live='true'] path,
+.legendMark[data-live='true'] path {
+  stroke: var(--accent-live);
 }
 
 /* page pointer (prototypes) — takes the dot's slot, marks an internal page */
@@ -238,8 +244,10 @@
   letter-spacing: 0.06em;
   color: var(--ink-witness);
 }
-.dotSample {
+.legendMark {
   display: inline-block;
-  width: 0.42rem;
-  height: 0.42rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  flex: none;
+  overflow: visible;
 }

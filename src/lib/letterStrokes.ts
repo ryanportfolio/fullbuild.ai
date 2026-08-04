@@ -169,6 +169,135 @@ function pathD(pts: Pt[]): string {
   return pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join(' ');
 }
 
+/* ------------------------------------------------------------ status icons
+   One hand-drawn mark per project, replacing the abstract probe dot. Unit
+   space 16x16, y down, same single-stroke discipline as the alphabet. The
+   COLOR carries the probe semantic (revision-red = live, graphite = repo
+   only) — the drawing carries what the thing IS. */
+const INDEX_ICONS: Record<string, number[][][]> = {
+  // cited page: sheet with a folded corner and reference lines
+  truenote: [
+    [[3, 1], [10, 1], [13, 4], [13, 15], [3, 15], [3, 1]],
+    [[10, 1], [10, 4], [13, 4]],
+    [[5.5, 9], [10.5, 9]],
+    [[5.5, 11.5], [8.5, 11.5]],
+  ],
+  // video frame with a play wedge
+  corewise: [
+    [[1, 3], [15, 3], [15, 13], [1, 13], [1, 3]],
+    [[6.5, 5.5], [10.5, 8], [6.5, 10.5], [6.5, 5.5]],
+  ],
+  // audit lens over the page edge
+  willaicite: [
+    [[13, 6], [11.8, 8.8], [9, 10], [6.2, 8.8], [5, 6], [6.2, 3.2], [9, 2], [11.8, 3.2], [13, 6]],
+    [[6.3, 8.9], [2.5, 13.5]],
+  ],
+  // mortarboard + tassel
+  'corewise-academy': [
+    [[8, 2], [15, 5], [8, 8], [1, 5], [8, 2]],
+    [[15, 5], [15, 9]],
+    [[4.5, 6.5], [4.5, 10], [8, 12], [11.5, 10], [11.5, 6.5]],
+  ],
+  // price series on its axes
+  kinefractal: [
+    [[2, 2], [2, 14], [15, 14]],
+    [[3.5, 11.5], [6, 8], [8, 10], [11, 5], [13.5, 6.5]],
+  ],
+  // a token, cut
+  savetokens: [
+    [[13.5, 8], [11.9, 11.9], [8, 13.5], [4.1, 11.9], [2.5, 8], [4.1, 4.1], [8, 2.5], [11.9, 4.1], [13.5, 8]],
+    [[4, 12], [12, 4]],
+  ],
+  // microphone on its stand
+  'whisper-ptt': [
+    [[6.5, 2], [9.5, 2], [10, 3], [10, 7.5], [9.5, 9], [6.5, 9], [6, 7.5], [6, 3], [6.5, 2]],
+    [[3.5, 7], [3.5, 8.5], [5.5, 10.5], [8, 11], [10.5, 10.5], [12.5, 8.5], [12.5, 7]],
+    [[8, 11], [8, 14]],
+    [[5.5, 14], [10.5, 14]],
+  ],
+  // running bond wall
+  securewall: [
+    [[1.5, 3], [14.5, 3], [14.5, 13], [1.5, 13], [1.5, 3]],
+    [[1.5, 8], [14.5, 8]],
+    [[8, 3], [8, 8]],
+    [[4.75, 8], [4.75, 13]],
+    [[11.25, 8], [11.25, 13]],
+  ],
+  // archive open, contents out
+  zipflow: [
+    [[2, 5], [2, 13], [14, 13], [14, 5]],
+    [[8, 11], [8, 3]],
+    [[5.5, 5.5], [8, 3], [10.5, 5.5]],
+  ],
+  // the chip the harness flashes
+  'agent-firmware': [
+    [[4, 4], [12, 4], [12, 12], [4, 12], [4, 4]],
+    [[6, 4], [6, 1.5]],
+    [[10, 4], [10, 1.5]],
+    [[6, 12], [6, 14.5]],
+    [[10, 12], [10, 14.5]],
+    [[4, 6], [1.5, 6]],
+    [[4, 10], [1.5, 10]],
+    [[12, 6], [14.5, 6]],
+    [[12, 10], [14.5, 10]],
+  ],
+  // gate passed: shield + check
+  'agentic-audit': [
+    [[8, 1.5], [14, 3.5], [14, 8], [11, 12.5], [8, 14.5], [5, 12.5], [2, 8], [2, 3.5], [8, 1.5]],
+    [[5, 8], [7.2, 10.2], [11, 5.5]],
+  ],
+  // trace on the bench scope
+  tracebench: [
+    [[1.5, 3], [14.5, 3], [14.5, 13], [1.5, 13], [1.5, 3]],
+    [[3, 8], [5, 8], [6, 4.5], [8, 11.5], [9.5, 6], [10.5, 8], [13, 8]],
+  ],
+  // the coil itself
+  maimcoil: [
+    [[8, 8], [10, 7], [10.5, 9.5], [8, 10.8], [5.5, 9.5], [5.2, 6.5], [8, 4.8], [11, 5.5], [12.5, 8.5], [11.5, 11.5], [8, 13], [4.5, 11.8], [2.8, 8.5], [3.5, 5], [6.5, 2.8], [10.5, 2.8], [13.5, 5]],
+  ],
+  // clamp brackets squeezing the read
+  stk: [
+    [[6, 2], [3, 2], [3, 14], [6, 14]],
+    [[10, 2], [13, 2], [13, 14], [10, 14]],
+    [[6.5, 8], [9.5, 8]],
+  ],
+  // the set's keystone
+  'fullbuild-ai': [
+    [[8, 2], [13, 8], [8, 14], [3, 8], [8, 2]],
+  ],
+};
+
+export interface IconGeometry {
+  viewBox: string;
+  ds: string[];
+}
+
+/** The keystone mark alone — the legend's color-semantic sample. */
+export function keystoneIcon(): IconGeometry {
+  return buildIcon('fullbuild-ai', 999) as IconGeometry;
+}
+
+/** Hand-drawn status icon for a project card. Pure + deterministic. */
+export function buildIcon(projectId: string, cardIdx: number): IconGeometry | null {
+  const strokes = INDEX_ICONS[projectId];
+  if (!strokes) return null;
+  const K = LETTERING;
+  const idx0 = cardIdx * 100000 + 95000;
+  let n = 0;
+  const ds = strokes.map((st) => {
+    const sub = subdivide(st as Pt[], 2);
+    return pathD(
+      sub.map(([x, y]): Pt => {
+        const wx = noiseF(K.SEED, idx0 + n * 2) * K.WOBBLE;
+        const wy = noiseF(K.SEED, idx0 + n * 2 + 1) * K.WOBBLE;
+        n++;
+        return [x + wx, y + wy];
+      }),
+    );
+  });
+  return { viewBox: '-1.5 -1.5 19 19', ds };
+}
+
 export interface NameInk {
   boxD: string;
   strokeDs: string[];

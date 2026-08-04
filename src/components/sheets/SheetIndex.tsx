@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import gsap from 'gsap';
 import { PROJECTS } from '@/lib/projects';
 import { useWorkingSet, isUp } from '@/lib/store';
-import { buildName, LETTERING, type NameGeometry } from '@/lib/letterStrokes';
+import { buildIcon, buildName, keystoneIcon, LETTERING, type NameGeometry } from '@/lib/letterStrokes';
 import x from './index.module.css';
 
 /**
@@ -27,6 +27,8 @@ export default function SheetIndex() {
   const health = useWorkingSet((s) => s.health);
   const rootRef = useRef<HTMLDivElement>(null);
   const geoms = useMemo<NameGeometry[]>(() => PROJECTS.map((p, i) => buildName(p.title, i)), []);
+  const icons = useMemo(() => PROJECTS.map((p, i) => buildIcon(p.id, i)), []);
+  const keystone = useMemo(() => keystoneIcon(), []);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -40,6 +42,7 @@ export default function SheetIndex() {
       box: SVGPathElement;
       strokes: SVGPathElement[];
       overs: SVGPathElement[];
+      icon: SVGPathElement[];
       drawn: boolean;
       boilRaf: number;
     }
@@ -47,13 +50,16 @@ export default function SheetIndex() {
       root.querySelectorAll<HTMLAnchorElement>('a[data-idx]'),
     ).map((card) => {
       const geo = geoms[Number(card.dataset.idx)];
-      const paths = Array.from(card.querySelectorAll<SVGPathElement>('path'));
+      const paths = Array.from(
+        card.querySelectorAll<SVGPathElement>('svg[data-lettering] path'),
+      );
       return {
         card,
         geo,
         box: paths[0],
         strokes: paths.slice(1, 1 + geo.strokeCount),
         overs: paths.slice(1 + geo.strokeCount),
+        icon: Array.from(card.querySelectorAll<SVGPathElement>('svg[data-status] path')),
         drawn: false,
         boilRaf: 0,
       };
@@ -61,7 +67,7 @@ export default function SheetIndex() {
 
     // Hold every stroke hidden-by-dash NOW, then arm it out of the pre-paint
     // CSS hold in the same frame — the finished lettering never flashes.
-    const allPaths = (r: CardRig) => [r.box, ...r.strokes, ...r.overs];
+    const allPaths = (r: CardRig) => [r.box, ...r.strokes, ...r.overs, ...r.icon];
     rigs.forEach((r) =>
       allPaths(r).forEach((el) => {
         const len = el.getTotalLength();
@@ -124,6 +130,8 @@ export default function SheetIndex() {
         // the second pass overlaps itself — reads as a quick re-ink, not a rewrite
         t += dur * 0.35;
       });
+      // the status mark is sealed last — the pen's final act on the stamp
+      r.icon.forEach((el) => pen(el, K.DRAW_SPEED, 0));
       tl.call(() => {
         r.drawn = true;
       });
@@ -188,9 +196,10 @@ export default function SheetIndex() {
       tryFire();
     };
     window.addEventListener('ws:cover-drawn', onCover);
-    // Safety: the index must never stay blank if the cover pass is torn down
-    // mid-flight (fast scroll unmount, dev overlay) — draw anyway after a beat.
-    const gateFallback = window.setTimeout(onCover, 6000);
+    // The one-hand gate yields to the reader: a fast scroller must never sit
+    // on blank stamps waiting for the elevation pen. Once the index is in
+    // view, the cover gets one short beat to finish — then the cards draw.
+    let gateFallback = 0;
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
@@ -198,6 +207,7 @@ export default function SheetIndex() {
           visible = true;
           io.disconnect();
           tryFire();
+          if (!fired) gateFallback = window.setTimeout(onCover, 800);
         });
       },
       { rootMargin: '0px 0px -18% 0px', threshold: 0 },
@@ -240,11 +250,24 @@ export default function SheetIndex() {
             >
               <span className={x.cardTop}>
                 <span className={x.no}>{p.sheet}</span>
-                <span
-                  className={x.dot}
-                  data-live={live ? 'true' : 'false'}
-                  aria-label={live ? 'live in production' : 'repository only'}
-                />
+                {icons[i] ? (
+                  <svg
+                    className={x.icon}
+                    viewBox={icons[i].viewBox}
+                    /* inline size: .drawing's global svg{width:100%} must not
+                       inflate the mark (same trap as the lettering svg) */
+                    style={{ width: '1.05rem', height: '1.05rem' }}
+                    data-live={live ? 'true' : 'false'}
+                    role="img"
+                    aria-label={live ? 'live in production' : 'repository only'}
+                    focusable="false"
+                    data-status=""
+                  >
+                    {icons[i].ds.map((d, si) => (
+                      <path key={si} d={d} data-draw-hold="" />
+                    ))}
+                  </svg>
+                ) : null}
               </span>
               <span className={x.cardDraw}>
                 <svg
@@ -252,6 +275,7 @@ export default function SheetIndex() {
                   style={{ width: `${g.width}px`, maxWidth: '100%' }}
                   aria-hidden="true"
                   focusable="false"
+                  data-lettering=""
                 >
                   <path className={x.ink} d={g.base.boxD} data-draw-hold="" />
                   {g.base.strokeDs.map((d, si) => (
@@ -279,8 +303,32 @@ export default function SheetIndex() {
         <span className={x.arrow} aria-hidden="true">→</span>
       </a>
       <p className={x.legend}>
-        <span className={x.dotSample} data-live="true" /> website&nbsp;&nbsp;
-        <span className={x.dotSample} data-live="false" /> repo only
+        <svg
+          className={x.legendMark}
+          viewBox={keystone.viewBox}
+          style={{ width: '0.7rem', height: '0.7rem' }}
+          data-live="true"
+          aria-hidden="true"
+          focusable="false"
+        >
+          {keystone.ds.map((d, si) => (
+            <path key={si} d={d} />
+          ))}
+        </svg>{' '}
+        website&nbsp;&nbsp;
+        <svg
+          className={x.legendMark}
+          viewBox={keystone.viewBox}
+          style={{ width: '0.7rem', height: '0.7rem' }}
+          data-live="false"
+          aria-hidden="true"
+          focusable="false"
+        >
+          {keystone.ds.map((d, si) => (
+            <path key={si} d={d} />
+          ))}
+        </svg>{' '}
+        repo only
       </p>
     </div>
   );
