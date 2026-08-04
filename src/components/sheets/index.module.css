@@ -1,9 +1,15 @@
-/* SHEET INDEX — mono, leader-dotted, drafting-table register. */
+/* SHEET INDEX — hand-lettered stamp cards on the drafting-table register.
+   Lettering knob values live in src/lib/letterStrokes.ts (LETTERING); the
+   literals here (stroke widths, reveal ms, columns) are ports of the same
+   lab-tuned settings and must move together. */
 
 .index {
   margin-top: clamp(1rem, 2.5vh, 1.75rem);
   border-top: 1px solid var(--rule-strong);
   font-family: var(--font-mono);
+  /* the grid columns answer to the drawing column's real width, not the
+     viewport — the index lives at very different widths across breakpoints */
+  container-type: inline-size;
 }
 
 .head {
@@ -16,6 +22,130 @@
   text-transform: uppercase;
   color: var(--ink-witness);
 }
+
+/* ------------------------------------------------------------ stamp cards */
+
+.grid {
+  /* GRID_COLS = 3 (lab-tuned); sheds columns as the register narrows so the
+     lettering keeps a readable measure — 1 per row on a narrow sheet */
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+@container (max-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container (max-width: 380px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.5rem 0.6rem 0.45rem;
+  border: 1px solid var(--rule-strong);
+  color: var(--ink-graphite);
+}
+
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  color: var(--ink-witness);
+}
+
+.cardDraw {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  min-height: 3.2rem;
+  padding: 0.2rem 0;
+}
+
+/* The lettering ink. STROKE_WIDTH 2.1; hover weight = 2.1 * HOVER_INK_BOOST
+   2.5 = 5.25 (CSS px on an svg = user units, so the boost scales with the
+   card exactly like the base weight does). */
+.ink {
+  stroke: var(--ink-graphite);
+  fill: none;
+  stroke-width: 2.1px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke-width 0.15s var(--ease-draw);
+}
+.card:hover .ink,
+.card:focus-visible .ink,
+.card[data-autohover] .ink {
+  stroke-width: 5.25px;
+}
+
+/* second-pass overdraw ink (OVERDRAW_ALPHA) */
+.over {
+  opacity: 0.35;
+}
+
+/* title block: drawn note + stack, revealed by hover / focus / the
+   no-pointer rotation (HOVER_REVEAL_MS = 180). An OVERLAY off the card's
+   bottom edge, so the resting cards stay stamp-compact — revealing it never
+   reflows the register. Solid ground behind it: it reads as a slip of paper
+   laid over the stamp, and the text never fights the lettering. */
+.cardMeta {
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  top: 100%;
+  z-index: 2;
+  background: var(--ground);
+  border: 1px solid var(--rule-strong);
+  padding: 0.4rem 0.6rem 0.45rem;
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+.card:hover .cardMeta,
+.card:focus-visible .cardMeta,
+.card[data-autohover] .cardMeta {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cardMeta {
+    transform: none;
+    transition: opacity 180ms ease;
+  }
+}
+
+.cardNote {
+  display: block;
+  font-size: 0.64rem;
+  line-height: 1.45;
+  color: var(--ink-graphite);
+  margin-bottom: 0.3rem;
+}
+
+.cardStack {
+  display: block;
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-witness);
+}
+
+/* ------------------------------------- register rows (P-01 link + legend) */
 
 .row {
   display: flex;
@@ -34,15 +164,15 @@
 .no {
   color: var(--ink-witness);
   font-size: 0.62rem;
-  width: 3.4rem;
   flex: none;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+.row .no {
+  width: 3.4rem;
+}
 
-/* Project titles are the LETTERED voice at index scale: display face, sized to
-   fill the register line without ever wrapping (the longest title at the
-   narrowest sheet is the constraint — mono physically can't double here). */
+/* P-01 keeps the LETTERED register voice of the old list rows. */
 .name {
   font-family: var(--font-display);
   font-stretch: 105%;
@@ -57,7 +187,7 @@
   .name {
     font-size: min(4.4vw, 1.35rem);
   }
-  .no {
+  .row .no {
     width: 3.2rem;
   }
   .leader {
@@ -80,7 +210,6 @@
   width: 0.5rem;
   height: 0.5rem;
   flex: none;
-  align-self: center;
   border-radius: 50%;
   border: 1px solid var(--ink-graphite);
   background: transparent;
