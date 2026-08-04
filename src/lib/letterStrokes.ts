@@ -55,6 +55,11 @@ export const LETTERING = {
   HOVER_BOIL_HZ: 0.4,
   /** No-pointer devices: each card holds the hovered state this long, ms. */
   AUTO_HOVER_DWELL_MS: 6000,
+  /** P-01 only: the hand searches while it writes — the seed sweeps this
+      range across the draw, then settles at PROTO_DRIFT_TO (lab v2 drift,
+      kept off the grid cards by choice). */
+  PROTO_DRIFT_FROM: 1,
+  PROTO_DRIFT_TO: 99,
   /** Grid columns (mirrored in index.module.css). */
   GRID_COLS: 3,
 } as const;

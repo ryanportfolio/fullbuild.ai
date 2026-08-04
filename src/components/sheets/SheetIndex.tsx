@@ -26,9 +26,14 @@ import x from './index.module.css';
 export default function SheetIndex() {
   const health = useWorkingSet((s) => s.health);
   const rootRef = useRef<HTMLDivElement>(null);
-  const geoms = useMemo<NameGeometry[]>(() => PROJECTS.map((p, i) => buildName(p.title, i)), []);
+  // One extra geometry past the schedule: the P-01 register card.
+  const geoms = useMemo<NameGeometry[]>(
+    () => [...PROJECTS.map((p, i) => buildName(p.title, i)), buildName('Prototypes', PROJECTS.length)],
+    [],
+  );
   const icons = useMemo(() => PROJECTS.map((p, i) => buildIcon(p.id, i)), []);
   const keystone = useMemo(() => keystoneIcon(), []);
+  const proto = geoms[PROJECTS.length];
 
   useEffect(() => {
     const root = rootRef.current;
@@ -45,6 +50,8 @@ export default function SheetIndex() {
       icon: SVGPathElement[];
       drawn: boolean;
       boilRaf: number;
+      /** The seed the lettering rests at — the boil oscillates around this. */
+      seedBase: number;
     }
     const rigs: CardRig[] = Array.from(
       root.querySelectorAll<HTMLAnchorElement>('a[data-idx]'),
@@ -62,6 +69,7 @@ export default function SheetIndex() {
         icon: Array.from(card.querySelectorAll<SVGPathElement>('svg[data-status] path')),
         drawn: false,
         boilRaf: 0,
+        seedBase: LETTERING.SEED,
       };
     });
 
@@ -132,7 +140,18 @@ export default function SheetIndex() {
       });
       // the status mark is sealed last — the pen's final act on the stamp
       r.icon.forEach((el) => pen(el, K.DRAW_SPEED, 0));
+      // P-01 only: the hand searches while it writes. The seed sweeps
+      // PROTO_DRIFT_FROM -> PROTO_DRIFT_TO across this card's draw and the
+      // lettering settles where the sweep ends (dash lengths were measured at
+      // the base seed; wobble-induced length change is <1%, invisible).
+      const isProto = Number(r.card.dataset.idx) === geoms.length - 1;
+      if (isProto) {
+        tl.eventCallback('onUpdate', () => {
+          setInk(r, K.PROTO_DRIFT_FROM + (K.PROTO_DRIFT_TO - K.PROTO_DRIFT_FROM) * tl.progress());
+        });
+      }
       tl.call(() => {
+        if (isProto) r.seedBase = K.PROTO_DRIFT_TO;
         r.drawn = true;
       });
       master.add(tl, (ci * K.CARD_STAGGER_MS) / 1000);
@@ -145,7 +164,7 @@ export default function SheetIndex() {
       const t0 = performance.now();
       const step = () => {
         const el = (performance.now() - t0) / 1000;
-        setInk(r, K.SEED + Math.sin(el * 2 * Math.PI * K.HOVER_BOIL_HZ) * K.HOVER_BOIL_AMP);
+        setInk(r, r.seedBase + Math.sin(el * 2 * Math.PI * K.HOVER_BOIL_HZ) * K.HOVER_BOIL_AMP);
         r.boilRaf = requestAnimationFrame(step);
       };
       r.boilRaf = requestAnimationFrame(step);
@@ -153,7 +172,7 @@ export default function SheetIndex() {
     const stopBoil = (r: CardRig) => {
       cancelAnimationFrame(r.boilRaf);
       r.boilRaf = 0;
-      if (r.drawn) setInk(r, K.SEED);
+      if (r.drawn) setInk(r, r.seedBase);
     };
     const enters = rigs.map((r) => () => startBoil(r));
     const leaves = rigs.map((r) => () => stopBoil(r));
@@ -295,12 +314,31 @@ export default function SheetIndex() {
         })}
       </div>
       {/* Not a shipped drawing — a link off the cover to the draft designs.
-          Internal nav, so no target/probe dot; an arrow marks it as a page. */}
-      <a className={x.row} href="/prototype">
-        <span className={x.no}>P-01</span>
-        <span className={x.name}>Prototypes</span>
-        <span className={x.leader} aria-hidden="true" />
-        <span className={x.arrow} aria-hidden="true">→</span>
+          Internal nav, so no status mark; an arrow marks it as a page. Full
+          register width, and the only stamp whose hand SEARCHES as it writes
+          (the seed sweeps the whole range across its draw). */}
+      <a className={x.protoCard} href="/prototype" aria-label="Prototypes" data-idx={PROJECTS.length}>
+        <span className={x.cardTop}>
+          <span className={x.no}>P-01</span>
+          <span className={x.arrow} aria-hidden="true">→</span>
+        </span>
+        <span className={x.cardDraw}>
+          <svg
+            viewBox={proto.viewBox}
+            style={{ width: `${proto.width}px`, maxWidth: '100%' }}
+            aria-hidden="true"
+            focusable="false"
+            data-lettering=""
+          >
+            <path className={x.ink} d={proto.base.boxD} data-draw-hold="" />
+            {proto.base.strokeDs.map((d, si) => (
+              <path className={x.ink} key={`s${si}`} d={d} data-draw-hold="" />
+            ))}
+            {proto.base.overDs.map((d, si) => (
+              <path className={`${x.ink} ${x.over}`} key={`o${si}`} d={d} data-draw-hold="" />
+            ))}
+          </svg>
+        </span>
       </a>
       <p className={x.legend}>
         <svg

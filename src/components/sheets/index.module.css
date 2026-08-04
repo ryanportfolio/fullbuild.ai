@@ -87,7 +87,10 @@
 }
 .card:hover .ink,
 .card:focus-visible .ink,
-.card[data-autohover] .ink {
+.card[data-autohover] .ink,
+.protoCard:hover .ink,
+.protoCard:focus-visible .ink,
+.protoCard[data-autohover] .ink {
   stroke-width: 5.25px;
 }
 
@@ -145,21 +148,7 @@
   color: var(--ink-witness);
 }
 
-/* ------------------------------------- register rows (P-01 link + legend) */
-
-.row {
-  display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
-  padding: 0.34rem 0;
-  border-bottom: 1px solid var(--rule);
-  font-size: 0.72rem;
-  color: var(--ink-graphite);
-  transition: opacity 0.15s var(--ease-draw);
-}
-.row:hover {
-  opacity: 0.65;
-}
+/* -------------------------------- P-01 register card (full width) + legend */
 
 .no {
   color: var(--ink-witness);
@@ -168,39 +157,17 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.row .no {
-  width: 3.4rem;
-}
 
-/* P-01 keeps the LETTERED register voice of the old list rows. */
-.name {
-  font-family: var(--font-display);
-  font-stretch: 105%;
-  font-weight: 600;
-  font-size: clamp(1rem, 0.55rem + 1.15vw, 1.4rem);
-  line-height: 1.1;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-}
-
-@media (max-width: 860px) {
-  .name {
-    font-size: min(4.4vw, 1.35rem);
-  }
-  .row .no {
-    width: 3.2rem;
-  }
-  .leader {
-    min-width: 0.6rem;
-  }
-}
-
-/* drafting leader dots filling the register line */
-.leader {
-  flex: 1;
-  border-bottom: 1px dotted var(--rule-strong);
-  transform: translateY(-0.22em);
-  min-width: 1.5rem;
+/* The prototypes card spans the whole register below the grid. */
+.protoCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.8rem;
+  padding: 0.5rem 0.6rem 0.45rem;
+  border: 1px solid var(--rule-strong);
+  color: var(--ink-graphite);
 }
 
 /* The status mark: a hand-drawn icon of the thing itself, inked revision-red
