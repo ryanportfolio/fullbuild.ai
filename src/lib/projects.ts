@@ -86,7 +86,7 @@ export const PROJECTS: Project[] = [
     metrics: [
       { label: 'commits', value: '14,879', source: 'GitHub API, commit pagination (private repo)' },
     ],
-    note: 'Full-stack multi-model video-analysis product in production since Dec ’25; a six-model council answers over extracted transcripts.',
+    note: 'Extract wisdom from any link. Chat with any model. Deep research. 1860+ registered users. 610M+ tokens processed.',
   },
   {
     id: 'willaicite',
