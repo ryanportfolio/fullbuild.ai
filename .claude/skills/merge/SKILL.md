@@ -6,7 +6,7 @@ description: Use only when the user explicitly asks to enable session-wide autom
 
 > Note: inside a git worktree this skill may be exposed under a directory-scoped name (e.g. `.claude/worktrees/<name>:merge`). Invoke the scoped name — same skill, same behavior.
 
-Invoking `/merge` does NOT do a one-off merge. It **flips on Auto-Merge Mode for the rest of the session**, like `/caveman` persists. From the moment it is on, every time a task is complete and verified (to the extent this environment allows), you run the **integration cycle** below automatically — no waiting to be asked, no per-merge confirmation.
+Invoking `/merge` does NOT do a one-off merge. It **flips on Auto-Merge Mode for the rest of the session**, like `/caveman` persists. On activation, immediately apply the **integration cycle** below to any already-complete, verified, unintegrated work from the current session. From then on, run the cycle every time a task is complete and verified (to the extent this environment allows) — no waiting to be asked, no per-merge confirmation.
 
 Invoking `/merge` IS the user's standing authorization to merge into `main` repeatedly for the session. That is why there is no per-merge confirm gate (see [Why no confirm](#why-no-per-merge-confirm)).
 
@@ -14,13 +14,23 @@ Invoking `/merge` IS the user's standing authorization to merge into `main` repe
 
 On `/merge`, announce activation in **plain prose** (not caveman), so the user can immediately correct a misread of this standing authorization. Say, concisely:
 
-> **Auto-Merge Mode is ON for this session.** From now on, when a task is complete I will, without asking: commit the touched files, push, ensure a PR exists, and merge it into `main` (resolving conflicts where unambiguous). The session branch is kept the whole session. Say "stop merge" to turn this off.
+> **Auto-Merge Mode is ON for this session.** I will immediately integrate any already-complete, verified, unintegrated work from this session. From now on, when a task is complete I will, without asking: commit the touched files, push, ensure a PR exists, and merge it into `main` (resolving conflicts where unambiguous). The session branch is kept the whole session. Say "stop merge" to turn this off.
 
-Then continue the current work. The cycle fires on the **next** task completion (and every one after), not retroactively.
+Then run the activation catch-up below before continuing current work.
+
+## Activation catch-up
+
+On `/merge` activation:
+
+1. Inspect the current session's working tree and recent completed task context.
+2. If already-complete, verified, unintegrated work from this session exists, run the integration cycle immediately. Do not wait for another task or ask for another confirmation.
+3. If the work is incomplete, exploratory, unverified, unrelated, or predates the current session, do not sweep it into the catch-up. Continue working until the normal completion gate is met.
+
+Activation is retroactive only for eligible current-session work. It never authorizes blanket-staging unrelated changes.
 
 ## The Integration Cycle
 
-Run this whenever a task is complete and verified. "Complete" = the requested change is finished and verified to the extent this environment allows (read code / logs / headless rasterize) — NOT mid-task, exploratory, or throwaway work. Never fabricate verification to trigger the cycle.
+Run this immediately for eligible activation catch-up work and whenever a later task is complete and verified. "Complete" = the requested change is finished and verified to the extent this environment allows (read code / logs / headless rasterize) — NOT mid-task, exploratory, or throwaway work. Never fabricate verification to trigger the cycle.
 
 ### 1. Identify the branch
 - `git branch --show-current`.
@@ -75,6 +85,8 @@ Turn the mode OFF when the user says "stop merge", "stop auto-merge", "normal mo
 ## Anti-patterns
 
 - Don't merge mid-task, exploratory, or unverified work — "complete + verified" is the gate.
+- Don't treat activation as prospective-only when verified current-session work is already complete — catch it up immediately.
+- Don't use retroactive catch-up to sweep in unrelated, pre-session, or unverified changes.
 - Don't fabricate verification just to trigger the cycle.
 - Don't blanket-commit unrelated files — stage only what the task touched.
 - Don't open a second PR for a branch that already has an open one — reuse it (`gh pr list --head <branch>` first). One open PR per unit of work.
