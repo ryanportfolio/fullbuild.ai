@@ -179,6 +179,13 @@ test("the band names are the plate's contract", async () => {
   assert.doesNotMatch(css, /--i-b-|--intro-b-/);
   assert.match(loader, /var\(--b-setout\$\{index\}\)/);
   assert.match(loader, /var\(--b-base\)/);
+
+  /*
+   * The dash offset must be a <length>. Chromium accepts a bare <number> calc and treats it
+   * as px, but Firefox rejects it, falls back to 0, and the whole progressive draw dies:
+   * every stroke paints fully drawn from frame one. The * 1px is the fix, not a style.
+   */
+  assert.match(css, /stroke-dashoffset: calc\(\(100 - 100 \* var\(--s, 1\)\) \* 1px\)/);
 });
 
 test("registration is stated and derived", async () => {
