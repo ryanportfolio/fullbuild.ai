@@ -11,6 +11,7 @@ import {
   ENTRANCE_LEAD_MS,
   HANDOVER_MS,
   INTRO_BEATS,
+  INTRO_DRAW_POINTS,
   INTRO_END,
   INTRO_LAND_FLOOR,
   INTRO_LAND_POINTS,
@@ -344,7 +345,12 @@ export default function HomepageIntro({ onDone }: { onDone: () => void }) {
         const gap = targetRef.current - displayRef.current;
         let next = displayRef.current;
         if (gap > 0) {
-          const openness = Math.min(1, displayRef.current / INTRO_OPEN_POINTS);
+          /*
+           * The draw zone runs flat at the open ratio so no entrance band can be crossed
+           * whole between frames 150ms apart; the ramp to full pace starts above it.
+           */
+          const drawn = Math.max(0, displayRef.current - INTRO_DRAW_POINTS);
+          const openness = Math.min(1, drawn / (INTRO_OPEN_POINTS - INTRO_DRAW_POINTS));
           const pace = INTRO_OPEN_RATIO + (1 - INTRO_OPEN_RATIO) * openness * openness;
           const swept = (delta * 100 * pace) / INTRO_SWEEP_MS;
           const taper = Math.max(Math.min(1, gap / INTRO_LAND_POINTS), INTRO_LAND_FLOOR);
