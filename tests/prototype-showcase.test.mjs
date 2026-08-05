@@ -1042,6 +1042,43 @@ test("the loader is a registered drafting sheet cut open by a percent function",
   assert.match(css, /--b-cut/);
   assert.match(css, /--b-blow/);
 
+  // The drawn furniture bands: the readout wipe and one band per lockup letter, each
+  // registered and ramped so the entrance stays a pure function of the one load write.
+  const furnitureBands = ["--b-num"];
+  for (let index = 0; index < 9; index += 1) furnitureBands.push(`--b-let${index}`);
+  for (const band of furnitureBands) {
+    assert.match(
+      css,
+      new RegExp(`@property ${band} \\{ syntax: "<number>"; inherits: true; initial-value: 0; \\}`),
+      `${band} should be registered`,
+    );
+    assert.ok(css.includes(`${band}: clamp(`), `${band} should be ramped in the band table`);
+  }
+
+  /*
+   * The lockup letters are ruled in by a per-letter mask riding --lb, and every letter span
+   * exists in the markup rather than as a bare text node, or the nth-child band mapping has
+   * nothing to land on and the words pop in whole.
+   */
+  assert.match(css, /mask-image: linear-gradient\(100deg, #000 calc\(var\(--lb, 1\) \* 130% - 18%\), transparent calc\(var\(--lb, 1\) \* 130%\)\)/);
+  assert.match(css, /--lb: var\(--b-let0\)/);
+  assert.match(css, /--lb: var\(--b-let8\)/);
+  assert.match(app, /<span>F<\/span>/);
+  assert.match(app, /<span>D<\/span>/);
+  assert.doesNotMatch(app, /<span>FULL<\/span>|<span>BUILD<\/span>/);
+
+  /*
+   * The draw zone pace is a contract with the band table: the narrowest entrance bands are
+   * 2.2 load points wide, so the follower may not sweep a whole band between natural frames
+   * sampled 150ms apart, or letters pop in complete.
+   */
+  assert.match(app, /LOAD_DRAW_POINTS = 11/);
+  const openRatio = Number(app.match(/LOAD_OPEN_RATIO = ([\d.]+)/)[1]);
+  const sweepMs = Number(app.match(/LOAD_SWEEP_MS = (\d+)/)[1]);
+  const perFrame = (150 * 100 * openRatio) / sweepMs;
+  assert.ok(perFrame < 2.2, `draw zone sweeps ${perFrame.toFixed(2)} points per 150ms frame`);
+  assert.match(app, /displayRef\.current - LOAD_DRAW_POINTS/);
+
   // The dash technique that survives a scaled viewBox, and the one that does not.
   assert.match(loader, /pathLength="100"/);
   assert.doesNotMatch(css, /non-scaling-stroke/);
@@ -1097,6 +1134,8 @@ test("the loader is a registered drafting sheet cut open by a percent function",
   assert.match(still, /--b-draw: 1;/);
   assert.match(still, /--b-blow: 1;/);
   assert.match(still, /--b-red: 0;/);
+  assert.match(still, /--b-num: 1;/);
+  assert.match(still, /--b-let8: 1;/);
 });
 
 test("showcase does not ship source-owned media, audio, or em dashes", async () => {

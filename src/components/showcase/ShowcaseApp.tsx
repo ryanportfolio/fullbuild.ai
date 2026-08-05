@@ -113,13 +113,18 @@ const LOAD_STEP_MS = 34;
 const LOAD_LAND_POINTS = 9;
 const LOAD_LAND_FLOOR = 0.12;
 /*
- * The opening is the drawing act, and a drawing is watched, not flashed. Below the opening
- * point count the sweep runs at the opening ratio and eases up to full speed, so the
- * setting out and the first object lines take about a third of a second more than they
- * would flat out, on every machine, without touching the film's percent keying.
+ * The opening is the drawing act, and its speed is a constraint rather than a taste: the
+ * drawn furniture lives entirely under load 0.11 and its narrowest bands (readout, each
+ * lockup letter) are 2.2 load points wide, so no element may cross a whole band between
+ * frames sampled 150ms apart. The follower therefore runs flat at LOAD_OPEN_RATIO through
+ * the first LOAD_DRAW_POINTS: 1000 * 100 * 0.06 / 620 = 9.7 points per second, 1.45
+ * points per 150ms frame, under the 2.2 point band width. Only past the draw zone does the
+ * quadratic ramp to full pace begin. The previous ratio of 0.38 swept a letter band in
+ * about 35ms of wall time, which read as letters popping in whole.
  */
+const LOAD_DRAW_POINTS = 11;
 const LOAD_OPEN_POINTS = 22;
-const LOAD_OPEN_RATIO = 0.38;
+const LOAD_OPEN_RATIO = 0.06;
 
 function bleachControl(node: EventTarget | null) {
   if (!(node instanceof Element)) return null;
@@ -219,7 +224,12 @@ export function ShowcaseApp() {
         if (reducedMotion) {
           next = targetRef.current;
         } else if (gap > 0) {
-          const openness = Math.min(1, displayRef.current / LOAD_OPEN_POINTS);
+          /*
+           * The draw zone runs flat at the open ratio so no entrance band can be crossed
+           * whole between frames 150ms apart; the ramp to full pace starts above it.
+           */
+          const drawn = Math.max(0, displayRef.current - LOAD_DRAW_POINTS);
+          const openness = Math.min(1, drawn / (LOAD_OPEN_POINTS - LOAD_DRAW_POINTS));
           const pace = LOAD_OPEN_RATIO + (1 - LOAD_OPEN_RATIO) * openness * openness;
           const swept = (delta * 100 * pace) / LOAD_SWEEP_MS;
           const taper = Math.max(Math.min(1, gap / LOAD_LAND_POINTS), LOAD_LAND_FLOOR);
@@ -565,7 +575,10 @@ export function ShowcaseApp() {
           <LoaderPlate variant="sheet" styles={styles} />
           <div className={styles.starterBottom}>
             <p className={styles.loadNumber}>{loadReadout}<span>%</span></p>
-            <p className={styles.starterMark}><span>FULL</span><span>BUILD</span></p>
+            <p className={styles.starterMark}>
+              <span><span>F</span><span>U</span><span>L</span><span>L</span></span>
+              <span><span>B</span><span>U</span><span>I</span><span>L</span><span>D</span></span>
+            </p>
           </div>
         </div>
 
@@ -575,7 +588,10 @@ export function ShowcaseApp() {
             <p className={styles.loadNumber}>{loadReadout}<span>%</span></p>
             {/* No aria-label here: the whole layer is aria-hidden and a bare paragraph has no
                 role for a label to name. The region carries the name instead. */}
-            <p className={styles.starterMark}><span>FULL</span><span>BUILD</span></p>
+            <p className={styles.starterMark}>
+              <span><span>F</span><span>U</span><span>L</span><span>L</span></span>
+              <span><span>B</span><span>U</span><span>I</span><span>L</span><span>D</span></span>
+            </p>
           </div>
         </div>
 

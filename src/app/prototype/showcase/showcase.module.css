@@ -547,6 +547,16 @@
 @property --b-tick4 { syntax: "<number>"; inherits: true; initial-value: 0; }
 @property --b-tick5 { syntax: "<number>"; inherits: true; initial-value: 0; }
 @property --b-tick6 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-num { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-let0 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-let1 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-let2 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-let3 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-let4 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-let5 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-let6 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-let7 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-let8 { syntax: "<number>"; inherits: true; initial-value: 0; }
 
 .starter {
   /*
@@ -570,6 +580,18 @@
   --load: var(--showcase-load, 0);
 
   --b-grid: clamp(0, calc(var(--load) * 16.667), 1);
+  /* The sheet furniture is drafted, never faded: the readout wipes in first, then each
+     lockup letter ripples in on its own band, all pure functions of the one load write. */
+  --b-num: clamp(0, calc((var(--load) - 0.012) * 45.45), 1);
+  --b-let0: clamp(0, calc((var(--load) - 0.016) * 45.45), 1);
+  --b-let1: clamp(0, calc((var(--load) - 0.025) * 45.45), 1);
+  --b-let2: clamp(0, calc((var(--load) - 0.034) * 45.45), 1);
+  --b-let3: clamp(0, calc((var(--load) - 0.043) * 45.45), 1);
+  --b-let4: clamp(0, calc((var(--load) - 0.052) * 45.45), 1);
+  --b-let5: clamp(0, calc((var(--load) - 0.061) * 45.45), 1);
+  --b-let6: clamp(0, calc((var(--load) - 0.070) * 45.45), 1);
+  --b-let7: clamp(0, calc((var(--load) - 0.079) * 45.45), 1);
+  --b-let8: clamp(0, calc((var(--load) - 0.088) * 45.45), 1);
   /* The layout is ruled one line at a time: the datum's long gesture first, then the apex
      centreline, then each eave guide. Four lines arriving together read as a glitch; four
      lines arriving in sequence read as a hand. */
@@ -733,7 +755,12 @@
   background: #e9e3d6;
 }
 
-/* The station grid inking up. Static gradients, so the whole band costs one opacity. */
+/*
+ * The station grid rules itself in along the drafting diagonal instead of fading up as one
+ * flat layer. The mask must stay on this pseudo, which owns nothing but the grid gradients:
+ * a mask on .loadSheet itself would mask every child layer with it. At --b-grid 1 the solid
+ * stop sits at 129%, past the far corner of the 135deg run, so the wipe fully uncovers.
+ */
 .loadSheet::before {
   position: absolute;
   inset: 0;
@@ -753,7 +780,8 @@
     2.25rem 2.25rem,
     2.25rem 2.25rem,
     2.25rem 2.25rem;
-  opacity: var(--b-grid);
+  -webkit-mask-image: linear-gradient(135deg, #000 calc(var(--b-grid) * 141% - 12%), transparent calc(var(--b-grid) * 141%));
+  mask-image: linear-gradient(135deg, #000 calc(var(--b-grid) * 141% - 12%), transparent calc(var(--b-grid) * 141%));
   pointer-events: none;
 }
 
@@ -917,12 +945,6 @@
   gap: 1.35rem;
   align-items: end;
   justify-items: start;
-  /*
-   * Nothing prints at full strength on the sheet's first painted frame: the furniture
-   * breathes in on the same band the graph grid does, so the sheet starts empty the way
-   * a sheet should.
-   */
-  opacity: var(--b-grid);
 }
 
 /*
@@ -949,9 +971,36 @@
   -webkit-font-smoothing: antialiased;
 }
 
-.starterMark span:last-child {
+/* Child combinator, or the last letter of each word would take the word gap too. */
+.starterMark > span:last-child {
   margin-left: 0.48em;
 }
+
+/*
+ * THE DRAWN FURNITURE. The film mounts onto a cover that has been plain ground for however
+ * long hydration took, so anything printed at full strength on frame one reads as a pop.
+ * Instead of fading the whole bottom block on the grid band, every piece of furniture is
+ * ruled in by a directional mask riding its own band: the readout first, then the lockup
+ * letter by letter. Masks are paint only, the letter spans are inline-block, so no layout
+ * changes frame to frame and holding a percent reproduces the frame byte for byte. The
+ * world copy of the lockup is only ever visible once every letter band is 1, so its masks
+ * are fully open and it renders exactly as it did before the split.
+ */
+.starterMark span span {
+  display: inline-block;
+  -webkit-mask-image: linear-gradient(100deg, #000 calc(var(--lb, 1) * 130% - 18%), transparent calc(var(--lb, 1) * 130%));
+  mask-image: linear-gradient(100deg, #000 calc(var(--lb, 1) * 130% - 18%), transparent calc(var(--lb, 1) * 130%));
+}
+
+.starterMark > span:first-child > span:nth-child(1) { --lb: var(--b-let0); }
+.starterMark > span:first-child > span:nth-child(2) { --lb: var(--b-let1); }
+.starterMark > span:first-child > span:nth-child(3) { --lb: var(--b-let2); }
+.starterMark > span:first-child > span:nth-child(4) { --lb: var(--b-let3); }
+.starterMark > span:last-child > span:nth-child(1) { --lb: var(--b-let4); }
+.starterMark > span:last-child > span:nth-child(2) { --lb: var(--b-let5); }
+.starterMark > span:last-child > span:nth-child(3) { --lb: var(--b-let6); }
+.starterMark > span:last-child > span:nth-child(4) { --lb: var(--b-let7); }
+.starterMark > span:last-child > span:nth-child(5) { --lb: var(--b-let8); }
 
 /*
  * Drawn first, then poured. While the drawing is being drawn the lockup is outline only, the
@@ -994,6 +1043,9 @@
   font-variant-numeric: tabular-nums;
   line-height: 1;
   letter-spacing: 0.01em;
+  /* The readout is inked in on its own band, same wipe grammar as the lockup letters. */
+  -webkit-mask-image: linear-gradient(100deg, #000 calc(var(--b-num) * 130% - 18%), transparent calc(var(--b-num) * 130%));
+  mask-image: linear-gradient(100deg, #000 calc(var(--b-num) * 130% - 18%), transparent calc(var(--b-num) * 130%));
 }
 
 .loadNumber span {
@@ -2037,6 +2089,16 @@
     --b-tick4: 1;
     --b-tick5: 1;
     --b-tick6: 1;
+    --b-num: 1;
+    --b-let0: 1;
+    --b-let1: 1;
+    --b-let2: 1;
+    --b-let3: 1;
+    --b-let4: 1;
+    --b-let5: 1;
+    --b-let6: 1;
+    --b-let7: 1;
+    --b-let8: 1;
   }
 
   .shell *,
