@@ -846,7 +846,13 @@
   stroke-width: calc(var(--w, 1) * 1px * (1 - 0.65 * var(--e-build)));
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-dashoffset: calc(100 - 100 * var(--s, 1));
+  /*
+   * The offset must resolve to a length. Chromium accepts a bare <number> calc here and
+   * quietly treats it as px, but Firefox rejects it as invalid, falls back to 0, and every
+   * stroke paints fully drawn from the first frame: the whole progressive draw dies in one
+   * declaration. Multiplying by 1px lands on the identical computed value in both engines.
+   */
+  stroke-dashoffset: calc((100 - 100 * var(--s, 1)) * 1px);
 }
 
 /* The hand erases its layout once the object line is inked. */
@@ -911,6 +917,12 @@
   gap: 1.35rem;
   align-items: end;
   justify-items: start;
+  /*
+   * Nothing prints at full strength on the sheet's first painted frame: the furniture
+   * breathes in on the same band the graph grid does, so the sheet starts empty the way
+   * a sheet should.
+   */
+  opacity: var(--b-grid);
 }
 
 /*

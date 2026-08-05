@@ -1047,6 +1047,13 @@ test("the loader is a registered drafting sheet cut open by a percent function",
   assert.doesNotMatch(css, /non-scaling-stroke/);
   assert.doesNotMatch(loader, /non-scaling-stroke/);
 
+  /*
+   * The dash offset must be a <length>. Chromium accepts a bare <number> calc and treats it
+   * as px, but Firefox rejects it, falls back to 0, and the whole progressive draw dies:
+   * every stroke paints fully drawn from frame one. The * 1px is the fix, not a style.
+   */
+  assert.match(css, /stroke-dashoffset: calc\(\(100 - 100 \* var\(--s, 1\)\) \* 1px\)/);
+
   // Path data is the icon's own, so no second coordinate mapping can drift.
   const icon = await source("icon");
   for (const d of ["M8 82 H92", "M18 82 V48 L35 32 L52 48 V82", "M52 48 L68 32 L82 46"]) {
