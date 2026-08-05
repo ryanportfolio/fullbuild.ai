@@ -49,87 +49,103 @@
         <div class="section__head">
           <p class="kicker">Book a visit</p>
           <h1>Point at the problem</h1>
-          <p>Tap where the trouble is and I'll start the request for you. Or skip the house and just tell me in your own words.</p>
+          <p>Tap where the trouble is and I'll start the request for you. Or skip the tapping and just tell me in your own words.</p>
         </div>
-        <div class="diagnostic" data-request>
-          <figure class="house" style="margin:0" aria-label="Cutaway drawing of a Hampton Roads house. Tap a labeled area to start your request">
-            <svg viewBox="0 0 720 440" role="group" aria-label="Tap the part of the house with the problem">
-              <!-- drawn in the card's fine-line style -->
-              <g fill="none" stroke="#FBF8F0" stroke-opacity="0.75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <!-- grade -->
-                <path d="M0 340 H148 M622 340 H720"/>
-                <!-- foundation and crawl space -->
-                <path d="M150 290 V352 M620 290 V352 M150 352 H620"/>
-                <path d="M268 292 V350 M388 292 V350 M508 292 V350" stroke-opacity="0.4"/>
-                <!-- floor and walls -->
-                <path d="M150 290 V120 M620 290 V120 M150 290 H620"/>
-                <!-- roof -->
-                <path d="M135 126 L385 56 L635 126"/>
-                <path d="M150 122 H620" stroke-opacity="0.4"/>
-                <!-- interior partitions -->
-                <path d="M330 122 V290 M470 122 V290" stroke-opacity="0.55"/>
-                <!-- kitchen counter and sink -->
-                <path d="M168 236 H312 M168 236 V290 M312 236 V290"/>
-                <path d="M222 236 v10 h44 v-10"/>
-                <path d="M244 236 V222 M236 222 H256" />
-                <!-- kitchen drain to crawl -->
-                <path d="M244 246 V322" stroke-opacity="0.55"/>
-                <!-- bathroom: toilet -->
-                <path d="M346 258 h18 v-26 h-14 z M344 258 a12 9 0 1 0 24 0 z"/>
-                <!-- bathroom: tub -->
-                <path d="M402 256 h60 v22 a8 8 0 0 1 -8 8 h-44 a8 8 0 0 1 -8 -8 z"/>
-                <path d="M410 256 V244" stroke-opacity="0.55"/>
-                <!-- bath drains -->
-                <path d="M368 267 V322 M430 286 V322" stroke-opacity="0.55"/>
-                <!-- water heater -->
-                <path d="M540 286 V196 a28 22 0 0 1 56 0 V286 z"/>
-                <path d="M556 174 V186 M568 174 V186" stroke-opacity="0.55"/>
-                <!-- supply line through crawl -->
-                <path d="M170 316 H600 M540 316 V286" stroke-opacity="0.55"/>
-                <!-- main drain and lateral to the street -->
-                <path d="M244 322 H150 M368 322 H244 M430 322 H368"/>
-                <path d="M150 326 C120 328 92 330 60 334 M60 334 V400" />
-                <!-- cleanout riser -->
-                <path d="M108 330 V302 M100 302 H116" />
-                <!-- spigot on the right wall -->
-                <path d="M620 258 h14 M634 258 v8" />
-              </g>
-
-              <g class="house-spot" role="button" tabindex="0" aria-pressed="false" data-job="kitchen" data-label="Kitchen sink or disposal" data-price="usually $149 to $325" aria-label="Kitchen sink or disposal">
-                <circle class="pad" cx="240" cy="176" r="34"/>
-                <path class="pin" transform="translate(240 158)" d="M0 0 C0 0 -8 10 -8 14.5 a8 8 0 0 0 16 0 C8 10 0 0 0 0 Z"/>
-                <text x="240" y="200" text-anchor="middle">Kitchen</text>
-              </g>
-              <g class="house-spot" role="button" tabindex="0" aria-pressed="false" data-job="bath" data-label="Toilet, tub or shower" data-price="usually $119 to $325" aria-label="Toilet, tub or shower">
-                <circle class="pad" cx="400" cy="176" r="34"/>
-                <path class="pin" transform="translate(400 158)" d="M0 0 C0 0 -8 10 -8 14.5 a8 8 0 0 0 16 0 C8 10 0 0 0 0 Z"/>
-                <text x="400" y="200" text-anchor="middle">Bath</text>
-              </g>
-              <g class="house-spot" role="button" tabindex="0" aria-pressed="false" data-job="water-heater" data-label="Water heater" data-price="repair from $129, tank replacement $1,450 to $2,400" aria-label="Water heater">
-                <circle class="pad" cx="568" cy="150" r="34"/>
-                <path class="pin" transform="translate(568 132)" d="M0 0 C0 0 -8 10 -8 14.5 a8 8 0 0 0 16 0 C8 10 0 0 0 0 Z"/>
-                <text x="568" y="174" text-anchor="middle">Water heater</text>
-              </g>
-              <g class="house-spot" role="button" tabindex="0" aria-pressed="false" data-job="crawl" data-label="Crawl space leak or pipe" data-price="from $189" aria-label="Crawl space leak or pipe">
-                <circle class="pad" cx="330" cy="368" r="34"/>
-                <path class="pin" transform="translate(330 356)" d="M0 0 C0 0 -8 10 -8 14.5 a8 8 0 0 0 16 0 C8 10 0 0 0 0 Z"/>
-                <text x="330" y="398" text-anchor="middle">Crawl space</text>
-              </g>
-              <g class="house-spot" role="button" tabindex="0" aria-pressed="false" data-job="yard" data-label="Main sewer or yard line" data-price="clearing from $249, camera $189" aria-label="Main sewer or yard line">
-                <circle class="pad" cx="72" cy="288" r="34"/>
-                <path class="pin" transform="translate(72 270)" d="M0 0 C0 0 -8 10 -8 14.5 a8 8 0 0 0 16 0 C8 10 0 0 0 0 Z"/>
-                <text x="72" y="312" text-anchor="middle">Yard line</text>
-              </g>
-              <g class="house-spot" role="button" tabindex="0" aria-pressed="false" data-job="spigot" data-label="Outdoor spigot" data-price="from $99" aria-label="Outdoor spigot">
-                <circle class="pad" cx="662" cy="230" r="30"/>
-                <path class="pin" transform="translate(662 214)" d="M0 0 C0 0 -8 10 -8 14.5 a8 8 0 0 0 16 0 C8 10 0 0 0 0 Z"/>
-                <text x="662" y="254" text-anchor="middle">Spigot</text>
-              </g>
-            </svg>
-            <figcaption class="house__caption">A typical Hampton Roads ranch: crawl space, clay lateral to the street, water heater in the utility room. Sound familiar?</figcaption>
+        <div class="booking" data-request>
+          <figure class="house" aria-label="Cutaway drawing of a Hampton Roads house. Tap a labeled area to start your request">
+            <!-- flomasters:system:book -->
+<svg class="system system--house" viewBox="0 0 1200 660" role="img" aria-label="Cutaway of a house showing the plumbing system, with six tappable problem areas">
+    <path class="shell" d="M400 180 L730 48 L1060 180"/>
+    <path class="shell" d="M420 180L420 504"/>
+    <path class="shell" d="M1040 180L1040 504"/>
+    <path class="shell shell--faint" d="M420 180L1040 180"/>
+    <path class="shell" d="M420 300L1040 300"/>
+    <path class="shell" d="M420 430L1040 430"/>
+    <path class="shell" d="M0 488L420 488"/>
+    <path class="shell" d="M1040 488L1200 488"/>
+    <rect class="shell shell--faint" x="513" y="462" width="14" height="26"/>
+    <rect class="shell shell--faint" x="613" y="462" width="14" height="26"/>
+    <rect class="shell shell--faint" x="713" y="462" width="14" height="26"/>
+    <rect class="shell shell--faint" x="813" y="462" width="14" height="26"/>
+    <rect class="shell shell--faint" x="913" y="462" width="14" height="26"/>
+    <path class="shell shell--faint" d="M170 488L170 482"/>
+    <path class="shell" d="M80 488L80 424"/>
+    <path class="shell shell--faint" d="M46 414 q10 -34 34 -30 q6 -26 30 -20 q24 4 22 30 q20 8 8 30 q-8 18 -30 14 q-18 12 -34 0 q-24 4 -30 -24z"/>
+    <path class="root" d="M74 488 q-8 26 4 44 q8 14 26 20 M86 488 q14 20 34 28 q22 10 40 8 M80 488 q2 34 18 52"/>
+    <path class="shell shell--faint" d="M620 300L620 430"/>
+    <path class="shell shell--faint" d="M780 180L780 300"/>
+    <path class="glyph" d="M452 392L590 392"/>
+    <path class="glyph glyph--faint" d="M452 392L452 430"/>
+    <path class="glyph glyph--faint" d="M590 392L590 430"/>
+    <path class="glyph" d="M478 392v10q0 6 6 6h32q6 0 6 -6v-10"/>
+    <path class="glyph" d="M508 392v-12q0 -8 -8 -8h-6v6"/>
+    <rect class="glyph" x="715" y="386" width="44" height="44" rx="3"/>
+    <circle class="glyph" cx="737" cy="410" r="12"/>
+    <path class="glyph" d="M558 300v-24h10v14"/>
+    <path class="glyph" d="M568 288h16q7 0 6 8q-1 6 -9 6"/>
+    <path class="glyph" d="M464 276h30l-5 8h-20z M479 284v16"/>
+    <path class="glyph" d="M630 278q-6 22 8 22h88q14 0 8 -22z"/>
+    <path class="glyph" d="M730 278v-8h-10"/>
+    <rect class="glyph" x="907" y="364" width="46" height="66" rx="10"/>
+    <path class="glyph glyph--faint" d="M907 376L953 376"/>
+    <path class="p-hot pipe-thin" d="M922 424q8 -8 16 0"/>
+    <path class="glyph" d="M1040 405h14v8m0 -8h4"/>
+    <rect class="glyph" x="110" y="536" width="24" height="18" rx="2"/>
+    <circle class="glyph glyph--faint" cx="122" cy="545" r="5"/>
+    <path class="pipe p-drain" d="M496 408v14a7 7 0 0 1 -14 0v-5h-4v52.12452830188681"/>
+    <path class="pipe p-drain" d="M679 388 L679 466.1"/>
+    <path class="pipe p-drain" d="M592 300 L592 467.4"/>
+    <path class="pipe p-drain p-drain--main" d="M950 462 L420 470 L420 515"/>
+    <path class="pipe p-drain p-drain--main" d="M420 515 L100 570"/>
+    <path class="pipe p-drain" d="M330 530.5 L330 486"/>
+    <path class="glyph" d="M324 486L336 486"/>
+    <path class="pipe p-drain p-drain--main" d="M8 575 L96 575"/>
+    <path class="pipe p-vent" d="M592 300 L592 89.2"/>
+    <path class="glyph glyph--faint" d="M587 89.2L597 89.2"/>
+    <path class="pipe p-cold" pathLength="1" d="M8 545 L110 545"/>
+    <path class="pipe p-cold" pathLength="1" d="M134 545 L170 545 L170 525 L352 525"/>
+    <path class="pipe p-cold" pathLength="1" d="M376 525 L450 525 L450 444"/>
+    <path class="pipe p-cold" pathLength="1" d="M352 525 a12 12 0 0 1 24 0"/>
+    <path class="pipe p-cold" pathLength="1" d="M450 444 L1005 444"/>
+    <path class="pipe p-cold" pathLength="1" d="M512 444 L512 412"/>
+    <path class="pipe p-cold" pathLength="1" d="M616 444 L616 282"/>
+    <path class="pipe p-cold" pathLength="1" d="M699 444 L699 396 L711 396"/>
+    <path class="pipe p-cold" pathLength="1" d="M920 444 L920 364"/>
+    <path class="pipe p-cold" pathLength="1" d="M1005 444 L1005 405 L1040 405"/>
+    <path class="glyph valve" d="M444 495l12 10m0 -10l-12 10"/>
+    <path class="pipe p-hot" pathLength="1" d="M940 364 L940 350 L971 350 L971 452 L520 452"/>
+    <path class="pipe p-hot" pathLength="1" d="M520 452 L520 412"/>
+    <path class="pipe p-hot" pathLength="1" d="M689 452 L689 408 L711 408"/>
+    <path class="pipe p-hot" pathLength="1" d="M626 452 L626 282"/>
+    <path class="water-table" d="M8 636 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0 q12 -7 24 0 q12 7 24 0"/>
+    <g class="sys-labels"><text class="sys-label" x="14" y="535">CITY MAIN</text>
+    <text class="sys-label" x="14" y="593">CITY SEWER</text>
+    <text class="sys-label" x="122" y="524" text-anchor="middle">METER</text>
+    <text class="sys-label" x="238" y="468">CLEANOUT</text>
+    <text class="sys-label" x="602" y="83.2">VENT</text>
+    <text class="sys-label" x="1186" y="630" text-anchor="end">WATER TABLE, HIGH AND BRACKISH</text>
+    <text class="sys-label" x="466" y="512">MAIN SHUTOFF</text></g>
+    <g class="sys-overlay"><g class="house-spot" role="button" tabindex="0" data-job="kitchen" data-label="Kitchen sink or disposal" data-price="usually $149 to $325" aria-pressed="false" aria-label="Kitchen sink or disposal, usually $149 to $325"><circle class="pad" cx="505" cy="362" r="44"/><circle class="pin" cx="505" cy="362" r="9"/><circle class="pin-ring" cx="505" cy="362" r="18"/><text x="505" y="336" text-anchor="middle">Kitchen</text></g>
+    <g class="house-spot" role="button" tabindex="0" data-job="bath" data-label="Toilet, tub or shower" data-price="usually $119 to $325" aria-pressed="false" aria-label="Toilet, tub or shower, usually $119 to $325"><circle class="pad" cx="640" cy="248" r="44"/><circle class="pin" cx="640" cy="248" r="9"/><circle class="pin-ring" cx="640" cy="248" r="18"/><text x="640" y="222" text-anchor="middle">Bath</text></g>
+    <g class="house-spot" role="button" tabindex="0" data-job="water-heater" data-label="Water heater" data-price="repair from $129, tank replacement $1,450 to $2,400" aria-pressed="false" aria-label="Water heater, repair from $129, tank replacement $1,450 to $2,400"><circle class="pad" cx="953" cy="346" r="44"/><circle class="pin" cx="953" cy="346" r="9"/><circle class="pin-ring" cx="953" cy="346" r="18"/><text x="953" y="320" text-anchor="middle">Water heater</text></g>
+    <g class="house-spot" role="button" tabindex="0" data-job="crawl" data-label="Crawl space leak or pipe" data-price="from $189" aria-pressed="false" aria-label="Crawl space leak or pipe, from $189"><circle class="pad" cx="745" cy="462" r="44"/><circle class="pin" cx="745" cy="462" r="9"/><circle class="pin-ring" cx="745" cy="462" r="18"/><text x="745" y="498" text-anchor="middle">Crawl space</text></g>
+    <g class="house-spot" role="button" tabindex="0" data-job="yard" data-label="Main sewer or yard line" data-price="clearing from $249, camera $189" aria-pressed="false" aria-label="Main sewer or yard line, clearing from $249, camera $189"><circle class="pad" cx="240" cy="548" r="44"/><circle class="pin" cx="240" cy="548" r="9"/><circle class="pin-ring" cx="240" cy="548" r="18"/><text x="240" y="584" text-anchor="middle">Yard line</text></g>
+    <g class="house-spot" role="button" tabindex="0" data-job="spigot" data-label="Outdoor spigot" data-price="from $99" aria-pressed="false" aria-label="Outdoor spigot, from $99"><circle class="pad" cx="1062" cy="406" r="44"/><circle class="pin" cx="1062" cy="406" r="9"/><circle class="pin-ring" cx="1062" cy="406" r="18"/><text x="1062" y="442" text-anchor="middle">Spigot</text></g></g>
+  </svg>
+<!-- /flomasters:system:book -->
+            <figcaption class="house__caption">A typical Hampton Roads house: crawl space over a high water table, clay lateral to the street, water heater in the utility corner. Sound familiar?</figcaption>
           </figure>
 
-          <div>
+          <div class="job-chips" role="group" aria-label="Pick the problem area">
+            <button type="button" class="job-chip" data-job="kitchen" data-label="Kitchen sink or disposal" data-price="usually $149 to $325" aria-pressed="false">Kitchen</button>
+            <button type="button" class="job-chip" data-job="bath" data-label="Toilet, tub or shower" data-price="usually $119 to $325" aria-pressed="false">Bath</button>
+            <button type="button" class="job-chip" data-job="water-heater" data-label="Water heater" data-price="repair from $129, tank replacement $1,450 to $2,400" aria-pressed="false">Water heater</button>
+            <button type="button" class="job-chip" data-job="crawl" data-label="Crawl space leak or pipe" data-price="from $189" aria-pressed="false">Crawl space</button>
+            <button type="button" class="job-chip" data-job="yard" data-label="Main sewer or yard line" data-price="clearing from $249, camera $189" aria-pressed="false">Yard line</button>
+            <button type="button" class="job-chip" data-job="spigot" data-label="Outdoor spigot" data-price="from $99" aria-pressed="false">Spigot</button>
+          </div>
+
+          <div class="booking__form">
             <p class="diagnostic__hint" data-job-hint hidden></p>
             <p class="form-lead" style="margin:0 0 1.2rem;color:var(--ink-2)">Not urgent? Send this and I'll call you back, usually within the hour during working hours (Mon to Sat, 7am to 7pm).</p>
             <form class="form" data-request-form novalidate>
@@ -229,7 +245,7 @@
 
   <div class="callbar" data-surface="deep">
     <a class="btn btn--call" href="tel:+17572776194">Call (757) 277-6194</a>
-    <a class="btn btn--ghost" href="/prototype/flomasters/book">Book</a>
+    <a class="btn btn--ghost" href="/prototype/flomasters/book">Book a visit</a>
   </div>
 
   <script type="module" src="/prototype/flomasters/src/app.mjs"></script>

@@ -46,10 +46,11 @@
   --drop-on-deep-2: #A8D8EA;
   --drop-on-light: #1B5E8C;
 
-  /* CTA: copper, and nothing else is copper */
+  /* Copper means heat or action, and nothing else is copper */
   --cta: #B87333;
   --cta-hover: #A5622A;
   --cta-ink: #071A2F;
+  --hot-line: #D08A45;
 
   /* Borders and rules */
   --line-on-light: #D8CFB8;
@@ -63,11 +64,11 @@
 
   --gutter: clamp(1.1rem, 4vw, 3rem);
   --measure: 68ch;
-  --radius: 10px;
+  --radius: 6px;
 
   /* Card texture: the wavy water-lines, redrawn as a seamless tile.
      Cream strokes at low opacity, applied to navy panels only. */
-  --texture-deep: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='128' viewBox='0 0 96 128'%3E%3Cg fill='none' stroke='%23FBF8F0' stroke-width='7' stroke-opacity='0.045'%3E%3Cpath d='M12 -8 C4 16 20 32 12 56 C4 80 20 96 12 120 C8 132 12 136 12 136'/%3E%3Cpath d='M44 -8 C36 16 52 32 44 56 C36 80 52 96 44 120 C40 132 44 136 44 136'/%3E%3Cpath d='M76 -8 C68 16 84 32 76 56 C68 80 84 96 76 120 C72 132 76 136 76 136'/%3E%3C/g%3E%3Cg fill='none' stroke='%23FBF8F0' stroke-width='7' stroke-opacity='0.03'%3E%3Cpath d='M28 -8 C36 16 20 32 28 56 C36 80 20 96 28 120 C32 132 28 136 28 136'/%3E%3Cpath d='M60 -8 C68 16 52 32 60 56 C68 80 52 96 60 120 C64 132 60 136 60 136'/%3E%3Cpath d='M92 -8 C100 16 84 32 92 56 C100 80 84 96 92 120 C96 132 92 136 92 136'/%3E%3C/g%3E%3C/svg%3E");
+  --texture-deep: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='128' viewBox='0 0 96 128'%3E%3Cg fill='none' stroke='%23FBF8F0' stroke-width='7' stroke-opacity='0.032'%3E%3Cpath d='M12 -8 C4 16 20 32 12 56 C4 80 20 96 12 120 C8 132 12 136 12 136'/%3E%3Cpath d='M44 -8 C36 16 52 32 44 56 C36 80 52 96 44 120 C40 132 44 136 44 136'/%3E%3Cpath d='M76 -8 C68 16 84 32 76 56 C68 80 84 96 76 120 C72 132 76 136 76 136'/%3E%3C/g%3E%3Cg fill='none' stroke='%23FBF8F0' stroke-width='7' stroke-opacity='0.02'%3E%3Cpath d='M28 -8 C36 16 20 32 28 56 C36 80 20 96 28 120 C32 132 28 136 28 136'/%3E%3Cpath d='M60 -8 C68 16 52 32 60 56 C68 80 52 96 60 120 C64 132 60 136 60 136'/%3E%3Cpath d='M92 -8 C100 16 84 32 92 56 C100 80 84 96 92 120 C96 132 92 136 92 136'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 * { box-sizing: border-box; }
@@ -324,6 +325,9 @@ h3 {
 
   .mobile-nav::-webkit-scrollbar { display: none; }
 
+  /* Trailing breathing room so the last link never sits on the edge */
+  .mobile-nav::after { content: ""; flex: none; width: 0.4rem; }
+
   .mobile-nav a {
     flex: none;
     color: var(--cream-ink-2);
@@ -357,10 +361,11 @@ h3 {
 
 /* ---------- Hero ---------- */
 
+/* The hero holds the drawing, so it stays untextured; the wave texture lives
+   on the other navy panels */
 .hero {
   position: relative;
   background: var(--navy-800);
-  background-image: var(--texture-deep);
   color: var(--cream-ink);
   overflow: hidden;
 }
@@ -368,7 +373,7 @@ h3 {
 .hero__inner {
   max-width: 74rem;
   margin: 0 auto;
-  padding: clamp(3.4rem, 9vw, 7rem) var(--gutter) clamp(2.6rem, 6vw, 4.5rem);
+  padding: clamp(3.2rem, 8vw, 6rem) var(--gutter) clamp(1.6rem, 4vw, 2.8rem);
 }
 
 .hero h1 { max-width: 15ch; }
@@ -392,33 +397,184 @@ h3 {
   padding: 0;
   list-style: none;
   font-size: 0.82rem;
-  color: var(--cream-ink-3);
+  color: var(--cream-ink-2);
 }
 
 .hero__trust .slab { font-size: 0.78rem; color: var(--cream-ink-2); }
 
-/* The one motion moment: a single drop falls once on arrival */
-.hero__drop {
-  position: absolute;
-  top: 0;
-  right: clamp(1.5rem, 12vw, 9rem);
-  width: 22px;
-  color: var(--drop-on-deep);
-  animation: drop-fall 0.6s cubic-bezier(0.55, 0, 0.85, 0.4) 0.35s both;
+.hero__system { margin: clamp(1.2rem, 3vw, 2.4rem) 0 0; padding-bottom: clamp(1.6rem, 4vw, 2.8rem); }
+
+/* ---------- The system drawing ----------
+   The house the way a master plumber sees it. Line semantics are the trade's:
+   cold solid blue, hot solid copper, drain dashed, vent dot-dash. Copper only
+   ever marks heat or a point of action. */
+
+.system { display: block; width: min(100%, 96rem); margin: 0 auto; }
+
+/* Two projections of the same system: the wide cutaway for big screens, the
+   vertical riser for small ones. Never both. */
+.system--riser { display: none; width: min(100%, 30rem); }
+
+@media (max-width: 760px) {
+  .system--house { display: none; }
+
+  .system--riser { display: block; }
 }
 
-@keyframes drop-fall {
-  from { transform: translateY(-60px); opacity: 0; }
-  30% { opacity: 1; }
-  to { transform: translateY(16vh); opacity: 1; }
+.system text { font-family: var(--font-body); }
+
+.shell {
+  fill: none;
+  stroke: var(--cream-ink);
+  stroke-opacity: 0.5;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .hero__drop { transform: translateY(16vh); opacity: 1; }
+.shell--faint { stroke-opacity: 0.24; }
+
+.glyph {
+  fill: none;
+  stroke: var(--cream-ink);
+  stroke-opacity: 0.78;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-@media (max-width: 720px) {
-  .hero__drop { display: none; }
+.glyph--faint { stroke-opacity: 0.38; }
+
+.pipe { fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+
+.pipe-thin { stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+.p-cold { stroke: var(--drop-on-deep); }
+
+.p-hot { stroke: var(--hot-line); }
+
+.p-drain { stroke: var(--cream-ink); stroke-opacity: 0.72; stroke-dasharray: 10 7; }
+
+.p-drain--main { stroke-width: 3.6; }
+
+.p-vent { stroke: var(--cream-ink); stroke-opacity: 0.38; stroke-width: 1.5; stroke-dasharray: 2 6 11 6; }
+
+.root { fill: none; stroke: var(--cream-ink); stroke-opacity: 0.3; stroke-width: 1.1; stroke-linecap: round; }
+
+.water-table { fill: none; stroke: var(--drop-on-deep); stroke-opacity: 0.38; stroke-width: 1.5; }
+
+.sys-label {
+  fill: var(--cream-ink-2);
+  font-size: 12.5px;
+  font-weight: 680;
+  letter-spacing: 0.12em;
+}
+
+.leader { fill: none; stroke: var(--cream-ink); stroke-opacity: 0.32; stroke-width: 1; }
+
+.leader-dot { fill: var(--cta); }
+
+.tag-box { fill: var(--navy-900); stroke: var(--cream-ink); stroke-opacity: 0.5; }
+
+.tag-hole { fill: none; stroke: var(--cream-ink); stroke-opacity: 0.5; stroke-width: 1.2; }
+
+.tag-text {
+  fill: var(--cream-ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.sys-tag a { cursor: pointer; }
+
+.sys-tag a:hover .tag-box, .sys-tag a:focus-visible .tag-box { stroke: var(--drop-on-deep); stroke-opacity: 1; }
+
+.sys-tag a:hover .tag-text { fill: var(--drop-on-deep-2); }
+
+/* The one motion moment: water enters the system once. Supplies draw on,
+   everything else fades in behind them. */
+@keyframes system-in {
+  from { stroke-dashoffset: var(--draw-from, 0); opacity: var(--in-from, 1); }
+  to { stroke-dashoffset: 0; opacity: 1; }
+}
+
+.system .pipe.p-cold {
+  stroke-dasharray: 1;
+  --draw-from: 1;
+  animation: system-in 1.3s ease-out 0.25s both;
+}
+
+.system .pipe.p-hot {
+  stroke-dasharray: 1;
+  --draw-from: 1;
+  animation: system-in 1.1s ease-out 1.15s both;
+}
+
+.system .pipe.p-drain, .system .p-vent, .system .water-table, .system .root {
+  --in-from: 0;
+  animation: system-in 0.9s ease-out 0.9s both;
+}
+
+.system .sys-labels, .system .sys-overlay {
+  --in-from: 0;
+  animation: system-in 0.7s ease-out 1.7s both;
+}
+
+/* Caption row: title, line legend, hint */
+.system-caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.9rem 2.2rem;
+  max-width: 96rem;
+  margin: 0 auto;
+  padding: 1.1rem var(--gutter) 0;
+}
+
+.system-caption__title {
+  font-family: var(--font-display);
+  font-size: 1.08rem;
+  font-variation-settings: "opsz" 40, "SOFT" 40, "WONK" 1;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cream-ink-2);
+}
+
+.legend li { display: inline-flex; align-items: center; gap: 0.5rem; }
+
+.swatch { display: inline-block; width: 26px; border-top: 2.6px solid; }
+
+.swatch--cold { border-color: var(--drop-on-deep); }
+
+.swatch--hot { border-color: var(--hot-line); }
+
+.swatch--drain { border-top-style: dashed; border-top-width: 3px; border-color: var(--cream-ink); opacity: 0.72; }
+
+/* Dot-dash, matching the drawn vent line */
+.swatch--vent {
+  border: 0;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, currentColor 0 2px, transparent 2px 7px, currentColor 7px 15px, transparent 15px 20px);
+  opacity: 0.45;
+}
+
+.system-caption__hint { font-size: 0.82rem; color: var(--cream-ink-3); }
+
+/* On small screens the booking house hands off to the job chips */
+@media (max-width: 760px) {
+  .house { display: none; }
 }
 
 /* ---------- Credential plate ---------- */
@@ -437,7 +593,7 @@ h3 {
   max-width: 74rem;
   margin: 0 auto;
   padding: 1.05rem var(--gutter);
-  border-top: 1px solid var(--cta);
+  border-top: 1px solid var(--line-on-deep);
 }
 
 .credential__line {
@@ -455,18 +611,16 @@ h3 {
 
 .grid {
   display: grid;
-  gap: 1.1rem;
-  grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
+  gap: 0 clamp(1.6rem, 4vw, 3.2rem);
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
 }
 
 .card {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
-  padding: 1.5rem 1.4rem 1.4rem;
-  background: var(--white);
-  border: 1px solid var(--line-on-light);
-  border-radius: var(--radius);
+  padding: 1.35rem 0.2rem 1.3rem;
+  border-top: 1px solid var(--line-on-light);
 }
 
 .card h3 { margin: 0; }
@@ -486,11 +640,130 @@ h3 {
 
 a.card { color: inherit; text-decoration: none; }
 
-a.card:hover { border-color: var(--drop-on-light); }
+a.card:hover { border-top-color: var(--drop-on-light); }
 
 a.card:hover h3 { color: var(--drop-on-light); }
 
 .card__icon { width: 26px; color: var(--drop-on-light); }
+
+/* ---------- The run: services hung on the drain line ---------- */
+
+.runline {
+  position: relative;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The continuous drain the rows tap into: dashed, like every drain here */
+.runline::before {
+  content: "";
+  position: absolute;
+  top: 0.4rem;
+  bottom: 0.4rem;
+  left: 1.85rem;
+  border-left: 3px dashed rgba(95, 113, 130, 0.5);
+}
+
+.runline li { position: relative; }
+
+.runline li + li { border-top: 1px solid var(--line-on-light); }
+
+.runline a, .runline .runline__row {
+  display: grid;
+  grid-template-columns: 3.8rem minmax(0, 44rem) 1fr;
+  gap: 1.3rem;
+  align-items: center;
+  padding: 1.3rem 0.3rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.runline .price-tag { justify-self: end; }
+
+.runline__glyph {
+  display: grid;
+  place-items: center;
+  width: 3.8rem;
+  height: 3.8rem;
+  background: var(--cream-50);
+  border: 1px solid var(--line-on-light);
+  border-radius: 50%;
+}
+
+.section--band .runline__glyph { background: var(--cream-100); }
+
+.runline__glyph svg { width: 2.5rem; height: 2.5rem; }
+
+/* Glyph line semantics on the light surface */
+.runline .glyph, .runline .p-drain { stroke: var(--ink-2); }
+
+.runline .glyph--faint { stroke: var(--ink-3); stroke-opacity: 0.55; }
+
+.runline .p-drain { stroke-opacity: 0.85; stroke-dasharray: 5 4; }
+
+.runline .p-cold { stroke: var(--drop-on-light); }
+
+.runline .p-hot { stroke: var(--cta); }
+
+.runline .root { stroke: var(--ink-3); stroke-opacity: 0.6; }
+
+.runline h3 { font-size: 1.32rem; }
+
+.runline__body p { margin: 0.3rem 0 0; font-size: 0.94rem; color: var(--ink-2); }
+
+.runline a:hover h3 { color: var(--drop-on-light); }
+
+.runline a:hover .runline__glyph { border-color: var(--drop-on-light); }
+
+@media (max-width: 640px) {
+  .runline::before { left: 1.5rem; }
+
+  .runline a, .runline .runline__row { grid-template-columns: 3rem 1fr; gap: 1rem; align-items: start; }
+
+  .runline__glyph { width: 3rem; height: 3rem; }
+
+  .runline__glyph svg { width: 2rem; height: 2rem; }
+
+  .runline .price-tag { grid-column: 2; justify-self: start; }
+}
+
+/* ---------- Price tag: the one shape a price is allowed to wear ---------- */
+
+.price-tag {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.42rem 0.75rem 0.42rem 0.6rem;
+  border: 1px solid var(--ink-3);
+  border-radius: 2px;
+  font-size: 0.72rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ink-2);
+}
+
+/* The punched hole */
+.price-tag::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border: 1.3px solid var(--ink-3);
+  border-radius: 50%;
+}
+
+[data-surface="deep"] .price-tag, .plate .price-tag { border-color: var(--cream-ink-3); color: var(--cream-ink-2); }
+
+[data-surface="deep"] .price-tag::before, .plate .price-tag::before { border-color: var(--cream-ink-3); }
+
+@media (max-width: 640px) {
+  .price-tag { white-space: normal; }
+}
 
 /* ---------- Steps ---------- */
 
@@ -561,19 +834,19 @@ a.card:hover h3 { color: var(--drop-on-light); }
   padding-left: 1.5rem;
 }
 
+/* Punch-ring markers, the same hole every tag carries */
 .drop-list li::before {
   content: "";
   position: absolute;
-  left: 0;
-  top: 0.36em;
-  width: 0.62em;
-  height: 0.74em;
-  background: var(--drop-on-light);
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28'%3E%3Cpath d='M12 1 C12 1 3 12.5 3 17.5 a9 9 0 0 0 18 0 C21 12.5 12 1 12 1 Z'/%3E%3C/svg%3E") center / contain no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28'%3E%3Cpath d='M12 1 C12 1 3 12.5 3 17.5 a9 9 0 0 0 18 0 C21 12.5 12 1 12 1 Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  left: 0.1em;
+  top: 0.42em;
+  width: 0.5em;
+  height: 0.5em;
+  border: 1.6px solid var(--drop-on-light);
+  border-radius: 50%;
 }
 
-[data-surface="deep"] .drop-list li::before { background: var(--drop-on-deep); }
+[data-surface="deep"] .drop-list li::before { border-color: var(--drop-on-deep); }
 
 /* ---------- Price rows ---------- */
 
@@ -589,16 +862,37 @@ a.card:hover h3 { color: var(--drop-on-light); }
 
 .price-list .job { font-weight: 600; }
 
+/* Solid hairline leader: dotted would read as vent in this house */
 .price-list .dots {
   flex: 1;
-  border-bottom: 2px dotted var(--line-on-light);
+  border-bottom: 1px solid var(--line-on-light);
   transform: translateY(-0.28em);
 }
 
+/* Every price wears the same punched tag */
 .price-list .price {
-  font-weight: 700;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.32rem 0.65rem 0.32rem 0.55rem;
+  border: 1px solid var(--ink-3);
+  border-radius: 2px;
+  font-size: 0.78rem;
+  font-weight: 750;
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
   white-space: nowrap;
+  color: var(--ink-2);
+}
+
+.price-list .price::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border: 1.3px solid var(--ink-3);
+  border-radius: 50%;
 }
 
 .price-list .note { display: block; margin-top: 0.15rem; font-size: 0.85rem; color: var(--ink-3); font-weight: 400; }
@@ -613,16 +907,14 @@ a.card:hover h3 { color: var(--drop-on-light); }
 
 /* ---------- Testimonials ---------- */
 
-.reviews { display: grid; gap: 1.1rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+.reviews { display: grid; gap: 0 clamp(1.6rem, 4vw, 3.2rem); grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
 
 .review {
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
-  padding: 1.5rem 1.4rem;
-  background: var(--white);
-  border: 1px solid var(--line-on-light);
-  border-radius: var(--radius);
+  padding: 1.3rem 0 0.4rem;
+  border-top: 1px solid var(--line-on-light);
 }
 
 .review blockquote { margin: 0; font-size: 0.98rem; }
@@ -636,44 +928,63 @@ a.card:hover h3 { color: var(--drop-on-light); }
 .review footer strong { color: var(--ink-2); }
 
 .review__job {
+  position: relative;
   align-self: flex-start;
-  padding: 0.25rem 0.6rem;
-  background: var(--cream-100);
-  border-radius: 99px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.65rem 0.3rem 0.55rem;
+  border: 1px solid var(--line-on-light);
+  border-radius: 2px;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--ink-2);
 }
 
+.review__job::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border: 1.3px solid var(--ink-3);
+  border-radius: 50%;
+}
+
 /* ---------- Service area ---------- */
 
+/* Cities as a plain slab roster: only the real link dresses like a link */
 .area-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem;
+  gap: 0.7rem 0;
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.area-list li a, .area-list li span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.95rem;
-  border: 1px solid var(--line-on-deep);
-  border-radius: 99px;
+  font-size: 1.02rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
   color: var(--cream-ink-2);
-  font-size: 0.92rem;
-  font-weight: 600;
-  text-decoration: none;
 }
 
-.area-list li a:hover { border-color: var(--drop-on-deep); color: var(--cream-ink); }
+.area-list li { display: inline-flex; align-items: center; }
 
-.area-list svg { width: 11px; color: var(--drop-on-deep); }
+.area-list li + li::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  margin: 0 1.1rem;
+  border-radius: 50%;
+  background: var(--cream-ink-3);
+}
+
+.area-list li a, .area-list li span { display: inline-flex; align-items: center; gap: 0.5rem; color: inherit; }
+
+.area-list li a { color: var(--drop-on-deep); text-decoration: underline; text-underline-offset: 0.2em; }
+
+.area-list li a:hover { color: var(--drop-on-deep-2); }
+
+.area-list svg { display: none; }
 
 /* ---------- FAQ ---------- */
 
@@ -761,21 +1072,16 @@ a.card:hover h3 { color: var(--drop-on-light); }
 
 [data-sent] .form, [data-sent] .form-lead { display: none; }
 
-/* ---------- House diagnostic ---------- */
+/* ---------- Booking: the house is the intake ---------- */
 
-.diagnostic {
-  display: grid;
-  gap: clamp(1.5rem, 4vw, 3rem);
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-  align-items: start;
-}
+.booking { max-width: 74rem; }
 
-@media (max-width: 900px) { .diagnostic { grid-template-columns: 1fr; } }
+.booking__form { max-width: 34rem; margin-top: clamp(1.6rem, 4vw, 2.6rem); }
 
 .house {
-  padding: 1.4rem;
+  margin: 0;
+  padding: clamp(1rem, 3vw, 2.2rem) clamp(1rem, 3vw, 2.2rem) 0.9rem;
   background: var(--navy-800);
-  background-image: var(--texture-deep);
   border-radius: var(--radius);
 }
 
@@ -783,28 +1089,69 @@ a.card:hover h3 { color: var(--drop-on-light); }
 
 .house-spot { cursor: pointer; }
 
-.house-spot circle.pad { fill: transparent; }
+.house-spot .pad { fill: transparent; }
 
-.house-spot .pin { fill: var(--drop-on-deep); stroke: none; }
+/* Copper pins: tappable means action */
+.house-spot .pin { fill: var(--cta); stroke: none; }
+
+.house-spot .pin-ring { fill: none; stroke: var(--cta); stroke-opacity: 0.5; stroke-width: 1.8; }
 
 .house-spot text {
   fill: var(--cream-ink-2);
   font-family: var(--font-body);
-  font-size: 10.5px;
-  font-weight: 650;
-  letter-spacing: 0.06em;
+  font-size: 15px;
+  font-weight: 680;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
-.house-spot:hover .pin, .house-spot:focus-visible .pin { fill: var(--cta); }
+.house-spot:hover .pin-ring, .house-spot:focus-visible .pin-ring, .house-spot[aria-pressed="true"] .pin-ring { stroke-opacity: 1; }
 
-.house-spot:hover text, .house-spot:focus-visible text { fill: var(--cream-ink); }
+.house-spot:hover text, .house-spot:focus-visible text, .house-spot[aria-pressed="true"] text { fill: var(--cream-ink); }
 
-.house-spot[aria-pressed="true"] .pin { fill: var(--cta); }
+.house__caption { margin: 0.9rem 0 0; padding: 0 0.2rem 0.4rem; font-size: 0.85rem; color: var(--cream-ink-3); }
 
-.house-spot[aria-pressed="true"] text { fill: var(--cream-ink); }
+/* Job chips: the same six answers as buttons, for thumbs and small screens */
+.job-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 1.1rem;
+}
 
-.house__caption { margin: 0.9rem 0 0; font-size: 0.85rem; color: var(--cream-ink-3); }
+.job-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.85rem 0.55rem 0.7rem;
+  background: transparent;
+  border: 1.5px solid var(--ink-3);
+  border-radius: 2px;
+  color: var(--ink-2);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* The punched hole, same as every other tag on the site */
+.job-chip::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border: 1.3px solid currentColor;
+  border-radius: 50%;
+}
+
+.job-chip:hover { border-color: var(--drop-on-light); color: var(--drop-on-light); }
+
+.job-chip[aria-pressed="true"] {
+  border-color: var(--cta);
+  background: var(--cta);
+  color: var(--cta-ink);
+}
 
 .diagnostic__hint {
   margin: 0 0 1.2rem;
@@ -958,4 +1305,8 @@ a.card:hover h3 { color: var(--drop-on-light); }
 
 .plate a { color: var(--drop-on-deep); }
 
-.rule-copper { border: 0; border-top: 2px solid var(--cta); width: 3.2rem; margin: 1.1rem 0; }
+/* Heading rule drawn in the water's color: copper stays reserved for heat and
+   action, so this short stroke is cold-supply blue on either surface */
+.rule-copper { border: 0; border-top: 2px solid var(--drop-on-light); width: 3.2rem; margin: 1.1rem 0; }
+
+[data-surface="deep"] .rule-copper, .plate .rule-copper { border-top-color: var(--drop-on-deep); }

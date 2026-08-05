@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
+import { render, SERVICES, SPOTS } from '../scripts/flomasters-system.mjs';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
+const lf = (s) => s.replaceAll('\r\n', '\n');
 
 const PAGES = [
   'public/prototype/flomasters/index.html',
@@ -61,6 +63,29 @@ test('the booking page diagnostic and form agree on job types', async () => {
   assert.match(page, /type="tel"/, 'phone field switches mobile keyboards');
   assert.match(page, /class="form-success"/);
   assert.match(page, /Skip the form\./, 'emergencies are routed to the phone, not the form');
+});
+
+test('the system drawing is the generated one, and every tag is a real service', async () => {
+  const [home, book] = await Promise.all([
+    read('public/prototype/flomasters/index.html'),
+    read('public/prototype/flomasters/book/index.html'),
+  ]);
+  // The committed pages carry exactly what the generator emits
+  assert.ok(lf(home).includes(lf(render('home'))), 'home page contains the generated system drawing');
+  assert.ok(lf(home).includes(lf(render('riser'))), 'home page contains the generated mobile riser');
+  assert.ok(lf(book).includes(lf(render('book'))), 'book page contains the generated system drawing');
+  // Countable honesty: eight tags on the drawing, eight services in the run
+  assert.equal(SERVICES.length, 8);
+  // Two projections of the system (house and riser), one tag per service each
+  assert.equal((home.match(/class="sys-tag"/g) ?? []).length, SERVICES.length * 2, 'one tag per service per projection, none decorative');
+  assert.equal((home.match(/<ol class="runline">[\s\S]*?<\/ol>/)?.[0].match(/<li>/g) ?? []).length, SERVICES.length, 'the service run lists the same count');
+  // Every tag links somewhere real, and every spot matches a booking job
+  for (const s of SERVICES) assert.match(home, new RegExp(`href="${s.href}"`), `${s.id} links to its page`);
+  for (const s of SPOTS) assert.match(book, new RegExp(`<option value="${s.job}"`), `${s.job} exists in the booking form`);
+  // Line semantics: every pipe on the drawing declares one of the four types
+  for (const m of render('home').matchAll(/class="pipe ([^"]+)"/g)) {
+    assert.match(m[1], /^(p-cold|p-hot|p-drain|p-vent)/, `pipe carries a trade line type: ${m[0]}`);
+  }
 });
 
 test('the design system enforces the card-derived contrast rules', async () => {

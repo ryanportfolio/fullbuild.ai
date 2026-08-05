@@ -27,14 +27,16 @@ const form = document.querySelector('[data-request-form]');
 if (form) {
   const jobSelect = form.querySelector('#job');
   const hint = document.querySelector('[data-job-hint]');
-  const spots = document.querySelectorAll('.house-spot');
+  // The tappable house spots and the mobile job chips drive the same state
+  const spots = document.querySelectorAll('.house-spot, .job-chip');
 
   const pick = (spot) => {
-    for (const other of spots) other.setAttribute('aria-pressed', String(other === spot));
+    for (const other of spots) other.setAttribute('aria-pressed', String(other.dataset.job === spot.dataset.job));
     if (jobSelect) jobSelect.value = spot.dataset.job;
     if (hint) {
       hint.innerHTML = `<strong>${spot.dataset.label}:</strong> ${spot.dataset.price}. Firm price in writing before I start.`;
       hint.hidden = false;
+      hint.scrollIntoView({ block: 'nearest' });
     }
   };
 
