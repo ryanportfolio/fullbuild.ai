@@ -562,7 +562,7 @@ export function ShowcaseApp() {
         </p>
 
         <div className={styles.loadSheet} aria-hidden="true">
-          <LoaderPlate variant="sheet" />
+          <LoaderPlate variant="sheet" styles={styles} />
           <div className={styles.starterBottom}>
             <p className={styles.loadNumber}>{loadReadout}<span>%</span></p>
             <p className={styles.starterMark}><span>FULL</span><span>BUILD</span></p>
@@ -570,7 +570,7 @@ export function ShowcaseApp() {
         </div>
 
         <div className={styles.loadWorld} aria-hidden="true">
-          <LoaderPlate variant="world" />
+          <LoaderPlate variant="world" styles={styles} />
           <div className={styles.starterBottom}>
             <p className={styles.loadNumber}>{loadReadout}<span>%</span></p>
             {/* No aria-label here: the whole layer is aria-hidden and a bare paragraph has no

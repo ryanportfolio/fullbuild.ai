@@ -1,7 +1,6 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import styles from "@/app/prototype/showcase/showcase.module.css";
 
 /*
  * THE PLATE. One flat drawing of the fullbuild mark, rendered twice: once in drafting ink
@@ -24,10 +23,26 @@ import styles from "@/app/prototype/showcase/showcase.module.css";
  * folds them back into one.
  *
  * Nothing here owns a clock. Every path takes its progress from a CSS band keyed only to
- * --showcase-load, so holding the percent holds the frame exactly.
+ * the driving load variable, so holding the percent holds the frame exactly.
+ *
+ * THE STYLESHEET ARRIVES BY PROP. Two films render this plate now, the showcase loader and
+ * the homepage intro, and each brings its own CSS module. Importing one module here would
+ * ship the whole showcase stylesheet to the homepage for the sake of eleven class names,
+ * so the caller passes the module it wants the plate drawn in.
+ *
+ * THE BAND NAMES ARE THIS FILE'S CONTRACT, NOT THE MODULE'S PRIVATE NAMESPACE. Every
+ * progress source below is a hardcoded `var(--b-*)` string, so any module driving this
+ * plate must declare and ramp those exact names. Rename them behind a module prefix and
+ * the dash offset resolves to nothing: the plate paints fully drawn from the first frame,
+ * silently, with no error anywhere.
+ *
+ * The class keys a module must define: plate, rise, guide, tick, hatch, overdraw, seam,
+ * extrusion, fillPath, pourFill, drawnFill.
  */
 
 type PlateVariant = "sheet" | "world";
+
+type PlateStyles = Readonly<Record<string, string>>;
 
 type PlateStroke = {
   d: string;
@@ -157,7 +172,7 @@ const EXTRUSION: PlateStroke[] = [
  * that zero length dash paints a visible dot at the tip of a line that has not been drawn
  * yet. Doubling the gap moves the whole path inside it and the dot is gone.
  */
-function Stroke({ stroke }: { stroke: PlateStroke }) {
+function Stroke({ stroke, styles }: { stroke: PlateStroke; styles: PlateStyles }) {
   return (
     <path
       d={stroke.d}
@@ -170,7 +185,7 @@ function Stroke({ stroke }: { stroke: PlateStroke }) {
   );
 }
 
-export function LoaderPlate({ variant }: { variant: PlateVariant }) {
+export function LoaderPlate({ variant, styles }: { variant: PlateVariant; styles: PlateStyles }) {
   const world = variant === "world";
   const riseId = `fb-rise-${variant}`;
 
@@ -199,12 +214,12 @@ export function LoaderPlate({ variant }: { variant: PlateVariant }) {
         clipPath={`url(#${riseId})`}
       />
 
-      {SETTING_OUT.map((stroke) => <Stroke key={stroke.d} stroke={stroke} />)}
-      {OBJECT_LINE.map((stroke) => <Stroke key={stroke.d} stroke={stroke} />)}
-      {world ? null : <Stroke stroke={OVERDRAW} />}
-      {world ? SEAMS.map((stroke) => <Stroke key={stroke.d} stroke={stroke} />) : null}
-      {world ? EXTRUSION.map((stroke) => <Stroke key={stroke.d} stroke={stroke} />) : null}
-      {TICKS.map((stroke) => <Stroke key={stroke.d} stroke={stroke} />)}
+      {SETTING_OUT.map((stroke) => <Stroke key={stroke.d} stroke={stroke} styles={styles} />)}
+      {OBJECT_LINE.map((stroke) => <Stroke key={stroke.d} stroke={stroke} styles={styles} />)}
+      {world ? null : <Stroke stroke={OVERDRAW} styles={styles} />}
+      {world ? SEAMS.map((stroke) => <Stroke key={stroke.d} stroke={stroke} styles={styles} />) : null}
+      {world ? EXTRUSION.map((stroke) => <Stroke key={stroke.d} stroke={stroke} styles={styles} />) : null}
+      {TICKS.map((stroke) => <Stroke key={stroke.d} stroke={stroke} styles={styles} />)}
     </svg>
   );
 }

@@ -15,6 +15,7 @@
    ========================================================================= */
 
 import { useLayoutEffect, useRef, useState } from 'react';
+import { afterIntroHold, introHoldActive } from '@/lib/introHold';
 import copy from '../sheets/copy.module.css';
 import MastheadDither from './MastheadDither';
 import styles from './MastheadPlot.module.css';
@@ -26,6 +27,10 @@ const DURATION = 1400; // total plot time (ms)
 const SWEEP_FRAC = 0.82; // fraction of DURATION the pen takes to cross the word
 const JITTER = 170; // per-module reveal lag behind the pen (ms) — the "1 by 1" life
 const PLOT_LEAD = 350; // beat between overlay ready and the pen moving (ms)
+// Under the intro that beat has already been served, at length, by five seconds of overlay
+// and the settle crossfade the pen is released into, so the lead is spent rather than
+// spent twice, and the ink starts on the frame the hold lifts.
+const HELD_PLOT_LEAD = 0;
 const OFFSET_Y = 0; // vertical nudge to align master baseline to the <h1> (css px)
 const FONT_TIMEOUT = 1600; // if fonts never settle, give up and show plain text
 
@@ -163,12 +168,26 @@ export default function MastheadPlot({ text }: { text: string }) {
     let resolveTimeout = 0;
     let cancelled = false;
     let started = false;
+    // Cancels whichever hold subscription is outstanding, so a teardown mid-hold leaves no
+    // listener behind waiting to plot into a wrap that no longer exists.
+    let unhold: (() => void) | null = null;
 
+    /*
+     * A BAIL WAITS FOR THE OVERLAY TOO. Every bail path ends in settle(), and settle() is
+     * what starts the rest of the page's opening: the lettering, the rail mark, the carriage.
+     * Firing it behind the intro would run the whole entrance under the curtain by the back
+     * door, which is precisely the failure the hold exists to prevent, so the giving-up is
+     * decided here and enacted when the page is visible.
+     */
     const bail = () => {
-      if (started) return;
+      if (started || cancelled) return;
       cancelled = true;
-      h1.style.opacity = '';
-      settle();
+      unhold?.();
+      unhold = afterIntroHold(() => {
+        unhold = null;
+        h1.style.opacity = '';
+        settle();
+      });
     };
     const timeout = window.setTimeout(bail, FONT_TIMEOUT);
 
@@ -287,13 +306,12 @@ export default function MastheadPlot({ text }: { text: string }) {
       // pen line spans the text height; colour follows the ink
       pen.style.height = `${hCss}px`;
       pen.style.color = color;
-      // now that we are genuinely plotting, reveal the overlay (hidden by default)
-      canvas.style.display = 'block';
-      pen.style.display = 'block';
-
       started = true;
       plotting = true;
       window.clearTimeout(timeout);
+      // Read once, here, rather than at the moment the pen starts: by then the hold has
+      // lifted by definition, and the question is whether this plot was ever held.
+      const lead = introHoldActive() ? HELD_PLOT_LEAD : PLOT_LEAD;
 
       let start = 0;
       let idx = 0;
@@ -333,7 +351,7 @@ export default function MastheadPlot({ text }: { text: string }) {
         if (!start) start = t;
         // Short settle beat before the pen moves — the sheet lands, then the
         // plot begins, instead of ink appearing the same instant as paint.
-        const e = Math.max(0, t - start - PLOT_LEAD);
+        const e = Math.max(0, t - start - lead);
 
         // commit every module now due (incremental — canvas is never cleared)
         while (idx < modules.length && modules[idx].reveal <= e) {
@@ -375,13 +393,32 @@ export default function MastheadPlot({ text }: { text: string }) {
         }
         raf = requestAnimationFrame(frame);
       };
-      raf = requestAnimationFrame(frame);
+
+      /*
+       * AND HERE IS WHERE THE PAGE STARTS. Everything above is preparation (fit, master
+       * render, quantise, canvas sizing) and it is all done BEFORE the wait rather than
+       * after it, deliberately: the hold lifts inside the intro's settle crossfade, and a
+       * getImageData readback landing on those frames would hitch the one fade the piece
+       * cannot afford to stutter. Lifting the hold now costs a single rAF.
+       *
+       * Unheld, on no intro or reduced motion or any other route, afterIntroHold runs this
+       * synchronously and the plot behaves exactly as it always did.
+       */
+      unhold = afterIntroHold(() => {
+        unhold = null;
+        if (cancelled) return;
+        // now that we are genuinely plotting, reveal the overlay (hidden by default)
+        canvas.style.display = 'block';
+        pen.style.display = 'block';
+        raf = requestAnimationFrame(frame);
+      });
     };
 
     run();
 
     return () => {
       cancelled = true;
+      unhold?.();
       clearPending(); // teardown mid-await must not leave the pre-paint hide up
       ro?.disconnect();
       window.clearTimeout(timeout);

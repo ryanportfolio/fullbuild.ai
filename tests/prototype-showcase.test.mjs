@@ -1021,8 +1021,8 @@ test("the loader is a registered drafting sheet cut open by a percent function",
   assert.match(app, /className=\{styles\.loadWorld\}/);
   assert.match(app, /className=\{styles\.loadBox\}/);
   assert.match(app, /className=\{styles\.loadEdge\}/);
-  assert.match(app, /<LoaderPlate variant="sheet" \/>/);
-  assert.match(app, /<LoaderPlate variant="world" \/>/);
+  assert.match(app, /<LoaderPlate variant="sheet" styles=\{styles\} \/>/);
+  assert.match(app, /<LoaderPlate variant="world" styles=\{styles\} \/>/);
 
   // Registration is derived from the entry artifact rather than eyeballed, the comment
   // names every input to the derivation, and the artifact mounts at the pose it is

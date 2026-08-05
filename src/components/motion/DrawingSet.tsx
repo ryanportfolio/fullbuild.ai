@@ -6,6 +6,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
 import { useWorkingSet, type PipelineState } from '@/lib/store';
 import { penBus, type PenInk } from '@/lib/penBus';
+import { afterIntroHold } from '@/lib/introHold';
 import ExperienceIsland from '../experience/ExperienceIsland';
 import PenCarriage from './PenCarriage';
 import styles from './DrawingSet.module.css';
@@ -345,8 +346,12 @@ export default function DrawingSet({
             window.removeEventListener('ws:plot-settled', begin);
             tl.play();
           };
+          let unhold: (() => void) | null = null;
+          let fallback = 0;
           disarmCoverGate = () => {
             begun = true;
+            unhold?.();
+            window.clearTimeout(fallback);
             window.removeEventListener('ws:plot-settled', begin);
           };
           if ((window as unknown as { __plotSettled?: boolean }).__plotSettled) {
@@ -355,7 +360,16 @@ export default function DrawingSet({
             window.addEventListener('ws:plot-settled', begin);
             // Fallback: if the plot never signals (torn down mid-flight), the
             // cover still draws — a beat after the plot's own font timeout.
-            window.setTimeout(begin, 2400);
+            // Its clock starts when the intro overlay lets the page go, not at
+            // mount: the plot is deliberately held behind the intro for several
+            // seconds, and a fallback measured from mount would call that hold a
+            // failure and draw the cover behind the curtain. Unheld, this runs
+            // synchronously and the fallback is armed exactly as it always was.
+            unhold = afterIntroHold(() => {
+              unhold = null;
+              if (begun) return;
+              fallback = window.setTimeout(begin, 2400);
+            });
           }
         }
         strokes.forEach((el, i) => {
