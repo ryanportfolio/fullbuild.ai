@@ -28,6 +28,10 @@ const nextConfig = {
       { source: '/prototype/burn-in', destination: '/prototype/burn-in/index.html' },
       { source: '/prototype/quench', destination: '/prototype/quench/index.html' },
       { source: '/prototype/maranatha', destination: '/prototype/maranatha/index.html' },
+      // Flomasters is a multi-page static site; clean URLs map onto the
+      // directory index files by pattern, same as Harborline below.
+      { source: '/prototype/flomasters', destination: '/prototype/flomasters/index.html' },
+      { source: '/prototype/flomasters/:path*', destination: '/prototype/flomasters/:path*/index.html' },
       // Harborline is a static export of a Statamic CMS build. It has a service
       // detail page per entry, so the clean URLs are matched by pattern rather
       // than enumerated: adding a service in the CMS should not need a config
