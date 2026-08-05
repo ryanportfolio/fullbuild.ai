@@ -1,0 +1,701 @@
+/*
+  THE HOMEPAGE INTRO FILM.
+
+  Act one of the intro, and a straight port of the showcase loader's film: a drafting sheet
+  that inks itself in, gets a registration box ruled around the mark, turns revision red,
+  travels across as a cut, and blows out to the page frame. One drafting object carries all
+  three beats, and the conversion happens at page level rather than as a wipe over a picture
+  of one.
+
+  MUD WARNING, permanent. A single layer with one ink lerped from graphite to frost goes
+  dead grey exactly where the ground goes dead grey, and contrast collapses in the middle of
+  the film. That failure is the entire reason there are two composites and a hard edge, and
+  it comes back the moment somebody folds them into one.
+
+  Never read --ground, --ink-graphite or any other globals.css token from this block. They
+  invert under :root[data-theme="dark"] and the film would open on a near black table,
+  destroying the inversion it is built on. Literals only. The one deliberate exception is
+  .flood at the bottom of this file, and it is an exception because its whole job is to stop
+  being the film and become the page.
+
+  THE BAND NAMES ARE A CONTRACT, NOT A NAMESPACE. LoaderPlate hardcodes every progress
+  source as a literal `var(--b-*)` string, so this module has to declare and ramp those
+  exact names. Renaming them behind an intro prefix resolves each dash offset to nothing and
+  the plate paints fully drawn from the first frame, silently. The @property registrations
+  are page-global, which is harmless: they are identical to the showcase's, and the two
+  films never co-exist on one page.
+
+  Only the driving variable is renamed, --showcase-load to --intro-load, and it is read in
+  exactly two places: the band table head and the world tint's opacity.
+*/
+@property --b-grid { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-setout0 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-setout1 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-setout2 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-setout3 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-base { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-draw { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-over { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-hatch1 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-hatch2 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-pour1 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-pour2 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-rise { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-cure { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-marks { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-mark { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-rule { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-red { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-spend { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-cut { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-edge { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-ink { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-blow { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-build { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-tick0 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-tick1 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-tick2 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-tick3 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-tick4 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-tick5 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-tick6 { syntax: "<number>"; inherits: true; initial-value: 0; }
+
+/*
+ * THE OVERLAY. Fixed, full bleed, above every layer the homepage owns: the canvas island
+ * sits at 0 and 1, PenCarriage at 30 and the title block rail at 40, so 100 clears the
+ * stack the same way the showcase loader does.
+ */
+.overlay {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  overflow: hidden;
+  opacity: 1;
+}
+
+/*
+ * THE WAY OUT. One fade for every act, because a reader who asks to leave should get the
+ * same answer whether the drawing is half inked or the lens is mid-doorway. Whatever is on
+ * screen goes to the page, fast, and nothing new starts underneath it.
+ */
+.overlay[data-skipping="true"] {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--skip-fade-ms, 260ms) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.film {
+  /*
+   * REGISTRATION. The film's last frame and the artifact's first frame have to be the same
+   * drawing at the same size in the same place, or the handover reads as two screens rather
+   * than one becoming the other. Derived from IntroSculpture's viewportScale (0.58 desktop,
+   * 0.44 handset), the camera at z 5 and fov 50, the rest pose z 0.1 and y 0.12, and
+   * INTRO_LINE_FRONT 0.034, which is the plane the visible linework sits on. The numbers
+   * are identical to the showcase's because every input to them is identical. If any of
+   * those four change, recompute both:
+   *   unit   = 100 * (S / 20) / (2 * (5 - 0.1 - 0.034 * S) * tan(25deg))
+   *   offset = 100 * 0.12     / (2 * (5 - 0.1 - 0.034 * S) * tan(25deg))
+   */
+  --mark-unit: 0.6372svh;
+  --mark-cy: calc(50% - 2.637svh);
+
+  /*
+   * The two type inks. They live on .shell in the showcase, which the intro has no
+   * counterpart for, so they are declared here on the film itself.
+   */
+  --showcase-white: #f4f6ff;
+  --showcase-muted: rgb(214 227 252 / 62%);
+
+  /*
+   * THE BAND TABLE. React writes one number and CSS derives every ramp off it, so the whole
+   * film is a pure function of percent: a fast machine plays it faster, a stall parks on a
+   * legitimate half inked sheet, and holding the percent reproduces any frame exactly.
+   */
+  --load: var(--intro-load, 0);
+
+  --b-grid: clamp(0, calc(var(--load) * 16.667), 1);
+  /* The layout is ruled one line at a time: the datum's long gesture first, then the apex
+     centreline, then each eave guide. Four lines arriving together read as a glitch; four
+     lines arriving in sequence read as a hand. */
+  --b-setout0: clamp(0, calc((var(--load) - 0.010) * 16.667), 1);
+  --b-setout1: clamp(0, calc((var(--load) - 0.062) * 27.78), 1);
+  --b-setout2: clamp(0, calc((var(--load) - 0.090) * 27.78), 1);
+  --b-setout3: clamp(0, calc((var(--load) - 0.118) * 27.78), 1);
+  --b-base: clamp(0, calc((var(--load) - 0.14) * 10), 1);
+  --b-draw: clamp(0, calc((var(--load) - 0.18) * 4.1667), 1);
+  --b-over: clamp(0, calc((var(--load) - 0.21) * 4.1667), 1);
+  --b-hatch1: clamp(0, calc((var(--load) - 0.40) * 14.286), 1);
+  --b-hatch2: clamp(0, calc((var(--load) - 0.43) * 14.286), 1);
+  --b-pour1: clamp(0, calc((var(--load) - 0.50) * 14.286), 1);
+  --b-pour2: clamp(0, calc((var(--load) - 0.53) * 14.286), 1);
+  --b-rise: clamp(0, calc((var(--load) - 0.54) * 10), 1);
+  --b-cure: clamp(0, calc((var(--load) - 0.58) * 16.667), 1);
+  --b-marks: clamp(0, calc((var(--load) - 0.56) * 10), 1);
+  --b-mark: clamp(0, calc((var(--load) - 0.10) * 1.7241), 1);
+  /*
+   * The wordmark pours. It stays an outline for as long as the drawing is being drawn, then
+   * fills with the same graphite the concrete cures to, so both lockups are solid type at
+   * identical metrics before the frame opens. Two materials meeting inside a letterform was
+   * the tear: the blow out is a rectangle whose four edges move at once, and it sliced
+   * knockout outline against solid fill into chips that read as debris on the sheet.
+   */
+  --b-ink: clamp(0, calc((var(--load) - 0.56) * 12.5), 1);
+  --b-rule: clamp(0, calc((var(--load) - 0.64) * 12.5), 1);
+  --b-red: clamp(0, calc((var(--load) - 0.70) * 33.333), 1);
+  /*
+   * The cut's hairline inks in over one per cent and then holds full revision red for the
+   * whole travel. Fading it in across the cut band meant the frame that crosses the party
+   * wall carried a pale pink line, and the rule only reached strength once it had stopped.
+   */
+  --b-edge: clamp(0, calc((var(--load) - 0.715) * 100), 1);
+  --b-spend: clamp(0, calc((var(--load) - 0.88) * 12.5), 1);
+  --b-cut: clamp(0, calc((var(--load) - 0.72) * 8.3333), 1);
+  --b-blow: clamp(0, calc((var(--load) - 0.82) * 9.0909), 1);
+  /*
+   * Standing up starts on the frame the cut lands, not after the frame has finished opening.
+   * Seven per cent gave the whole dimensional read about five frames, so the seams, the
+   * extrusion and the thinning of the pen were a flash rather than a beat. Running it under
+   * the blow out makes one event of it: the object gains its third dimension while the
+   * registration box becomes the page.
+   */
+  --b-build: clamp(0, calc((var(--load) - 0.84) * 6.25), 1);
+
+  /* Seven registration marks, put down one at a time the way a hand puts them down. */
+  --b-tick0: clamp(0, calc((var(--load) - 0.560) * 25), 1);
+  --b-tick1: clamp(0, calc((var(--load) - 0.572) * 25), 1);
+  --b-tick2: clamp(0, calc((var(--load) - 0.584) * 25), 1);
+  --b-tick3: clamp(0, calc((var(--load) - 0.596) * 25), 1);
+  --b-tick4: clamp(0, calc((var(--load) - 0.608) * 25), 1);
+  --b-tick5: clamp(0, calc((var(--load) - 0.620) * 25), 1);
+  --b-tick6: clamp(0, calc((var(--load) - 0.632) * 25), 1);
+
+  /*
+   * Deceleration into rest, no overshoot. Pen draws stay linear because a plotter moves at
+   * constant speed; grounds, fills, scale, the cut and the blow out are smoothstepped.
+   */
+  --e-cut: calc(var(--b-cut) * var(--b-cut) * (3 - 2 * var(--b-cut)));
+  --e-blow: calc(var(--b-blow) * var(--b-blow) * (3 - 2 * var(--b-blow)));
+  --e-mark: calc(var(--b-mark) * var(--b-mark) * (3 - 2 * var(--b-mark)));
+  --e-build: calc(var(--b-build) * var(--b-build) * (3 - 2 * var(--b-build)));
+
+  /* The box hugs the mark plus four units of pad, clamped so a 320px handset never crops it. */
+  --box-hw: min(calc(46 * var(--mark-unit)), calc(50vw - 0.75rem));
+  --box-hh: min(calc(32.5 * var(--mark-unit)), calc(50svh - 0.75rem));
+
+  --edge-l: calc(50% - var(--box-hw));
+  --edge-r: calc(50% + var(--box-hw));
+  --edge-c: calc(var(--edge-l) + var(--e-cut) * 2 * var(--box-hw));
+  --edge-t: calc(var(--mark-cy) - var(--box-hh));
+  --edge-b: calc(var(--mark-cy) + var(--box-hh));
+
+  --open: calc(1 - var(--e-blow));
+  --clip-t: calc(var(--edge-t) * var(--open));
+  --clip-b: calc((100% - var(--edge-b)) * var(--open));
+  --clip-l: calc(var(--edge-l) * var(--open));
+  --clip-r: calc((100% - var(--edge-c)) * var(--open));
+  --frame-r: calc((100% - var(--edge-r)) * var(--open));
+  /*
+   * Where the conversion edge actually is, which is not where the cut stopped travelling.
+   * The blow out keeps opening the world's right clip after --edge-c has reached the box,
+   * so a rule pinned to --edge-c is left stranded in the middle of the blue field with
+   * nothing on either side of it and the frame carrying a second, unrelated red vertical.
+   * Riding the clip keeps the rule on the leading edge for the whole event and lands it
+   * exactly on the box's own right border once the two become the same line.
+   */
+  --cut-x: calc(100% - var(--clip-r));
+
+  --rule-ink: color-mix(in srgb, #cb3a26 calc(var(--b-red) * 100%), rgba(33, 31, 28, 0.34));
+
+  position: absolute;
+  z-index: 100;
+  inset: 0;
+  overflow: hidden;
+  color: var(--showcase-white);
+  background: #000;
+  /*
+   * A transition is read off the state being moved to, so the two directions get their own.
+   * step-end holds its from-value for the whole duration, which is exactly right on the way
+   * out and exactly wrong on the way back: re-entering the film kept it hidden for the full
+   * duration, so a capture pass that holds a percent after handover photographed nothing.
+   */
+  transition: opacity var(--handover-ms, 640ms) cubic-bezier(0.76, 0, 0.24, 1), visibility 0s;
+}
+
+.film[data-ready="true"] {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--handover-ms, 640ms) cubic-bezier(0.76, 0, 0.24, 1),
+    visibility var(--handover-ms, 640ms) step-end;
+}
+
+/*
+ * THE HELD FRAME. Holding a percent has to put the film back on screen showing exactly that
+ * frame with nothing in flight, so a held film takes no part in the handover fade in either
+ * direction. It stays inert to the pointer: holding is a capture state, not a way back into
+ * the film.
+ */
+.film[data-held="true"] {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: none;
+  transition: none;
+}
+
+/*
+ * The only announced percent, and the only spoken line in the whole intro. Both visible
+ * readouts live inside aria-hidden layers, so these nodes are what a screen reader follows.
+ */
+.readout {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/*
+ * THE FOUR INKS, one to one. Every ink on the sheet has exactly one counterpart on the
+ * other side of the cut, which is what lets a hard edge cross the drawing without anything
+ * tearing. Revision red is spent on the cut alone.
+ */
+.loadSheet,
+.loadWorld {
+  position: absolute;
+  inset: 0;
+}
+
+.loadSheet {
+  --ink-object: #211f1c;
+  --ink-annot: #5f5a4f;
+  --ink-hatch: #1c4a5a;
+  /* Wet concrete curing to graphite: at 64 the sheet is exactly the icon at drafting weights. */
+  --ink-pour: color-mix(in srgb, #211f1c calc(var(--b-cure) * 100%), #7a7263);
+  --ink-drawn: transparent;
+  z-index: 1;
+  background: #e9e3d6;
+}
+
+/* The station grid inking up. Static gradients, so the whole band costs one opacity. */
+.loadSheet::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background-image:
+    linear-gradient(to right, rgba(33, 31, 28, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(33, 31, 28, 0.04) 1px, transparent 1px),
+    linear-gradient(to right, rgba(33, 31, 28, 0.16) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(33, 31, 28, 0.16) 1px, transparent 1px);
+  background-position:
+    1.125rem 1.125rem,
+    1.125rem 1.125rem,
+    0 0,
+    0 0;
+  background-size:
+    2.25rem 2.25rem,
+    2.25rem 2.25rem,
+    2.25rem 2.25rem,
+    2.25rem 2.25rem;
+  opacity: var(--b-grid);
+  pointer-events: none;
+}
+
+.loadWorld {
+  --ink-object: #f1f4ff;
+  --ink-annot: rgb(214 227 252 / 62%);
+  --ink-hatch: #f1f4ff;
+  --ink-pour: #050516;
+  --ink-drawn: rgb(24 46 190 / 46%);
+  z-index: 2;
+  background: #000;
+  clip-path: inset(var(--clip-t) var(--clip-r) var(--clip-b) var(--clip-l));
+}
+
+/*
+ * LOADING TINT. The field floods radiation blue over the last stretch of the load, so the
+ * film hands the world over already lit instead of cutting from black. It rides the world
+ * layer rather than the whole screen, so the cut is what reveals it: the ramp already
+ * started at 0.72, which is the frame the cut leaves the left edge.
+ */
+.loadWorld::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    radial-gradient(circle at 50% 48%, rgb(29 52 255 / 62%) 0 11%, rgb(0 6 190 / 34%) 42%, rgb(0 0 11 / 96%) 86%),
+    linear-gradient(90deg, rgb(0 0 11 / 74%), transparent 20% 80%, rgb(0 0 11 / 74%));
+  opacity: calc((max(var(--intro-load, 0), 0.72) - 0.72) / 0.28);
+  pointer-events: none;
+}
+
+/*
+ * THE REGISTRATION BOX and the cut riding its leading edge. The box is its own rect and the
+ * cut is its own hairline: one element doing both gives a zero width box while the box is
+ * still being ruled.
+ */
+.loadBox {
+  position: absolute;
+  z-index: 3;
+  inset: var(--clip-t) var(--frame-r) var(--clip-b) var(--clip-l);
+  border: 1px solid var(--rule-ink);
+  opacity: calc(var(--b-rule) * (1 - var(--b-spend)));
+  clip-path: inset(0 calc((1 - var(--b-rule)) * 100%) 0 0);
+  pointer-events: none;
+}
+
+.loadEdge {
+  position: absolute;
+  z-index: 4;
+  top: var(--clip-t);
+  bottom: var(--clip-b);
+  /* The negative margin seats the hairline in the last converted column, so it reads as the
+     leading edge of the cut and coincides with the box's own border once they meet. */
+  left: var(--cut-x);
+  width: 1px;
+  margin-left: -1px;
+  background: #cb3a26;
+  opacity: calc(var(--b-edge) * (1 - var(--b-spend)));
+  pointer-events: none;
+}
+
+/*
+ * THE PLATE. The mark at the size and place the 3D artifact will take it over at, in the
+ * icon's own viewBox so no second coordinate mapping exists. The setting out line runs past
+ * the plate on both sides, hence overflow: visible.
+ */
+.plate {
+  position: absolute;
+  left: 50%;
+  top: var(--mark-cy);
+  width: calc(100 * var(--mark-unit));
+  height: calc(100 * var(--mark-unit));
+  overflow: visible;
+  /* viewBox (50, 57) is the 3D group's origin, so that point is what gets registered. */
+  transform: translate(-50%, -57%);
+}
+
+/*
+ * The drawing hands over lines three to four times heavier than the object it becomes, so
+ * every weight thins across the build band and the last film frame matches the built line.
+ * Both plates thin on the same band and never on separate ones, or strokes of two different
+ * widths would meet at the cut and the mark would misregister down its own edge.
+ * pathLength normalises the dash out of px space; see ShowcaseLoader for why that matters
+ * and why the constant width vector effect must never be put on these paths.
+ */
+.plate path {
+  fill: none;
+  stroke: var(--ink-object);
+  stroke-width: calc(var(--w, 1) * 1px * (1 - 0.65 * var(--e-build)));
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dashoffset: calc(100 - 100 * var(--s, 1));
+}
+
+/* The hand erases its layout once the object line is inked. */
+.plate path.guide {
+  stroke: var(--ink-annot);
+  stroke-linecap: butt;
+  opacity: calc((1 - var(--b-marks)) * 0.8);
+}
+
+.plate path.tick {
+  stroke: var(--ink-annot);
+  stroke-linecap: butt;
+}
+
+.plate path.hatch {
+  stroke: var(--ink-hatch);
+}
+
+.plate path.overdraw {
+  opacity: 0.35;
+}
+
+.plate path.seam {
+  opacity: calc(0.35 * var(--e-build));
+}
+
+.plate path.extrusion {
+  opacity: calc(0.8 * var(--e-build));
+}
+
+/*
+ * SPECIFICITY TRAP. `.plate path { fill: none }` beats a bare `.pourFill { fill: ... }`
+ * three components to two and silently kills every fill, so the fills are written at the
+ * same depth as the rule they have to beat.
+ */
+.plate path.fillPath {
+  stroke: none;
+}
+
+.plate path.pourFill {
+  fill: var(--ink-pour);
+}
+
+.plate path.drawnFill {
+  fill: var(--ink-drawn);
+}
+
+/* The pour rises out of the baseline through this rect rather than fading in. */
+.rise {
+  x: 52px;
+  width: 30px;
+  y: calc(82px - 34px * var(--b-rise));
+  height: calc(34px * var(--b-rise));
+}
+
+.starterBottom {
+  position: absolute;
+  bottom: 1.8rem;
+  left: 1rem;
+  display: grid;
+  grid-template-columns: auto;
+  gap: 1.35rem;
+  align-items: end;
+  justify-items: start;
+}
+
+/*
+ * The wordmark interpolates out of the drafted voice globals.css calls .u-label and into
+ * the finished mark, so the cut only ever changes its material. Archivo's weight and width
+ * axes interpolate continuously on the loaded face, which is why these are font-weight and
+ * font-stretch rather than font-variation-settings.
+ */
+.starterMark {
+  display: grid;
+  align-self: end;
+  justify-self: start;
+  margin: 0;
+  font-family: var(--font-archivo), sans-serif;
+  font-size: clamp(6rem, 14vw, 15rem);
+  font-weight: calc(400 + 400 * var(--e-mark));
+  font-stretch: calc(125% - 25% * var(--e-mark));
+  line-height: 0.71;
+  letter-spacing: calc(0.16em - 0.25em * var(--e-mark));
+  /*
+   * Grayscale antialiasing on both copies, not one. Subpixel rendering lays a warm fringe
+   * down one side of every stem and a cold one down the other, and two stacked lockups
+   * either side of the cut double it into a visible colour edge on the finished mark.
+   */
+  -webkit-font-smoothing: antialiased;
+}
+
+.starterMark span:last-child {
+  margin-left: 0.48em;
+}
+
+/*
+ * Drawn first, then poured. While the drawing is being drawn the lockup is outline only, the
+ * same doctrine the mark itself follows, and the knockout fill is mandatory or the two lines
+ * show through each other. On --b-ink the outline fills with graphite and the stroke closes
+ * to nothing, so by the time the frame blows out the sheet's type and the world's type are
+ * the same solid letterforms in two inks and the opening rectangle changes their material
+ * without taking chips out of them. -webkit-text-stroke has no unprefixed twin, so the
+ * @supports fallback below is not optional either.
+ */
+.loadSheet .starterMark {
+  color: color-mix(in srgb, #211f1c calc(var(--b-ink) * 100%), #e9e3d6);
+  -webkit-text-stroke-width: calc(2.4px * (1 - var(--b-ink)));
+  -webkit-text-stroke-color: #211f1c;
+}
+
+.loadWorld .starterMark {
+  color: var(--showcase-white);
+  -webkit-text-stroke: 0;
+}
+
+@supports not (-webkit-text-stroke: 1px black) {
+  .loadSheet .starterMark {
+    color: #675f52;
+    -webkit-text-stroke: 0;
+  }
+}
+
+/*
+ * The readout is Martian Mono on both sides rather than a morph. Both systems already use
+ * the mono face as their measured voice, and identical metrics either side of the cut are
+ * what let a hard edge cross type without tearing.
+ */
+.loadNumber {
+  grid-row: 1;
+  min-width: 8rem;
+  margin: 0;
+  font-family: var(--font-martian), monospace;
+  font-size: clamp(1.5rem, 2.2vw, 2.6rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.loadNumber span {
+  margin-left: 0.3em;
+  font-size: 0.62em;
+  vertical-align: top;
+}
+
+.loadSheet .loadNumber {
+  color: #211f1c;
+}
+
+/* The per cent sign is an annotation, so it takes annotation ink. */
+.loadSheet .loadNumber span {
+  color: #5f5a4f;
+}
+
+.loadWorld .loadNumber {
+  color: var(--showcase-white);
+}
+
+.loadWorld .loadNumber span {
+  color: var(--showcase-muted);
+}
+
+/*
+ * THE STAGE. The 3D artifact's canvas, painted under the film from the moment the scene
+ * chunk mounts so the handover fades a drawing off an object that is already standing
+ * there, rather than cutting between two pictures.
+ */
+.stage {
+  position: absolute;
+  z-index: 50;
+  inset: 0;
+  background: #000209;
+  /* Goes out under the burst, so the settle has no warp left to uncover. */
+  opacity: var(--stage-fade, 1);
+}
+
+.stage canvas {
+  display: block;
+}
+
+/*
+ * The analog floor over the canvas: a seeded dot tile, drawn once on the client. It is a
+ * DOM layer rather than a post pass, which is what lets the scene ship with no
+ * EffectComposer at all. Until the tile lands there is simply nothing here.
+ */
+.grain {
+  position: absolute;
+  z-index: 51;
+  inset: 0;
+  background-repeat: repeat;
+  /* The tile is drawn at device scale and must never be resampled: a scaled dot lattice
+     smears into exactly the regular weave the seeded tile exists to replace. */
+  background-size: auto;
+  /* Grainy across the working frame, falling away in the outer corners. Without the mask
+     the floor reaches the frame edges at full strength and the whole picture reads as
+     noise laid over it rather than as a field the picture is standing in. */
+  mask-image: radial-gradient(ellipse 86% 94% at 50% 48%, #000 0 55%, rgb(0 0 0 / 62%) 86%, transparent 105%);
+  /*
+   * THE SAME FLOOR AS THE SHOWCASE ENTRY, and it has to be measured rather than eyeballed.
+   * At 0.42 it was not: sampling mean absolute horizontal luminance difference in four type
+   * free patches put this frame at 1.42 to 1.63 against the showcase's 2.89 to 3.26, so the
+   * intro was carrying roughly half the analog floor of the reference it was told to beat,
+   * in every patch. Same tile, same mask, same blend, so the opacity is the whole delta and
+   * this is the showcase's own number.
+   */
+  opacity: 0.62;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+/*
+ * THE BURST AND THE SETTLE, and the one deliberate exception to the literals-only rule
+ * above. This layer's whole job is to stop being the film and become the page, so it reads
+ * the page's own ground token: in light it blows out to a lift of vellum, in dark to a lift
+ * of the night table. The metaphor holds either way, because passing through the glass puts
+ * you inside the page's world whatever ground that world stands on.
+ *
+ * Flat colour, no gradient. This layer touches the paper world, so the globals.css
+ * constraint contract governs it.
+ *
+ * The lift rides a ramped variable rather than a boolean attribute. Toggling the colour on
+ * an attribute changes it by a fifth inside one frame while the layer is at full opacity,
+ * and that step is visible in the one place the piece is meant to read as light rather than
+ * as a layer. Same colours, same peak, no step.
+ */
+.flood {
+  position: absolute;
+  z-index: 101;
+  inset: 0;
+  background: color-mix(in srgb, #ffffff calc(var(--flood-lift, 0) * 22%), var(--ground));
+  opacity: var(--flood, 0);
+  pointer-events: none;
+}
+
+/* Same derivation as desktop, with the handset viewportScale of 0.44. */
+@media (max-width: 767px) {
+  .film {
+    --mark-unit: 0.4829svh;
+    --mark-cy: calc(50% - 2.634svh);
+  }
+
+  .starterBottom {
+    bottom: 0.8rem;
+    left: 0.7rem;
+    grid-template-columns: auto;
+    gap: 0.8rem;
+  }
+
+  .starterMark {
+    font-size: clamp(4.5rem, 22vw, 7rem);
+  }
+
+  .loadNumber {
+    justify-self: start;
+    font-size: clamp(1.55rem, 7vw, 2.4rem);
+  }
+}
+
+/*
+ * REDUCED MOTION. IntroMount never mounts this component under the query at all, so a
+ * reader who asked for less motion gets the server-rendered homepage with no film and no
+ * cover to fade. This block is belt and braces for the one path that can still reach here:
+ * the query flipping mid-intro, where the film has to stand at its finished frame for the
+ * handful of frames before skip() unmounts it, rather than resuming an animation.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .film {
+    --b-grid: 1;
+    --b-setout0: 1;
+    --b-setout1: 1;
+    --b-setout2: 1;
+    --b-setout3: 1;
+    --b-base: 1;
+    --b-draw: 1;
+    --b-over: 1;
+    --b-hatch1: 1;
+    --b-hatch2: 1;
+    --b-pour1: 1;
+    --b-pour2: 1;
+    --b-rise: 1;
+    --b-cure: 1;
+    --b-marks: 1;
+    --b-mark: 1;
+    --b-ink: 1;
+    --b-rule: 1;
+    --b-red: 0;
+    --b-edge: 0;
+    --b-spend: 1;
+    --b-cut: 1;
+    --b-blow: 1;
+    --b-build: 1;
+    --b-tick0: 1;
+    --b-tick1: 1;
+    --b-tick2: 1;
+    --b-tick3: 1;
+    --b-tick4: 1;
+    --b-tick5: 1;
+    --b-tick6: 1;
+  }
+
+  .overlay *,
+  .overlay *::before,
+  .overlay *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

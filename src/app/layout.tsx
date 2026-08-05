@@ -93,6 +93,48 @@ const noFlashDepth = `(function(){try{if(window.matchMedia('(prefers-reduced-mot
 // reduced motion opts out, no-JS never runs this.
 const noFlashDraw = `(function(){try{if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;var d=document.documentElement;d.setAttribute('data-draw-pending','');window.__drawGuard=window.setTimeout(function(){d.removeAttribute('data-draw-pending');},3000);}catch(e){}})();`;
 
+// Cover the homepage BEFORE first paint so the intro's opening frame is the first thing
+// anyone sees, rather than a flash of the finished set that the overlay then covers up.
+// The cover is painted in the film's own opening ground, so the handoff from cover to first
+// film frame is invisible in either direction and a one-frame overlap costs nothing.
+// HomepageIntro clears both the attribute and this timer in the effect that paints that
+// first frame. Same carve-outs as its four siblings: reduced motion opts out entirely (that
+// path gets no intro at all, so the page must stand from frame one), and no-JS visitors
+// never run this, so the SSR page stays visible for them. The guard runs longer than the
+// intro's own maximum, so a visitor whose JS runs but whose React never hydrates still gets
+// the page back rather than a permanent blank ground.
+//
+// THE PATH CHECK IS NOT OPTIONAL, and it is the one thing that separates this script from
+// its four siblings. They describe states every route has; this one covers the screen for a
+// component that only the homepage mounts. Without the check every other route in the site
+// (the showcase, every prototype, contact, lab) loads under an opaque vellum sheet with
+// nothing behind it to lift the attribute, and sits there until the 4s guard fires.
+//
+// THE GUARD FIRING IS A DECISION, NOT JUST A TIDY UP, which is why it latches. Measured on a
+// 20x throttled CPU over a 50 kB/s link, hydration landed at 12.7s: the guard had lifted the
+// cover at 4s, the reader spent eight seconds reading a finished homepage, and only then did
+// an overlay arrive to report that the page was loading, followed by a warp. That is the
+// flash of the ending before the beginning the cover exists to prevent, inverted and drawn
+// out. So the moment the cover comes off, the intro's chance is gone: __introExpired is what
+// IntroMount reads to know it arrived too late to be an intro at all.
+//
+// IT ALSO LATCHES THE ENTRANCE HOLD, in the same breath and under the same
+// conditions, because the page has an opening act of its own and that act starts at
+// hydration. Left alone it plots the wordmark, letters the pipeline, draws the rail mark
+// and works the cover behind the curtain, and the reader arrives at a page that is already
+// over. The latch has to exist before any module does, because MastheadPlot plots from a
+// layout effect the instant it mounts, so it is set here rather than by the overlay, which
+// arrives later. And the guard that lifts the cover lifts the hold with it: if the intro is
+// not coming, the page's opening must not be left waiting on it. See src/lib/introHold.ts;
+// the event name is spelled out here because this script predates every module.
+// THE HOLD CARRIES ITS OWN DEADLINE, on a second timer that nothing in React clears. The
+// cover's 4s guard is cleared by HomepageIntro the moment it paints its first frame, which is
+// correct for a cover and useless as a backstop for the hold: after that, an overlay that
+// somehow never finishes would hold the page's opening for the rest of the session. The
+// deadline is set well past the intro's own worst case (a 4.2s film plus a 3.5s cinematic) so
+// no real intro ever reaches it, and it releases unconditionally when it fires.
+const noFlashIntro = `(function(){try{if(window.location.pathname!=='/')return;if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;var d=document.documentElement;var go=function(){if(window.__introHold){window.__introHold=false;window.dispatchEvent(new Event('ws:intro-entrance'));}};d.setAttribute('data-intro-pending','');window.__introHold=true;window.__introGuard=window.setTimeout(function(){d.removeAttribute('data-intro-pending');window.__introExpired=1;go();},4000);window.setTimeout(go,12000);}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: {
@@ -111,6 +153,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: noFlashPipeline }} />
         <script dangerouslySetInnerHTML={{ __html: noFlashDepth }} />
         <script dangerouslySetInnerHTML={{ __html: noFlashDraw }} />
+        <script dangerouslySetInnerHTML={{ __html: noFlashIntro }} />
       </head>
       <body>
         {children}
