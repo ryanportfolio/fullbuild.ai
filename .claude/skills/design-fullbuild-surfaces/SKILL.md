@@ -1,6 +1,6 @@
 ---
 name: design-fullbuild-surfaces
-description: Design, extend and audit fullbuild.ai visual surfaces. Use when opening a new standalone prototype identity under public/prototype or src/app/prototype (palette, type, governing metaphor, motion verbs), storyboarding a scroll narrative, writing GSAP + Lenis + R3F + SVG motion or drawing craft, auditing a diff against a binding visual contract, or verifying UI by Playwright capture. The Working Set (src/app, excluding src/app/prototype) is settled: extend and audit it, never restyle it. Not for backend-only work, prose rewriting (see .claude/reference/voice.md), charts, or anything needing Tailwind, a component library, an icon set, or a design tool.
+description: Design, extend and audit fullbuild.ai visual surfaces. Use for new prototype identities under public/prototype or src/app/prototype, scroll narratives, GSAP/Lenis/R3F/SVG motion, visual-contract audits, or Playwright UI verification.
 ---
 
 # design-fullbuild-surfaces
