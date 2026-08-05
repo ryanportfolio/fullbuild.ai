@@ -1,6 +1,7 @@
 'use client';
 
 import { useLayoutEffect, useRef } from 'react';
+import { afterIntroHold } from '@/lib/introHold';
 import copy from './copy.module.css';
 
 /* --- the lettering pass ----------------------------------------------------
@@ -210,11 +211,21 @@ export default function TaglineFit() {
       place(g1, 0);
       wake();
     };
+    let unhold: (() => void) | null = null;
     if ((window as unknown as { __plotSettled?: boolean }).__plotSettled) {
       begin();
     } else {
       window.addEventListener('ws:plot-settled', begin);
-      gate = window.setTimeout(begin, GATE_FALLBACK);
+      // The fallback's clock starts when the intro overlay lets the page go, not
+      // at mount: the plot it is waiting on is held behind the intro for several
+      // seconds by design, and a fallback measured from mount would call that
+      // hold a failure and letter the pipeline behind the curtain. Unheld, this
+      // runs synchronously and the timer is armed exactly as before.
+      unhold = afterIntroHold(() => {
+        unhold = null;
+        if (begun || cancelled) return;
+        gate = window.setTimeout(begin, GATE_FALLBACK);
+      });
     }
 
     const io =
@@ -231,6 +242,7 @@ export default function TaglineFit() {
 
     return () => {
       cancelled = true;
+      unhold?.();
       if (raf) cancelAnimationFrame(raf);
       window.clearTimeout(gate);
       window.removeEventListener('ws:plot-settled', begin);

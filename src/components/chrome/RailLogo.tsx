@@ -1,6 +1,7 @@
 'use client';
 
 import { useLayoutEffect, useRef } from 'react';
+import { afterIntroHold } from '@/lib/introHold';
 
 /* ============================================================================
    RAIL LOGO — the mark. A long shed half-drawn, half-poured: the left bay is
@@ -73,14 +74,25 @@ export default function RailLogo({ className }: { className?: string }) {
     };
 
     // One hand: wait for the wordmark plot (latched flag covers late mount);
-    // fallback keeps the mark drawing even if the plot never signals.
+    // fallback keeps the mark drawing even if the plot never signals. The
+    // fallback's clock starts when the intro overlay lets the page go rather
+    // than at mount: the plot is held behind the intro on purpose, and a
+    // fallback measured from mount would mistake that hold for a failure and
+    // draw the mark behind the curtain. Unheld, this is synchronous and the
+    // timer is armed exactly as before.
+    let unhold: (() => void) | null = null;
     if ((window as unknown as { __plotSettled?: boolean }).__plotSettled) begin();
     else {
       window.addEventListener('ws:plot-settled', begin);
-      timer = window.setTimeout(begin, 2600);
+      unhold = afterIntroHold(() => {
+        unhold = null;
+        if (begun) return;
+        timer = window.setTimeout(begin, 2600);
+      });
     }
 
     return () => {
+      unhold?.();
       window.removeEventListener('ws:plot-settled', begin);
       window.clearTimeout(timer);
       // teardown mid-draw → leave the finished mark

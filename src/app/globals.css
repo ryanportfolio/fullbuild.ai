@@ -228,6 +228,23 @@ svg {
   visibility: hidden;
 }
 
+/* The homepage intro's pre-paint cover, same pattern as the hold above and for the
+   same reason one layer up: the set is SSR-complete, so without this the first frame
+   paints the finished homepage and the overlay then covers it — a flash of the ending
+   before the beginning. The literal is the film's own opening ground rather than
+   var(--ground), deliberately: --ground inverts under data-theme="dark" and the film
+   opens on vellum in BOTH themes, so a token here would show a dark cover handing over
+   to a light drawing. Reduced motion and no-JS never set the attribute, so neither ever
+   sees this rule. */
+html[data-intro-pending] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #e9e3d6;
+  pointer-events: none;
+}
+
 /* Focus — a drafted registration box, never a glow */
 :focus-visible {
   outline: 2px solid var(--accent-live);
