@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Open Build is a measured, rights-safe reference reconstruction of a modern SaaS starter landing page.">
+  <meta name="theme-color" content="#fffdfb">
+  <title>Open Build · SaaS starter reference prototype</title>
+  <link rel="icon" href="/prototype/open-saas/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/prototype/open-saas/styles.css">
+  <script>
+    try {
+      const saved = localStorage.getItem('open-build-theme');
+      if (saved === 'dark') document.documentElement.dataset.theme = 'dark';
+    } catch {}
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <aside class="promo" aria-label="Learning announcement">
+    <a href="#features"><span aria-hidden="true">🧑‍🏫</span> <span class="promo__desktop">Learn to build a SaaS with our free, interactive course</span><span class="promo__mobile">Learn to Build a SaaS w/ our free course →</span></a>
+    <a class="promo__secondary" href="#features">Become a pro with Open Build <span aria-hidden="true">→</span></a>
+  </aside>
+
+  <header class="site-header" data-header>
+    <nav class="nav-shell" aria-label="Global">
+      <a class="brand" href="#main" aria-label="Open Build home">
+        <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="7" fill="currentColor"/>
+          <path d="M8 10h10v4H8zm0 8h7v4H8zm13-8h3v12h-3zm-5 5h8v4h-8z" fill="var(--brand-mark-ink)"/>
+        </svg>
+        <span>Open Build</span>
+      </a>
+
+      <div class="nav-links" aria-label="Primary navigation">
+        <a href="#features">Features</a>
+        <a href="#roadmap">Roadmap</a>
+        <a href="#faq">Documentation</a>
+        <a href="#testimonials">Blog</a>
+      </div>
+
+      <div class="nav-actions">
+        <a class="github-count" href="#roadmap" aria-label="Open Build community count">
+          <span aria-hidden="true">◉</span> 15.2K
+        </a>
+        <label class="theme-toggle" aria-label="Color theme">
+          <input type="checkbox" aria-label="Toggle dark mode" data-theme-toggle>
+          <span class="theme-toggle__track" aria-hidden="true"><span>☀</span><span>☾</span></span>
+        </label>
+        <a class="demo-link" href="#demo">Demo App <span>Log in</span> <span aria-hidden="true">↪</span></a>
+      </div>
+
+      <button class="menu-button" type="button" aria-expanded="false" aria-controls="mobile-drawer" data-menu-button>
+        <span class="sr-only">Open main menu</span>
+        <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+      </button>
+    </nav>
+  </header>
+
+  <div class="drawer-scrim" data-drawer-scrim hidden></div>
+  <aside class="mobile-drawer" id="mobile-drawer" aria-label="Mobile navigation" aria-hidden="true" data-mobile-drawer>
+    <nav>
+      <a class="is-active" href="#features">Features</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="#faq">Documentation</a>
+      <a href="#testimonials">Blog</a>
+    </nav>
+    <div class="mobile-drawer__actions">
+      <a class="button button--outline" href="#demo">Demo App <span aria-hidden="true">↪</span></a>
+      <div class="mobile-drawer__meta">
+        <label class="theme-toggle" aria-label="Color theme">
+          <input type="checkbox" aria-label="Toggle dark mode" data-theme-toggle>
+          <span class="theme-toggle__track" aria-hidden="true"><span>☀</span><span>☾</span></span>
+        </label>
+        <span>◉ 15.2K</span>
+      </div>
+    </div>
+  </aside>
+
+  <main id="main">
+    <section class="hero section-rail" data-section="hero">
+      <div class="hero__copy">
+        <h1>The <em>free</em> SaaS starter with <strong>superpowers</strong></h1>
+        <p>An open-source, feature-rich, React + NodeJS starter kit shaped for the AI era. Built to become yours.</p>
+        <div class="hero__actions" id="demo">
+          <a class="button button--outline" href="#features">Try the Demo App</a>
+          <a class="button button--primary" href="#features">Get Started <span aria-hidden="true">→</span></a>
+        </div>
+      </div>
+
+      <div class="hero-orbit" aria-label="Open Build stack orbit">
+        <svg viewBox="0 0 600 600" role="img" aria-label="100 percent open-source stack surrounded by modular tools">
+          <g class="orbit-rings" fill="none" stroke="currentColor">
+            <circle cx="300" cy="300" r="112"/>
+            <circle cx="300" cy="300" r="178"/>
+            <circle cx="300" cy="300" r="242"/>
+            <circle cx="300" cy="300" r="286"/>
+          </g>
+          <g class="orbit-spin">
+            <g class="orbit-item" transform="translate(300 62)"><path d="M-11 11 0-13 12 11 0 6z"/><path d="M0-13v19"/></g>
+            <g class="orbit-item" transform="translate(536 300)"><text text-anchor="middle">≈</text></g>
+            <g class="orbit-item" transform="translate(300 542)"><path d="m0-13 11 24H-10z"/></g>
+            <g class="orbit-item" transform="translate(66 300)"><text text-anchor="middle">//</text></g>
+          </g>
+          <g class="orbit-counter">
+            <g transform="translate(446 118)"><circle r="13"/><path d="M-18 0h36M0-18v36M-13-13l26 26M13-13l-26 26"/></g>
+            <g transform="translate(438 472)"><text text-anchor="middle">node</text></g>
+            <g transform="translate(153 451)"><path d="M0-12c16 0 16 24 0 24s-16-24 0-24m-10 4c16 0 16 16 0 16m20-16c-16 0-16 16 0 16"/></g>
+            <g transform="translate(151 138)"><text text-anchor="middle">stripe</text></g>
+          </g>
+          <g class="orbit-center">
+            <text x="300" y="285" text-anchor="middle">100%</text>
+            <text x="300" y="325" text-anchor="middle">Open Source</text>
+          </g>
+          <g class="orbit-brand" transform="translate(450 315)">
+            <rect x="-18" y="-18" width="36" height="36" rx="7"/>
+            <path d="M-10-7H2v5h-12zm0 10h9v5h-9zM7-7h4V8H7zM0-1h11v5H0z"/>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <section class="customers section-rail" data-section="customers" aria-labelledby="customers-title">
+      <h2 id="customers-title">Used by</h2>
+      <div class="customer-rail">
+        <article class="customer-card customer-card--dark">
+          <div class="customer-art"><span>Find the best creators</span><i></i><i></i></div>
+          <h3>Launchpad</h3><p>launchpad.tools</p>
+        </article>
+        <article class="customer-card">
+          <div class="customer-art customer-art--table"><i></i><i></i><i></i><i></i></div>
+          <h3>Kite</h3><p>kite.dev</p>
+        </article>
+        <article class="customer-card customer-card--slate">
+          <div class="customer-art"><span>Lightweight search without the bloat</span></div>
+          <h3>Searchlight</h3><p>searchlight.io</p>
+        </article>
+        <article class="customer-card">
+          <div class="customer-art customer-art--type">Hi</div>
+          <h3>Scribe</h3><p>scribe.page</p>
+        </article>
+        <article class="customer-card customer-card--ink">
+          <div class="customer-art">M</div><h3>Messync</h3><p>messync.app</p>
+        </article>
+        <article class="customer-card">
+          <div class="customer-art customer-art--panda">P</div><h3>Prompt Panda</h3><p>promptpanda.dev</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="story section-rail" data-section="story" aria-label="Product capabilities">
+      <article class="story-row" data-reveal>
+        <div class="story-figure constellation" aria-label="AI-assisted development tools">
+          <div class="constellation__ring"></div>
+          <div class="note-card note-card--one">plan / ship</div>
+          <div class="note-card note-card--two">test / prove</div>
+          <div class="note-card note-card--three">own / extend</div>
+          <div class="bot" aria-hidden="true">✦</div>
+        </div>
+        <div class="story-copy">
+          <h2>AI Ready</h2>
+          <p>Opinionated defaults, custom agent rules, and explicit project knowledge give coding tools enough context to build complex products without guessing at the stack.</p>
+        </div>
+      </article>
+
+      <article class="story-row story-row--reverse" data-reveal>
+        <div class="story-figure auth-card" aria-label="Authentication form example">
+          <div class="auth-card__tabs"><button type="button">Google</button><button type="button">GitHub</button><button type="button">Passkey</button></div>
+          <form aria-label="Demo login form">
+            <strong>Log in to your account</strong>
+            <label>Email<input type="email" placeholder="you@example.com"></label>
+            <label>Password<input type="password" value="password" aria-label="Password"></label>
+            <button type="button">Log in</button>
+          </form>
+        </div>
+        <div class="story-copy">
+          <h2>DIY Auth Done for you</h2>
+          <p>Pre-configured full-stack authentication you can inspect, extend, and own.</p>
+          <div class="provider-row" aria-label="Available identity providers"><span>G</span><span>◆</span><span>●</span><span>＋</span></div>
+        </div>
+      </article>
+
+      <article class="story-row" data-reveal>
+        <div class="story-figure pricing-stack" aria-label="Payment provider cards">
+          <div class="price-card price-card--back"><small>Hobby</small><strong>$9</strong><span>per month</span></div>
+          <div class="price-card price-card--front"><small>Pro</small><strong>$19.99</strong><span>per month</span><button type="button">Pay now</button></div>
+        </div>
+        <div class="story-copy">
+          <h2>Payments without lock-in</h2>
+          <p>Checkout and webhook paths are ready for multiple providers. Choose a rail, keep your code, and start collecting revenue.</p>
+        </div>
+      </article>
+
+      <article class="story-row story-row--reverse" data-reveal>
+        <div class="story-figure analytics-stack" aria-label="Analytics cards">
+          <div class="metric-card metric-card--line"><span>MRR</span><strong>$4.2K</strong><svg viewBox="0 0 180 60" aria-hidden="true"><path d="M2 52 38 43 68 46 98 25 126 31 178 6"/></svg></div>
+          <div class="metric-card metric-card--bars"><strong>+2486</strong><div><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+        </div>
+        <div class="story-copy">
+          <h2>Admin Dashboard</h2>
+          <p>Graphs, tables, product analytics, and operational signals arrive in one calm control surface.</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="features section-rail" id="features" data-section="features" aria-labelledby="features-title">
+      <header class="section-heading" data-reveal>
+        <h2 id="features-title">Features</h2>
+        <p>Everything needed to move from idea to a working product</p>
+      </header>
+      <div class="feature-grid">
+        <article class="feature-card feature-card--wide" data-reveal>
+          <div class="code-stub"><span>AI API connected</span><b>✦</b></div>
+          <h3>AI workflows included</h3><p>Ship a useful first loop without building every integration from zero.</p>
+        </article>
+        <article class="feature-card" data-reveal><span class="feature-icon">🥞</span><h3>Full-stack Type Safety</h3><p>Generated types span the client, server, and data layer.</p></article>
+        <article class="feature-card feature-card--wide" data-reveal><div class="file-stub">File upload with S3 <b>↥</b></div><h3>Files ready to move</h3><p>Presigned upload examples and documented storage paths.</p></article>
+        <article class="feature-card feature-card--tall" data-reveal><h3>Email Sending</h3><p>Transactional email and scheduled jobs share one clear path.</p><div class="email-stub"><small>Welcome</small><strong>Verify email</strong></div></article>
+        <a class="feature-card feature-card--center" href="#demo" data-reveal><span class="feature-logo">↱</span><h3>Open Build</h3><p>Try the demo app</p></a>
+        <article class="feature-card feature-card--tall" data-reveal><div class="blog-stub"><i></i><button type="button">Publish</button></div><h3>Blog with Markdown</h3><p>Write posts in plain text and ship a fast public archive.</p></article>
+        <article class="feature-card feature-card--small" data-reveal><span class="feature-icon">🚀</span><h3>Deploy Anywhere</h3><p>Your code stays portable.</p></article>
+        <article class="feature-card feature-card--small" data-reveal><h3>Documentation</h3><p>Guides plus community support.</p></article>
+        <article class="feature-card feature-card--small" data-reveal><h3>E2E Tests</h3><p>Playwright and CI examples.</p></article>
+        <article class="feature-card feature-card--small" data-reveal><span class="feature-icon">🤝</span><h3>Open Source</h3><p>Inspect every layer.</p></article>
+      </div>
+    </section>
+
+    <section class="roadmap section-rail" id="roadmap" data-section="roadmap" aria-labelledby="roadmap-title">
+      <header class="section-heading" data-reveal>
+        <h2 id="roadmap-title">The Roadmap</h2>
+        <p>High-level topics moving through the reference backlog</p>
+      </header>
+      <div class="roadmap-board" data-source="Prototype backlog fixture, 11 cards shown">
+        <section class="roadmap-column roadmap-column--ideas" aria-labelledby="ideas-title">
+          <h3 id="ideas-title">Ideas <span>2</span></h3>
+          <article><strong>Improve admin calculations</strong><span>Progress <b>0% (0/8)</b></span><i style="--progress:0%"></i></article>
+          <article><strong>Add billing recovery</strong><span>Progress <b>0% (0/1)</b></span><i style="--progress:0%"></i></article>
+          <button class="roadmap-add" type="button" aria-label="Add idea">＋</button>
+        </section>
+        <section class="roadmap-column roadmap-column--planned" aria-labelledby="planned-title">
+          <h3 id="planned-title">Planned <span>2</span></h3>
+          <article><strong>Improve AI demo app</strong><span>Progress <b>0% (0/2)</b></span><i style="--progress:0%"></i></article>
+          <article><strong>Unify payment docs</strong><span>Progress <b>0% (0/4)</b></span><i style="--progress:0%"></i></article>
+        </section>
+        <section class="roadmap-column roadmap-column--progress" aria-labelledby="progress-title">
+          <h3 id="progress-title">In progress <span>5</span></h3>
+          <article><strong>Refactor the dashboard</strong><span>Progress <b>22% (2/9)</b></span><i style="--progress:22%"></i></article>
+          <article><strong>Improve checkout</strong><span>Progress <b>40% (2/5)</b></span><i style="--progress:40%"></i></article>
+          <article><strong>Expand e2e tests</strong><span>Progress <b>33% (2/6)</b></span><i style="--progress:33%"></i></article>
+          <article><strong>Polish mobile details</strong><span>Progress <b>50% (6/12)</b></span><i style="--progress:50%"></i></article>
+          <article><strong>Document local capture</strong><span>Progress <b>67% (2/3)</b></span><i style="--progress:67%"></i></article>
+        </section>
+        <section class="roadmap-column roadmap-column--done" aria-labelledby="done-title">
+          <h3 id="done-title">Done <span>2</span></h3>
+          <article><strong>Add provider choice</strong><span>Progress <b>100% (2/2)</b></span><i style="--progress:100%"></i></article>
+          <article><strong>Ship agent context</strong><span>Progress <b>100% (4/4)</b></span><i style="--progress:100%"></i></article>
+        </section>
+      </div>
+    </section>
+
+    <section class="testimonials section-rail" id="testimonials" data-section="testimonials" aria-labelledby="testimonials-title">
+      <header class="section-heading" data-reveal><h2 id="testimonials-title">What Our Users Say</h2></header>
+      <div class="quote-grid">
+        <blockquote data-reveal><p>I went from a blank repo to a sellable product loop in weeks, without surrendering the codebase.</p><footer><span class="avatar">AK</span><strong>Founder</strong><small>Pilot cohort</small></footer></blockquote>
+        <blockquote data-reveal><p>The defaults let me focus on the product instead of stitching auth, email, billing, and deployment together.</p><footer><span class="avatar">TS</span><strong>Product engineer</strong><small>Early access</small></footer></blockquote>
+        <blockquote data-reveal><p>I can inspect every layer and still move quickly. That combination is rare.</p><footer><span class="avatar">DM</span><strong>Technical founder</strong><small>Builder group</small></footer></blockquote>
+        <blockquote data-reveal><p>Six evenings in, the product was live. The docs answered the questions the starter could not answer for me.</p><footer><span class="avatar">JC</span><strong>Independent maker</strong><small>Pilot cohort</small></footer></blockquote>
+        <blockquote data-reveal><p>Setup took minutes. The useful part was what came after: coherent patterns that stayed coherent as the app grew.</p><footer><span class="avatar">CB</span><strong>Founder</strong><small>Builder group</small></footer></blockquote>
+        <blockquote class="quote--long" data-reveal><p>I had tried several starters that looked complete until the first real feature. This one gave me enough structure to keep moving and enough ownership to change the structure when my product demanded it.</p><footer><span class="avatar">JL</span><strong>Front-end lead</strong><small>Early access</small></footer></blockquote>
+        <blockquote data-reveal><p>Without a strong full-stack baseline, our small team would still be debating infrastructure.</p><footer><span class="avatar">AI</span><strong>Studio partner</strong><small>Builder group</small></footer></blockquote>
+        <blockquote data-reveal><p>The project knowledge is the quiet win. Coding tools start from facts instead of inventing architecture.</p><footer><span class="avatar">EA</span><strong>Engineering lead</strong><small>Pilot cohort</small></footer></blockquote>
+        <blockquote class="quote--medium" data-reveal><p>The documentation gave me confidence that the architecture would remain understandable after the launch sprint. I could see where every decision lived, change it when the product needed something different, and still keep the path back to a stable baseline.</p><footer><span class="avatar">MO</span><strong>Product builder</strong><small>Early access</small></footer></blockquote>
+      </div>
+    </section>
+
+    <section class="faq section-rail" id="faq" data-section="faq" aria-labelledby="faq-title">
+      <h2 id="faq-title">Frequently asked questions</h2>
+      <div class="faq-list">
+        <details>
+          <summary>Why is this starter free and open-source?<span aria-hidden="true">＋</span></summary>
+          <p>Useful infrastructure gets better when builders can inspect it, adapt it, and contribute improvements back. Open Build keeps the application layer visible and portable.</p>
+        </details>
+        <details>
+          <summary>What does Open Build include?<span aria-hidden="true">＋</span></summary>
+          <p>A coherent starting point for authentication, payments, email, files, analytics, tests, deployment, and AI-assisted development.</p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer section-rail" aria-label="Footer">
+    <a class="brand" href="#main" aria-label="Open Build home">
+      <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="currentColor"/><path d="M8 10h10v4H8zm0 8h7v4H8zm13-8h3v12h-3zm-5 5h8v4h-8z" fill="var(--brand-mark-ink)"/></svg>
+      <span>Open Build</span>
+    </a>
+    <nav aria-label="Application links"><h2>App</h2><a href="#features">Features</a><a href="#roadmap">Roadmap</a><a href="#faq">Documentation</a></nav>
+    <nav aria-label="Company links"><h2>Company</h2><a href="#faq">Terms of Service</a><a href="/">Made by fullbuild.ai</a></nav>
+  </footer>
+
+  <script type="module" src="/prototype/open-saas/app.mjs"></script>
+</body>
+</html>
