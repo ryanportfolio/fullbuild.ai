@@ -1068,6 +1068,13 @@ test("the loader is a registered drafting sheet cut open by a percent function",
   assert.doesNotMatch(app, /<span>FULL<\/span>|<span>BUILD<\/span>/);
 
   /*
+   * Inline-block letters invent a break opportunity between every glyph, and a handset
+   * width takes one mid word: BUILD wrapped its D onto a new line. The word spans forbid
+   * wrapping so the split can never change where the words sit.
+   */
+  assert.match(css, /\.starterMark > span \{\r?\n  white-space: nowrap;/);
+
+  /*
    * The draw zone pace is a contract with the band table: the narrowest entrance bands are
    * 2.2 load points wide, so the follower may not sweep a whole band between natural frames
    * sampled 150ms apart, or letters pop in complete.
