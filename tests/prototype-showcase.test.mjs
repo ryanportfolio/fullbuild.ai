@@ -1075,6 +1075,12 @@ test("the loader is a registered drafting sheet cut open by a percent function",
   assert.match(css, /\.starterMark > span \{\r?\n  white-space: nowrap;/);
 
   /*
+   * The mask clips to the border box and heavy glyphs paint past their advance width (the
+   * D lost its bowl). Padding widens the mask box, the negative margin gives it back.
+   */
+  assert.match(css, /padding: 0 0\.08em;\r?\n  margin: 0 -0\.08em;/);
+
+  /*
    * The draw zone pace is a contract with the band table: the narrowest entrance bands are
    * 2.2 load points wide, so the follower may not sweep a whole band between natural frames
    * sampled 150ms apart, or letters pop in complete.
