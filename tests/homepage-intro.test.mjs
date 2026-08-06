@@ -205,6 +205,13 @@ test("the band names are the plate's contract", async () => {
   assert.match(film, /<span>F<\/span>/);
   assert.match(film, /<span>D<\/span>/);
   assert.doesNotMatch(film, /<span>FULL<\/span>|<span>BUILD<\/span>/);
+
+  /*
+   * Inline-block letters invent a break opportunity between every glyph, and a handset
+   * width takes one mid word: BUILD wrapped its D onto a new line. The word spans forbid
+   * wrapping so the split can never change where the words sit.
+   */
+  assert.match(css, /\.starterMark > span \{\r?\n  white-space: nowrap;/);
 });
 
 test("registration is stated and derived", async () => {
