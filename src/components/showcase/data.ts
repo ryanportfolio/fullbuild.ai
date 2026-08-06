@@ -7,9 +7,15 @@ export type ShowcaseProject = {
   colors: readonly [string, string, string];
   media: string;
   motif: "fault" | "assembly" | "burn" | "quench" | "market" | "loop" | "thread" | "morrow" | "dead-low";
+  /** The real prototype page this chapter opens, same behavior as the source's case pages. */
+  href: string;
 };
 
-export const TRACK_SCREENS = 17;
+/*
+ * 21 screens, up from 17: every beat threshold is a fraction of the track, so a longer
+ * track stretches each chapter's dwell without moving any handover or the finale.
+ */
+export const TRACK_SCREENS = 21;
 
 /*
  * Every chapter owns the same slice of the track. Uneven centres left a three-screen
@@ -24,6 +30,7 @@ const FINALE_RUN_OUT = 0.082;
 export const SHOWCASE_PROJECTS: readonly ShowcaseProject[] = [
   {
     id: "morrow",
+    href: "/prototype/morrow",
     title: "Morrow",
     eyebrow: "Future utility",
     summary: "A quiet instrument for making tomorrow feel close enough to inspect and shape",
@@ -34,6 +41,7 @@ export const SHOWCASE_PROJECTS: readonly ShowcaseProject[] = [
   },
   {
     id: "burn-in",
+    href: "/prototype/burn-in",
     title: "Burn-In",
     eyebrow: "Cultural archive",
     summary: "A permanent image afterglow built from memory, repetition, and luminous residue",
@@ -44,6 +52,7 @@ export const SHOWCASE_PROJECTS: readonly ShowcaseProject[] = [
   },
   {
     id: "fault-line",
+    href: "/prototype/fault-line",
     title: "Fault Line",
     eyebrow: "Interactive campaign",
     summary: "A pressure field that turns an invisible structural force into a tactile launch story",
@@ -54,6 +63,7 @@ export const SHOWCASE_PROJECTS: readonly ShowcaseProject[] = [
   },
   {
     id: "assembly-line",
+    href: "/prototype/assembly-line",
     title: "Assembly Line",
     eyebrow: "Product narrative",
     summary: "An industrial system made legible through rhythm, sequence, and exact visual feedback",
@@ -64,6 +74,7 @@ export const SHOWCASE_PROJECTS: readonly ShowcaseProject[] = [
   },
   {
     id: "quench",
+    href: "/prototype/quench",
     title: "Quench",
     eyebrow: "Launch platform",
     summary: "A cold material study where depth and speed make a technical product feel immediate",
@@ -74,6 +85,7 @@ export const SHOWCASE_PROJECTS: readonly ShowcaseProject[] = [
   },
   {
     id: "fahrzeugmarkt",
+    href: "/prototype/fahrzeugmarkt",
     title: "Fahrzeugmarkt",
     eyebrow: "Marketplace prototype",
     summary: "A dense vehicle market recut as one precise, cinematic path through selection",
@@ -84,6 +96,7 @@ export const SHOWCASE_PROJECTS: readonly ShowcaseProject[] = [
   },
   {
     id: "loop-zero",
+    href: "/prototype/loop-zero",
     title: "Loop Zero",
     eyebrow: "Autonomous systems",
     summary: "A looping control room for work that learns, adapts, and returns with a better answer",
@@ -94,6 +107,7 @@ export const SHOWCASE_PROJECTS: readonly ShowcaseProject[] = [
   },
   {
     id: "threadline",
+    href: "/prototype/threadline",
     title: "Threadline",
     eyebrow: "Network story",
     summary: "Distributed work shown as a living line that gathers context without losing its origin",
@@ -104,6 +118,7 @@ export const SHOWCASE_PROJECTS: readonly ShowcaseProject[] = [
   },
   {
     id: "dead-low",
+    href: "/prototype/deadlow",
     title: "Dead Low",
     eyebrow: "Signal experiment",
     summary: "A low-frequency digital object assembled from interference, compression, and control",

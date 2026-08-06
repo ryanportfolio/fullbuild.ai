@@ -3783,6 +3783,13 @@ function ProjectCrystal({
         delete gl.domElement.dataset.hoveredProject;
         setHovered(false);
       }}
+      onClick={(event) => {
+        // stopPropagation so a click cannot also land on a crystal stacked behind this one
+        event.stopPropagation();
+        // Clicks go live once the journey owns the frame and stand down under the finale
+        if (!entered || !entrySettled || progress >= 0.978) return;
+        window.location.assign(SHOWCASE_PROJECTS[index].href);
+      }}
     >
       <mesh
         scale={compactViewport ? [1.55, 1.23, 0.84] : [1.28, 1.14, 0.84]}

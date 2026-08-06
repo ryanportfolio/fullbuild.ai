@@ -6,13 +6,13 @@
   Governing metaphor: a deep-space archive of fractured media crystals
   Palette: void, radiation blue, frost, cold white
   Type: Archivo display with Martian Mono measurements
-  Grid: fixed field, fixed header, bottom ledger, 1700 viewport camera track
+  Grid: fixed field, fixed header, bottom ledger, 2100 viewport camera track
   Motion verbs: DRIFT, ORBIT, FRACTURE, BLEACH
   Signature: procedural project media held inside crystalline cells
   Bans: normal cards, stacked sections, glass panels, decorative statistics,
   source-owned marks or media, audio, and a second animation clock
   State sequence: a drafting sheet that inks itself in and is cut open to the
-  built world, ready manifesto with entry control, then the unlocked 17-screen
+  built world, ready manifesto with entry control, then the unlocked 21-screen
   project journey
 */
 
@@ -25,11 +25,15 @@
   --showcase-muted: rgb(214 227 252 / 62%);
   --showcase-line: rgb(214 227 252 / 28%);
   --showcase-bleach-ease: 760ms;
+
+  /* The house mark from icon.svg as a 32px pointer: Firefox rejects a cursor SVG that
+     carries only a viewBox, so the data URI declares width and height explicitly */
+  --showcase-house-cursor: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='32'%20height='32'%20viewBox='0%200%20100%20100'%3E%3Cg%20stroke='%230a0d1a'%20stroke-linecap='round'%20stroke-linejoin='round'%20fill='none'%3E%3Cpath%20d='M8%2082%20H92'%20stroke-width='9'/%3E%3Cpath%20d='M18%2082%20V48%20L35%2032%20L52%2048%20V82'%20stroke-width='10'/%3E%3Cpath%20d='M52%2048%20H82%20V82'%20stroke-width='10'/%3E%3Cpath%20d='M52%2048%20L68%2032%20L82%2046'%20stroke-width='10'/%3E%3Cpath%20d='M25%2076%20l12%20-12%20M25%2066%20l9%20-9'%20stroke-width='6'/%3E%3C/g%3E%3Cpath%20d='M52%2048%20H82%20V82%20H52%20Z'%20fill='%230a0d1a'%20stroke='%230a0d1a'%20stroke-width='10'%20stroke-linejoin='round'/%3E%3Cg%20stroke='%23f4f6ff'%20stroke-linecap='round'%20stroke-linejoin='round'%20fill='none'%3E%3Cpath%20d='M8%2082%20H92'%20stroke-width='4'/%3E%3Cpath%20d='M18%2082%20V48%20L35%2032%20L52%2048%20V82'%20stroke-width='4.5'/%3E%3Cpath%20d='M52%2048%20H82%20V82'%20stroke-width='4.5'/%3E%3Cpath%20d='M52%2048%20L68%2032%20L82%2046'%20stroke-width='4.5'/%3E%3Cpath%20d='M25%2076%20l12%20-12%20M25%2066%20l9%20-9'%20stroke-width='2.5'/%3E%3C/g%3E%3Cpath%20d='M52%2048%20H82%20V82%20H52%20Z'%20fill='%23f4f6ff'/%3E%3C/svg%3E") 11 10, pointer;
   position: relative;
   isolation: isolate;
   width: 100%;
-  height: 1700svh;
-  min-height: 1700svh;
+  height: calc(var(--track-screens, 21) * 100svh);
+  min-height: calc(var(--track-screens, 21) * 100svh);
   overflow: clip;
   color: var(--showcase-white);
   background: var(--showcase-void);
@@ -38,6 +42,15 @@
 
 .shell:focus {
   outline: none;
+}
+
+/* The mark rides the pointer only on the four real actions: the wordmark, the entry
+   control, the ledger link, and a hovered crystal on the canvas */
+.wordmark,
+.enterButton,
+.projectRow a,
+.scene canvas[data-hovered-project] {
+  cursor: var(--showcase-house-cursor);
 }
 
 :global(html):has(.shell) {
@@ -83,13 +96,12 @@
 .shell[data-bleaching="true"] .entryGate,
 .shell[data-bleaching="true"] .sceneLabel,
 .shell[data-bleaching="true"] .finale::before,
-.shell[data-bleaching="true"] .finale p,
 .shell[data-bleaching="true"] .finaleHandle,
 .shell[data-bleaching="true"] .socials a,
 .shell[data-bleaching="true"] .mobileMenu,
 .shell[data-bleaching="true"] .ledgerLabel,
 .shell[data-bleaching="true"] .projectRow h1,
-.shell[data-bleaching="true"] .projectRow button,
+.shell[data-bleaching="true"] .projectRow a,
 .shell[data-bleaching="true"] .summary,
 .shell[data-bleaching="true"] .ledgerInfo li,
 .shell[data-bleaching="true"] .wordmark,
@@ -103,7 +115,7 @@
 /* The control under the cursor is the one thing that keeps its colour */
 .shell[data-bleaching="true"] .header a:hover,
 .shell[data-bleaching="true"] .header button:hover,
-.shell[data-bleaching="true"] .projectRow button:hover,
+.shell[data-bleaching="true"] .projectRow a:hover,
 .shell[data-bleaching="true"] .finale a:hover {
   filter: none;
 }
@@ -153,10 +165,9 @@
 
 .ledgerLabel,
 .projectRow h1,
-.projectRow button,
+.projectRow a,
 .summary,
 .ledgerInfo li,
-.finale p,
 .finaleHandle,
 .socials a {
   transition: filter var(--showcase-bleach-ease, 760ms) ease,
@@ -164,7 +175,7 @@
 }
 
 /* The ledger stays transparent to the crystals, apart from the one control on it */
-.ledger[data-visible="true"] .projectRow button {
+.ledger[data-visible="true"] .projectRow a {
   pointer-events: auto;
 }
 
@@ -1511,19 +1522,20 @@
   letter-spacing: -0.015em;
 }
 
-.projectRow button {
+.projectRow a {
   display: flex;
   align-items: center;
-  height: 28px;
-  padding: 0 8px;
+  height: 42px;
+  padding: 0 12px;
   border: 0;
   color: var(--showcase-white);
   background: var(--showcase-blue);
   font-family: var(--font-martian), monospace;
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 21px;
+  line-height: 30px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  text-decoration: none;
   white-space: nowrap;
   opacity: 1;
 }
@@ -1619,26 +1631,22 @@
   justify-items: center;
 }
 
-.finale p,
 .finaleHandle {
   margin: 0;
+  color: var(--showcase-white);
   font-size: clamp(3.4rem, 8.1vw, 10.4rem);
   font-weight: 430;
   line-height: 1.03;
   letter-spacing: -0.055em;
   text-transform: uppercase;
   white-space: nowrap;
+  -webkit-text-stroke: 0;
   /* Tight halo, not a lamp. The 2.2rem blue bled a mid tone a third of a line height out
      from every glyph, which is most of what put the last screen twice the reference's
      brightness while its field and its floor already matched. */
   text-shadow:
     0 0 0.3rem rgb(226 233 255 / 26%),
     0 0 1.1rem rgb(46 82 255 / 44%);
-}
-
-.finaleHandle {
-  color: var(--showcase-white);
-  -webkit-text-stroke: 0;
 }
 
 /* Stacked at the very bottom of the frame, not tucked under the heading */
@@ -1652,7 +1660,7 @@
   align-items: center;
   margin: 0;
   font-family: var(--font-martian), monospace;
-  font-size: 11px;
+  font-size: 22px;
   line-height: 1;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -1948,10 +1956,10 @@
     line-height: 1;
   }
 
-  .projectRow button {
-    height: 1.7rem;
-    padding: 0 0.5rem;
-    font-size: 0.66rem;
+  .projectRow a {
+    height: 2.55rem;
+    padding: 0 0.75rem;
+    font-size: 0.99rem;
   }
 
   .finale {
@@ -1963,26 +1971,11 @@
   }
 
   /*
-   * The handset abandons the desktop's single nowrap band. The reference phone finale is
-   * three stacked blocks: the statement wrapped onto two centered lines in the top third,
-   * the socials in the middle, and the mailto reduced to one small line at the floor. The
-   * lockup wrapper dissolves so the three blocks can space between top and bottom.
+   * The handset stacks the LinkedIn link in the middle and the mailto reduced to one
+   * small line at the floor. The lockup wrapper dissolves so flex order can interleave.
    */
   .finaleLockup {
     display: contents;
-  }
-
-  .finale p {
-    order: 0;
-    position: static;
-    width: auto;
-    max-width: 80vw;
-    font-size: 11.8vw;
-    font-weight: 430;
-    line-height: 1.12;
-    white-space: normal;
-    text-align: center;
-    transform: none;
   }
 
   .finaleHandle {
@@ -2002,7 +1995,7 @@
     position: static;
     margin: 0;
     gap: 14px;
-    font-size: 0.62rem;
+    font-size: 1.24rem;
   }
 }
 

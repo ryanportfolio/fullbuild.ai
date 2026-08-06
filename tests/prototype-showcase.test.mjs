@@ -40,11 +40,21 @@ test("showcase route exposes the clean-room experience", async () => {
     app.match(/<section className=\{styles\.starter\}[\s\S]*?<\/section>/)?.[0] ?? "",
     /enterButton/,
   );
-  assert.match(app, /WITH US IT HAPPENS/);
+  // The finale lockup is the mailto alone; the statement line and the extra socials left
+  // by owner request. LinkedIn is the one social and it points at the real profile.
+  assert.doesNotMatch(app, /WITH US IT HAPPENS/);
+  assert.doesNotMatch(app, /instagram|behance/i);
+  assert.match(app, /href="https:\/\/www\.linkedin\.com\/in\/ryan-allen-d\/"/);
+  assert.match(app, /<span>PROTOTYPES<\/span>/);
+  assert.doesNotMatch(app, /<span>SHOWCASE<\/span>/);
   assert.match(app, /aria-expanded/);
   assert.match(app, /<noscript>/);
-  assert.match(data, /TRACK_SCREENS\s*=\s*17/);
   assert.equal((data.match(/\bid:\s*"/g) ?? []).length, 9);
+  // Every chapter opens a real prototype page, the way the source opens its case pages.
+  assert.equal((data.match(/\bhref:\s*"\/prototype\//g) ?? []).length, 9);
+  assert.match(data, /href: "\/prototype\/deadlow"/);
+  // A chapter has to survive more scroll before it clears away, so the track is longer
+  assert.match(data, /TRACK_SCREENS\s*=\s*21/);
 });
 
 test("showcase scene is deterministic, disposable, and captureable", async () => {
@@ -54,6 +64,10 @@ test("showcase scene is deterministic, disposable, and captureable", async () =>
   assert.match(scene, /entrySettled/);
   assert.match(scene, /onPointerEnter/);
   assert.match(scene, /hoverMix/);
+  // A crystal is a link to its own prototype, guarded off the entry and the finale
+  assert.match(scene, /onClick=\{\(event\) => \{/);
+  assert.match(scene, /window\.location\.assign\(SHOWCASE_PROJECTS\[index\]\.href\)/);
+  assert.match(scene, /if \(!entered \|\| !entrySettled \|\| progress >= 0\.978\) return;/);
   assert.doesNotMatch(scene, /Math\.random/);
   assert.match(scene, /seededRandom/);
   assert.match(scene, /dispose\(\)/);
@@ -326,7 +340,12 @@ test("showcase CSS contains the binding contract and responsive floor", async ()
 
   assert.match(css, /DESIGN CONTRACT/);
   assert.match(css, /--showcase-blue:\s*#0004eb/i);
-  assert.match(css, /1700svh/);
+  // The shell reads its length off the same TRACK_SCREENS the beats scale from
+  assert.match(css, /height: calc\(var\(--track-screens, 21\) \* 100svh\)/);
+  // The house mark cursor: Firefox needs explicit width and height on the data URI SVG
+  assert.match(css, /--showcase-house-cursor: url\("data:image\/svg\+xml,%3Csvg%20xmlns='http:\/\/www\.w3\.org\/2000\/svg'%20width='32'%20height='32'/);
+  const cursorTargets = css.match(/\.wordmark,\r?\n\.enterButton,\r?\n\.projectRow a,\r?\n\.scene canvas\[data-hovered-project\] \{\r?\n\s*cursor: var\(--showcase-house-cursor\);/);
+  assert.ok(cursorTargets, "the four real actions carry the house cursor");
   assert.match(css, /@media\s*\(max-width:\s*767px\)/);
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /:focus-visible/);
@@ -380,18 +399,17 @@ test("bleach answers to the pointer alone, never to scroll position", async () =
 
   // The control under the cursor keeps its colour, so it can never sit inside a
   // filtered wrapper.
-  assert.match(css, /\.shell\[data-bleaching="true"\] \.projectRow button:hover/);
-  assert.match(css, /\.ledger\[data-visible="true"\] \.projectRow button \{\s*pointer-events: auto;/);
+  assert.match(css, /\.shell\[data-bleaching="true"\] \.projectRow a:hover/);
+  assert.match(css, /\.ledger\[data-visible="true"\] \.projectRow a \{\s*pointer-events: auto;/);
   assert.doesNotMatch(css, /\.shell\[data-bleaching="true"\] \.ledger,/);
 
-  // The ledger CTA is spoken as unavailable, never natively disabled. Browsers are free to
-  // swallow pointer events on a disabled form control, and this button is one of the
-  // anchors the drain listens to.
-  const ledgerCta = app.split("View case study")[0]?.split("<button").pop() ?? "";
-  assert.match(ledgerCta, /aria-disabled="true"/);
-  assert.match(ledgerCta, /tabIndex=\{-1\}/);
-  assert.match(ledgerCta, /onClick=\{\(event\) => event\.preventDefault\(\)\}/);
-  assert.doesNotMatch(ledgerCta, /\sdisabled[\s>]/);
+  // The ledger CTA is a real link to the active prototype, still one of the anchors the
+  // drain listens to, and it navigates as a full page load because several targets are
+  // static exports rather than app routes.
+  assert.match(app, /<a href=\{activeProject\.href\} aria-label=\{`View \$\{activeProject\.title\}`\}>View<\/a>/);
+  assert.doesNotMatch(app, /View case study/);
+  assert.doesNotMatch(app, /aria-disabled/);
+  assert.doesNotMatch(app, /detail page not included/);
 
   // A control can be unmounted out from under a resting cursor, so the drain re-checks what
   // the pointer is really on once a scroll settles instead of waiting for a pointerout that
@@ -912,29 +930,31 @@ test("the finale keeps the live field, a display lockup, and socials on the floo
   assert.match(finale, /background: transparent/);
   assert.doesNotMatch(finale, /background:\s*#/);
 
-  // Display scale, and both lines nowrap so a narrow viewport crops instead of reflowing.
-  const lockup = css.match(/\.finale p,\s*\.finaleHandle \{[\s\S]*?\}/)?.[0] ?? "";
+  // Display scale, and the mailto line nowrap so a narrow viewport crops instead of
+  // reflowing. The statement paragraph is gone by owner request, so the handle carries
+  // the lockup styling alone.
+  const lockup = css.match(/\.finaleHandle \{[\s\S]*?\}/)?.[0] ?? "";
   assert.match(lockup, /font-size: clamp\(3\.4rem, 8\.1vw, 10\.4rem\)/);
   assert.match(lockup, /white-space: nowrap/);
+  assert.doesNotMatch(css, /\.finale p[,\s{]/);
 
-  // The handset finale is three stacked blocks like the reference phone frame: statement
-  // wrapped onto centered lines up top, socials in the middle, mailto reduced to one small
+  // The handset finale stacks LinkedIn in the middle and the mailto reduced to one small
   // line on the floor. The lockup wrapper dissolves so flex order can interleave them.
   const mobile = css.match(/@media \(max-width: 767px\) \{[\s\S]*?\n\}/)?.[0] ?? "";
-  const mobileStatement = mobile.match(/\.finale p \{[\s\S]*?\}/)?.[0] ?? "";
-  assert.match(mobileStatement, /font-size: 11\.8vw/);
-  assert.match(mobileStatement, /white-space: normal/);
-  assert.match(mobileStatement, /text-align: center/);
   const mobileHandle = mobile.match(/\.finaleHandle \{[\s\S]*?\}/)?.[0] ?? "";
   assert.match(mobileHandle, /order: 2/);
   assert.match(mobileHandle, /font-size: 1\.2rem/);
   assert.match(mobile, /\.finaleLockup \{[^}]*display: contents/);
   assert.doesNotMatch(mobile, /12\.5vw/);
 
-  // Socials stack on the floor of the frame rather than sitting under the heading.
+  // Socials stack on the floor of the frame rather than sitting under the heading, and
+  // LinkedIn runs twice the old 11px scale on both breakpoints.
   const socials = css.match(/\.socials \{[\s\S]*?\}/)?.[0] ?? "";
   assert.match(socials, /flex-direction: column/);
   assert.match(socials, /bottom: 43px/);
+  assert.match(socials, /font-size: 22px/);
+  const mobileSocials = mobile.match(/\.socials \{[\s\S]*?\}/)?.[0] ?? "";
+  assert.match(mobileSocials, /font-size: 1\.24rem/);
 
   // The travelling corridor is spent by the finale, so it carries its own seeded band.
   assert.match(scene, /function FinaleDebris/);

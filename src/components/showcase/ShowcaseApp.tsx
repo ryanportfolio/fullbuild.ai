@@ -521,7 +521,7 @@ export function ShowcaseApp() {
       <header className={styles.header} aria-label="Showcase navigation">
         <Link className={styles.wordmark} href="/" aria-label="fullbuild.ai home">
           <span>FULLBUILD</span>
-          <span>SHOWCASE</span>
+          <span>PROTOTYPES</span>
         </Link>
 
         <div className={styles.headerActions}>
@@ -654,22 +654,12 @@ export function ShowcaseApp() {
           <div className={styles.projectRow} key={`project-${activeProject.id}`}>
             <h1>{activeProject.title}</h1>
             {/*
-              aria-disabled, never the disabled attribute. A natively disabled control is
-              inert to pointer events in some browsers, and this CTA is one of the anchors
-              the bleach listens to: dwelling on it has to drain the world while the button
-              itself keeps its radiation blue. The attribute swap changes nothing visually
-              because every colour on this control is set here rather than inherited from a
-              user agent :disabled rule.
+              A plain anchor with a full page navigation: several targets are static
+              exports rather than app routes, so a router transition cannot reach them.
+              It stays matched by BLEACH_CONTROL, so dwelling here still drains the world
+              while the link keeps its radiation blue.
             */}
-            <button
-              type="button"
-              aria-disabled="true"
-              tabIndex={-1}
-              onClick={(event) => event.preventDefault()}
-              aria-label={`${activeProject.title} detail page not included`}
-            >
-              View case study
-            </button>
+            <a href={activeProject.href} aria-label={`View ${activeProject.title}`}>View</a>
           </div>
         </div>
         <div className={styles.ledgerInfo} key={`info-${activeProject.id}`}>
@@ -688,13 +678,10 @@ export function ShowcaseApp() {
       */}
       <section className={styles.finale} data-visible={finaleVisible} aria-label="Contact">
         <div className={styles.finaleLockup}>
-          <p>WITH US IT HAPPENS</p>
           <a className={styles.finaleHandle} href="mailto:hi@fullbuild.ai">HI@FULLBUILD.AI</a>
         </div>
         <div className={styles.socials}>
-          <a href="https://www.linkedin.com" rel="noreferrer">LinkedIn</a>
-          <a href="https://www.instagram.com" rel="noreferrer">Instagram</a>
-          <a href="https://www.behance.net" rel="noreferrer">Behance</a>
+          <a href="https://www.linkedin.com/in/ryan-allen-d/" rel="noreferrer">LinkedIn</a>
         </div>
       </section>
 
