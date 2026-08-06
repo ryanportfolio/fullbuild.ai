@@ -27,6 +27,7 @@ const nextConfig = {
       { source: '/prototype/assembly-line', destination: '/prototype/assembly-line/index.html' },
       { source: '/prototype/burn-in', destination: '/prototype/burn-in/index.html' },
       { source: '/prototype/quench', destination: '/prototype/quench/index.html' },
+      { source: '/prototype/loop-zero', destination: '/prototype/loop-zero/index.html' },
       { source: '/prototype/open-saas', destination: '/prototype/open-saas/index.html' },
       { source: '/prototype/maranatha', destination: '/prototype/maranatha/index.html' },
       // Harborline is a static export of a Statamic CMS build. It has a service

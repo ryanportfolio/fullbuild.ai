@@ -1,0 +1,2142 @@
+/*
+  DESIGN CONTRACT
+  Subject: fullbuild.ai project showcase
+  Reader: a prospect entering from the prototype gallery
+  Job: explore nine flagship builds, then make contact
+  Governing metaphor: a deep-space archive of fractured media crystals
+  Palette: void, radiation blue, frost, cold white
+  Type: Archivo display with Martian Mono measurements
+  Grid: fixed field, fixed header, bottom ledger, 2100 viewport camera track
+  Motion verbs: DRIFT, ORBIT, FRACTURE, BLEACH
+  Signature: procedural project media held inside crystalline cells
+  Bans: normal cards, stacked sections, glass panels, decorative statistics,
+  source-owned marks or media, audio, and a second animation clock
+  State sequence: a drafting sheet that inks itself in and is cut open to the
+  built world, ready manifesto with entry control, then the unlocked 21-screen
+  project journey
+*/
+
+.shell {
+  --showcase-void: #00000b;
+  --showcase-black: #050516;
+  --showcase-blue: #0004eb;
+  --showcase-frost: #f1f4ff;
+  --showcase-white: #f4f6ff;
+  --showcase-muted: rgb(214 227 252 / 62%);
+  --showcase-line: rgb(214 227 252 / 28%);
+  --showcase-bleach-ease: 760ms;
+
+  /* One mark, one pointer. The geometry and both grounds live in globals.css; this page is
+     a night table wherever the site theme stands, so it takes the frost cut of it. */
+  --showcase-house-cursor: var(--house-cursor-frost);
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: calc(var(--track-screens, 21) * 100svh);
+  min-height: calc(var(--track-screens, 21) * 100svh);
+  overflow: clip;
+  color: var(--showcase-white);
+  background: var(--showcase-void);
+  font-family: var(--font-archivo), sans-serif;
+}
+
+.shell:focus {
+  outline: none;
+}
+
+/* The mark rides the pointer only on the four real actions: the wordmark, the entry
+   control, the ledger link, and a hovered crystal on the canvas */
+.wordmark,
+.enterButton,
+.projectRow a,
+.scene canvas[data-hovered-project],
+.entryObject canvas[data-hovered-mark] {
+  cursor: var(--showcase-house-cursor);
+}
+
+:global(html):has(.shell) {
+  background: var(--showcase-void, #020411);
+  scroll-behavior: auto;
+  scrollbar-color: #283cff #020411;
+}
+
+:global(body):has(.shell) {
+  margin: 0;
+  overflow-x: hidden;
+  color: var(--showcase-white, #d6e3fc);
+  background: var(--showcase-void, #020411);
+}
+
+:global(body):has(.shell) :global(#site-header),
+:global(body):has(.shell) :global(#title-block) {
+  display: none;
+}
+
+.scene {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  width: 100vw;
+  height: 100svh;
+  background: #00000b;
+  transition: filter var(--showcase-bleach-ease, 760ms) ease;
+}
+
+/*
+ * BLEACH. Every fixed layer carries its own grayscale instead of one filter on the
+ * shell, because a filtered ancestor would become the containing block for the fixed
+ * children and drop the whole world into the scroll. `--showcase-bleach` is the single
+ * 0 to 1 authority and pointer dwell on a control is its only input, on the starter and
+ * deep in the journey alike. The ledger and the finale are listed leaf by leaf rather than
+ * as one block, because a filtered ancestor would take their controls down with it and the
+ * control under the cursor is the one thing that keeps its blue.
+ */
+.shell[data-bleaching="true"] .scene,
+.shell[data-bleaching="true"] .entryObject,
+.shell[data-bleaching="true"] .entryGate,
+.shell[data-bleaching="true"] .sceneLabel,
+.shell[data-bleaching="true"] .finale::before,
+.shell[data-bleaching="true"] .finaleHandle,
+.shell[data-bleaching="true"] .socials a,
+.shell[data-bleaching="true"] .mobileMenu,
+.shell[data-bleaching="true"] .ledgerLabel,
+.shell[data-bleaching="true"] .projectRow h1,
+.shell[data-bleaching="true"] .projectRow a,
+.shell[data-bleaching="true"] .summary,
+.shell[data-bleaching="true"] .ledgerInfo li,
+.shell[data-bleaching="true"] .wordmark,
+.shell[data-bleaching="true"] .desktopNav a,
+.shell[data-bleaching="true"] .mailLink,
+.shell[data-bleaching="true"] .soundTile,
+.shell[data-bleaching="true"] .menuButton {
+  filter: grayscale(var(--showcase-bleach, 0));
+}
+
+/* The control under the cursor is the one thing that keeps its colour */
+.shell[data-bleaching="true"] .header a:hover,
+.shell[data-bleaching="true"] .header button:hover,
+.shell[data-bleaching="true"] .projectRow a:hover,
+.shell[data-bleaching="true"] .finale a:hover {
+  filter: none;
+}
+
+/* Chrome text has no blue to keep, so the cursor lends it some */
+.shell[data-bleaching="true"] .desktopNav a:hover,
+.shell[data-bleaching="true"] .finale a:hover {
+  color: var(--showcase-blue);
+}
+
+/*
+ * ENTRY BLACK POINT. Sampled anywhere off the artifact, the reference field through the
+ * whole opening is a pure blue channel over a literal zero: 0/0/99 in the far corners,
+ * 0/0/188 hard against the plate, and ninety-one percent of the frame under sixteen
+ * counts at 1800ms. The same field here carried about fourteen counts of red and green
+ * with it, and that is the entire gap: every one of those pixels landed in the sixteen to
+ * thirty-two band the reference leaves empty, while the plate itself was already black.
+ * Crushing the black point of the world layer takes the red and green to nothing and
+ * leaves the blue where it was.
+ *
+ * It has to be off well before the entrySettled handover at 3s rather than at it, so the
+ * crush runs on its own clock and is fully released by 2.5s. The artifact is a separate
+ * layer, so none of this touches the plate or its seams.
+ *
+ * Ordered after the bleach rule on purpose: the two selectors weigh the same, so this one
+ * has to come second to win, and it carries the grayscale term along so a pointer resting
+ * on a control still drains the world during the opening.
+ */
+.shell:not([data-entry-settled="true"]) .scene {
+  filter: grayscale(var(--showcase-bleach, 0)) contrast(1.3);
+}
+
+.shell[data-entered="true"]:not([data-entry-settled="true"]) .scene {
+  animation: entryBlackPoint 2500ms linear forwards;
+}
+
+@keyframes entryBlackPoint {
+  0%,
+  82% {
+    filter: grayscale(var(--showcase-bleach, 0)) contrast(1.3);
+  }
+
+  100% {
+    filter: grayscale(var(--showcase-bleach, 0)) contrast(1);
+  }
+}
+
+.ledgerLabel,
+.projectRow h1,
+.projectRow a,
+.summary,
+.ledgerInfo li,
+.finaleHandle,
+.socials a {
+  transition: filter var(--showcase-bleach-ease, 760ms) ease,
+    color var(--showcase-bleach-ease, 760ms) ease;
+}
+
+/* The ledger stays transparent to the crystals, apart from the one control on it */
+.ledger[data-visible="true"] .projectRow a {
+  pointer-events: auto;
+}
+
+.scene::before,
+.scene::after {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+}
+
+/*
+ * Two stacked fields, never a swap. `.scene::before` holds the settled world tint and
+ * fades up while `.entryFlood` blooms and drains, so the entrySettled flip at 3s has
+ * nothing left to change.
+ */
+/*
+ * Screen blending means every non-black stop in here is a lift applied to the whole frame.
+ * The old outer stops carried blue, which put roughly ten counts of navy in all four
+ * corners while the reference holds a true zero there, so the outer half of both layers is
+ * now literally black and the cobalt only survives where the wash belongs.
+ */
+/*
+ * And it does not ride the chapter arc, which is why it had to come down: a fixed tint at
+ * the old level was still laying a mid tone across the middle of the two darkest chapters,
+ * where the reference has nothing between its objects but speckle.
+ */
+.scene::before {
+  background:
+    radial-gradient(circle at 50% 46%, rgb(16 34 255 / 12%) 0 4%, rgb(0 3 128 / 4%) 22%, rgb(0 0 0 / 91%) 56%),
+    linear-gradient(90deg, rgb(0 0 0 / 78%), transparent 25% 75%, rgb(0 0 0 / 78%));
+  opacity: 0;
+  mix-blend-mode: screen;
+  transition: opacity 1150ms ease 1150ms;
+}
+
+.shell[data-entered="true"] .scene::before {
+  opacity: 1;
+}
+
+.entryFlood {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  opacity: 0.62;
+  /* A pool, not a wash. At a 48 percent mid stop this covered seventy percent of the
+     frame in a mid tone from the first frame of the transition, where the reference holds
+     that stretch as dark as its starter and only floods later. */
+  background:
+    radial-gradient(circle at 50% 48%, rgb(46 76 255 / 84%) 0 12%, rgb(0 10 205 / 44%) 32%, rgb(0 0 0 / 96%) 75%),
+    linear-gradient(90deg, rgb(0 0 0 / 46%), transparent 19% 81%, rgb(0 0 0 / 46%));
+  mix-blend-mode: screen;
+  transition: opacity 700ms ease;
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+/* The ready field is the reference's widest blue moment: mean blue ~73 on the source
+   ready frame against 55 after the journey floor removal pulled this pool down with it.
+   The lift lives only here; the drain keyframes hand it straight back to the old curve. */
+.shell[data-ready="true"] .entryFlood {
+  opacity: 0.95;
+}
+
+.shell[data-entered="true"] .entryFlood {
+  animation: entryFloodDrain 2400ms linear forwards;
+}
+
+/*
+ * The flare arrives late and leaves fast. Measured against the reference, the first six
+ * hundred milliseconds of the transition are no brighter than the starter it came from,
+ * the peak lands at about 1.2s and is a hard cobalt, and the frame is nearly black by
+ * 1.8s. Blooming from the click instead put twenty counts of lift exactly where the
+ * reference is still dark, and left the peak spent by the time the reference reached it.
+ */
+@keyframes entryFloodDrain {
+  0% {
+    opacity: 0.95;
+    transform: scale(1);
+  }
+
+  18% {
+    opacity: 0.78;
+    transform: scale(1.03);
+  }
+
+  30% {
+    opacity: 0.9;
+    transform: scale(1.2);
+  }
+
+  46% {
+    opacity: 0.86;
+    transform: scale(1.6);
+  }
+
+  56% {
+    opacity: 0.5;
+    transform: scale(2.05);
+  }
+
+  68% {
+    opacity: 0.16;
+    transform: scale(2.6);
+  }
+
+  84%,
+  100% {
+    opacity: 0;
+    transform: scale(3.2);
+  }
+}
+
+/*
+ * P2-4: the analog floor. Soft-light is a no-op over a true black, so the old grain was
+ * invisible in exactly the places the reference is grainiest: its empty frame is black
+ * studded with pure cobalt speckle, not a smooth navy field. Screen blending puts the
+ * speck back on top of zero.
+ *
+ * The dot pattern itself comes from `--showcase-grain`, a seeded tile the app draws
+ * once at mount. Repeating gradients cannot place isolated single pixels, so the tiled
+ * version of this laid a regular weave over the whole frame: every pixel got some blue,
+ * which lifted the corners the reference holds at literally zero and left grain that
+ * decorrelated inside one pixel where the reference stays correlated across two. The
+ * gradient below is the fallback for the frames before the tile lands.
+ */
+.scene::after {
+  opacity: 0.62;
+  background-image: var(
+    --showcase-grain,
+    repeating-radial-gradient(circle at 31% 19%, transparent 0 1.4px, rgb(0 0 255 / 54%) 1.4px 2.15px, transparent 2.15px 5px)
+  );
+  /* The tile is drawn at device scale and must never be resampled: a scaled dot lattice
+     smears into the weave this replaced. */
+  background-size: auto;
+  background-repeat: repeat;
+  /* The reference floor is grainy across the whole working frame and falls away only in
+     the outer corners, so the vignette here is wide. It no longer carries the floor: the
+     tile is black between its dots, so the corners read zero whatever the mask does. */
+  mask-image: radial-gradient(ellipse 86% 94% at 50% 48%, #000 0 55%, rgb(0 0 0 / 62%) 86%, transparent 105%);
+  mix-blend-mode: screen;
+}
+
+/* The transition is the one moment the film breaks up: grain climbs with the flood and is
+   back to its settled level well before the 3s handover. */
+.shell[data-entered="true"] .scene::after {
+  animation: grainSpike 2900ms ease-out;
+}
+
+@keyframes grainSpike {
+  0%,
+  21% {
+    opacity: 0.62;
+  }
+
+  38%,
+  62% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.62;
+  }
+}
+
+.scene canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.header {
+  position: fixed;
+  z-index: 70;
+  top: 15px;
+  right: 16px;
+  left: 16px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  color: var(--showcase-frost);
+  transition: opacity 600ms ease, transform 600ms ease;
+}
+
+/*
+ * Only the identity shouts. A blanket uppercase on the header put the navigation and the
+ * mail control in caps, which is not how the chrome is set: those are sentence case.
+ */
+
+.shell:not([data-ready="true"]) .header {
+  opacity: 0;
+  transform: translateY(-1rem);
+  pointer-events: none;
+}
+
+.wordmark {
+  display: inline-flex;
+  gap: 0.8rem;
+  align-items: baseline;
+  justify-self: start;
+  color: inherit;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.075em;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: filter var(--showcase-bleach-ease, 760ms) ease;
+}
+
+.wordmark span:last-child {
+  font-family: var(--font-martian), monospace;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+}
+
+.desktopNav {
+  display: flex;
+  gap: 30px;
+  justify-self: start;
+  font-family: var(--font-martian), monospace;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.desktopNav a,
+.mailLink,
+.mobileMenu a,
+.finale a,
+.socials a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.desktopNav a {
+  position: relative;
+  padding-bottom: 0.45rem;
+}
+
+.desktopNav a,
+.mailLink {
+  transition: filter var(--showcase-bleach-ease, 760ms) ease;
+}
+
+.desktopNav a::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 300ms ease;
+  content: "";
+}
+
+.desktopNav a:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/*
+ * The mail control is a pale periwinkle plate carrying blue type, closed by a solid blue
+ * arrow chip flush inside its right end. A bare glyph read as an afterthought.
+ */
+.mailLink {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 126px;
+  height: 30px;
+  padding: 0 4px 0 10px;
+  border: 0;
+  border-radius: 4px;
+  color: var(--showcase-blue);
+  background: #dfe3ff;
+  font-family: var(--font-martian), monospace;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.mailChip {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 3px;
+  color: #dfe3ff;
+  background: var(--showcase-blue);
+  font-family: var(--font-archivo), sans-serif;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.mailLink:hover {
+  background: var(--showcase-white);
+}
+
+.headerActions {
+  display: flex;
+  gap: 8px;
+  justify-self: end;
+}
+
+.soundTile {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  color: var(--showcase-white);
+  background: var(--showcase-blue);
+  opacity: 1;
+  transition: filter var(--showcase-bleach-ease, 760ms) ease;
+}
+
+.speakerGlyph {
+  display: block;
+  width: 17px;
+  height: 17px;
+}
+
+.mobileControls,
+.mobileMenu {
+  display: none;
+}
+
+/*
+ * THE SHEET GOES LIVE. The loader is one drawing rendered twice: a drafting sheet in
+ * graphite on vellum, and the same geometry in frost on the void. A registration box is
+ * ruled around the mark, turns revision red, travels across the sheet as a cut, then blows
+ * out to the page frame. One drafting object carries all three beats, and the conversion
+ * happens at page level rather than as a wipe over a picture of one.
+ *
+ * MUD WARNING, permanent. A single layer with one ink lerped from graphite to frost goes
+ * dead grey exactly where the ground goes dead grey, and contrast collapses in the middle
+ * of the film. That failure is the entire reason there are two composites and a hard edge,
+ * and it comes back the moment somebody folds them into one.
+ *
+ * Never read --ground, --ink-graphite or any other globals.css token from this block. They
+ * invert under :root[data-theme="dark"] and the loader would open on a near black table,
+ * destroying the inversion the film is built on. Literals only, which is this module's
+ * house style anyway.
+ */
+@property --b-grid { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-setout0 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-setout1 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-setout2 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-setout3 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-base { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-draw { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-over { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-hatch1 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-hatch2 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-pour1 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-pour2 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-rise { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-cure { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-marks { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-mark { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-rule { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-red { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-spend { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-cut { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-edge { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-ink { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-blow { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-build { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-tick0 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-tick1 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-tick2 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-tick3 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-tick4 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-tick5 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-tick6 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-num { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-let0 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-let1 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-let2 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-let3 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-let4 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-let5 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-let6 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-let7 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --b-let8 { syntax: "<number>"; inherits: true; initial-value: 0; }
+
+.starter {
+  /*
+   * REGISTRATION. The loader's last frame and the artifact's first frame have to be the
+   * same drawing at the same size in the same place, or the 900ms handover reads as two
+   * screens instead of one becoming the other. Derived from ShowcaseScene's viewportScale
+   * (0.58 desktop, 0.44 handset), its entry camera at z 5 and fov 50, the rest pose z 0.1
+   * and y 0.12, and ENTRY_LINE_FRONT 0.034, which is the plane the visible linework sits on.
+   * If any of those four change, recompute both numbers:
+   *   unit   = 100 * (S / 20) / (2 * (5 - 0.1 - 0.034 * S) * tan(25deg))
+   *   offset = 100 * 0.12     / (2 * (5 - 0.1 - 0.034 * S) * tan(25deg))
+   */
+  --mark-unit: 0.6372svh;
+  --mark-cy: calc(50% - 2.637svh);
+
+  /*
+   * THE BAND TABLE. React writes one number and CSS derives every ramp off it, so the
+   * whole film is a pure function of percent: a fast machine plays it faster, a stall parks
+   * on a legitimate half inked sheet, and holding the percent reproduces any frame exactly.
+   */
+  --load: var(--showcase-load, 0);
+
+  --b-grid: clamp(0, calc(var(--load) * 16.667), 1);
+  /* The sheet furniture is drafted, never faded: the readout wipes in first, then each
+     lockup letter ripples in on its own band, all pure functions of the one load write. */
+  --b-num: clamp(0, calc((var(--load) - 0.012) * 45.45), 1);
+  --b-let0: clamp(0, calc((var(--load) - 0.016) * 45.45), 1);
+  --b-let1: clamp(0, calc((var(--load) - 0.025) * 45.45), 1);
+  --b-let2: clamp(0, calc((var(--load) - 0.034) * 45.45), 1);
+  --b-let3: clamp(0, calc((var(--load) - 0.043) * 45.45), 1);
+  --b-let4: clamp(0, calc((var(--load) - 0.052) * 45.45), 1);
+  --b-let5: clamp(0, calc((var(--load) - 0.061) * 45.45), 1);
+  --b-let6: clamp(0, calc((var(--load) - 0.070) * 45.45), 1);
+  --b-let7: clamp(0, calc((var(--load) - 0.079) * 45.45), 1);
+  --b-let8: clamp(0, calc((var(--load) - 0.088) * 45.45), 1);
+  /* The layout is ruled one line at a time: the datum's long gesture first, then the apex
+     centreline, then each eave guide. Four lines arriving together read as a glitch; four
+     lines arriving in sequence read as a hand. */
+  --b-setout0: clamp(0, calc((var(--load) - 0.010) * 16.667), 1);
+  --b-setout1: clamp(0, calc((var(--load) - 0.062) * 27.78), 1);
+  --b-setout2: clamp(0, calc((var(--load) - 0.090) * 27.78), 1);
+  --b-setout3: clamp(0, calc((var(--load) - 0.118) * 27.78), 1);
+  --b-base: clamp(0, calc((var(--load) - 0.14) * 10), 1);
+  --b-draw: clamp(0, calc((var(--load) - 0.18) * 4.1667), 1);
+  --b-over: clamp(0, calc((var(--load) - 0.21) * 4.1667), 1);
+  --b-hatch1: clamp(0, calc((var(--load) - 0.40) * 14.286), 1);
+  --b-hatch2: clamp(0, calc((var(--load) - 0.43) * 14.286), 1);
+  --b-pour1: clamp(0, calc((var(--load) - 0.50) * 14.286), 1);
+  --b-pour2: clamp(0, calc((var(--load) - 0.53) * 14.286), 1);
+  --b-rise: clamp(0, calc((var(--load) - 0.54) * 10), 1);
+  --b-cure: clamp(0, calc((var(--load) - 0.58) * 16.667), 1);
+  --b-marks: clamp(0, calc((var(--load) - 0.56) * 10), 1);
+  --b-mark: clamp(0, calc((var(--load) - 0.10) * 1.7241), 1);
+  /*
+   * The wordmark pours. It stays an outline for as long as the drawing is being drawn, then
+   * fills with the same graphite the concrete cures to, so both lockups are solid type at
+   * identical metrics before the frame opens. Two materials meeting inside a letterform was
+   * the tear: the blow out is a rectangle whose four edges move at once, and it sliced
+   * knockout outline against solid fill into chips that read as debris on the sheet.
+   */
+  --b-ink: clamp(0, calc((var(--load) - 0.56) * 12.5), 1);
+  --b-rule: clamp(0, calc((var(--load) - 0.64) * 12.5), 1);
+  --b-red: clamp(0, calc((var(--load) - 0.70) * 33.333), 1);
+  /*
+   * The cut's hairline inks in over one per cent and then holds full revision red for the
+   * whole travel. Fading it in across the cut band meant the frame that crosses the party
+   * wall carried a pale pink line, and the rule only reached strength once it had stopped.
+   */
+  --b-edge: clamp(0, calc((var(--load) - 0.715) * 100), 1);
+  --b-spend: clamp(0, calc((var(--load) - 0.88) * 12.5), 1);
+  --b-cut: clamp(0, calc((var(--load) - 0.72) * 8.3333), 1);
+  --b-blow: clamp(0, calc((var(--load) - 0.82) * 9.0909), 1);
+  /*
+   * Standing up starts on the frame the cut lands, not after the frame has finished opening.
+   * Seven per cent gave the whole dimensional read about five frames, so the seams, the
+   * extrusion and the thinning of the pen were a flash rather than a beat. Running it under
+   * the blow out makes one event of it: the object gains its third dimension while the
+   * registration box becomes the page.
+   */
+  --b-build: clamp(0, calc((var(--load) - 0.84) * 6.25), 1);
+
+  /* Seven registration marks, put down one at a time the way a hand puts them down. */
+  --b-tick0: clamp(0, calc((var(--load) - 0.560) * 25), 1);
+  --b-tick1: clamp(0, calc((var(--load) - 0.572) * 25), 1);
+  --b-tick2: clamp(0, calc((var(--load) - 0.584) * 25), 1);
+  --b-tick3: clamp(0, calc((var(--load) - 0.596) * 25), 1);
+  --b-tick4: clamp(0, calc((var(--load) - 0.608) * 25), 1);
+  --b-tick5: clamp(0, calc((var(--load) - 0.620) * 25), 1);
+  --b-tick6: clamp(0, calc((var(--load) - 0.632) * 25), 1);
+
+  /*
+   * Deceleration into rest, no overshoot. Pen draws stay linear because a plotter moves at
+   * constant speed; grounds, fills, scale, the cut and the blow out are smoothstepped.
+   */
+  --e-cut: calc(var(--b-cut) * var(--b-cut) * (3 - 2 * var(--b-cut)));
+  --e-blow: calc(var(--b-blow) * var(--b-blow) * (3 - 2 * var(--b-blow)));
+  --e-mark: calc(var(--b-mark) * var(--b-mark) * (3 - 2 * var(--b-mark)));
+  --e-build: calc(var(--b-build) * var(--b-build) * (3 - 2 * var(--b-build)));
+
+  /* The box hugs the mark plus four units of pad, clamped so a 320px handset never crops it. */
+  --box-hw: min(calc(46 * var(--mark-unit)), calc(50vw - 0.75rem));
+  --box-hh: min(calc(32.5 * var(--mark-unit)), calc(50svh - 0.75rem));
+
+  --edge-l: calc(50% - var(--box-hw));
+  --edge-r: calc(50% + var(--box-hw));
+  --edge-c: calc(var(--edge-l) + var(--e-cut) * 2 * var(--box-hw));
+  --edge-t: calc(var(--mark-cy) - var(--box-hh));
+  --edge-b: calc(var(--mark-cy) + var(--box-hh));
+
+  --open: calc(1 - var(--e-blow));
+  --clip-t: calc(var(--edge-t) * var(--open));
+  --clip-b: calc((100% - var(--edge-b)) * var(--open));
+  --clip-l: calc(var(--edge-l) * var(--open));
+  --clip-r: calc((100% - var(--edge-c)) * var(--open));
+  --frame-r: calc((100% - var(--edge-r)) * var(--open));
+  /*
+   * Where the conversion edge actually is, which is not where the cut stopped travelling.
+   * The blow out keeps opening the world's right clip after --edge-c has reached the box,
+   * so a rule pinned to --edge-c is left stranded in the middle of the blue field with
+   * nothing on either side of it and the frame carrying a second, unrelated red vertical.
+   * Riding the clip keeps the rule on the leading edge for the whole event and lands it
+   * exactly on the box's own right border once the two become the same line.
+   */
+  --cut-x: calc(100% - var(--clip-r));
+
+  --rule-ink: color-mix(in srgb, #cb3a26 calc(var(--b-red) * 100%), rgba(33, 31, 28, 0.34));
+
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  overflow: hidden;
+  color: var(--showcase-white);
+  background: #000;
+  /*
+   * A transition is read off the state being moved to, so the two directions get their own.
+   * step-end holds its from-value for the whole duration, which is exactly right on the way
+   * out and exactly wrong on the way back: re-entering the loader kept it hidden for the
+   * full 900ms, so a capture pass that holds a percent after handover photographed nothing.
+   */
+  transition: opacity 900ms cubic-bezier(0.76, 0, 0.24, 1), visibility 0s;
+}
+
+.starter[data-ready="true"] {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 900ms cubic-bezier(0.76, 0, 0.24, 1), visibility 900ms step-end;
+}
+
+/*
+ * THE HELD FRAME. Holding a percent has to put the loader back on screen showing exactly
+ * that frame with nothing in flight, so a held loader takes no part in the handover fade in
+ * either direction. It stays inert to the pointer: holding is a capture state, not a way
+ * back into the film.
+ */
+.starter[data-held="true"] {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: none;
+  transition: none;
+}
+
+/*
+ * The only announced percent. Both visible readouts live inside aria-hidden layers, so this
+ * node is what a screen reader follows, and it is present from percent zero.
+ */
+.loadReadout {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/*
+ * THE FOUR INKS, one to one. Every ink on the sheet has exactly one counterpart on the
+ * other side of the cut, which is what lets a hard edge cross the drawing without anything
+ * tearing. Revision red is spent on the cut alone.
+ */
+.loadSheet,
+.loadWorld {
+  position: absolute;
+  inset: 0;
+}
+
+.loadSheet {
+  --ink-object: #211f1c;
+  --ink-annot: #5f5a4f;
+  --ink-hatch: #1c4a5a;
+  /* Wet concrete curing to graphite: at 64 the sheet is exactly the icon at drafting weights. */
+  --ink-pour: color-mix(in srgb, #211f1c calc(var(--b-cure) * 100%), #7a7263);
+  --ink-drawn: transparent;
+  z-index: 1;
+  background: #e9e3d6;
+}
+
+/*
+ * The station grid rules itself in along the drafting diagonal instead of fading up as one
+ * flat layer. The mask must stay on this pseudo, which owns nothing but the grid gradients:
+ * a mask on .loadSheet itself would mask every child layer with it. At --b-grid 1 the solid
+ * stop sits at 129%, past the far corner of the 135deg run, so the wipe fully uncovers.
+ */
+.loadSheet::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background-image:
+    linear-gradient(to right, rgba(33, 31, 28, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(33, 31, 28, 0.04) 1px, transparent 1px),
+    linear-gradient(to right, rgba(33, 31, 28, 0.16) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(33, 31, 28, 0.16) 1px, transparent 1px);
+  background-position:
+    1.125rem 1.125rem,
+    1.125rem 1.125rem,
+    0 0,
+    0 0;
+  background-size:
+    2.25rem 2.25rem,
+    2.25rem 2.25rem,
+    2.25rem 2.25rem,
+    2.25rem 2.25rem;
+  -webkit-mask-image: linear-gradient(135deg, #000 calc(var(--b-grid) * 141% - 12%), transparent calc(var(--b-grid) * 141%));
+  mask-image: linear-gradient(135deg, #000 calc(var(--b-grid) * 141% - 12%), transparent calc(var(--b-grid) * 141%));
+  pointer-events: none;
+}
+
+.loadWorld {
+  --ink-object: #f1f4ff;
+  --ink-annot: rgb(214 227 252 / 62%);
+  --ink-hatch: #f1f4ff;
+  --ink-pour: #050516;
+  --ink-drawn: rgb(24 46 190 / 46%);
+  z-index: 2;
+  background: #000;
+  clip-path: inset(var(--clip-t) var(--clip-r) var(--clip-b) var(--clip-l));
+}
+
+/*
+ * LOADING TINT. The field floods radiation blue over the last stretch of the load, so the
+ * starter hands the world over already lit instead of cutting from black. It rides the
+ * world layer rather than the whole screen, so the cut is what reveals it: the ramp already
+ * started at 0.72, which is the frame the cut leaves the left edge. `--showcase-load` is the
+ * load percent as a 0 to 1 number; nothing here touches the staged entry transition.
+ */
+.loadWorld::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    radial-gradient(circle at 50% 48%, rgb(29 52 255 / 62%) 0 11%, rgb(0 6 190 / 34%) 42%, rgb(0 0 11 / 96%) 86%),
+    linear-gradient(90deg, rgb(0 0 11 / 74%), transparent 20% 80%, rgb(0 0 11 / 74%));
+  opacity: calc((max(var(--showcase-load, 0), 0.72) - 0.72) / 0.28);
+  pointer-events: none;
+}
+
+/*
+ * THE REGISTRATION BOX and the cut riding its leading edge. The box is its own rect and the
+ * cut is its own hairline: one element doing both gives a zero width box while the box is
+ * still being ruled.
+ */
+.loadBox {
+  position: absolute;
+  z-index: 3;
+  inset: var(--clip-t) var(--frame-r) var(--clip-b) var(--clip-l);
+  border: 1px solid var(--rule-ink);
+  opacity: calc(var(--b-rule) * (1 - var(--b-spend)));
+  clip-path: inset(0 calc((1 - var(--b-rule)) * 100%) 0 0);
+  pointer-events: none;
+}
+
+.loadEdge {
+  position: absolute;
+  z-index: 4;
+  top: var(--clip-t);
+  bottom: var(--clip-b);
+  /* The negative margin seats the hairline in the last converted column, so it reads as the
+     leading edge of the cut and coincides with the box's own border once they meet. */
+  left: var(--cut-x);
+  width: 1px;
+  margin-left: -1px;
+  background: #cb3a26;
+  opacity: calc(var(--b-edge) * (1 - var(--b-spend)));
+  pointer-events: none;
+}
+
+/*
+ * THE PLATE. The mark at the size and place the 3D artifact will take it over at, in the
+ * icon's own viewBox so no second coordinate mapping exists. The setting out line runs past
+ * the plate on both sides, hence overflow: visible.
+ */
+.plate {
+  position: absolute;
+  left: 50%;
+  top: var(--mark-cy);
+  width: calc(100 * var(--mark-unit));
+  height: calc(100 * var(--mark-unit));
+  overflow: visible;
+  /* viewBox (50, 57) is the 3D group's origin, so that point is what gets registered. */
+  transform: translate(-50%, -57%);
+}
+
+/*
+ * The drawing hands over lines three to four times heavier than the object it becomes, so
+ * every weight thins across the build band and the last loader frame matches the built line.
+ * Both plates thin on the same band and never on separate ones, or strokes of two different
+ * widths would meet at the cut and the mark would misregister down its own edge.
+ * pathLength normalises the dash out of px space; see ShowcaseLoader for why that matters
+ * and why the constant width vector effect must never be put on these paths.
+ */
+.plate path {
+  fill: none;
+  stroke: var(--ink-object);
+  stroke-width: calc(var(--w, 1) * 1px * (1 - 0.65 * var(--e-build)));
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /*
+   * The offset must resolve to a length. Chromium accepts a bare <number> calc here and
+   * quietly treats it as px, but Firefox rejects it as invalid, falls back to 0, and every
+   * stroke paints fully drawn from the first frame: the whole progressive draw dies in one
+   * declaration. Multiplying by 1px lands on the identical computed value in both engines.
+   */
+  stroke-dashoffset: calc((100 - 100 * var(--s, 1)) * 1px);
+}
+
+/* The hand erases its layout once the object line is inked. */
+.plate path.guide {
+  stroke: var(--ink-annot);
+  stroke-linecap: butt;
+  opacity: calc((1 - var(--b-marks)) * 0.8);
+}
+
+.plate path.tick {
+  stroke: var(--ink-annot);
+  stroke-linecap: butt;
+}
+
+.plate path.hatch {
+  stroke: var(--ink-hatch);
+}
+
+.plate path.overdraw {
+  opacity: 0.35;
+}
+
+.plate path.seam {
+  opacity: calc(0.35 * var(--e-build));
+}
+
+.plate path.extrusion {
+  opacity: calc(0.8 * var(--e-build));
+}
+
+/*
+ * SPECIFICITY TRAP. `.plate path { fill: none }` beats a bare `.pourFill { fill: ... }`
+ * three components to two and silently kills every fill, so the fills are written at the
+ * same depth as the rule they have to beat.
+ */
+.plate path.fillPath {
+  stroke: none;
+}
+
+.plate path.pourFill {
+  fill: var(--ink-pour);
+}
+
+.plate path.drawnFill {
+  fill: var(--ink-drawn);
+}
+
+/* The pour rises out of the baseline through this rect rather than fading in. */
+.rise {
+  x: 52px;
+  width: 30px;
+  y: calc(82px - 34px * var(--b-rise));
+  height: calc(34px * var(--b-rise));
+}
+
+.starterBottom {
+  position: absolute;
+  bottom: 1.8rem;
+  left: 1rem;
+  display: grid;
+  grid-template-columns: auto;
+  gap: 1.35rem;
+  align-items: end;
+  justify-items: start;
+}
+
+/*
+ * The wordmark interpolates out of the drafted voice globals.css calls .u-label and into
+ * this module's finished mark, so the cut only ever changes its material. Archivo's weight
+ * and width axes interpolate continuously on the loaded face, which is why these are
+ * font-weight and font-stretch rather than font-variation-settings.
+ */
+.starterMark {
+  display: grid;
+  align-self: end;
+  justify-self: start;
+  margin: 0;
+  font-size: clamp(6rem, 14vw, 15rem);
+  font-weight: calc(400 + 400 * var(--e-mark));
+  font-stretch: calc(125% - 25% * var(--e-mark));
+  line-height: 0.71;
+  letter-spacing: calc(0.16em - 0.25em * var(--e-mark));
+  /*
+   * Grayscale antialiasing on both copies, not one. Subpixel rendering lays a warm fringe
+   * down one side of every stem and a cold one down the other, and two stacked lockups
+   * either side of the cut double it into a visible colour edge on the finished mark.
+   */
+  -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * Child combinator, or the last letter of each word would take the word gap too. nowrap is
+ * load bearing: the per-letter split turned each glyph into an inline-block, which invents
+ * a break opportunity between every letter, and a handset width takes one mid word.
+ */
+.starterMark > span {
+  white-space: nowrap;
+}
+
+.starterMark > span:last-child {
+  margin-left: 0.48em;
+}
+
+/*
+ * THE DRAWN FURNITURE. The film mounts onto a cover that has been plain ground for however
+ * long hydration took, so anything printed at full strength on frame one reads as a pop.
+ * Instead of fading the whole bottom block on the grid band, every piece of furniture is
+ * ruled in by a directional mask riding its own band: the readout first, then the lockup
+ * letter by letter. Masks are paint only, the letter spans are inline-block, so no layout
+ * changes frame to frame and holding a percent reproduces the frame byte for byte. The
+ * world copy of the lockup is only ever visible once every letter band is 1, so its masks
+ * are fully open and it renders exactly as it did before the split.
+ */
+.starterMark span span {
+  display: inline-block;
+  /*
+   * The mask clips to the border box, and at the lockup's heaviest weight a glyph's ink
+   * paints past its own advance width: the D's bowl lost its right edge. The padding widens
+   * the mask box over the overhang and the negative margin gives the width straight back,
+   * so the letters sit exactly where they did and only the paintable area grows.
+   */
+  padding: 0 0.08em;
+  margin: 0 -0.08em;
+  -webkit-mask-image: linear-gradient(100deg, #000 calc(var(--lb, 1) * 130% - 18%), transparent calc(var(--lb, 1) * 130%));
+  mask-image: linear-gradient(100deg, #000 calc(var(--lb, 1) * 130% - 18%), transparent calc(var(--lb, 1) * 130%));
+}
+
+.starterMark > span:first-child > span:nth-child(1) { --lb: var(--b-let0); }
+.starterMark > span:first-child > span:nth-child(2) { --lb: var(--b-let1); }
+.starterMark > span:first-child > span:nth-child(3) { --lb: var(--b-let2); }
+.starterMark > span:first-child > span:nth-child(4) { --lb: var(--b-let3); }
+.starterMark > span:last-child > span:nth-child(1) { --lb: var(--b-let4); }
+.starterMark > span:last-child > span:nth-child(2) { --lb: var(--b-let5); }
+.starterMark > span:last-child > span:nth-child(3) { --lb: var(--b-let6); }
+.starterMark > span:last-child > span:nth-child(4) { --lb: var(--b-let7); }
+.starterMark > span:last-child > span:nth-child(5) { --lb: var(--b-let8); }
+
+/*
+ * Drawn first, then poured. While the drawing is being drawn the lockup is outline only, the
+ * same doctrine the mark itself follows, and the knockout fill is mandatory or the two lines
+ * show through each other. On --b-ink the outline fills with graphite and the stroke closes
+ * to nothing, so by the time the frame blows out the sheet's type and the world's type are
+ * the same solid letterforms in two inks and the opening rectangle changes their material
+ * without taking chips out of them. -webkit-text-stroke has no unprefixed twin, so the
+ * @supports fallback below is not optional either.
+ */
+.loadSheet .starterMark {
+  color: color-mix(in srgb, #211f1c calc(var(--b-ink) * 100%), #e9e3d6);
+  -webkit-text-stroke-width: calc(2.4px * (1 - var(--b-ink)));
+  -webkit-text-stroke-color: #211f1c;
+}
+
+.loadWorld .starterMark {
+  color: var(--showcase-white);
+  -webkit-text-stroke: 0;
+}
+
+@supports not (-webkit-text-stroke: 1px black) {
+  .loadSheet .starterMark {
+    color: #675f52;
+    -webkit-text-stroke: 0;
+  }
+}
+
+/*
+ * The readout is Martian Mono on both sides rather than a morph. Both systems already use
+ * the mono face as their measured voice, and identical metrics either side of the cut are
+ * what let a hard edge cross type without tearing.
+ */
+.loadNumber {
+  grid-row: 1;
+  min-width: 8rem;
+  margin: 0;
+  font-family: var(--font-martian), monospace;
+  font-size: clamp(1.5rem, 2.2vw, 2.6rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  /* The readout is inked in on its own band, same wipe grammar as the lockup letters. */
+  -webkit-mask-image: linear-gradient(100deg, #000 calc(var(--b-num) * 130% - 18%), transparent calc(var(--b-num) * 130%));
+  mask-image: linear-gradient(100deg, #000 calc(var(--b-num) * 130% - 18%), transparent calc(var(--b-num) * 130%));
+}
+
+.loadNumber span {
+  margin-left: 0.3em;
+  font-size: 0.62em;
+  vertical-align: top;
+}
+
+.loadSheet .loadNumber {
+  color: #211f1c;
+}
+
+/* The per cent sign is an annotation, so it takes annotation ink. */
+.loadSheet .loadNumber span {
+  color: #5f5a4f;
+}
+
+.loadWorld .loadNumber {
+  color: var(--showcase-white);
+}
+
+.loadWorld .loadNumber span {
+  color: var(--showcase-muted);
+}
+
+.entryGate {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  color: var(--showcase-white);
+  opacity: 1;
+  transition: filter var(--showcase-bleach-ease, 760ms) ease;
+}
+
+/* The gate's own vignette and grain have to be gone before the 3s unmount too. */
+.entryGate[data-entering="true"] {
+  animation: entryGateFade 2450ms ease-in forwards;
+}
+
+@keyframes entryGateFade {
+  0%,
+  58% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+.entryObject {
+  position: fixed;
+  z-index: 25;
+  inset: 0;
+  width: 100vw;
+  height: 100svh;
+  transition: filter var(--showcase-bleach-ease, 760ms) ease;
+  pointer-events: none;
+}
+
+/*
+ * The canvas takes the pointer so the mark can answer it, and nothing else in the layer
+ * does. It sits under the entry control at z-index 26, so the button keeps its own clicks
+ * and only the artifact and the empty field behind it are this layer's to receive.
+ */
+.entryObject canvas {
+  pointer-events: auto;
+}
+
+.entryObject canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.entryGate::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background: radial-gradient(circle at 50% 48%, transparent 0 28%, rgb(0 0 11 / 28%) 70%, rgb(0 0 11 / 78%) 100%);
+  content: "";
+  pointer-events: none;
+}
+
+.entryGate::after {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  opacity: 0.14;
+  background-image:
+    repeating-radial-gradient(circle at 31% 19%, transparent 0 1px, rgb(217 224 237 / 26%) 1px 2px, transparent 2px 4px),
+    repeating-linear-gradient(0deg, transparent 0 2px, rgb(0 0 0 / 20%) 2px 3px);
+  background-size: 5px 5px, 100% 3px;
+  content: "";
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+
+/*
+ * The small stack has to be read, not just seen. Two display properties were reaching it
+ * through inheritance and destroying it at 10px: `letter-spacing` inherits as a computed
+ * length, so the headline's -0.062em landed as -4.6px and folded every glyph into its
+ * neighbour, and the chromatic text-shadow was a full pixel wide against a 7px cap. Both
+ * are reset here, and the leading opens to the source's airy three-line block.
+ */
+.heroMeta {
+  display: grid;
+  flex: 0 0 auto;
+  align-self: center;
+  margin: 0 0.8vw;
+  color: var(--showcase-white);
+  font-family: var(--font-martian), monospace;
+  font-size: clamp(0.42rem, 0.766vw, 0.6rem);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  /* Pitched to the source's three-line block: about 22px between baselines against a 7px
+     cap, which is what makes it read as a caption rather than a stack of hairlines. */
+  line-height: 2.3;
+  text-align: left;
+  text-shadow: -0.5px 0 rgb(255 42 73 / 46%), 0.5px 0 rgb(25 70 255 / 58%);
+  text-transform: uppercase;
+}
+
+/*
+ * Two blocks, one control. The pill and the arrow tile are separate blue bodies with air
+ * between them; the button itself carries no surface at all.
+ */
+.enterButton {
+  position: fixed;
+  z-index: 26;
+  bottom: 43px;
+  left: 50%;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  color: var(--showcase-white);
+  background: none;
+  font-family: var(--font-martian), monospace;
+  font-size: 15px;
+  text-transform: uppercase;
+  opacity: 1;
+  transform: translateX(-50%);
+  transition: opacity 300ms ease, transform 300ms ease;
+  pointer-events: auto;
+}
+
+.enterLabel {
+  display: grid;
+  min-width: 192px;
+  height: 58px;
+  padding: 0 20px;
+  place-items: center;
+  white-space: nowrap;
+  border-radius: 10px;
+  color: inherit;
+  background: var(--showcase-blue);
+  transition: color 300ms ease, background 300ms ease;
+}
+
+.enterArrow {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border-radius: 50%;
+  color: inherit;
+  background: var(--showcase-blue);
+  font-family: var(--font-archivo), sans-serif;
+  font-size: 24px;
+  transition: color 300ms ease, background 300ms ease;
+}
+
+.enterButton:hover .enterLabel,
+.enterButton:hover .enterArrow {
+  color: var(--showcase-blue);
+  background: var(--showcase-white);
+}
+
+/*
+ * The title pill is pinned to the crystal, not to the pointer. ShowcaseScene projects the
+ * hovered crystal's lower right edge into --showcase-anchor-x/y every frame, so the pill
+ * rides the artifact as it drifts and the cursor can wander without dragging it.
+ */
+.sceneLabel {
+  position: fixed;
+  z-index: 28;
+  top: var(--showcase-anchor-y, 53vh);
+  left: var(--showcase-anchor-x, 58vw);
+  display: flex;
+  gap: 0.42em;
+  align-items: baseline;
+  max-width: calc(100vw - var(--showcase-anchor-x, 58vw) - 24px);
+  margin: 0;
+  padding: 0.3rem 0.95rem 0.36rem;
+  border-radius: 999px;
+  color: var(--showcase-white);
+  background: var(--showcase-blue);
+  font-family: var(--font-archivo), sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(calc(-50% + 0.7rem));
+  transition: opacity 180ms ease, transform 220ms ease;
+  pointer-events: none;
+}
+
+.sceneLabel b {
+  font-weight: 600;
+}
+
+.heroSignal {
+  position: absolute;
+  z-index: 24;
+  top: 26%;
+  left: 0;
+  display: grid;
+  width: 100vw;
+  margin: 0;
+  padding: 0 20px;
+  color: var(--showcase-white);
+  /* A title card carries three lines, so the type runs at the scale a letter-spread word
+     can hold: the ceiling is the size where ten letters and their gaps still fit the
+     measure, and the floor keeps the two words spanning it on the narrowest desktop. */
+  font-size: clamp(3.1rem, 11.4vw, 15rem);
+  font-weight: 430;
+  line-height: 0.96;
+  letter-spacing: -0.062em;
+  text-align: left;
+  text-shadow: -1px 0 rgb(255 42 73 / 58%), 1px 0 rgb(25 70 255 / 72%);
+  text-transform: uppercase;
+  opacity: 1;
+  transform: none;
+  transform-origin: 50% 64%;
+  transition: opacity 900ms ease, filter 900ms ease, transform 900ms ease;
+  pointer-events: none;
+}
+
+/*
+ * Justified word by word. Every word is its own flex child, so `space-between` spreads the
+ * whole measure the way the source does instead of only pushing two or three groups apart.
+ */
+.heroSignal > .heroLine {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  white-space: nowrap;
+}
+
+/*
+ * Never shrink. A nowrap word inside a shrinkable box keeps its glyphs and loses its box,
+ * which is what collided the words into each other once a line ran past the measure.
+ */
+.heroLine > * {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+/*
+ * A spread line is one word holding the whole measure, so its children are letters rather
+ * than words. The display tracking comes off here: a negative letter-spacing on a single
+ * letter is a phantom gap after it, and the flex gap is doing that work now.
+ */
+.heroSpread {
+  letter-spacing: 0;
+}
+
+/* The heading's spoken name, carried once so the spread letters are never read one by one */
+.heroName {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.heroSignal b {
+  display: inline-block;
+  padding: 0.02em 0.2em 0.08em;
+  border-radius: 999px;
+  background: var(--showcase-blue);
+  font: inherit;
+  transition: background-color var(--showcase-bleach-ease, 760ms) ease;
+}
+
+/* Greyscale alone would leave the pills reading as dark slabs; the drain takes them out */
+.shell[data-bleached="true"] .heroSignal b {
+  background-color: #000;
+}
+
+/*
+ * Through the plane. The manifesto rushes the camera from the artifact's centre: it
+ * crops on the frame edges around a second and is fully past the viewer by 2s, so
+ * nothing is left standing when the gate unmounts. It used to clear by 1.6s, which left
+ * the frame empty through the stretch the reference still has a full screen of type
+ * running past the lens, and that gap is most of what the peak was missing.
+ */
+.entryGate[data-entering="true"] .heroSignal {
+  animation: heroThroughPlane 2000ms linear forwards;
+}
+
+@keyframes heroThroughPlane {
+  0% {
+    opacity: 1;
+    filter: blur(0) brightness(1) contrast(1);
+    transform: scale(1);
+  }
+
+  /* Held, then snapped. Measured on the reference the manifesto grows barely a tenth
+     through the first second and is still a full screen of type at 1.2s; all of the
+     travel happens between there and 1.8s, where the frame goes to nothing. Spreading
+     that travel evenly across the window instead emptied the frame at the peak. */
+  12.5% {
+    transform: scale(1.015);
+  }
+
+  25% {
+    opacity: 1;
+    transform: scale(1.035);
+  }
+
+  37.5% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+
+  50% {
+    opacity: 1;
+    filter: blur(0.3px) brightness(1.12) contrast(1.5);
+    transform: scale(1.09);
+  }
+
+  62% {
+    opacity: 1;
+    transform: scale(1.16);
+  }
+
+  66% {
+    opacity: 0.82;
+    transform: scale(1.5);
+  }
+
+  71% {
+    opacity: 0.5;
+    filter: blur(1.1px) brightness(1.22) contrast(1.9);
+    transform: scale(2.4);
+  }
+
+  77% {
+    opacity: 0.22;
+    transform: scale(4.2);
+  }
+
+  84% {
+    opacity: 0.07;
+    transform: scale(6.4);
+  }
+
+  94% {
+    opacity: 0.1;
+    transform: scale(8);
+  }
+
+  100% {
+    opacity: 0;
+    filter: blur(9px) brightness(1.3) contrast(2.2);
+    transform: scale(12);
+  }
+}
+
+.entryGate[data-entering="true"] .heroLine {
+  animation: heroLineDrain 2000ms ease-in forwards;
+}
+
+/* The spoken name is the heading's first child, so the lines start counting at two */
+.entryGate[data-entering="true"] .heroLine:nth-child(3) {
+  animation-delay: 55ms;
+}
+
+.entryGate[data-entering="true"] .heroLine:nth-child(4) {
+  animation-delay: 110ms;
+}
+
+@keyframes heroLineDrain {
+  0%,
+  64% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+.enterButton[data-entering="true"] {
+  opacity: 0;
+  transform: translate(-50%, 1rem);
+  pointer-events: none;
+}
+
+.shell:has(.scene canvas[data-hovered-project]) .sceneLabel[data-visible="true"] {
+  opacity: 1;
+  transform: translateY(-50%);
+}
+
+/*
+ * Contract geometry: 32px inset, a 310px project bay, 77px of air, a 523px info measure,
+ * and 52px of floor under the tallest column. Both columns hang from the same top edge so
+ * the two labels share one baseline instead of the Info label floating above it.
+ */
+.ledger {
+  position: fixed;
+  z-index: 45;
+  right: 32px;
+  bottom: 52px;
+  left: 32px;
+  display: grid;
+  grid-template-columns: 310px minmax(0, 523px);
+  gap: 77px;
+  justify-content: start;
+  align-items: start;
+  opacity: 0;
+  transform: translateY(1.2rem);
+  transition: opacity 450ms ease, transform 450ms ease;
+  pointer-events: none;
+}
+
+.ledger[data-visible="true"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ledgerLabel {
+  margin: 0 0 0.85rem;
+  color: var(--showcase-muted);
+  font-family: var(--font-martian), monospace;
+  font-size: 12px;
+  line-height: 15px;
+}
+
+/*
+ * No rules across the top of either column. The ledger is an editorial caption sitting on
+ * the field, and a hairline turned it into a spec sheet with a header row.
+ */
+.projectRow {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  align-items: start;
+  justify-items: start;
+  animation: ledger-in 500ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.projectRow h1 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 24px;
+  letter-spacing: -0.015em;
+}
+
+.projectRow a {
+  display: flex;
+  align-items: center;
+  height: 42px;
+  padding: 0 12px;
+  border: 0;
+  color: var(--showcase-white);
+  background: var(--showcase-blue);
+  font-family: var(--font-martian), monospace;
+  font-size: 21px;
+  line-height: 30px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  opacity: 1;
+}
+
+.ledgerInfo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  animation: ledger-in 500ms 80ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.summary {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 22px;
+}
+
+.ledgerInfo ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-start;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Bright filled pills, not outlined mono chips: the tags are the one warm surface here */
+.ledgerInfo li {
+  padding: 0.13rem 0.5rem 0.16rem;
+  border: 0;
+  border-radius: 999px;
+  color: #0a0a18;
+  background: var(--showcase-white);
+  font-family: var(--font-archivo), sans-serif;
+  font-size: 12px;
+  line-height: 1.15;
+}
+
+.finale {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 5rem 0 3.2rem;
+  /* No black veil: the last screen keeps the live field behind the lockup, and only a
+     pointer on a control is ever allowed to take the colour out of it. */
+  background: transparent;
+  text-align: center;
+  opacity: 0;
+  transform: scale(0.97);
+  transition: transform 560ms cubic-bezier(0.2, 0.75, 0.2, 1);
+  pointer-events: none;
+}
+
+/* The cobalt lamp the lockup stands in front of. It rides above the canvas and under the
+   type, so the debris behind it silhouettes and the letters keep their halo.
+
+   It hugs the type band and nothing else. At a 29 percent vertical radius the wash was a
+   lamp filling the middle third of the last screen, which measured as fifteen percent of
+   the frame carrying a mid tone the reference gives to under two. The green in the old
+   core was the other half of it: this wash reads cobalt, so any green in the stop survives
+   the encode as brightness without reading as colour. */
+.finale::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: radial-gradient(38% 14% at 50% 51%, rgb(12 36 255 / 56%) 0%, rgb(6 14 156 / 22%) 44%, transparent 76%);
+  opacity: 0;
+  mix-blend-mode: screen;
+  transition: opacity 620ms ease, filter var(--showcase-bleach-ease, 760ms) ease;
+  content: "";
+  pointer-events: none;
+}
+
+.finale[data-visible="true"] {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.finale[data-visible="true"]::before {
+  opacity: 1;
+}
+
+.finaleLockup {
+  display: grid;
+  justify-items: center;
+}
+
+.finaleHandle {
+  margin: 0;
+  color: var(--showcase-white);
+  font-size: clamp(3.4rem, 8.1vw, 10.4rem);
+  font-weight: 430;
+  line-height: 1.03;
+  letter-spacing: -0.055em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  -webkit-text-stroke: 0;
+  /* Tight halo, not a lamp. The 2.2rem blue bled a mid tone a third of a line height out
+     from every glyph, which is most of what put the last screen twice the reference's
+     brightness while its field and its floor already matched. */
+  text-shadow:
+    0 0 0.3rem rgb(226 233 255 / 26%),
+    0 0 1.1rem rgb(46 82 255 / 44%);
+}
+
+/* Stacked at the very bottom of the frame, not tucked under the heading */
+.socials {
+  position: absolute;
+  bottom: 43px;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+  align-items: center;
+  margin: 0;
+  font-family: var(--font-martian), monospace;
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+}
+
+.accessibleProjects {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.noScript {
+  position: fixed;
+  z-index: 150;
+  inset: 0;
+  overflow: auto;
+  padding: 2rem;
+  color: #d6e3fc;
+  background: #020411;
+}
+
+.noScript h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(3rem, 10vw, 8rem);
+  line-height: 0.85;
+  text-transform: uppercase;
+}
+
+.noScript ol {
+  padding-left: 1.2rem;
+}
+
+.noScript a {
+  color: inherit;
+}
+
+.shell a:focus-visible,
+.shell button:focus-visible {
+  outline: 2px solid var(--showcase-white);
+  outline-offset: 4px;
+}
+
+@keyframes ledger-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.9rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 767px) {
+  .header {
+    top: 0.85rem;
+    right: 0.85rem;
+    left: 0.85rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .wordmark {
+    gap: 0.42rem;
+    font-size: 0.95rem;
+  }
+
+  .wordmark span:last-child {
+    font-size: 0.4rem;
+  }
+
+  .desktopNav,
+  .headerActions {
+    display: none;
+  }
+
+  .mobileControls {
+    display: flex;
+    gap: 0.48rem;
+  }
+
+  .soundTile,
+  .menuButton {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    color: var(--showcase-white);
+    opacity: 1;
+    transition: filter var(--showcase-bleach-ease, 760ms) ease;
+  }
+
+  .soundTile {
+    display: grid;
+    place-items: center;
+    border-radius: 6px;
+    background: var(--showcase-blue);
+  }
+
+  .speakerGlyph {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Bare dots on the field, no plate: the only blue tile up here is the sound control */
+  .menuButton {
+    display: grid;
+    grid-template-columns: repeat(3, 0.36rem);
+    grid-template-rows: repeat(3, 0.36rem);
+    gap: 0.16rem;
+    place-content: center;
+    background: none;
+  }
+
+  .menuButton span {
+    width: 0.36rem;
+    height: 0.36rem;
+    background: currentColor;
+    transition: opacity 260ms ease, transform 400ms cubic-bezier(0.2, 0.75, 0.2, 1);
+  }
+
+  .shell[data-menu-open="true"] .menuButton span:nth-child(1),
+  .shell[data-menu-open="true"] .menuButton span:nth-child(9) {
+    transform: translate(0.52rem, 0.52rem);
+  }
+
+  .shell[data-menu-open="true"] .menuButton span:nth-child(3),
+  .shell[data-menu-open="true"] .menuButton span:nth-child(7) {
+    transform: translate(-0.52rem, 0.52rem);
+  }
+
+  .shell[data-menu-open="true"] .menuButton span:nth-child(even),
+  .shell[data-menu-open="true"] .menuButton span:nth-child(5) {
+    opacity: 0;
+  }
+
+  .mobileMenu {
+    position: fixed;
+    z-index: 60;
+    inset: 0;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    padding: 7rem 1rem 1.5rem;
+    color: var(--showcase-white);
+    background:
+      radial-gradient(circle at 68% 34%, rgb(77 93 255 / 65%), transparent 28%),
+      var(--showcase-blue);
+    opacity: 0;
+    transform: translateY(-100%);
+    visibility: hidden;
+    transition: opacity 500ms ease, transform 700ms cubic-bezier(0.76, 0, 0.24, 1), visibility 700ms step-end;
+    pointer-events: none;
+  }
+
+  .shell[data-menu-open="true"] .mobileMenu {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+    transition: opacity 500ms ease, transform 700ms cubic-bezier(0.76, 0, 0.24, 1), visibility 0ms step-start;
+    pointer-events: auto;
+  }
+
+  .mobileMenu nav {
+    display: grid;
+    align-content: flex-start;
+  }
+
+  .mobileMenu nav a {
+    padding: 0.3rem 0;
+    border-bottom: 1px solid rgb(214 227 252 / 36%);
+    font-size: clamp(2.5rem, 13vw, 4.5rem);
+    font-weight: 600;
+    line-height: 0.95;
+    letter-spacing: -0.06em;
+    text-transform: uppercase;
+  }
+
+  /* Mono uppercase has no descender room to spare: at 1.35 the commas on one line sat in
+     the caps of the next and the three lines read as one smear. */
+  .mobileMenu p {
+    max-width: 18rem;
+    margin: 0;
+    font-family: var(--font-martian), monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.02em;
+    line-height: 1.85;
+    text-transform: uppercase;
+  }
+
+  /* Same derivation as desktop, with the handset viewportScale of 0.44. */
+  .starter {
+    --mark-unit: 0.4829svh;
+    --mark-cy: calc(50% - 2.634svh);
+  }
+
+  .starterBottom {
+    bottom: 0.8rem;
+    left: 0.7rem;
+    grid-template-columns: auto;
+    gap: 0.8rem;
+  }
+
+  .starterMark {
+    font-size: clamp(4.5rem, 22vw, 7rem);
+  }
+
+  .loadNumber {
+    justify-self: start;
+    font-size: clamp(1.55rem, 7vw, 2.4rem);
+  }
+
+  .enterButton {
+    bottom: 1rem;
+    gap: 5px;
+    font-size: 0.82rem;
+  }
+
+  .enterLabel {
+    min-width: 11rem;
+    height: 3.7rem;
+    padding: 0 1.1rem;
+  }
+
+  .enterArrow {
+    width: 3.7rem;
+    height: 3.7rem;
+    font-size: 1.3rem;
+  }
+
+  .sceneLabel {
+    font-size: 0.9rem;
+  }
+
+  /*
+   * The handset keeps the title card inside its own frame. The old wall ran past both
+   * edges because five justified lines needed a wider measure than the screen; two spread
+   * words hold the screen exactly, and letters pushed off the edge would lose the word.
+   */
+  .heroSignal {
+    top: 38%;
+    left: 0;
+    width: 100vw;
+    margin-left: 0;
+    padding: 0 14px;
+    /* The ceiling is set by the longest word: at 12.6vw the ten letters of PROTOTYPES sat
+       3px apart, which reads as a word that failed to fit rather than one that was spread */
+    font-size: clamp(2.4rem, 11.2vw, 4.2rem);
+    line-height: 0.92;
+    transform: none;
+    transform-origin: 50% 47%;
+  }
+
+  .entryGate::before {
+    background: none;
+  }
+
+  .heroMeta {
+    font-size: 0.34rem;
+    line-height: 2;
+    margin: 0 0.6vw;
+  }
+
+  .ledger {
+    right: 0.9rem;
+    bottom: 3.8rem;
+    left: 0.9rem;
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .ledgerInfo {
+    display: none;
+  }
+
+  .ledgerLabel {
+    margin-bottom: 0.45rem;
+    font-size: 0.48rem;
+  }
+
+  .projectRow {
+    grid-template-columns: 1fr;
+    gap: 0.42rem;
+    justify-items: start;
+    padding-top: 0.5rem;
+  }
+
+  .projectRow h1 {
+    font-size: clamp(1rem, 4.8vw, 1.45rem);
+    line-height: 1;
+  }
+
+  .projectRow a {
+    height: 2.55rem;
+    padding: 0 0.75rem;
+    font-size: 0.99rem;
+  }
+
+  .finale {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8.4rem 0 4.2rem;
+  }
+
+  /*
+   * The handset stacks the LinkedIn link in the middle and the mailto reduced to one
+   * small line at the floor. The lockup wrapper dissolves so flex order can interleave.
+   */
+  .finaleLockup {
+    display: contents;
+  }
+
+  .finaleHandle {
+    order: 2;
+    position: static;
+    width: auto;
+    font-size: 1.2rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    line-height: 1;
+    transform: none;
+    text-shadow: 0 0 0.3rem rgb(226 233 255 / 26%);
+  }
+
+  .socials {
+    order: 1;
+    position: static;
+    margin: 0;
+    gap: 14px;
+    font-size: 1.24rem;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .header,
+  .starterBottom,
+  .ledger {
+    right: 1.8rem;
+    left: 1.8rem;
+  }
+
+  .ledger {
+    grid-template-columns: minmax(13rem, 0.8fr) minmax(20rem, 1.2fr);
+    gap: 2.8rem;
+  }
+
+  .ledgerInfo {
+    grid-template-columns: 1fr;
+  }
+
+  /* Same window onto a wider wall as mobile: the tablet keeps display scale and crops on
+     both edges rather than shrinking the manifesto to fit. */
+  .heroSignal {
+    width: 122vw;
+    margin-left: -11vw;
+    padding: 0;
+    transform-origin: 50% 58%;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 900px) {
+  .header {
+    right: 1rem;
+    left: 1rem;
+    grid-template-columns: minmax(180px, 24vw) auto 1fr;
+  }
+
+  .wordmark {
+    gap: 0.6rem;
+    font-size: 16px;
+  }
+
+  .wordmark span:last-child {
+    font-size: 8px;
+  }
+
+  .desktopNav {
+    gap: 20px;
+    font-size: 12px;
+  }
+
+  .soundTile {
+    width: 30px;
+    height: 30px;
+  }
+
+  .mailLink {
+    min-width: 122px;
+    height: 30px;
+    font-size: 12px;
+  }
+}
+
+/*
+ * The loading clock already reports 100 in one step under reduced motion and the follower
+ * bypasses its rate cap, so every band clamps to its end state on the first paint and the
+ * finished composition renders statically with no draw, no cut and no travel. This is belt
+ * and braces for the day the progress number becomes a real one. The numeral still counts.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .starter {
+    --b-grid: 1;
+    --b-setout0: 1;
+    --b-setout1: 1;
+    --b-setout2: 1;
+    --b-setout3: 1;
+    --b-base: 1;
+    --b-draw: 1;
+    --b-over: 1;
+    --b-hatch1: 1;
+    --b-hatch2: 1;
+    --b-pour1: 1;
+    --b-pour2: 1;
+    --b-rise: 1;
+    --b-cure: 1;
+    --b-marks: 1;
+    --b-mark: 1;
+    --b-ink: 1;
+    --b-rule: 1;
+    --b-red: 0;
+    --b-edge: 0;
+    --b-spend: 1;
+    --b-cut: 1;
+    --b-blow: 1;
+    --b-build: 1;
+    --b-tick0: 1;
+    --b-tick1: 1;
+    --b-tick2: 1;
+    --b-tick3: 1;
+    --b-tick4: 1;
+    --b-tick5: 1;
+    --b-tick6: 1;
+    --b-num: 1;
+    --b-let0: 1;
+    --b-let1: 1;
+    --b-let2: 1;
+    --b-let3: 1;
+    --b-let4: 1;
+    --b-let5: 1;
+    --b-let6: 1;
+    --b-let7: 1;
+    --b-let8: 1;
+  }
+
+  .shell *,
+  .shell *::before,
+  .shell *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

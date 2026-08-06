@@ -226,7 +226,7 @@
   border: 1px solid var(--rule-strong);
   color: var(--ink-witness);
   padding: 0.2rem 0.5rem;
-  cursor: pointer;
+  cursor: var(--house-cursor);
   /* 24px touch target */
   min-height: 24px;
 }
@@ -253,7 +253,7 @@
   background: none;
   border: 2px solid var(--ink-graphite);
   padding: 0.55rem 1.4rem;
-  cursor: pointer;
+  cursor: var(--house-cursor);
 }
 .transmit:hover:not(:disabled) {
   background: var(--ink-graphite);
