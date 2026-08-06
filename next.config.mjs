@@ -19,12 +19,21 @@ const nextConfig = {
   // /prototype pages are static artifacts in public/; map the clean URLs
   // onto their index.html files.
   async rewrites() {
-    return [
+    return {
+      /*
+       * The showcase is the gateway: /prototype opens the journey whose finale is the
+       * index, and the old grid stays on disk at /prototype/index.html for direct
+       * links. This one rule has to run BEFORE the filesystem: Vercel resolves
+       * /prototype to public/prototype/index.html on its own (local next start does
+       * not), so in the afterFiles group the rule works locally and silently loses in
+       * production.
+       */
+      beforeFiles: [
+        { source: '/prototype', destination: '/prototype/showcase' },
+      ],
+      afterFiles: [
       // Harness Firmware product page — a static artifact like the prototypes.
       { source: '/harness-firmware', destination: '/harness-firmware/index.html' },
-      // The showcase is the gateway: /prototype opens the journey whose finale is the
-      // index. The old grid stays on disk at /prototype/index.html for direct links.
-      { source: '/prototype', destination: '/prototype/showcase' },
       { source: '/prototype/fault-line', destination: '/prototype/fault-line/index.html' },
       { source: '/prototype/assembly-line', destination: '/prototype/assembly-line/index.html' },
       { source: '/prototype/burn-in', destination: '/prototype/burn-in/index.html' },
@@ -54,7 +63,8 @@ const nextConfig = {
         source: '/prototype/fahrzeugmarkt/:path*',
         destination: '/prototype/fahrzeugmarkt/index.html',
       },
-    ];
+      ],
+    };
   },
   // Old prototype URLs that have been linked or shipped before the rename.
   async redirects() {
