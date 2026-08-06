@@ -212,6 +212,12 @@ test("the band names are the plate's contract", async () => {
    * wrapping so the split can never change where the words sit.
    */
   assert.match(css, /\.starterMark > span \{\r?\n  white-space: nowrap;/);
+
+  /*
+   * The mask clips to the border box and heavy glyphs paint past their advance width (the
+   * D lost its bowl). Padding widens the mask box, the negative margin gives it back.
+   */
+  assert.match(css, /padding: 0 0\.08em;\r?\n  margin: 0 -0\.08em;/);
 });
 
 test("registration is stated and derived", async () => {
