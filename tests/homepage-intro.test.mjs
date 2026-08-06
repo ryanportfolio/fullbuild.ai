@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
@@ -37,6 +38,13 @@ const files = {
 async function source(name) {
   return readFile(files[name], "utf8");
 }
+
+/*
+ * The showcase prototype ships on its own branch. Until it lands on main these two files do
+ * not exist here, so the parity assertions that read them stand down and re-arm on their own
+ * the moment the prototype merges. The intro's own invariants never stand down.
+ */
+const showcasePresent = existsSync(files.showcaseCss) && existsSync(files.showcaseApp);
 
 const INTRO_SOURCES = ["mount", "intro", "film", "scene", "sculpture", "space", "geometry", "timing"];
 
@@ -95,9 +103,11 @@ test("voice rules hold", async () => {
     assert.doesNotMatch(text, /[—–]/, `${name} must contain no em or en dash`);
   }
 
-  // The lockup and the percent readout of the loader film both stay.
+  // The lockup and the percent readout of the loader film both stay, now split into
+  // per-letter spans so each glyph can be ruled in on its own band.
   const film = await source("film");
-  assert.match(film, /<span>FULL<\/span><span>BUILD<\/span>/);
+  assert.match(film, /<span><span>F<\/span><span>U<\/span><span>L<\/span><span>L<\/span><\/span>/);
+  assert.match(film, /<span><span>B<\/span><span>U<\/span><span>I<\/span><span>L<\/span><span>D<\/span><\/span>/);
   assert.match(film, /styles\.loadNumber/);
   assert.match(film, /\{readout\}<span>%<\/span>/);
 
@@ -146,7 +156,9 @@ test("the plate is shared by prop, not by copy", async () => {
 });
 
 test("the band names are the plate's contract", async () => {
-  const [css, loader] = await Promise.all([source("css"), source("loader")]);
+  const [css, loader, film] = await Promise.all([
+    source("css"), source("loader"), source("film"),
+  ]);
 
   /*
    * LoaderPlate hardcodes every progress source as a literal var(--b-*) string, so a module
@@ -161,6 +173,9 @@ test("the band names are the plate's contract", async () => {
   ];
   for (let index = 0; index < 4; index += 1) bands.push(`--b-setout${index}`);
   for (let index = 0; index < 7; index += 1) bands.push(`--b-tick${index}`);
+  // The drawn furniture bands: the readout wipe and one band per lockup letter.
+  bands.push("--b-num");
+  for (let index = 0; index < 9; index += 1) bands.push(`--b-let${index}`);
 
   for (const band of bands) {
     assert.ok(
@@ -171,6 +186,38 @@ test("the band names are the plate's contract", async () => {
   assert.doesNotMatch(css, /--i-b-|--intro-b-/);
   assert.match(loader, /var\(--b-setout\$\{index\}\)/);
   assert.match(loader, /var\(--b-base\)/);
+
+  /*
+   * The dash offset must be a <length>. Chromium accepts a bare <number> calc and treats it
+   * as px, but Firefox rejects it, falls back to 0, and the whole progressive draw dies:
+   * every stroke paints fully drawn from frame one. The * 1px is the fix, not a style.
+   */
+  assert.match(css, /stroke-dashoffset: calc\(\(100 - 100 \* var\(--s, 1\)\) \* 1px\)/);
+
+  /*
+   * The lockup letters are ruled in by a per-letter mask riding --lb, and every letter span
+   * exists in the markup rather than as a bare text node, or the nth-child band mapping has
+   * nothing to land on and the words pop in whole.
+   */
+  assert.match(css, /mask-image: linear-gradient\(100deg, #000 calc\(var\(--lb, 1\) \* 130% - 18%\), transparent calc\(var\(--lb, 1\) \* 130%\)\)/);
+  assert.match(css, /--lb: var\(--b-let0\)/);
+  assert.match(css, /--lb: var\(--b-let8\)/);
+  assert.match(film, /<span>F<\/span>/);
+  assert.match(film, /<span>D<\/span>/);
+  assert.doesNotMatch(film, /<span>FULL<\/span>|<span>BUILD<\/span>/);
+
+  /*
+   * Inline-block letters invent a break opportunity between every glyph, and a handset
+   * width takes one mid word: BUILD wrapped its D onto a new line. The word spans forbid
+   * wrapping so the split can never change where the words sit.
+   */
+  assert.match(css, /\.starterMark > span \{\r?\n  white-space: nowrap;/);
+
+  /*
+   * The mask clips to the border box and heavy glyphs paint past their advance width (the
+   * D lost its bowl). Padding widens the mask box, the negative margin gives it back.
+   */
+  assert.match(css, /padding: 0 0\.08em;\r?\n  margin: 0 -0\.08em;/);
 });
 
 test("registration is stated and derived", async () => {
@@ -255,9 +302,21 @@ test("the progress model uses real signals", async () => {
   assert.match(timing, /INTRO_STEP_MS = 34/);
   assert.match(timing, /INTRO_LAND_POINTS = 9/);
   assert.match(timing, /INTRO_LAND_FLOOR = 0\.12/);
+  assert.match(timing, /INTRO_DRAW_POINTS = 11/);
   assert.match(timing, /INTRO_OPEN_POINTS = 22/);
-  assert.match(timing, /INTRO_OPEN_RATIO = 0\.38/);
+  assert.match(timing, /INTRO_OPEN_RATIO = 0\.06/);
   assert.match(intro, /Math\.min\(INTRO_STEP_MS, now - last\)/);
+
+  /*
+   * The draw zone pace is a contract with the band table: the narrowest entrance bands are
+   * 2.2 load points wide, so the follower may not sweep a whole band between natural frames
+   * sampled 150ms apart, or letters pop in complete.
+   */
+  const openRatio = Number(timing.match(/INTRO_OPEN_RATIO = ([\d.]+)/)[1]);
+  const sweepMs = Number(timing.match(/INTRO_SWEEP_MS = (\d+)/)[1]);
+  const perFrame = (150 * 100 * openRatio) / sweepMs;
+  assert.ok(perFrame < 2.2, `draw zone sweeps ${perFrame.toFixed(2)} points per 150ms frame`);
+  assert.match(intro, /displayRef\.current - INTRO_DRAW_POINTS/);
 
   // Each signal is paid out by something the browser actually finished.
   assert.match(intro, /document\.fonts\?\.ready\.then/);
@@ -462,14 +521,17 @@ test("the scene is deterministic, disposed and lean", async () => {
 });
 
 test("the showcase film is untouched", async () => {
-  const [css, loader] = await Promise.all([source("showcaseCss"), source("loader")]);
+  const loader = await source("loader");
 
-  assert.match(css, /--mark-unit: 0\.6372svh/);
-  assert.match(css, /--b-build: clamp\(0, calc\(\(var\(--load\) - 0\.84\) \* 6\.25\), 1\)/);
-  assert.match(css, /--cut-x: calc\(100% - var\(--clip-r\)\)/);
-  assert.match(css, /opacity: calc\(var\(--b-edge\) \* \(1 - var\(--b-spend\)\)\)/);
-  // The showcase keeps driving the plate off its own variable.
-  assert.match(css, /--load: var\(--showcase-load, 0\)/);
+  if (showcasePresent) {
+    const css = await source("showcaseCss");
+    assert.match(css, /--mark-unit: 0\.6372svh/);
+    assert.match(css, /--b-build: clamp\(0, calc\(\(var\(--load\) - 0\.84\) \* 6\.25\), 1\)/);
+    assert.match(css, /--cut-x: calc\(100% - var\(--clip-r\)\)/);
+    assert.match(css, /opacity: calc\(var\(--b-edge\) \* \(1 - var\(--b-spend\)\)\)/);
+    // The showcase keeps driving the plate off its own variable.
+    assert.match(css, /--load: var\(--showcase-load, 0\)/);
+  }
 
   // The plate's own invariants survive the parameterization untouched.
   assert.match(loader, /pathLength="100"/);
@@ -503,10 +565,12 @@ test("the analog floor matches the reference it was measured against", async () 
    */
   const grain = css.match(/\.grain \{[\s\S]*?\r?\n\}/);
   assert.ok(grain, "intro.module.css must carry the grain layer");
-  const showcase = await source("showcaseCss");
-  const reference = showcase.match(/\.scene::after \{\r?\n\s*opacity: ([\d.]+);/);
-  assert.ok(reference, "the showcase floor must still declare the opacity this is matched to");
-  assert.equal(grain[0].match(/opacity: ([\d.]+);/)[1], reference[1]);
+  if (showcasePresent) {
+    const showcase = await source("showcaseCss");
+    const reference = showcase.match(/\.scene::after \{\r?\n\s*opacity: ([\d.]+);/);
+    assert.ok(reference, "the showcase floor must still declare the opacity this is matched to");
+    assert.equal(grain[0].match(/opacity: ([\d.]+);/)[1], reference[1]);
+  }
 
   /*
    * And the tile itself stays denser than the reference, which is the honest lever and the one
@@ -515,12 +579,15 @@ test("the analog floor matches the reference it was measured against", async () 
    * what is pinned and not two numbers that can drift apart.
    */
   const introDensity = Number(geometry.match(/INTRO_GRAIN_DOT_DENSITY = ([\d.]+)/)?.[1]);
-  const showcaseDensity = Number((await source("showcaseApp")).match(/GRAIN_DOT_DENSITY = ([\d.]+)/)?.[1]);
-  assert.ok(Number.isFinite(introDensity) && Number.isFinite(showcaseDensity));
-  assert.ok(
-    introDensity > showcaseDensity * 1.3,
-    `intro grain ${introDensity} must be materially denser than the showcase's ${showcaseDensity}`,
-  );
+  assert.ok(Number.isFinite(introDensity));
+  if (showcasePresent) {
+    const showcaseDensity = Number((await source("showcaseApp")).match(/GRAIN_DOT_DENSITY = ([\d.]+)/)?.[1]);
+    assert.ok(Number.isFinite(showcaseDensity));
+    assert.ok(
+      introDensity > showcaseDensity * 1.3,
+      `intro grain ${introDensity} must be materially denser than the showcase's ${showcaseDensity}`,
+    );
+  }
   for (const [name, count] of [
     ["INTRO_STAR_PINPOINT_COUNT", 5200],
     ["INTRO_STAR_MID_COUNT", 980],

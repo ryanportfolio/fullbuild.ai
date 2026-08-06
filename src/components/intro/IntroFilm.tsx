@@ -34,7 +34,10 @@ export default function IntroFilm({
         <LoaderPlate variant="sheet" styles={styles} />
         <div className={styles.starterBottom}>
           <p className={styles.loadNumber}>{readout}<span>%</span></p>
-          <p className={styles.starterMark}><span>FULL</span><span>BUILD</span></p>
+          <p className={styles.starterMark}>
+            <span><span>F</span><span>U</span><span>L</span><span>L</span></span>
+            <span><span>B</span><span>U</span><span>I</span><span>L</span><span>D</span></span>
+          </p>
         </div>
       </div>
 
@@ -42,7 +45,10 @@ export default function IntroFilm({
         <LoaderPlate variant="world" styles={styles} />
         <div className={styles.starterBottom}>
           <p className={styles.loadNumber}>{readout}<span>%</span></p>
-          <p className={styles.starterMark}><span>FULL</span><span>BUILD</span></p>
+          <p className={styles.starterMark}>
+            <span><span>F</span><span>U</span><span>L</span><span>L</span></span>
+            <span><span>B</span><span>U</span><span>I</span><span>L</span><span>D</span></span>
+          </p>
         </div>
       </div>
 
