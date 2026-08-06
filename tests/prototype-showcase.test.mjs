@@ -25,7 +25,10 @@ test("showcase route exposes the clean-room experience", async () => {
   ]);
 
   assert.match(page, /ShowcaseApp/);
-  assert.match(app, /Get started/i);
+  // The entry control names what it opens, and the mark beside it opens the same journey
+  assert.match(app, /<span className=\{styles\.enterLabel\}>Prototypes<\/span>/);
+  assert.doesNotMatch(app, /Get started/i);
+  assert.match(app, /onEnter=\{enterShowcase\}/);
   assert.match(app, /data-ready=\{ready\}/);
   assert.match(app, /data-entry-settled=\{entrySettled\}/);
   assert.match(app, /className=\{styles\.entryGate\}/);
@@ -344,8 +347,16 @@ test("showcase CSS contains the binding contract and responsive floor", async ()
   assert.match(css, /height: calc\(var\(--track-screens, 21\) \* 100svh\)/);
   // The house mark cursor: Firefox needs explicit width and height on the data URI SVG
   assert.match(css, /--showcase-house-cursor: url\("data:image\/svg\+xml,%3Csvg%20xmlns='http:\/\/www\.w3\.org\/2000\/svg'%20width='32'%20height='32'/);
-  const cursorTargets = css.match(/\.wordmark,\r?\n\.enterButton,\r?\n\.projectRow a,\r?\n\.scene canvas\[data-hovered-project\] \{\r?\n\s*cursor: var\(--showcase-house-cursor\);/);
-  assert.ok(cursorTargets, "the four real actions carry the house cursor");
+  const cursorTargets = css.match(/\.wordmark,\r?\n\.enterButton,\r?\n\.projectRow a,\r?\n\.scene canvas\[data-hovered-project\],\r?\n\.entryObject canvas\[data-hovered-mark\] \{\r?\n\s*cursor: var\(--showcase-house-cursor\);/);
+  assert.ok(cursorTargets, "the five real actions carry the house cursor");
+  // The artifact is a control, so its canvas takes the pointer; the blanket child override
+  // that used to make the whole layer inert would swallow it.
+  assert.match(css, /\.entryObject canvas \{\r?\n  pointer-events: auto;/);
+  assert.doesNotMatch(css, /\.entryObject \* \{/);
+  // A fixed element is its own stacking context whatever its z-index, so the entry control
+  // has to be fixed and outside the gate to sit above the artifact that now takes clicks.
+  assert.match(css, /\.enterButton \{\r?\n  position: fixed;\r?\n  z-index: 26;/);
+  assert.match(css, /\.enterButton\[data-entering="true"\] \{/);
   assert.match(css, /@media\s*\(max-width:\s*767px\)/);
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /:focus-visible/);
@@ -395,6 +406,8 @@ test("bleach answers to the pointer alone, never to scroll position", async () =
   assert.match(app, /const bleach = controlDwell \? 1 : 0;/);
   assert.match(app, /BLEACH_CONTROL = "a\[href\], button"/);
   assert.match(app, /control\.closest\(`\.\$\{styles\.entryGate\}`\)/);
+  // The entry control now stands outside the gate, so it is carved out by name too
+  assert.match(app, /control\.classList\.contains\(styles\.enterButton\)/);
   assert.doesNotMatch(scene, /bleached(Ground|Fog)/);
 
   // The control under the cursor keeps its colour, so it can never sit inside a
@@ -436,6 +449,13 @@ test("entry artifact is the FullBuild mark built in three dimensions", async () 
   assert.match(icon, /d="M52 48 H82 V82"/);
   assert.match(icon, /d="M52 48 L68 32 L82 46"/);
   assert.match(icon, /d="M25 76 l12 -12 M25 66 l9 -9"/);
+
+  // The mark is the entry control the button repeats: hover latches the house cursor on
+  // the canvas and a click opens the journey. The handlers sit on the parent group so a
+  // panel seam is not an exit.
+  assert.match(scene, /gl\.domElement\.dataset\.hoveredMark = "true";/);
+  assert.match(scene, /onEnter\(\);/);
+  assert.match(scene, /onEnter: \(\) => void/);
 
   // One mapping from viewBox units into world space, flipped once because the viewBox
   // counts downward, and nothing anywhere else does that arithmetic by hand.

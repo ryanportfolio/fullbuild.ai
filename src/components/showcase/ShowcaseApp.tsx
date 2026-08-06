@@ -129,8 +129,13 @@ const LOAD_OPEN_RATIO = 0.06;
 function bleachControl(node: EventTarget | null) {
   if (!(node instanceof Element)) return null;
   const control = node.closest(BLEACH_CONTROL);
-  // The entry gate's own call to action opens the journey; it never drains it.
-  return control && !control.closest(`.${styles.entryGate}`) ? control : null;
+  // The entry's own call to action opens the journey; it never drains it. The control
+  // stands outside the gate in the DOM, so it is named here as well as by its ancestor.
+  return control
+    && !control.closest(`.${styles.entryGate}`)
+    && !control.classList.contains(styles.enterButton)
+    ? control
+    : null;
 }
 
 /*
@@ -514,6 +519,7 @@ export function ShowcaseApp() {
             entrySettled={entrySettled}
             reducedMotion={reducedMotion}
             cursorRef={pointerRef}
+            onEnter={enterShowcase}
           />
         </div>
       ) : null}
@@ -630,13 +636,26 @@ export function ShowcaseApp() {
               <HeroWords text="SYSTEMS AT SCALE" />
             </span>
           </h1>
-          {/* Two blue blocks, one click target: the pill and the arrow tile are siblings
-              inside the control rather than a badge nested in a lozenge. */}
-          <button className={styles.enterButton} type="button" onClick={enterShowcase}>
-            <span className={styles.enterLabel}>Get started</span>
-            <span className={styles.enterArrow} aria-hidden="true">→</span>
-          </button>
         </section>
+      ) : null}
+
+      {/*
+        Two blue blocks, one click target: the pill and the arrow tile are siblings inside
+        the control rather than a badge nested in a lozenge. It stands outside the gate
+        because a fixed element is its own stacking context whatever its z-index, so a
+        control nested in the gate can never rise above the artifact layer, and the
+        artifact takes the pointer now that the mark is a control of its own.
+      */}
+      {ready && !entrySettled ? (
+        <button
+          className={styles.enterButton}
+          type="button"
+          data-entering={entered}
+          onClick={enterShowcase}
+        >
+          <span className={styles.enterLabel}>Prototypes</span>
+          <span className={styles.enterArrow} aria-hidden="true">→</span>
+        </button>
       ) : null}
 
       {/*

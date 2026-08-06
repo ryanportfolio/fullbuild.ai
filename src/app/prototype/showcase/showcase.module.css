@@ -49,7 +49,8 @@
 .wordmark,
 .enterButton,
 .projectRow a,
-.scene canvas[data-hovered-project] {
+.scene canvas[data-hovered-project],
+.entryObject canvas[data-hovered-mark] {
   cursor: var(--showcase-house-cursor);
 }
 
@@ -1133,8 +1134,13 @@
   pointer-events: none;
 }
 
-.entryObject * {
-  pointer-events: none !important;
+/*
+ * The canvas takes the pointer so the mark can answer it, and nothing else in the layer
+ * does. It sits under the entry control at z-index 26, so the button keeps its own clicks
+ * and only the artifact and the empty field behind it are this layer's to receive.
+ */
+.entryObject canvas {
+  pointer-events: auto;
 }
 
 .entryObject canvas {
@@ -1196,7 +1202,7 @@
  * between them; the button itself carries no surface at all.
  */
 .enterButton {
-  position: absolute;
+  position: fixed;
   z-index: 26;
   bottom: 43px;
   left: 50%;
@@ -1455,7 +1461,7 @@
   }
 }
 
-.entryGate[data-entering="true"] .enterButton {
+.enterButton[data-entering="true"] {
   opacity: 0;
   transform: translate(-50%, 1rem);
   pointer-events: none;

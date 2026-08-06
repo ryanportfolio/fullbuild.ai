@@ -2686,8 +2686,11 @@ function EntrySculpture({
   entrySettled,
   reducedMotion,
   cursorRef,
-}: Pick<ShowcaseSceneProps, "ready" | "entered" | "entrySettled" | "reducedMotion" | "cursorRef">) {
+  onEnter,
+}: Pick<ShowcaseSceneProps, "ready" | "entered" | "entrySettled" | "reducedMotion" | "cursorRef">
+  & { onEnter: () => void }) {
   const groupRef = useRef<Group>(null);
+  const { gl } = useThree();
   const cellRefs = useRef<Array<Group | null>>([]);
   const prismRefs = useRef<Array<Mesh | null>>([]);
   const pouredBodyRef = useRef<Mesh>(null);
@@ -3266,7 +3269,29 @@ function EntrySculpture({
    * reached yet. The first painted entry frame is now the loader's last frame.
    */
   return (
-    <group ref={groupRef} position={[0, 0.12, 0.1]}>
+    <group
+      ref={groupRef}
+      position={[0, 0.12, 0.1]}
+      /*
+        The mark is the entry control the button repeats, so it answers a pointer the same
+        way. The handlers sit on the parent rather than on each cell: R3F keys hover on the
+        object that owns the handler, so crossing a panel seam is not an exit and the
+        cursor never flickers between cells.
+      */
+      onPointerOver={() => {
+        if (!ready || entered) return;
+        gl.domElement.dataset.hoveredMark = "true";
+      }}
+      onPointerOut={() => {
+        delete gl.domElement.dataset.hoveredMark;
+      }}
+      onClick={(event) => {
+        event.stopPropagation();
+        if (!ready || entered) return;
+        delete gl.domElement.dataset.hoveredMark;
+        onEnter();
+      }}
+    >
       <group ref={lineRef}>
         <lineSegments geometry={drawnLineWork}>
           <lineBasicMaterial
@@ -4008,7 +4033,9 @@ export function ShowcaseEntryScene({
   entrySettled,
   reducedMotion,
   cursorRef,
-}: Pick<ShowcaseSceneProps, "ready" | "entered" | "entrySettled" | "reducedMotion" | "cursorRef">) {
+  onEnter,
+}: Pick<ShowcaseSceneProps, "ready" | "entered" | "entrySettled" | "reducedMotion" | "cursorRef">
+  & { onEnter: () => void }) {
   return (
     <Canvas
       camera={{ position: [0, 0, 5], fov: 50, near: 0.05, far: 40 }}
@@ -4047,6 +4074,7 @@ export function ShowcaseEntryScene({
         entrySettled={entrySettled}
         reducedMotion={reducedMotion}
         cursorRef={cursorRef}
+        onEnter={onEnter}
       />
     </Canvas>
   );
