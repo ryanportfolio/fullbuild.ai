@@ -120,7 +120,7 @@
 .iconButton,
 .bagButton {
   border: 0;
-  cursor: pointer;
+  cursor: var(--house-cursor);
   background: transparent;
   color: inherit;
 }
@@ -377,7 +377,7 @@
   min-height: inherit;
   padding: 36px;
   border: 0;
-  cursor: pointer;
+  cursor: var(--house-cursor);
   background: transparent;
   color: var(--carbon);
 }
@@ -420,7 +420,7 @@
   padding: 0;
   border: 1px solid var(--carbon);
   border-radius: 50%;
-  cursor: pointer;
+  cursor: var(--house-cursor);
   background: var(--chalk);
   color: var(--carbon);
   place-items: center;
@@ -484,7 +484,7 @@
 .productFooter button {
   padding: 4px 0;
   border: 0;
-  cursor: pointer;
+  cursor: var(--house-cursor);
   background: transparent;
   color: inherit;
   font-weight: 700;
@@ -649,7 +649,7 @@
   padding: 0;
   border: 1px solid var(--carbon);
   border-radius: 50%;
-  cursor: pointer;
+  cursor: var(--house-cursor);
   background: var(--chalk);
   color: var(--carbon);
   place-items: center;
@@ -806,7 +806,7 @@
   padding: 4px;
   border: 1px solid var(--rule);
   border-radius: 50%;
-  cursor: pointer;
+  cursor: var(--house-cursor);
   background: transparent;
   place-items: center;
 }
@@ -828,7 +828,7 @@
   min-height: 42px;
   padding: 0 10px;
   border: 1px solid var(--carbon);
-  cursor: pointer;
+  cursor: var(--house-cursor);
   background: transparent;
   color: inherit;
   font-size: 11px;
@@ -877,7 +877,7 @@
   min-height: 54px;
   padding: 0 18px;
   border: 0;
-  cursor: pointer;
+  cursor: var(--house-cursor);
   background: var(--orange-deep);
   color: #fff;
   align-items: center;
@@ -910,7 +910,7 @@
 
 .productDetails summary {
   padding: 16px 0;
-  cursor: pointer;
+  cursor: var(--house-cursor);
   font-family: var(--font-martian), monospace;
   font-size: 11px;
   font-weight: 700;
@@ -1019,7 +1019,7 @@
   width: max-content;
   padding: 2px 0;
   border: 0;
-  cursor: pointer;
+  cursor: var(--house-cursor);
   background: transparent;
   color: var(--carbon-soft);
   font-size: 11px;
@@ -1089,7 +1089,7 @@
   padding: 0 16px;
   border: 1px solid var(--carbon);
   margin-top: 26px;
-  cursor: pointer;
+  cursor: var(--house-cursor);
   background: transparent;
   color: var(--carbon);
   font-size: 10px;

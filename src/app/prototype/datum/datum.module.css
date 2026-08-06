@@ -9,6 +9,9 @@
    ========================================================================== */
 
 .shell {
+  /* A night ground, so the pointer takes the frost cut of the mark */
+  --house-cursor: var(--house-cursor-frost);
+
   --tool-void: #0b0d0f;
   --tool-panel: #14181b;
   --tool-line: #23292e;
@@ -50,7 +53,7 @@
 .shell button {
   background: none;
   border: 0;
-  cursor: pointer;
+  cursor: var(--house-cursor);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -454,7 +457,7 @@
   align-items: center;
   gap: 6px;
   margin-left: auto;
-  cursor: pointer;
+  cursor: var(--house-cursor);
 }
 
 .pinToggle input {
@@ -543,7 +546,7 @@
   border: 1px solid var(--tool-line);
   border-radius: 2px;
   background: none;
-  cursor: pointer;
+  cursor: var(--house-cursor);
 }
 
 .hexInput {
@@ -709,7 +712,7 @@
     'count count';
   gap: 4px 10px;
   padding: 9px 10px;
-  cursor: pointer;
+  cursor: var(--house-cursor);
   list-style: none;
 }
 
@@ -929,7 +932,7 @@
   font-size: 12.5px;
   letter-spacing: 0;
   color: var(--tool-dim);
-  cursor: pointer;
+  cursor: var(--house-cursor);
 }
 
 .send input {
@@ -977,7 +980,7 @@
 }
 
 .specGroup summary {
-  cursor: pointer;
+  cursor: var(--house-cursor);
   list-style: none;
   font-family: var(--font-martian), ui-monospace, monospace;
   font-size: 9.5px;

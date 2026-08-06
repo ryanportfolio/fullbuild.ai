@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readdirSync } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
 import test from "node:test";
 
@@ -10,11 +11,27 @@ const files = {
   scene: new URL("../src/components/showcase/ShowcaseScene.tsx", import.meta.url),
   data: new URL("../src/components/showcase/data.ts", import.meta.url),
   icon: new URL("../src/app/icon.svg", import.meta.url),
+  globals: new URL("../src/app/globals.css", import.meta.url),
   gallery: new URL("../public/prototype/index.html", import.meta.url),
 };
 
 async function source(name) {
   return readFile(files[name], "utf8");
+}
+
+// Every stylesheet the app itself ships, so a cursor rule can be held to across all of them
+function styleSheets() {
+  const roots = ["../src/app", "../src/components"].map((dir) => new URL(dir, import.meta.url));
+  const sheets = [];
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const child = new URL(`${dir.pathname.replace(/\/$/, "")}/${entry.name}`, import.meta.url);
+      if (entry.isDirectory()) walk(child);
+      else if (entry.name.endsWith(".css")) sheets.push(child);
+    }
+  };
+  roots.forEach(walk);
+  return sheets;
 }
 
 test("showcase route exposes the clean-room experience", async () => {
@@ -33,12 +50,16 @@ test("showcase route exposes the clean-room experience", async () => {
   assert.match(app, /data-entry-settled=\{entrySettled\}/);
   assert.match(app, /className=\{styles\.entryGate\}/);
   assert.match(app, /data-entering=\{entered\}/);
+  // A title card, not a manifesto: two letter-spread words, a year, and the disciplines.
+  // The spoken name is carried once so a screen reader never reads the letters one by one.
+  assert.match(app, /<span className=\{styles\.heroName\}>FullBuild Prototypes 2026<\/span>/);
+  assert.match(app, /<HeroLetters text="FULLBUILD" \/>/);
+  assert.match(app, /<HeroLetters text="PROTOTYPES" \/>/);
+  assert.match(app, /<b>2026<\/b>/);
+  assert.doesNotMatch(app, /HeroWords/);
+  assert.doesNotMatch(app, /BECAME REAL|EVERY SCREEN|SYSTEMS AT SCALE|STEP INTO/);
   assert.match(app, /ready\s*&&\s*!entrySettled/);
   assert.doesNotMatch(app, /className=\{styles\.entryCluster\}/);
-  assert.match(app, /STEP INTO/);
-  assert.match(app, /FULLBUILD 2026/);
-  assert.match(app, /INTERACTIVE/);
-  assert.match(app, /SYSTEMS AT SCALE/);
   assert.doesNotMatch(
     app.match(/<section className=\{styles\.starter\}[\s\S]*?<\/section>/)?.[0] ?? "",
     /enterButton/,
@@ -339,14 +360,31 @@ test("showcase ships nine repository-owned project captures", async () => {
 });
 
 test("showcase CSS contains the binding contract and responsive floor", async () => {
-  const css = await source("css");
+  const [css, globals] = await Promise.all([source("css"), source("globals")]);
 
   assert.match(css, /DESIGN CONTRACT/);
   assert.match(css, /--showcase-blue:\s*#0004eb/i);
   // The shell reads its length off the same TRACK_SCREENS the beats scale from
   assert.match(css, /height: calc\(var\(--track-screens, 21\) \* 100svh\)/);
-  // The house mark cursor: Firefox needs explicit width and height on the data URI SVG
-  assert.match(css, /--showcase-house-cursor: url\("data:image\/svg\+xml,%3Csvg%20xmlns='http:\/\/www\.w3\.org\/2000\/svg'%20width='32'%20height='32'/);
+  // One mark, one pointer: the geometry lives in globals and this dark page takes the
+  // frost cut. Firefox needs explicit width and height on a cursor SVG data URI.
+  assert.match(css, /--showcase-house-cursor: var\(--house-cursor-frost\);/);
+  assert.doesNotMatch(css, /--showcase-house-cursor: url\(/);
+  for (const ground of ["graphite", "frost"]) {
+    assert.match(
+      globals,
+      new RegExp(`--house-cursor-${ground}: url\\("data:image/svg\\+xml,%3Csvg%20xmlns='http://www\\.w3\\.org/2000/svg'%20width='32'%20height='32'`),
+    );
+  }
+  // The mark inverts with the table, and everything that answers a click carries it
+  assert.match(globals, /--house-cursor: var\(--house-cursor-graphite\);/);
+  assert.match(globals, /--house-cursor: var\(--house-cursor-frost\);/);
+  assert.match(globals, /a\[href\],\r?\nbutton,\r?\nsummary,\r?\n\[role="button"\] \{\r?\n  cursor: var\(--house-cursor\);/);
+  // A module class beats the global element rule, so a hard-coded pointer anywhere in the
+  // app would quietly take the mark back off that control. Nothing may declare one.
+  for (const sheet of await Promise.all(styleSheets().map((url) => readFile(url, "utf8")))) {
+    assert.doesNotMatch(sheet, /cursor: pointer/);
+  }
   const cursorTargets = css.match(/\.wordmark,\r?\n\.enterButton,\r?\n\.projectRow a,\r?\n\.scene canvas\[data-hovered-project\],\r?\n\.entryObject canvas\[data-hovered-mark\] \{\r?\n\s*cursor: var\(--showcase-house-cursor\);/);
   assert.ok(cursorTargets, "the five real actions carry the house cursor");
   // The artifact is a control, so its canvas takes the pointer; the blanket child override
@@ -1025,14 +1063,18 @@ test("chase answers a pointing device and the manifesto justifies word by word",
   assert.doesNotMatch(scene, /mobile \|\| reducedMotion \|\| entered \? 0/);
   assert.doesNotMatch(scene, /reducedMotion \|\| mobile \? 0 : pointer/);
 
-  // Every word is its own flex child, and none of them may shrink into its neighbour.
-  assert.match(app, /function HeroWords/);
-  assert.match(app, /text\.split\(" "\)\.map/);
+  // Every letter is its own flex child, and none of them may shrink into its neighbour.
+  // The display tracking comes off a spread line or each letter trails a phantom gap.
+  assert.match(app, /function HeroLetters/);
+  assert.match(app, /text\.split\(""\)\.map/);
   assert.match(css, /\.heroLine > \* \{[\s\S]*?flex: 0 0 auto/);
+  assert.match(css, /\.heroSpread \{\r?\n  letter-spacing: 0;/);
 
-  // The starter block is wider than the viewport and centred, so it crops on both edges.
+  // The handset holds the title card inside its own frame: a letter pushed off the edge
+  // would lose the word, which the old five-line wall could afford and this cannot.
   const mobile = css.match(/@media \(max-width: 767px\) \{[\s\S]*?\n\}/)?.[0] ?? "";
-  assert.match(mobile, /margin-left: -58vw/);
+  assert.doesNotMatch(mobile, /margin-left: -58vw/);
+  assert.match(mobile, /\.heroSignal \{[\s\S]*?width: 100vw;/);
 
   // The hover pill is pinned to the crystal the scene projects, never to the cursor.
   assert.match(scene, /--showcase-anchor-x/);

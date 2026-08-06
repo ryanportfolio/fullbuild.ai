@@ -5,6 +5,9 @@
    allowlisted selectors of 2.2. */
 
 .shell {
+  /* A night ground, so the pointer takes the frost cut of the mark */
+  --house-cursor: var(--house-cursor-frost);
+
   --bruised-black: #1a1410;
   --falloff-edge: #16110d;
   --bench: #2a221c;
@@ -31,7 +34,7 @@
 
 .shell button {
   font: inherit;
-  cursor: pointer;
+  cursor: var(--house-cursor);
 }
 
 .shell a {

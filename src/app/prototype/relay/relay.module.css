@@ -86,6 +86,9 @@
    ========================================================================== */
 
 .shell {
+  /* A night ground, so the pointer takes the frost cut of the mark */
+  --house-cursor: var(--house-cursor-frost);
+
   --room: #14181d;
   --bone: #edf1ee;
   --signal: #ffb45e;
@@ -388,7 +391,7 @@
   color: color-mix(in srgb, var(--hollowell) 85%, var(--room));
   font-family: inherit;
   font-size: 0.74rem;
-  cursor: pointer;
+  cursor: var(--house-cursor);
 }
 
 .quickChip:hover {
@@ -427,7 +430,7 @@
   font-family: inherit;
   font-size: 0.82rem;
   font-weight: 600;
-  cursor: pointer;
+  cursor: var(--house-cursor);
 }
 
 .sendButton:disabled {
@@ -715,7 +718,7 @@
   font-family: inherit;
   font-size: 0.78rem;
   line-height: 1.4;
-  cursor: pointer;
+  cursor: var(--house-cursor);
 }
 
 .suggestion:hover {
@@ -1052,7 +1055,7 @@
      button dropped on top of it. */
   background: color-mix(in srgb, var(--room) 76%, transparent);
   border: 0;
-  cursor: pointer;
+  cursor: var(--house-cursor);
   font-family: var(--mono);
   color: var(--bone);
 }

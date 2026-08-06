@@ -203,7 +203,7 @@
   border: 1px solid var(--rule-strong);
   color: inherit;
   padding: 0.2rem 0.45rem;
-  cursor: pointer;
+  cursor: var(--house-cursor);
   /* 24px touch target */
   min-height: 24px;
 }
@@ -298,7 +298,7 @@
   border-right: 1px solid var(--rule);
   color: var(--ink-witness);
   padding: 0.4rem 0;
-  cursor: pointer;
+  cursor: var(--house-cursor);
   transition: color 0.2s var(--ease-draw);
 }
 .navBtn:last-child {

@@ -139,17 +139,16 @@ function bleachControl(node: EventTarget | null) {
 }
 
 /*
- * The manifesto is justified word by word, not span by span. `space-between` can only
- * push apart the children it is given, so every word becomes its own child and the
- * copy stays one readable string in this file.
+ * The title is justified letter by letter, not word by word. `space-between` can only push
+ * apart the children it is given, so every letter becomes its own child and a single word
+ * spans the whole measure however many letters it carries. The letters are spoken as one
+ * word by the hidden name on the heading, never read out one at a time.
  */
-function HeroWords({ text, accent = false }: { text: string; accent?: boolean }) {
+function HeroLetters({ text }: { text: string }) {
   return (
     <>
-      {text.split(" ").map((word, index) => (
-        accent
-          ? <b key={`${word}-${index}`}>{word}</b>
-          : <span key={`${word}-${index}`}>{word}</span>
+      {text.split("").map((letter, index) => (
+        <span key={`${letter}-${index}`}>{letter}</span>
       ))}
     </>
   );
@@ -611,29 +610,26 @@ export function ShowcaseApp() {
           aria-labelledby="showcase-entry-title"
           data-entering={entered}
         >
+          {/*
+            A title card, not a manifesto: two words at the scale of the page with the year
+            and the disciplines on one quiet row under them. The name is carried once, for
+            a screen reader, so the spread letters can stay decorative.
+          */}
           <h1 className={styles.heroSignal} id="showcase-entry-title">
-            <span className={styles.heroLine}>
-              <HeroWords text="STEP INTO" />
-              <small className={styles.heroMeta} aria-hidden="true">
+            <span className={styles.heroName}>FullBuild Prototypes 2026</span>
+            <span className={`${styles.heroLine} ${styles.heroSpread}`} aria-hidden="true">
+              <HeroLetters text="FULLBUILD" />
+            </span>
+            <span className={`${styles.heroLine} ${styles.heroSpread}`} aria-hidden="true">
+              <HeroLetters text="PROTOTYPES" />
+            </span>
+            <span className={styles.heroLine} aria-hidden="true">
+              <b>2026</b>
+              <small className={styles.heroMeta}>
                 <span>IMMERSIVE WEB</span>
                 <span>DIGITAL STORYTELLING</span>
                 <span>WEBGL · MOTION · SYSTEMS</span>
               </small>
-              <HeroWords text="FULLBUILD 2026" accent />
-            </span>
-            <span className={styles.heroLine}>
-              <HeroWords text="NINE PROTOTYPES BECAME REAL" />
-            </span>
-            <span className={styles.heroLine}>
-              <HeroWords text="EVERY SCREEN A" />
-              <HeroWords text="STORY" accent />
-            </span>
-            <span className={styles.heroLine}>
-              <HeroWords text="THROUGH WEBGL, 3D, MOTION &" />
-            </span>
-            <span className={styles.heroLine}>
-              <HeroWords text="INTERACTIVE" accent />
-              <HeroWords text="SYSTEMS AT SCALE" />
             </span>
           </h1>
         </section>

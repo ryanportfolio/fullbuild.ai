@@ -96,6 +96,14 @@
   /* The drawing band: the one cell the R3F island may paint in (STATE 03→04). */
   --band-w: clamp(20rem, 34vw, 37rem);
 
+  /* THE POINTER IS THE MARK. Both cursors are the icon's own two-house geometry at 32px,
+     drawn twice: a heavy under-stroke in the ground's colour, then the ink over it, so the
+     mark holds an edge on whatever it happens to be crossing. Firefox refuses a cursor SVG
+     that carries only a viewBox, hence the explicit width and height on the data URI. */
+  --house-cursor-graphite: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='32'%20height='32'%20viewBox='0%200%20100%20100'%3E%3Cg%20stroke='%23e9e3d6'%20stroke-linecap='round'%20stroke-linejoin='round'%20fill='none'%3E%3Cpath%20d='M8%2082%20H92'%20stroke-width='9'/%3E%3Cpath%20d='M18%2082%20V48%20L35%2032%20L52%2048%20V82'%20stroke-width='10'/%3E%3Cpath%20d='M52%2048%20H82%20V82'%20stroke-width='10'/%3E%3Cpath%20d='M52%2048%20L68%2032%20L82%2046'%20stroke-width='10'/%3E%3Cpath%20d='M25%2076%20l12%20-12%20M25%2066%20l9%20-9'%20stroke-width='6'/%3E%3C/g%3E%3Cpath%20d='M52%2048%20H82%20V82%20H52%20Z'%20fill='%23e9e3d6'%20stroke='%23e9e3d6'%20stroke-width='10'%20stroke-linejoin='round'/%3E%3Cg%20stroke='%23211f1c'%20stroke-linecap='round'%20stroke-linejoin='round'%20fill='none'%3E%3Cpath%20d='M8%2082%20H92'%20stroke-width='4'/%3E%3Cpath%20d='M18%2082%20V48%20L35%2032%20L52%2048%20V82'%20stroke-width='4.5'/%3E%3Cpath%20d='M52%2048%20H82%20V82'%20stroke-width='4.5'/%3E%3Cpath%20d='M52%2048%20L68%2032%20L82%2046'%20stroke-width='4.5'/%3E%3Cpath%20d='M25%2076%20l12%20-12%20M25%2066%20l9%20-9'%20stroke-width='2.5'/%3E%3C/g%3E%3Cpath%20d='M52%2048%20H82%20V82%20H52%20Z'%20fill='%23211f1c'/%3E%3C/svg%3E") 11 10, pointer;
+  --house-cursor-frost: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='32'%20height='32'%20viewBox='0%200%20100%20100'%3E%3Cg%20stroke='%230a0d1a'%20stroke-linecap='round'%20stroke-linejoin='round'%20fill='none'%3E%3Cpath%20d='M8%2082%20H92'%20stroke-width='9'/%3E%3Cpath%20d='M18%2082%20V48%20L35%2032%20L52%2048%20V82'%20stroke-width='10'/%3E%3Cpath%20d='M52%2048%20H82%20V82'%20stroke-width='10'/%3E%3Cpath%20d='M52%2048%20L68%2032%20L82%2046'%20stroke-width='10'/%3E%3Cpath%20d='M25%2076%20l12%20-12%20M25%2066%20l9%20-9'%20stroke-width='6'/%3E%3C/g%3E%3Cpath%20d='M52%2048%20H82%20V82%20H52%20Z'%20fill='%230a0d1a'%20stroke='%230a0d1a'%20stroke-width='10'%20stroke-linejoin='round'/%3E%3Cg%20stroke='%23f4f6ff'%20stroke-linecap='round'%20stroke-linejoin='round'%20fill='none'%3E%3Cpath%20d='M8%2082%20H92'%20stroke-width='4'/%3E%3Cpath%20d='M18%2082%20V48%20L35%2032%20L52%2048%20V82'%20stroke-width='4.5'/%3E%3Cpath%20d='M52%2048%20H82%20V82'%20stroke-width='4.5'/%3E%3Cpath%20d='M52%2048%20L68%2032%20L82%2046'%20stroke-width='4.5'/%3E%3Cpath%20d='M25%2076%20l12%20-12%20M25%2066%20l9%20-9'%20stroke-width='2.5'/%3E%3C/g%3E%3Cpath%20d='M52%2048%20H82%20V82%20H52%20Z'%20fill='%23f4f6ff'/%3E%3C/svg%3E") 11 10, pointer;
+  --house-cursor: var(--house-cursor-graphite);
+
   color-scheme: light;
 }
 
@@ -112,6 +120,9 @@
   --rule: rgba(216, 210, 196, 0.14);
   --rule-strong: rgba(216, 210, 196, 0.3);
   --pour-concrete: #5d574d; /* same material, night light — not bone */
+
+  /* The pointer inverts with the table it crosses, the way every other ink here does */
+  --house-cursor: var(--house-cursor-frost);
 
   color-scheme: dark;
 }
@@ -186,6 +197,14 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* Anything that answers a click carries the mark instead of the system hand */
+a[href],
+button,
+summary,
+[role="button"] {
+  cursor: var(--house-cursor);
 }
 
 svg {

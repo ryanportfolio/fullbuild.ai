@@ -75,7 +75,7 @@
   padding: 0;
   border: 0;
   background: transparent;
-  cursor: pointer;
+  cursor: var(--house-cursor);
   -webkit-appearance: none;
   appearance: none;
 }
@@ -154,7 +154,7 @@
   padding: 0.1rem 0.3rem;
   border: 0;
   background: transparent;
-  cursor: pointer;
+  cursor: var(--house-cursor);
   font-family: var(--font-mono);
   font-size: 0.7rem;
   line-height: 1;

@@ -26,9 +26,9 @@
   --showcase-line: rgb(214 227 252 / 28%);
   --showcase-bleach-ease: 760ms;
 
-  /* The house mark from icon.svg as a 32px pointer: Firefox rejects a cursor SVG that
-     carries only a viewBox, so the data URI declares width and height explicitly */
-  --showcase-house-cursor: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='32'%20height='32'%20viewBox='0%200%20100%20100'%3E%3Cg%20stroke='%230a0d1a'%20stroke-linecap='round'%20stroke-linejoin='round'%20fill='none'%3E%3Cpath%20d='M8%2082%20H92'%20stroke-width='9'/%3E%3Cpath%20d='M18%2082%20V48%20L35%2032%20L52%2048%20V82'%20stroke-width='10'/%3E%3Cpath%20d='M52%2048%20H82%20V82'%20stroke-width='10'/%3E%3Cpath%20d='M52%2048%20L68%2032%20L82%2046'%20stroke-width='10'/%3E%3Cpath%20d='M25%2076%20l12%20-12%20M25%2066%20l9%20-9'%20stroke-width='6'/%3E%3C/g%3E%3Cpath%20d='M52%2048%20H82%20V82%20H52%20Z'%20fill='%230a0d1a'%20stroke='%230a0d1a'%20stroke-width='10'%20stroke-linejoin='round'/%3E%3Cg%20stroke='%23f4f6ff'%20stroke-linecap='round'%20stroke-linejoin='round'%20fill='none'%3E%3Cpath%20d='M8%2082%20H92'%20stroke-width='4'/%3E%3Cpath%20d='M18%2082%20V48%20L35%2032%20L52%2048%20V82'%20stroke-width='4.5'/%3E%3Cpath%20d='M52%2048%20H82%20V82'%20stroke-width='4.5'/%3E%3Cpath%20d='M52%2048%20L68%2032%20L82%2046'%20stroke-width='4.5'/%3E%3Cpath%20d='M25%2076%20l12%20-12%20M25%2066%20l9%20-9'%20stroke-width='2.5'/%3E%3C/g%3E%3Cpath%20d='M52%2048%20H82%20V82%20H52%20Z'%20fill='%23f4f6ff'/%3E%3C/svg%3E") 11 10, pointer;
+  /* One mark, one pointer. The geometry and both grounds live in globals.css; this page is
+     a night table wherever the site theme stands, so it takes the frost cut of it. */
+  --showcase-house-cursor: var(--house-cursor-frost);
   position: relative;
   isolation: isolate;
   width: 100%;
@@ -1291,17 +1291,17 @@
 .heroSignal {
   position: absolute;
   z-index: 24;
-  top: 20.5%;
+  top: 26%;
   left: 0;
   display: grid;
   width: 100vw;
   margin: 0;
   padding: 0 20px;
   color: var(--showcase-white);
-  /* The floor has to stay under the fluid term all the way down to the tablet breakpoint,
-     or a narrow desktop window locks the type larger than its own measure and the words
-     close up on each other. */
-  font-size: clamp(3.1rem, 5.85vw, 7.5rem);
+  /* A title card carries three lines, so the type runs at the scale a letter-spread word
+     can hold: the ceiling is the size where ten letters and their gaps still fit the
+     measure, and the floor keeps the two words spanning it on the narrowest desktop. */
+  font-size: clamp(3.1rem, 11.4vw, 15rem);
   font-weight: 430;
   line-height: 0.96;
   letter-spacing: -0.062em;
@@ -1334,6 +1334,25 @@
 .heroLine > * {
   flex: 0 0 auto;
   min-width: 0;
+}
+
+/*
+ * A spread line is one word holding the whole measure, so its children are letters rather
+ * than words. The display tracking comes off here: a negative letter-spacing on a single
+ * letter is a phantom gap after it, and the flex gap is doing that work now.
+ */
+.heroSpread {
+  letter-spacing: 0;
+}
+
+/* The heading's spoken name, carried once so the spread letters are never read one by one */
+.heroName {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .heroSignal b {
@@ -1434,20 +1453,13 @@
   animation: heroLineDrain 2000ms ease-in forwards;
 }
 
-.entryGate[data-entering="true"] .heroLine:nth-child(2) {
+/* The spoken name is the heading's first child, so the lines start counting at two */
+.entryGate[data-entering="true"] .heroLine:nth-child(3) {
   animation-delay: 55ms;
 }
 
-.entryGate[data-entering="true"] .heroLine:nth-child(3) {
-  animation-delay: 110ms;
-}
-
 .entryGate[data-entering="true"] .heroLine:nth-child(4) {
-  animation-delay: 165ms;
-}
-
-.entryGate[data-entering="true"] .heroLine:nth-child(5) {
-  animation-delay: 220ms;
+  animation-delay: 110ms;
 }
 
 @keyframes heroLineDrain {
@@ -1908,16 +1920,19 @@
   }
 
   /*
-   * A window onto a wider wall. The oversized block is centred on the viewport so both
-   * ends run past the edge; anchoring it left made the starts read as a normal margin.
+   * The handset keeps the title card inside its own frame. The old wall ran past both
+   * edges because five justified lines needed a wider measure than the screen; two spread
+   * words hold the screen exactly, and letters pushed off the edge would lose the word.
    */
   .heroSignal {
-    top: 33%;
+    top: 38%;
     left: 0;
-    width: 216vw;
-    margin-left: -58vw;
-    padding: 0;
-    font-size: clamp(2.4rem, 13vw, 4.2rem);
+    width: 100vw;
+    margin-left: 0;
+    padding: 0 14px;
+    /* The ceiling is set by the longest word: at 12.6vw the ten letters of PROTOTYPES sat
+       3px apart, which reads as a word that failed to fit rather than one that was spread */
+    font-size: clamp(2.4rem, 11.2vw, 4.2rem);
     line-height: 0.92;
     transform: none;
     transform-origin: 50% 47%;
