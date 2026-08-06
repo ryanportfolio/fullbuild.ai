@@ -541,6 +541,14 @@
  */
 .starterMark span span {
   display: inline-block;
+  /*
+   * The mask clips to the border box, and at the lockup's heaviest weight a glyph's ink
+   * paints past its own advance width: the D's bowl lost its right edge. The padding widens
+   * the mask box over the overhang and the negative margin gives the width straight back,
+   * so the letters sit exactly where they did and only the paintable area grows.
+   */
+  padding: 0 0.08em;
+  margin: 0 -0.08em;
   -webkit-mask-image: linear-gradient(100deg, #000 calc(var(--lb, 1) * 130% - 18%), transparent calc(var(--lb, 1) * 130%));
   mask-image: linear-gradient(100deg, #000 calc(var(--lb, 1) * 130% - 18%), transparent calc(var(--lb, 1) * 130%));
 }
