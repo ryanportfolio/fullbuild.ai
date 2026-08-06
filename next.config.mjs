@@ -22,7 +22,9 @@ const nextConfig = {
     return [
       // Harness Firmware product page — a static artifact like the prototypes.
       { source: '/harness-firmware', destination: '/harness-firmware/index.html' },
-      { source: '/prototype', destination: '/prototype/index.html' },
+      // The showcase is the gateway: /prototype opens the journey whose finale is the
+      // index. The old grid stays on disk at /prototype/index.html for direct links.
+      { source: '/prototype', destination: '/prototype/showcase' },
       { source: '/prototype/fault-line', destination: '/prototype/fault-line/index.html' },
       { source: '/prototype/assembly-line', destination: '/prototype/assembly-line/index.html' },
       { source: '/prototype/burn-in', destination: '/prototype/burn-in/index.html' },

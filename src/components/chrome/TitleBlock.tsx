@@ -93,7 +93,7 @@ export default function TitleBlock({
   // App-router prototypes own their entire canvas and navigation. The portfolio
   // drawing rail would otherwise cover their controls and violate both visual
   // isolation and pointer access.
-  const onAppPrototype = pathname.startsWith('/prototype/');
+  const onAppPrototype = pathname === '/prototype' || pathname.startsWith('/prototype/');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [mounted, setMounted] = useState(false);
   // Compact strip fold (mobile only — CSS gates it under 900px). Full block at

@@ -13,6 +13,8 @@ const files = {
   icon: new URL("../src/app/icon.svg", import.meta.url),
   globals: new URL("../src/app/globals.css", import.meta.url),
   gallery: new URL("../public/prototype/index.html", import.meta.url),
+  config: new URL("../next.config.mjs", import.meta.url),
+  rail: new URL("../src/components/chrome/TitleBlock.tsx", import.meta.url),
 };
 
 async function source(name) {
@@ -73,10 +75,12 @@ test("showcase route exposes the clean-room experience", async () => {
   assert.doesNotMatch(app, /<span>SHOWCASE<\/span>/);
   assert.match(app, /aria-expanded/);
   assert.match(app, /<noscript>/);
-  assert.equal((data.match(/\bid:\s*"/g) ?? []).length, 9);
+  // Counted inside the chapters array alone: the prototype index below it has its own 15
+  const chapters = data.match(/SHOWCASE_PROJECTS[\s\S]*?\] as const/)?.[0] ?? "";
+  assert.equal((chapters.match(/\bid:\s*"/g) ?? []).length, 9);
   // Every chapter opens a real prototype page, the way the source opens its case pages.
-  assert.equal((data.match(/\bhref:\s*"\/prototype\//g) ?? []).length, 9);
-  assert.match(data, /href: "\/prototype\/deadlow"/);
+  assert.equal((chapters.match(/\bhref:\s*"\/prototype\//g) ?? []).length, 9);
+  assert.match(chapters, /href: "\/prototype\/deadlow"/);
   // A chapter has to survive more scroll before it clears away, so the track is longer
   assert.match(data, /TRACK_SCREENS\s*=\s*21/);
 });
@@ -996,8 +1000,8 @@ test("the finale keeps the live field, a display lockup, and socials on the floo
   assert.match(lockup, /white-space: nowrap/);
   assert.doesNotMatch(css, /\.finale p[,\s{]/);
 
-  // The handset finale stacks LinkedIn in the middle and the mailto reduced to one small
-  // line on the floor. The lockup wrapper dissolves so flex order can interleave them.
+  // The handset regrids the finale around the index: the mailto is one small line between
+  // the card bands. The lockup wrapper dissolves so grid order can interleave them.
   const mobile = css.match(/@media \(max-width: 767px\) \{[\s\S]*?\n\}/)?.[0] ?? "";
   const mobileHandle = mobile.match(/\.finaleHandle \{[\s\S]*?\}/)?.[0] ?? "";
   assert.match(mobileHandle, /order: 2/);
@@ -1087,6 +1091,49 @@ test("prototype gallery links to Showcase", async () => {
 
   assert.match(gallery, /href="\/prototype\/showcase"/);
   assert.match(gallery, />Showcase</);
+});
+
+test("the finale is the prototype index and /prototype serves the showcase", async () => {
+  const [app, config, data, rail] = await Promise.all([
+    source("app"),
+    source("config"),
+    source("data"),
+    source("rail"),
+  ]);
+
+  // Fifteen entries in the old gallery's order, showcase last, every capture under the
+  // index media dir and a real graded file on disk rather than a stub.
+  const index = data.match(/PROTOTYPE_INDEX[\s\S]*?\] as const/)?.[0] ?? "";
+  const ids = [...index.matchAll(/\bid: "([a-z-]+)"/g)].map((m) => m[1]);
+  assert.equal(ids.length, 15);
+  assert.equal(ids[0], "fault-line");
+  assert.equal(ids[14], "showcase");
+  const images = [...index.matchAll(/\bimage: "([^"]+)"/g)].map((m) => m[1]);
+  assert.equal(images.length, 15);
+  for (const image of images) {
+    assert.match(image, /^\/prototype\/showcase\/media\/index\/[a-z-]+\.webp$/);
+    const capture = await stat(new URL(`../public${image}`, import.meta.url));
+    assert.ok(capture.size > 3000, `${image} is a real graded capture`);
+  }
+
+  // Ten cards above the lockup and five below it: labelled anchors around lazy images,
+  // so the link carries the name and the grid ships no script of its own.
+  const finale = app.match(/<section className=\{styles\.finale\}[\s\S]*?<\/section>/)?.[0] ?? "";
+  const top = finale.indexOf("PROTOTYPE_INDEX.slice(0, 10)");
+  const lockup = finale.indexOf("finaleLockup");
+  const bottom = finale.indexOf("PROTOTYPE_INDEX.slice(10)");
+  assert.ok(top > -1 && top < lockup, "ten cards render above the lockup");
+  assert.ok(bottom > lockup, "five cards render below the lockup");
+  assert.match(finale, /aria-label=\{`Open \$\{entry\.title\}`\}/);
+  assert.match(finale, /<img src=\{entry\.image\} alt="" loading="lazy" decoding="async" \/>/);
+
+  // The gateway: /prototype opens the showcase; the old grid keeps its direct URL.
+  assert.match(config, /\{ source: '\/prototype', destination: '\/prototype\/showcase' \}/);
+  assert.doesNotMatch(config, /\{ source: '\/prototype', destination: '\/prototype\/index\.html' \}/);
+
+  // The drawing rail must unmount on the bare gateway path as well as the nested
+  // prototype routes, or its fixed overlay covers the whole journey at /prototype.
+  assert.match(rail, /pathname === '\/prototype' \|\| pathname\.startsWith\('\/prototype\/'\)/);
 });
 
 test("the loader is a registered drafting sheet cut open by a percent function", async () => {
