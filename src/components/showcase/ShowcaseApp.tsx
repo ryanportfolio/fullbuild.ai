@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "@/app/prototype/showcase/showcase.module.css";
-import { activeProjectIndex, SHOWCASE_PROJECTS, TRACK_SCREENS } from "./data";
+import { activeProjectIndex, PROTOTYPE_INDEX, SHOWCASE_PROJECTS, TRACK_SCREENS } from "./data";
 import { hashSeed, seededRandom } from "./prng";
 import { ShowcaseEntryScene, ShowcaseScene } from "./ShowcaseScene";
 import { LoaderPlate } from "./ShowcaseLoader";
@@ -692,9 +692,30 @@ export function ShowcaseApp() {
         is ever allowed to take the colour out.
       */}
       <section className={styles.finale} data-visible={finaleVisible} aria-label="Contact">
+        {/*
+          The last screen is also the site's prototype index: ten cards over the lockup,
+          five under it. Plain anchors, so the bleach hover rules already cover them, and
+          the handset regroups them around the mailto with grid order alone, never JS.
+        */}
+        <nav className={styles.indexGrid} data-band="top" aria-label="Prototype index">
+          {PROTOTYPE_INDEX.slice(0, 10).map((entry) => (
+            <a key={entry.id} className={styles.indexCard} href={entry.href} aria-label={`Open ${entry.title}`}>
+              <img src={entry.image} alt="" loading="lazy" decoding="async" />
+              <span className={styles.indexCaption}>{entry.title}</span>
+            </a>
+          ))}
+        </nav>
         <div className={styles.finaleLockup}>
           <a className={styles.finaleHandle} href="mailto:hi@fullbuild.ai">HI@FULLBUILD.AI</a>
         </div>
+        <nav className={styles.indexGrid} data-band="bottom" aria-label="Prototype index continued">
+          {PROTOTYPE_INDEX.slice(10).map((entry) => (
+            <a key={entry.id} className={styles.indexCard} href={entry.href} aria-label={`Open ${entry.title}`}>
+              <img src={entry.image} alt="" loading="lazy" decoding="async" />
+              <span className={styles.indexCaption}>{entry.title}</span>
+            </a>
+          ))}
+        </nav>
         <div className={styles.socials}>
           <a href="https://www.linkedin.com/in/ryan-allen-d/" rel="noreferrer">LinkedIn</a>
         </div>

@@ -99,6 +99,7 @@
 .shell[data-bleaching="true"] .finale::before,
 .shell[data-bleaching="true"] .finaleHandle,
 .shell[data-bleaching="true"] .socials a,
+.shell[data-bleaching="true"] .indexCard,
 .shell[data-bleaching="true"] .mobileMenu,
 .shell[data-bleaching="true"] .ledgerLabel,
 .shell[data-bleaching="true"] .projectRow h1,
@@ -1602,8 +1603,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 5rem 0 3.2rem;
+  /* Ten index cards ride above the lockup and five below it, so the frame distributes:
+     cards to the top, mailto through the middle, the last row clear of the floor socials */
+  justify-content: space-between;
+  padding: clamp(5rem, 10svh, 7rem) 0 clamp(6rem, 12svh, 9rem);
   /* No black veil: the last screen keeps the live field behind the lockup, and only a
      pointer on a control is ever allowed to take the colour out of it. */
   background: transparent;
@@ -1647,6 +1650,75 @@
 .finaleLockup {
   display: grid;
   justify-items: center;
+}
+
+/*
+ * PROTOTYPE INDEX. Fifteen graded captures as plain anchors inside the finale, so the
+ * bleach rules and the focus outline already govern them. Card height is svh-driven and
+ * the width is capped at the 1.9 aspect, so a short viewport shrinks the cards instead
+ * of letting a row collide with the lockup or clip off frame.
+ */
+.indexGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(14px, 1.9svh, 26px) clamp(18px, 2.2vw, 36px);
+  justify-items: center;
+  width: min(92vw, 1500px);
+}
+
+.indexCard {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  width: min(100%, calc(12svh * 1.9));
+  height: 12svh;
+  border: 1px solid rgb(241 244 255 / 30%);
+  background: rgb(2 4 17 / 55%);
+  cursor: var(--showcase-house-cursor);
+  transition: border-color 240ms ease, box-shadow 240ms ease,
+    filter var(--showcase-bleach-ease, 760ms) ease;
+}
+
+.indexCard img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.94);
+  transition: filter 240ms ease;
+}
+
+.indexCard:hover,
+.indexCard:focus-visible {
+  border-color: var(--showcase-blue);
+  box-shadow: 0 0 18px rgb(0 4 235 / 35%);
+}
+
+.indexCard:hover img,
+.indexCard:focus-visible img {
+  filter: brightness(1.08);
+}
+
+.indexCaption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  padding: 4px 7px;
+  color: var(--showcase-white);
+  background: rgb(0 0 11 / 74%);
+  font-family: var(--font-martian), monospace;
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 200ms ease;
+  pointer-events: none;
+}
+
+.indexCard:hover .indexCaption,
+.indexCard:focus-visible .indexCaption {
+  opacity: 1;
 }
 
 .finaleHandle {
@@ -1983,18 +2055,19 @@
     font-size: 0.99rem;
   }
 
+  /*
+   * The handset regrids the finale to three columns: six cards, the mailto line, nine
+   * cards, LinkedIn pinned to the floor. Both navs and the lockup dissolve to contents
+   * so grid order can interleave their children without any script.
+   */
   .finale {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8.4rem 0 4.2rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    align-content: center;
+    padding: 4.4rem 16px 5.4rem;
   }
 
-  /*
-   * The handset stacks the LinkedIn link in the middle and the mailto reduced to one
-   * small line at the floor. The lockup wrapper dissolves so flex order can interleave.
-   */
   .finaleLockup {
     display: contents;
   }
@@ -2002,7 +2075,10 @@
   .finaleHandle {
     order: 2;
     position: static;
+    grid-column: 1 / -1;
+    justify-self: center;
     width: auto;
+    margin: 8px 0;
     font-size: 1.2rem;
     font-weight: 500;
     letter-spacing: 0.05em;
@@ -2011,10 +2087,26 @@
     text-shadow: 0 0 0.3rem rgb(226 233 255 / 26%);
   }
 
-  .socials {
+  .indexGrid {
+    display: contents;
+  }
+
+  .indexCard {
     order: 1;
-    position: static;
-    margin: 0;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1.9;
+    /* A card is a tap target, so it never shrinks under the 44px floor */
+    min-height: 44px;
+  }
+
+  .indexGrid[data-band="top"] .indexCard:nth-child(n+7),
+  .indexGrid[data-band="bottom"] .indexCard {
+    order: 3;
+  }
+
+  .socials {
+    bottom: 22px;
     gap: 14px;
     font-size: 1.24rem;
   }

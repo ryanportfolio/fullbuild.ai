@@ -129,6 +129,35 @@ export const SHOWCASE_PROJECTS: readonly ShowcaseProject[] = [
   },
 ] as const;
 
+export type PrototypeIndexEntry = {
+  id: string;
+  title: string;
+  href: string;
+  image: string;
+};
+
+/*
+ * The finale doubles as the site's prototype index: the old gallery's order, showcase
+ * last. Images are pre-graded 608x320 captures shipped in public/, never regenerated.
+ */
+export const PROTOTYPE_INDEX: readonly PrototypeIndexEntry[] = [
+  { id: "fault-line", title: "Fault Line", href: "/prototype/fault-line", image: "/prototype/showcase/media/index/fault-line.webp" },
+  { id: "assembly-line", title: "Assembly Line", href: "/prototype/assembly-line", image: "/prototype/showcase/media/index/assembly-line.webp" },
+  { id: "burn-in", title: "Burn-In", href: "/prototype/burn-in", image: "/prototype/showcase/media/index/burn-in.webp" },
+  { id: "quench", title: "Quench", href: "/prototype/quench", image: "/prototype/showcase/media/index/quench.webp" },
+  { id: "harborline", title: "Harborline", href: "/prototype/harborline", image: "/prototype/showcase/media/index/harborline.webp" },
+  { id: "fahrzeugmarkt", title: "Fahrzeugmarkt", href: "/prototype/fahrzeugmarkt", image: "/prototype/showcase/media/index/fahrzeugmarkt.webp" },
+  { id: "loop-zero", title: "Loop Zero", href: "/prototype/loop-zero", image: "/prototype/showcase/media/index/loop-zero.webp" },
+  { id: "threadline", title: "Threadline", href: "/prototype/threadline", image: "/prototype/showcase/media/index/threadline.webp" },
+  { id: "morrow", title: "Morrow", href: "/prototype/morrow", image: "/prototype/showcase/media/index/morrow.webp" },
+  { id: "halation", title: "Halation", href: "/prototype/halation", image: "/prototype/showcase/media/index/halation.webp" },
+  { id: "relay", title: "Relay", href: "/prototype/relay", image: "/prototype/showcase/media/index/relay.webp" },
+  { id: "deadlow", title: "Dead Low", href: "/prototype/deadlow", image: "/prototype/showcase/media/index/deadlow.webp" },
+  { id: "maranatha", title: "Maranatha", href: "/prototype/maranatha", image: "/prototype/showcase/media/index/maranatha.webp" },
+  { id: "open-saas", title: "Open Build", href: "/prototype/open-saas", image: "/prototype/showcase/media/index/open-saas.webp" },
+  { id: "showcase", title: "Showcase", href: "/prototype/showcase", image: "/prototype/showcase/media/index/showcase.webp" },
+] as const;
+
 export function clamp01(value: number) {
   return Math.min(1, Math.max(0, value));
 }
