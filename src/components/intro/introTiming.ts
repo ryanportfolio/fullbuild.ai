@@ -53,15 +53,24 @@ export const INTRO_MAX_MS = 4200;
  * A rate limit rather than an exponential: an exponential lags the clock by around nine
  * points for free and the drawing hands over late. The landing window is the one eased
  * stretch, and the floor keeps a crawl alive so the counter decelerates to rest instead of
- * stopping mid-stride. The opening runs slower still, because the opening is the drawing
- * act and a drawing is watched, not flashed.
+ * stopping mid-stride.
+ *
+ * The opening is the drawing act, and its speed is a constraint rather than a taste: the
+ * drawn furniture lives entirely under load 0.11 and its narrowest bands (readout, each
+ * lockup letter) are 2.2 load points wide, so no element may cross a whole band between
+ * frames sampled 150ms apart. The follower therefore runs flat at INTRO_OPEN_RATIO through
+ * the first INTRO_DRAW_POINTS: 1000 * 100 * 0.06 / 620 = 9.7 points per second, 1.45
+ * points per 150ms frame, under the 2.2 point band width. Only past the draw zone does the
+ * quadratic ramp to full pace begin. The previous ratio of 0.38 swept a letter band in
+ * about 35ms of wall time, which read as letters popping in whole.
  */
 export const INTRO_SWEEP_MS = 620;
 export const INTRO_STEP_MS = 34;
 export const INTRO_LAND_POINTS = 9;
 export const INTRO_LAND_FLOOR = 0.12;
+export const INTRO_DRAW_POINTS = 11;
 export const INTRO_OPEN_POINTS = 22;
-export const INTRO_OPEN_RATIO = 0.38;
+export const INTRO_OPEN_RATIO = 0.06;
 
 /* ── ACTS 2 to 4: the cinematic ────────────────────────────────────────────── */
 
