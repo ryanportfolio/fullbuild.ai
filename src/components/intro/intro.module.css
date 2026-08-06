@@ -516,7 +516,15 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* Child combinator, or the last letter of each word would take the word gap too. */
+/*
+ * Child combinator, or the last letter of each word would take the word gap too. nowrap is
+ * load bearing: the per-letter split turned each glyph into an inline-block, which invents
+ * a break opportunity between every letter, and a handset width takes one mid word.
+ */
+.starterMark > span {
+  white-space: nowrap;
+}
+
 .starterMark > span:last-child {
   margin-left: 0.48em;
 }
