@@ -1127,8 +1127,10 @@ test("the finale is the prototype index and /prototype serves the showcase", asy
   assert.match(finale, /aria-label=\{`Open \$\{entry\.title\}`\}/);
   assert.match(finale, /<img src=\{entry\.image\} alt="" loading="lazy" decoding="async" \/>/);
 
-  // The gateway: /prototype opens the showcase; the old grid keeps its direct URL.
-  assert.match(config, /\{ source: '\/prototype', destination: '\/prototype\/showcase' \}/);
+  // The gateway: /prototype opens the showcase; the old grid keeps its direct URL. The
+  // rule must sit in beforeFiles: Vercel resolves /prototype to the static index.html on
+  // its own, so an afterFiles rule works locally and silently loses in production.
+  assert.match(config, /beforeFiles: \[\r?\n\s*\{ source: '\/prototype', destination: '\/prototype\/showcase' \},\r?\n\s*\]/);
   assert.doesNotMatch(config, /\{ source: '\/prototype', destination: '\/prototype\/index\.html' \}/);
 
   // The drawing rail must unmount on the bare gateway path as well as the nested
