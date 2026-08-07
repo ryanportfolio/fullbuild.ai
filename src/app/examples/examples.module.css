@@ -1,0 +1,543 @@
+/* ============================================================================
+   E-01 · RECORD OF DEMONSTRATION — page contract.
+
+   The exhibit sheet lives inside The Working Set's binding contract
+   (globals.css) and adds only the strip-chart transport on top of it:
+
+   - Inks: the chart plots in graphite; the not-yet-played envelope stands in
+     the RULE token (declared line ink — never opacity on an ink). The pen is
+     graphite and is the chart's only full-height stroke; station boundaries
+     are short numbered registration ticks. Revision-red appears ONLY on
+     station links whose registry row is `live` and whose health probe agrees
+     — the site-wide meaning, unchanged — and the log prints that law.
+   - The waveform is a plot of measured data (peaks.json, 1,317 half-second
+     bins of the reel's own audio); the minute ruling and scale note under it
+     are the plot's real axis. Nothing on the chart is decorative.
+   - No gradients, no blur, no glassmorphism. The video plate sits in a drawn
+     frame like every other figure in the set.
+   - Margin Law: the sheet ends at the rail. Below 900px the rail is a bottom
+     overlay and the sheet clears it with padding, as Sheet.module.css does.
+   - Motion: the pen and re-ink track playback (content, not ornament); the
+     only transition is the preview card's appearance, and reduced motion
+     collapses it via the global rule.
+   ========================================================================= */
+
+.page {
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: var(--sheet-margin);
+  display: flex;
+}
+
+@media (min-width: 901px) {
+  .page {
+    padding-right: calc(var(--rail-w) + var(--sheet-margin));
+  }
+}
+
+@media (max-width: 900px) {
+  .page {
+    padding-bottom: clamp(3rem, 12vh, 7rem);
+  }
+}
+
+.frame {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--rule-strong);
+  padding: clamp(1rem, 2.5vw, 2rem);
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(0.75rem, 2vw, 1.75rem);
+  padding-bottom: 0.85rem;
+  margin-bottom: clamp(1rem, 3vh, 2rem);
+  border-bottom: 1px solid var(--rule);
+}
+
+.headNo {
+  font-size: 0.7rem;
+  color: var(--ink-witness);
+  white-space: nowrap;
+}
+
+.headFacts {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--ink-witness);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-weight: 700;
+  font-size: clamp(1.9rem, 4.5vw, 3.4rem);
+  line-height: 1.04;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  margin-bottom: clamp(1rem, 3vh, 1.75rem);
+}
+
+/* ---- player ---------------------------------------------------------------- */
+
+.player {
+  display: flex;
+  flex-direction: column;
+  /* The capture's own ground: the dark bench the recorded screens sit on
+     while frames arrive. Declared once so the ground is auditable, and NOT a
+     theme token on purpose — the recording's pixels do not invert with the
+     table. */
+  --capture-bench: #101010;
+}
+
+.player:fullscreen {
+  background: var(--ground);
+  padding: clamp(1rem, 2.5vw, 2rem);
+  overflow: auto;
+}
+
+.stage {
+  position: relative;
+}
+
+.video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  display: block;
+  border: 1px solid var(--rule-strong);
+  background: var(--capture-bench);
+}
+
+.player[data-enhanced] .video {
+  cursor: var(--house-cursor);
+}
+
+.plate {
+  margin-top: 0.5rem;
+  font-size: 0.62rem;
+  color: var(--ink-witness);
+}
+
+/* a fact group never breaks internally; wraps land between groups */
+.plateSeg {
+  white-space: nowrap;
+}
+
+/* Pause-state affordance: a drawn chip on the plate's frame, in the ground's
+   own paper so it holds an edge over any recorded pixel. Pointer-events off;
+   the whole plate is the button. */
+.playChip {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 2.4rem;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.68rem;
+  color: var(--ink-graphite);
+  background: var(--ground);
+  border: 1px solid var(--rule-strong);
+  pointer-events: none;
+}
+
+/* ---- chrome (hidden until hydration; native controls carry the floor) ----- */
+
+.chrome {
+  display: none;
+}
+
+.player[data-enhanced] .chrome {
+  display: block;
+  margin-top: clamp(0.75rem, 2vh, 1.25rem);
+}
+
+.deck {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.6rem, 1.5vw, 1rem);
+  margin-bottom: 0.6rem;
+}
+
+.transport {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 1px solid var(--rule-strong);
+  background: transparent;
+  color: var(--ink-graphite);
+}
+
+.transport svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.transport:hover {
+  border-color: var(--ink-graphite);
+}
+
+.timecode {
+  font-size: 0.78rem;
+  color: var(--ink-graphite);
+  min-width: 11.5ch;
+  white-space: nowrap;
+}
+
+.stationReadout {
+  font-size: 0.7rem;
+  color: var(--ink-witness);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---- the strip chart ------------------------------------------------------- */
+
+.chartBlock {
+  position: relative;
+}
+
+/* Station callouts above the chart: grid references at the verified
+   boundaries. The current one is underlined the way the rail's state ticker
+   underlines the standing sheet. */
+.stationRow {
+  position: relative;
+  height: 1.15rem;
+}
+
+.stationBtn {
+  position: absolute;
+  top: 0;
+  padding: 0 0.15rem 0.1rem;
+  font-size: 0.62rem;
+  color: var(--ink-witness);
+  background: none;
+  border: none;
+}
+
+.stationBtn:hover {
+  color: var(--ink-graphite);
+}
+
+.stationBtn[data-current] {
+  color: var(--ink-graphite);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.chart {
+  position: relative;
+  border: 1px solid var(--rule-strong);
+}
+
+.wave {
+  width: 100%;
+  height: clamp(3.4rem, 9vh, 5rem);
+  display: block;
+}
+
+.waveBase {
+  stroke: var(--rule);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+/* The whole recording standing by in the RULE ink (a declared line token, so
+   composited contrast stays knowable) and the played reach re-inked to full
+   graphite: pencil first, then ink, the way a chart is traced. */
+.waveRest {
+  fill: var(--rule-strong);
+}
+
+.waveInked {
+  fill: var(--ink-graphite);
+}
+
+/* Station boundaries are short registration ticks at the top edge — the pen
+   below is the only full-height stroke, so stylus and event marks can never
+   read as the same line. */
+.stationTick {
+  stroke: var(--rule-strong);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.pen line {
+  stroke: var(--ink-graphite);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+/* the scrub input owns pointer + keys + AT; drawn layers stay quiet */
+.scrub {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  margin: 0;
+  cursor: var(--house-cursor);
+}
+
+.previewCard {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.previewThumb {
+  width: 160px;
+  height: 90px;
+  border: 1px solid var(--rule-strong);
+  background-color: var(--capture-bench);
+  background-repeat: no-repeat;
+}
+
+.previewCard span {
+  font-size: 0.62rem;
+  color: var(--ink-graphite);
+  background: var(--ground);
+  padding: 0.1rem 0.35rem;
+  border: 1px solid var(--rule);
+  white-space: nowrap;
+}
+
+/* keep the card on the sheet at the edges */
+.previewCard {
+  max-width: none;
+}
+
+/* Minute ruling under the chart: the plot's time axis, in the measured voice. */
+.ruler {
+  position: relative;
+  height: 1.05rem;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  color: var(--ink-witness);
+}
+
+.rulerTick {
+  position: absolute;
+  top: 0;
+  padding-top: 0.3rem;
+  transform: translateX(-50%);
+  border-top: none;
+}
+
+.rulerTick::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 1px;
+  height: 0.22rem;
+  background: var(--rule-strong);
+}
+
+.rulerTick[data-labeled]::before {
+  height: 0.34rem;
+}
+
+/* The plot's scale, on its own line under the ruling — static flow, so it
+   cannot overprint a minute label at any width, and it ships on mobile too. */
+.rulerScale {
+  margin-top: 0.1rem;
+  text-align: right;
+  font-size: 0.55rem;
+  color: var(--ink-witness);
+}
+
+.keys {
+  margin-top: 0.5rem;
+  font-size: 0.62rem;
+  color: var(--ink-witness);
+}
+
+/* A key legend is for keyboards; coarse pointers get the transport readout
+   instead of a spacebar they do not have. */
+@media (pointer: coarse) {
+  .keys {
+    display: none;
+  }
+}
+
+.frameCount {
+  font-size: 0.62rem;
+  color: var(--ink-witness);
+  white-space: nowrap;
+}
+
+/* ---- station log ----------------------------------------------------------- */
+
+.logFold {
+  margin-top: clamp(1.5rem, 4vh, 2.5rem);
+  border-top: 1px solid var(--rule-strong);
+}
+
+/* the fold's pull tab: a drawn disclosure tick, not the UA marker */
+.logSummary {
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.6rem 0;
+  font-size: 0.7rem;
+  color: var(--ink-witness);
+  user-select: none;
+}
+
+.logSummary::-webkit-details-marker {
+  display: none;
+}
+
+.logSummary::before {
+  content: '▸';
+  color: var(--ink-graphite);
+}
+
+.logFold[open] .logSummary::before {
+  content: '▾';
+}
+
+.logSummary:hover {
+  color: var(--ink-graphite);
+}
+
+.log {
+  list-style: none;
+  border-top: 1px solid var(--rule);
+}
+
+.logRow {
+  display: grid;
+  grid-template-columns: 2.2rem 1fr auto;
+  align-items: baseline;
+  gap: clamp(0.5rem, 1.5vw, 1rem);
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+/* "You are here": the standing station's number re-inks and underlines, the
+   same mark the rail's state ticker uses for the standing sheet. */
+.logRow[data-current] .logN {
+  color: var(--ink-graphite);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.logN {
+  font-size: 0.7rem;
+  color: var(--ink-witness);
+}
+
+/* One click behavior per row: the whole timecode+title assembly seeks; the
+   red URL at the right edge is the only external mark. */
+.logSeek {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(0.5rem, 1.5vw, 1rem);
+  min-width: 0;
+  color: var(--ink-graphite);
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+}
+
+.logSeek > span:first-child {
+  font-size: 0.78rem;
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 0.2em;
+  white-space: nowrap;
+}
+
+.logSeek:hover > span:first-child {
+  text-decoration-color: var(--ink-graphite);
+}
+
+.logSeek:hover .logTitle {
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 0.25em;
+}
+
+.logTitle {
+  font-family: var(--font-display);
+  font-stretch: 118%;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+.logHref {
+  font-size: 0.68rem;
+  color: var(--ink-witness);
+}
+
+/* red is EARNED: registry-live and probe-agreed only (same law as the set) */
+.logHref[data-live] {
+  color: var(--accent-link);
+}
+
+.logHref:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+/* The probe law, printed where the red appears — the audit line that keeps
+   the all-red column a record instead of a theme. */
+.probeNote {
+  padding: 0.55rem 0 0.2rem;
+  font-size: 0.62rem;
+  color: var(--ink-witness);
+}
+
+@media (max-width: 900px) {
+  .frameCount {
+    display: none;
+  }
+}
+
+@media (max-width: 700px) {
+  /* The deck wraps: transport marks on the first line, the station readout
+     standing alone on its own full-width line beneath, still on the sheet. */
+  .deck {
+    flex-wrap: wrap;
+  }
+  .stationReadout {
+    order: 1;
+    flex-basis: 100%;
+  }
+  .logRow {
+    grid-template-columns: 2.2rem 1fr;
+  }
+  .logHref {
+    grid-column: 2 / -1;
+    margin-top: -0.2rem;
+  }
+  .logTitle {
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+  }
+  .stationBtn {
+    display: none;
+  }
+  .stationRow {
+    height: 0;
+  }
+}

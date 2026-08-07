@@ -31,3 +31,7 @@ PUBLIC_BASE=/prototype/fahrzeugmarkt/ VITE_API_PREFIX=/prototype/fahrzeugmarkt n
 then copy `dist/` over `public/prototype/fahrzeugmarkt/`. Both variables are unset locally, where Vite proxies `/api` to a backend on port 8080.
 
 The demo is intentionally not hardened: open registration, CSRF disabled, and demo credentials published in its README including an admin account. Its data is disposable and lives only in the Railway database.
+
+## Large media: GitHub release assets
+
+Big binaries (the /examples demonstration reel, 157MB mp4) never enter git or `public/`. They ship as release assets on this repo (`gh release create media-<name>-v<N> <file>`) and pages reference the stable download URL (`https://github.com/ryanportfolio/fullbuild.ai/releases/download/<tag>/<file>`). GitHub serves them with HTTP 206 range support, so `<video preload="metadata">` streams instead of downloading. Re-encode first (x264 CRF 23 `-movflags +faststart` took the 1.33GB screen-capture master to 157MB at 2Mbps with crisp text). Lightweight derivatives (poster, scrub sprite sheet, waveform peaks JSON) DO live in the repo beside the page. New reel cut = new tag, update `src/app/examples/reel.ts`, re-verify station boundaries against the ENCODED file (its timing drifts ±2s from the master).
