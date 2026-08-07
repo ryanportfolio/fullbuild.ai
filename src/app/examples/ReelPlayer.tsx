@@ -295,6 +295,9 @@ export default function ReelPlayer() {
       className={styles.player}
       data-enhanced={enhanced ? 'true' : undefined}
       aria-label="Reel player · ten stations"
+      /* The bench keys are unlabelled on the sheet by choice: every one of
+         them has a drawn control or a log row that does the same job, so the
+         keyboard is a shortcut over visible affordances, not a hidden API. */
       onKeyDown={onKeyDown}
     >
       <figure className={styles.stage}>
@@ -513,15 +516,6 @@ export default function ReelPlayer() {
           </p>
         </div>
 
-        <p className={`${styles.keys} u-mono`}>
-          {/* the complete bench: every bound key, in unbreakable groups */}
-          <span className={styles.plateSeg}>SPACE / K PLAY</span>{' '}
-          <span className={styles.plateSeg}>· ← → ±5 SEC</span>{' '}
-          <span className={styles.plateSeg}>· J / L ±10 SEC</span>{' '}
-          <span className={styles.plateSeg}>· 1–0 STATIONS</span>{' '}
-          <span className={styles.plateSeg}>· M MUTE</span>{' '}
-          <span className={styles.plateSeg}>· F FULL</span>
-        </p>
       </div>
 
       <details className={styles.logFold}>

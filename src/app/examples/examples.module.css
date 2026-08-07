@@ -65,23 +65,15 @@
   white-space: nowrap;
 }
 
+/* The sheet's name, carried on the head band as an h1: the heading element
+   for the outline, the annotation voice for the drawing. */
 .headFacts {
   margin-left: auto;
   font-size: 0.7rem;
+  font-weight: 400;
   color: var(--ink-witness);
   text-align: right;
   white-space: nowrap;
-}
-
-.title {
-  font-family: var(--font-display);
-  font-stretch: 125%;
-  font-weight: 700;
-  font-size: clamp(1.9rem, 4.5vw, 3.4rem);
-  line-height: 1.04;
-  letter-spacing: 0.01em;
-  text-transform: uppercase;
-  margin-bottom: clamp(1rem, 3vh, 1.75rem);
 }
 
 /* ---- player ---------------------------------------------------------------- */
@@ -360,20 +352,6 @@
   color: var(--ink-witness);
 }
 
-.keys {
-  margin-top: 0.5rem;
-  font-size: 0.62rem;
-  color: var(--ink-witness);
-}
-
-/* A key legend is for keyboards; coarse pointers get the transport readout
-   instead of a spacebar they do not have. */
-@media (pointer: coarse) {
-  .keys {
-    display: none;
-  }
-}
-
 .frameCount {
   font-size: 0.62rem;
   color: var(--ink-witness);
@@ -514,10 +492,18 @@
 }
 
 @media (max-width: 700px) {
-  /* The deck wraps: transport marks on the first line, the station readout
-     standing alone on its own full-width line beneath, still on the sheet. */
+  /* The deck wraps: all four drawn controls hold ONE line with the timecode,
+     and the station readout stands alone on a full-width line beneath. The
+     tightened gap and timecode are what keep the fullscreen mark from
+     falling off the end of the first line at 390px (measured: the four
+     controls plus the timecode need 276px of the 292px available). */
   .deck {
     flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .timecode {
+    font-size: 0.7rem;
+    min-width: 0;
   }
   .stationReadout {
     order: 1;

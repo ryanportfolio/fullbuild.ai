@@ -67,8 +67,11 @@ test('the exhibit page prints only claims the data can back', async () => {
   // The frame count and fps on the plate come from REEL, never hand-typed.
   assert.match(player, /\{REEL\.frames\.toLocaleString\('en-US'\)\} FRAMES/);
   assert.match(player, /\{REEL\.fps\} FPS/);
-  // The station count in the head is derived from the array.
-  assert.match(page, /\{STATIONS\.length\} STATIONS/);
+  // The head band prints the reel's duration from REEL, never hand-typed.
+  assert.match(page, /timecode\(REEL\.duration\)/);
+  // Exactly one h1, and it is the sheet's name on the head band.
+  assert.equal((page.match(/<h1[ >]/g) ?? []).length, 1, 'exactly one h1');
+  assert.match(page, /<h1[^>]*>\s*EXAMPLES/);
   // Voice rules: no em dashes in anything the reader sees. Comments keep the
   // repo's drafting voice, so strip them before checking.
   const visible = (src) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
