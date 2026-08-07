@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import ReelPlayer from './ReelPlayer';
-import { REEL, STATIONS, timecode } from './reel';
+import { REEL, timecode } from './reel';
 import styles from './examples.module.css';
 
 export const metadata: Metadata = {
@@ -20,14 +20,15 @@ export default function ExamplesPage() {
   return (
     <main className={styles.page}>
       <div className={styles.frame}>
+        {/* The sheet's title lives in the head band beside its number, the way
+            a drawing is named on its own title line rather than in a masthead
+            above it. It stays the page's single h1. */}
         <header className={styles.head}>
           <span className={`${styles.headNo} u-mono`}>EXHIBIT E-01</span>
-          <span className={`${styles.headFacts} u-mono`}>
-            {STATIONS.length} STATIONS · {timecode(REEL.duration)}
-          </span>
+          <h1 className={`${styles.headFacts} u-mono`}>
+            EXAMPLES · {timecode(REEL.duration)}
+          </h1>
         </header>
-
-        <h1 className={styles.title}>Examples</h1>
 
         <ReelPlayer />
       </div>
