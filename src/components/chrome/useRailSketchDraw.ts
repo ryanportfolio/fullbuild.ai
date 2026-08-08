@@ -77,7 +77,22 @@ export function useRailSketchDraw(): void {
       const front = p * (strokes.length + OVERLAP);
       for (let i = 0; i < strokes.length; i++) {
         const local = Math.min(1, Math.max(0, (front - i) / OVERLAP));
-        strokes[i].setAttribute('stroke-dashoffset', String(1 - local));
+        const el = strokes[i];
+        if (local >= 1) {
+          // A FINISHED STROKE CARRIES NO DASH. Firefox mis-renders a lingering
+          // `stroke-dasharray: 1 1` against pathLength=1 on multi-subpath
+          // paths even at dashoffset 0 — subpaths fall into dash gaps and the
+          // record rearranges itself (reproduced 2026-08-08, ff-contact-end).
+          // Chromium happens to forgive it; the sheet strokes and the
+          // transmittal already live by this rule.
+          el.removeAttribute('stroke-dasharray');
+          el.removeAttribute('stroke-dashoffset');
+        } else {
+          // step() may travel backward across a finished stroke, so the dash
+          // rig is re-hung whenever it is missing.
+          if (!el.hasAttribute('stroke-dasharray')) el.setAttribute('stroke-dasharray', '1 1');
+          el.setAttribute('stroke-dashoffset', String(1 - local));
+        }
       }
     };
 

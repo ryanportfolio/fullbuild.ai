@@ -508,7 +508,19 @@ export default function DrawingSet({
         sketchFront = front;
         sketch.forEach((el, i) => {
           const local = Math.min(1, Math.max(0, front - i));
-          el.setAttribute('stroke-dashoffset', String(1 - local));
+          if (local >= 1) {
+            // A finished stroke carries no dash: Firefox mis-renders a
+            // lingering `1 1` dasharray against pathLength=1 on multi-subpath
+            // paths even at offset 0 (subpaths fall into dash gaps), so the
+            // completed record was rearranging itself at the bottom of the
+            // set. Same rule the .ws-draw tweens above apply on complete.
+            // Safe here because the front is monotonic — a finished mark
+            // never un-draws.
+            el.removeAttribute('stroke-dasharray');
+            el.removeAttribute('stroke-dashoffset');
+          } else {
+            el.setAttribute('stroke-dashoffset', String(1 - local));
+          }
         });
       };
 

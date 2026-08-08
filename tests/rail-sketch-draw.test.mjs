@@ -55,6 +55,28 @@ test('the draw-in releases the pre-paint hold on every path, including reduced m
   assert.match(hook, /setAttribute\('stroke-dasharray', '1 1'\)/);
   assert.ok(!hook.includes('strokeDasharray'), 'no CSS dash writes');
 
+  // A FINISHED STROKE CARRIES NO DASH. Firefox mis-renders a lingering
+  // `1 1` dasharray against pathLength=1 on multi-subpath paths even at
+  // dashoffset 0 (subpaths fall into dash gaps and the record rearranges),
+  // so every dash-draw consumer must strip the rig on completion. Chromium
+  // forgiving it is why this regresses silently without a pin.
+  const scrub = await read('src/components/motion/DrawingSet.tsx');
+  const logo = await read('src/components/chrome/RailLogo.tsx');
+  for (const [name, src] of [['useRailSketchDraw', hook], ['DrawingSet sketch scrub', scrub]]) {
+    assert.match(
+      src,
+      /removeAttribute\('stroke-dasharray'\);\s*\r?\n\s*.*removeAttribute\('stroke-dashoffset'\)/,
+      `${name} strips the dash rig from finished strokes`,
+    );
+  }
+  assert.match(
+    logo,
+    /strokeDasharray = '';\s*\r?\n\s*p\.style\.strokeDashoffset = '';/,
+    'RailLogo clears its dash styles once the draw settles',
+  );
+  assert.match(logo, /settleTimer = window\.setTimeout/, 'RailLogo settles on a timer it owns');
+  assert.match(logo, /clearTimeout\(settleTimer\)/, 'and clears it on teardown');
+
   // Deterministic capture hook, and it is cleaned up.
   assert.match(hook, /window\.__railSketch = \{/);
   for (const fn of ['freeze', 'thaw', 'step']) {
