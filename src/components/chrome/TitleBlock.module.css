@@ -146,6 +146,11 @@
   padding-top: 0.6rem;
   border-top: 1px solid var(--rule);
 }
+/* No carriage in the room, no dial on the rail — same rule the correspondence
+   panel follows above. PenCarriage flips this on its first real target. */
+.telemetry[data-carriage='false'] {
+  display: none;
+}
 .telemetryHead {
   font-size: 0.56rem;
   letter-spacing: 0.18em;
