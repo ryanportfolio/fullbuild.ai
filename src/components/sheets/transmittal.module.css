@@ -393,11 +393,20 @@
 }
 
 /* ---- collapse ----------------------------------------------------------- */
-@media (max-width: 900px) {
+/* The notes column drops below the fields well before the rail collapses at
+   900px: the full-height rail eats ~15rem of a 901-1200px viewport, and the
+   two-column form would starve the message block to a few characters a line.
+   Stacked, the note letters after SEND in the sheet's open lower margin. */
+@media (max-width: 1200px) {
   .form {
     grid-template-columns: 1fr;
     gap: 1.6rem;
   }
+  .notes {
+    max-width: 24rem;
+  }
+}
+@media (max-width: 900px) {
   .row,
   .sgnRow {
     grid-template-columns: 1fr;
