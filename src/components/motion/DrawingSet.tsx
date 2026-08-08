@@ -470,12 +470,27 @@ export default function DrawingSet({
       // scrubbed by overall set progress: survey → footings → bents → roof →
       // AS BUILT, finishing as the set runs out. Monotonic by design — the
       // pencil only ever ADDS; scrolling back up never un-draws a mark.
-      const sketch = gsap.utils.toArray<SVGElement>(document.querySelectorAll('.ws-scrub'));
+      //
+      // OWNERSHIP IS EARNED BY HAVING SCROLL TO SPEND. A scrubbed record needs
+      // a scroll narrative underneath it, and not every route that mounts this
+      // controller has one: /contact is a single sheet with a scroll range of
+      // exactly zero, so its log could never advance past the first mark and
+      // sat blank permanently. Where there is no distance to scrub, this
+      // controller cedes the log and the rail draws it on its own clock
+      // (useRailSketchDraw), which reads the flag stamped below. Half a
+      // viewport is the floor: less than that is a page that does not scroll
+      // in any meaningful sense, whatever its exact pixel overhang.
+      const scrollRange = document.documentElement.scrollHeight - window.innerHeight;
+      const scrubbable = scrollRange > window.innerHeight * 0.5;
+      const sketch = scrubbable
+        ? gsap.utils.toArray<SVGElement>(document.querySelectorAll('.ws-scrub'))
+        : [];
       sketch.sort(
         (a, b) => Number(a.getAttribute('data-o') ?? 0) - Number(b.getAttribute('data-o') ?? 0),
       );
       // Attributes, not CSS — same px-mis-scale trap as the sheet strokes above.
       if (sketch.length) {
+        root.setAttribute('data-site-log', 'scrubbed');
         gsap.set(sketch, { attr: { 'stroke-dasharray': '1 1', 'stroke-dashoffset': 1 } });
         // Release the site log from the pre-paint CSS hold now that the scrub
         // owns its hidden state — same frame, so the record never shows itself
@@ -662,7 +677,10 @@ export default function DrawingSet({
       ) : null}
       <PenCarriage />
       {/* <main>: the set IS the document's main content. The title block rail
-          is the only chrome outside it. */}
+          is the only chrome outside it. The site-log ownership flag is stamped
+          on this element from the effect below, not written here, because
+          whether this controller can scrub the log is a measurement, not a
+          fact about the markup. */}
       <main ref={rootRef} className={styles.set}>
         {children}
       </main>

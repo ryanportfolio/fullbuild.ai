@@ -6,6 +6,7 @@ import { useWorkingSet, isUp, type PipelineState } from '@/lib/store';
 import { LIVE_PROJECTS } from '@/lib/projects';
 import RailLogo from './RailLogo';
 import RailSketch from './RailSketch';
+import { useRailSketchDraw } from './useRailSketchDraw';
 import styles from './TitleBlock.module.css';
 
 /**
@@ -101,6 +102,10 @@ export default function TitleBlock({
   // to essentials. Hysteresis (fold past 80, unfold under 40) so a reader
   // parked at the boundary never sees it buzz.
   const [min, setMin] = useState(false);
+
+  // The site log draws itself on routes with no DrawingSet to scrub it. Stands
+  // down where the set owns the strokes; see useRailSketchDraw.
+  useRailSketchDraw();
 
   useEffect(() => {
     setMounted(true);
@@ -211,8 +216,16 @@ export default function TitleBlock({
       </div>
 
       {/* Carriage telemetry — live readout of the one instrument. PenCarriage
-          writes these cells directly (real coords, real mode, no theater). */}
-      <div className={styles.telemetry} aria-hidden="true">
+          writes these cells directly (real coords, real mode, no theater).
+
+          HIDDEN UNTIL THE INSTRUMENT REPORTS, the same rule the correspondence
+          panel follows (`data-posted`): routes outside the set never mount a
+          carriage, and under reduced motion the pen bus never fires, so the
+          panel would otherwise print "idle · x --- · y ---" forever. A readout
+          of an instrument that is not in the room is not an honest empty
+          state, it is a dead dial. PenCarriage flips this on its first real
+          target and back off when it unmounts. */}
+      <div className={styles.telemetry} aria-hidden="true" data-carriage="false">
         <span className={styles.telemetryHead}>Carriage</span>
         <span id="pen-telemetry-mode" className={styles.telemetryLine}>
           idle

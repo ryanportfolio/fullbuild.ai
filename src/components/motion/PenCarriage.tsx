@@ -40,9 +40,13 @@ export default function PenCarriage() {
     // mode + ink + hand together drive the telemetry line, so a hand swap
     // (site -> visitor) re-letters the cell even when the mode holds steady
     let curTel = '';
-    // Rail telemetry cells — real coords, throttled to readable rate.
+    // Rail telemetry cells — real coords, throttled to readable rate. The
+    // panel itself stays off the rail until the instrument actually reports:
+    // under reduced motion the bus never fires, so a panel revealed at mount
+    // would print a dead "idle · x --- · y ---" for the whole visit.
     const telMode = document.getElementById('pen-telemetry-mode');
     const telXY = document.getElementById('pen-telemetry-xy');
+    const telPanel = telMode?.parentElement ?? null;
     const MODE_TEXT = {
       draw: 'plotting',
       pour: 'riding the pour',
@@ -52,6 +56,7 @@ export default function PenCarriage() {
     let lastTel = 0;
 
     const unsub = penBus.subscribe((t) => {
+      if (telPanel) telPanel.dataset.carriage = 'true';
       // Off-stage: the [data-mode='hide'] CSS rule fades it out in place
       // (see module.css); forget the position so the next appearance
       // materialises at its target instead of streaking across.
@@ -104,6 +109,8 @@ export default function PenCarriage() {
 
     return () => {
       unsub();
+      // The instrument leaves the room with its dial.
+      if (telPanel) telPanel.dataset.carriage = 'false';
     };
   }, []);
 
