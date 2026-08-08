@@ -48,8 +48,13 @@ export default function RailLogo({ className }: { className?: string }) {
     // The mark ships drawn (no-JS floor), so the pre-paint CSS hold in
     // globals.css covers it until this effect owns the hidden state; arming the
     // svg in the same frame releases the hold with no flash of the finished mark.
+    // visibility carries the wait, NOT the dash alone: Firefox mis-renders a
+    // dasharray against pathLength=1 on multi-subpath paths at any offset (the
+    // hatch and the dimension string both are), leaking stray fragments while
+    // the mark waited for the wordmark to settle.
     strokes.forEach((p) => {
       p.style.transition = 'none';
+      p.style.visibility = 'hidden';
       p.style.strokeDasharray = '1';
       p.style.strokeDashoffset = '1';
     });
@@ -67,7 +72,10 @@ export default function RailLogo({ className }: { className?: string }) {
       window.clearTimeout(timer);
       svg.getBoundingClientRect(); // flush the hidden state
       strokes.forEach((p, i) => {
-        p.style.transition = `stroke-dashoffset ${DRAW_DUR}ms cubic-bezier(0.22,0.61,0.36,1) ${i * DRAW_STAGGER}ms`;
+        // visibility is discretely transitionable, so each stroke's nib comes
+        // down exactly on its own stagger beat — never visible-but-undrawn.
+        p.style.transition = `stroke-dashoffset ${DRAW_DUR}ms cubic-bezier(0.22,0.61,0.36,1) ${i * DRAW_STAGGER}ms, visibility 0s ${i * DRAW_STAGGER}ms`;
+        p.style.visibility = 'visible';
         p.style.strokeDashoffset = '0';
       });
       pour.style.transition = `opacity ${DRAW_DUR}ms ease ${strokes.length * DRAW_STAGGER}ms`;
@@ -81,6 +89,7 @@ export default function RailLogo({ className }: { className?: string }) {
         () => {
           strokes.forEach((p) => {
             p.style.transition = 'none';
+            p.style.visibility = '';
             p.style.strokeDasharray = '';
             p.style.strokeDashoffset = '';
           });
@@ -115,6 +124,7 @@ export default function RailLogo({ className }: { className?: string }) {
       // teardown mid-draw → leave the finished mark
       strokes.forEach((p) => {
         p.style.transition = 'none';
+        p.style.visibility = '';
         p.style.strokeDasharray = '';
         p.style.strokeDashoffset = '';
       });

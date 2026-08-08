@@ -73,32 +73,40 @@ export function useRailSketchDraw(): void {
       return;
     }
 
+    /* A stroke is in exactly one of three states, and only ONE of them wears
+       the dash rig:
+       - waiting: hidden by the visibility attribute, no dash. Firefox
+         mis-renders `stroke-dasharray: 1 1` against pathLength=1 on
+         multi-subpath paths at ANY offset — parked at 1 it leaks stray
+         subpath fragments, finished at 0 it drops subpaths into gaps (both
+         reproduced 2026-08-08). Chromium forgives both, which is how it
+         shipped. So the dash can only ever be worn mid-draw.
+       - in flight: visible, dash-rigged, offset easing 1 -> 0.
+       - finished: plain path, no dash, no visibility — the SSR state. */
     const paintAt = (p: number) => {
       const front = p * (strokes.length + OVERLAP);
       for (let i = 0; i < strokes.length; i++) {
         const local = Math.min(1, Math.max(0, (front - i) / OVERLAP));
         const el = strokes[i];
         if (local >= 1) {
-          // A FINISHED STROKE CARRIES NO DASH. Firefox mis-renders a lingering
-          // `stroke-dasharray: 1 1` against pathLength=1 on multi-subpath
-          // paths even at dashoffset 0 — subpaths fall into dash gaps and the
-          // record rearranges itself (reproduced 2026-08-08, ff-contact-end).
-          // Chromium happens to forgive it; the sheet strokes and the
-          // transmittal already live by this rule.
+          el.removeAttribute('visibility');
           el.removeAttribute('stroke-dasharray');
           el.removeAttribute('stroke-dashoffset');
-        } else {
-          // step() may travel backward across a finished stroke, so the dash
-          // rig is re-hung whenever it is missing.
+        } else if (local > 0) {
+          // step() travels both ways, so the rig is re-hung when missing.
+          el.removeAttribute('visibility');
           if (!el.hasAttribute('stroke-dasharray')) el.setAttribute('stroke-dasharray', '1 1');
           el.setAttribute('stroke-dashoffset', String(1 - local));
+        } else {
+          el.setAttribute('visibility', 'hidden');
+          el.removeAttribute('stroke-dasharray');
+          el.removeAttribute('stroke-dashoffset');
         }
       }
     };
 
     for (const el of strokes) {
-      el.setAttribute('stroke-dasharray', '1 1');
-      el.setAttribute('stroke-dashoffset', '1');
+      el.setAttribute('visibility', 'hidden');
     }
     arm();
 
@@ -148,6 +156,12 @@ export function useRailSketchDraw(): void {
 
     return () => {
       if (raf) cancelAnimationFrame(raf);
+      // Unmounting mid-draw hands back the SSR state: the finished record.
+      for (const el of strokes) {
+        el.removeAttribute('visibility');
+        el.removeAttribute('stroke-dasharray');
+        el.removeAttribute('stroke-dashoffset');
+      }
       delete window.__railSketch;
     };
   }, []);
