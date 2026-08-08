@@ -58,6 +58,7 @@ export default function RailLogo({ className }: { className?: string }) {
     svg.setAttribute('data-ws-armed', '');
 
     let timer = 0;
+    let settleTimer = 0;
     let begun = false;
     const begin = () => {
       if (begun) return;
@@ -71,6 +72,21 @@ export default function RailLogo({ className }: { className?: string }) {
       });
       pour.style.transition = `opacity ${DRAW_DUR}ms ease ${strokes.length * DRAW_STAGGER}ms`;
       pour.style.opacity = '1';
+      // A FINISHED STROKE CARRIES NO DASH. Firefox mis-renders a lingering
+      // dasharray against pathLength=1 on multi-subpath paths even at
+      // dashoffset 0 (the hatch and the dimension string here both are), so
+      // once the last transition lands the rig comes off and the finished
+      // mark stands as plain paths — the same state teardown leaves behind.
+      settleTimer = window.setTimeout(
+        () => {
+          strokes.forEach((p) => {
+            p.style.transition = 'none';
+            p.style.strokeDasharray = '';
+            p.style.strokeDashoffset = '';
+          });
+        },
+        DRAW_DUR + (strokes.length - 1) * DRAW_STAGGER + 100,
+      );
     };
 
     // One hand: wait for the wordmark plot (latched flag covers late mount);
@@ -95,6 +111,7 @@ export default function RailLogo({ className }: { className?: string }) {
       unhold?.();
       window.removeEventListener('ws:plot-settled', begin);
       window.clearTimeout(timer);
+      window.clearTimeout(settleTimer);
       // teardown mid-draw → leave the finished mark
       strokes.forEach((p) => {
         p.style.transition = 'none';
