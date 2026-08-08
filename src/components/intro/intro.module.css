@@ -545,10 +545,13 @@
    * The mask clips to the border box, and at the lockup's heaviest weight a glyph's ink
    * paints past its own advance width: the D's bowl lost its right edge. The padding widens
    * the mask box over the overhang and the negative margin gives the width straight back,
-   * so the letters sit exactly where they did and only the paintable area grows.
+   * so the letters sit exactly where they did and only the paintable area grows. The same
+   * clip runs vertically: line-height 0.71 is negative leading, the letter box ends a
+   * fraction above the baseline, and the U's bowl came back flat. The vertical pair opens
+   * the box over the full glyph, and gives the height straight back the same way.
    */
-  padding: 0 0.08em;
-  margin: 0 -0.08em;
+  padding: 0.12em 0.08em;
+  margin: -0.12em -0.08em;
   -webkit-mask-image: linear-gradient(100deg, #000 calc(var(--lb, 1) * 130% - 18%), transparent calc(var(--lb, 1) * 130%));
   mask-image: linear-gradient(100deg, #000 calc(var(--lb, 1) * 130% - 18%), transparent calc(var(--lb, 1) * 130%));
 }

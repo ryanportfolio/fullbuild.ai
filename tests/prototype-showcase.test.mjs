@@ -1207,9 +1207,11 @@ test("the loader is a registered drafting sheet cut open by a percent function",
 
   /*
    * The mask clips to the border box and heavy glyphs paint past their advance width (the
-   * D lost its bowl). Padding widens the mask box, the negative margin gives it back.
+   * D lost its bowl) AND past the negative-leading letter box (the U's bowl came back
+   * flat at the baseline). Padding opens the mask box on both axes, the negative margin
+   * gives the space back so layout never moves.
    */
-  assert.match(css, /padding: 0 0\.08em;\r?\n  margin: 0 -0\.08em;/);
+  assert.match(css, /padding: 0\.12em 0\.08em;\r?\n  margin: -0\.12em -0\.08em;/);
 
   /*
    * The draw zone pace is a contract with the band table: the narrowest entrance bands are
