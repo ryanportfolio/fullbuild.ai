@@ -294,8 +294,17 @@ export default function DrawingSet({
           const authored = el.getAttribute('stroke-dasharray');
           if (authored) el.dataset.wsDash = authored;
         });
-        gsap.set(strokes, { attr: { 'stroke-dasharray': '1 1', 'stroke-dashoffset': 1 } });
-        // The dash hide is now this timeline's, so release each stroke from the
+        // HIDDEN UNTIL IN FLIGHT. The dash rig alone cannot hide a waiting
+        // stroke: Firefox mis-renders `1 1` against pathLength=1 on
+        // multi-subpath paths at ANY offset, so a page full of strokes parked
+        // at offset 1 leaked stray subpath fragments on load (hatch ticks,
+        // dim arrows). The visibility attribute carries the hidden state;
+        // each stroke sheds it in its tween's onStart, is briefly dash-drawn,
+        // and hands back its authored presentation in onComplete.
+        gsap.set(strokes, {
+          attr: { 'stroke-dasharray': '1 1', 'stroke-dashoffset': 1, visibility: 'hidden' },
+        });
+        // The hide is now this timeline's, so release each stroke from the
         // pre-paint CSS hold (globals.css) in the same frame — the stroke never
         // paints between the two states.
         strokes.forEach((el) => el.setAttribute('data-ws-armed', ''));
@@ -384,6 +393,7 @@ export default function DrawingSet({
               duration: sheetDur / speed,
               onStart: () => {
                 leader = i;
+                el.removeAttribute('visibility'); // its turn: nib down
               },
               onUpdate() {
                 if ((crewed || courier) && leader === i) penToStroke(el, this.progress(), ink);
@@ -491,7 +501,12 @@ export default function DrawingSet({
       // Attributes, not CSS — same px-mis-scale trap as the sheet strokes above.
       if (sketch.length) {
         root.setAttribute('data-site-log', 'scrubbed');
-        gsap.set(sketch, { attr: { 'stroke-dasharray': '1 1', 'stroke-dashoffset': 1 } });
+        // Hidden until in flight — same Firefox law as the sheet strokes
+        // above: a stroke waiting at offset 1 still leaks subpath fragments,
+        // so the waiting state is carried by visibility, not by the dash.
+        gsap.set(sketch, {
+          attr: { 'stroke-dasharray': '1 1', 'stroke-dashoffset': 1, visibility: 'hidden' },
+        });
         // Release the site log from the pre-paint CSS hold now that the scrub
         // owns its hidden state — same frame, so the record never shows itself
         // finished before the pencil starts (globals.css).
@@ -516,11 +531,15 @@ export default function DrawingSet({
             // set. Same rule the .ws-draw tweens above apply on complete.
             // Safe here because the front is monotonic — a finished mark
             // never un-draws.
+            el.removeAttribute('visibility');
             el.removeAttribute('stroke-dasharray');
             el.removeAttribute('stroke-dashoffset');
-          } else {
+          } else if (local > 0) {
+            // in flight: nib down, briefly dash-drawn
+            el.removeAttribute('visibility');
             el.setAttribute('stroke-dashoffset', String(1 - local));
           }
+          // local === 0: still waiting, still hidden by the visibility attr
         });
       };
 
@@ -661,6 +680,8 @@ export default function DrawingSet({
       });
       document.querySelectorAll<SVGElement>('.ws-scrub').forEach((s) => {
         s.removeAttribute('stroke-dashoffset');
+        s.removeAttribute('stroke-dasharray');
+        s.removeAttribute('visibility');
       });
       // The depth ratchet, the ledger scrub and the stamp's armed flag are all
       // direct writes too, so ctx.revert() above does not own them.

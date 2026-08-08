@@ -77,6 +77,15 @@ test('the draw-in releases the pre-paint hold on every path, including reduced m
   assert.match(logo, /settleTimer = window\.setTimeout/, 'RailLogo settles on a timer it owns');
   assert.match(logo, /clearTimeout\(settleTimer\)/, 'and clears it on teardown');
 
+  // HIDDEN UNTIL IN FLIGHT — the other half of the same Firefox defect: a
+  // stroke PARKED at offset 1 with the rig hung leaks stray subpath fragments
+  // on load, so the waiting state is carried by visibility, never by the dash.
+  assert.match(scrub, /'stroke-dashoffset': 1, visibility: 'hidden'/, 'sheet + sketch strokes wait hidden');
+  assert.match(scrub, /el\.removeAttribute\('visibility'\); \/\/ its turn: nib down/, 'sheet strokes shed the hide in onStart');
+  assert.match(hook, /el\.setAttribute\('visibility', 'hidden'\)/, 'one-shot strokes wait hidden');
+  assert.match(logo, /p\.style\.visibility = 'hidden'/, 'logo strokes wait hidden');
+  assert.match(logo, /visibility 0s \$\{i \* DRAW_STAGGER\}ms/, 'logo nib comes down on its own stagger beat');
+
   // Deterministic capture hook, and it is cleaned up.
   assert.match(hook, /window\.__railSketch = \{/);
   for (const fn of ['freeze', 'thaw', 'step']) {
