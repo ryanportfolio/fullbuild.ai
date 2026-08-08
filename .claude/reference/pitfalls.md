@@ -276,3 +276,7 @@ Browser cannot perform a necessary check or the user explicitly requests it.
 This rule is Codex-specific; Claude Code keeps its configured verification
 workflow. Browser choice does not replace the existing fresh-port and sentinel
 checks.
+
+## Firefox drops subpaths when a finished stroke keeps its dash
+
+The dash draw-in (`pathLength={1}` + `stroke-dasharray: 1 1`, offset 1 -> 0) must END with both dash attributes REMOVED. Firefox mis-renders a lingering dasharray on multi-subpath paths even at offset 0: later subpaths land in dash gaps, so hatch ticks, dim arrows, and letterforms vanish or "rearrange" while single-subpath strokes look fine. Chromium forgives the residue completely, so Chromium-only verification passes clean and the defect ships to Firefox users. Reproduced 2026-08-08 on the rail sketch (PR #154). The law: a finished stroke carries no dash. Strip attrs on completion (see `.ws-draw` tweens, `useRailSketchDraw`, DrawingSet's sketch scrub, RailLogo's settle timer); `tests/rail-sketch-draw.test.mjs` pins it. Verify dash work in Playwright **Firefox**, not just Chromium.
