@@ -29,6 +29,14 @@
  *
  * The raw per-sample numbers are printed alongside it, so the claim stays a measurement.
  *
+ * RUN THE WHOLE LIST, OR AT LEAST MORE THAN ONE BEAT. `--beats rest` on its own reports rest
+ * as UNSTABLE at a block max around 196, and the frames show the crystals at two different
+ * rotations while the DOM is identical. The drift rides `clock.elapsedTime`, which
+ * `setFrameloop` zeroes on every freeze and thaw, so a beat's pose depends on how many pin
+ * cycles ran before it and the two passes only agree when both reach it the same way.
+ * Measured 2026-08-09: the same beat inside its usual list comes back stable at 0.98 with
+ * zero blocks apart. A single-beat run is a false negative, not a defect in the page.
+ *
  * HELD BEATS ARE NOT WHAT A READER SEES, and that is the point of the second set. A held beat
  * renders 120 settle frames before it is photographed, so it shows a converged atmosphere and
  * finished CSS transitions: at held `cross` the ledger is already at opacity 0 and the finale

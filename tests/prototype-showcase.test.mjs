@@ -1347,9 +1347,10 @@ test("view all runs the archive as one timed function, not a jump", async () => 
   assert.match(app, /window\.__showcaseWarp = \{/);
   assert.doesNotMatch(app, /__showcaseCapture\s*=/);
 
-  // The control, in the ledger's voice: sentence case in the JSX, caps by CSS.
-  assert.match(app, /<span className=\{styles\.warpKicker\}>Index<\/span>/);
+  // The control, in the ledger's voice: sentence case in the JSX, caps by CSS. The block
+  // stands alone, so the corner carries one shout and not a label above it.
   assert.match(app, /<span className=\{styles\.warpBlock\}>View all<\/span>/);
+  assert.doesNotMatch(app, /warpKicker/);
   assert.match(app, /aria-label="View all prototypes"/);
   // Uppercased by CSS on its own rule, the way every other shouted control on this page is.
   assert.match(css, /\.warpBlock \{[^}]*text-transform: uppercase;/);

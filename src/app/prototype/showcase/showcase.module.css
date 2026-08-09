@@ -1635,12 +1635,10 @@
   right: 32px;
   bottom: 52px;
   display: grid;
-  /* Cut to the ledger's own height, which ShowcaseApp publishes off the element itself
-     because it is set by the Info measure and no stylesheet can know it. Index then lands on
-     the Project and Info line and VIEW ALL on the ledger's floor beside VIEW, both measured
-     rather than asserted. */
-  height: var(--showcase-ledger-height, auto);
-  align-content: space-between;
+  /* The box is its block and nothing else, so the floor it is pinned to is the floor the
+     block sits on. That is the same 52px the ledger is pinned to, and .ledgerProject stretches
+     VIEW down to it, so the two blocks share a baseline by construction rather than by a
+     measured height. Verified at 0.00px of delta across the desktop range. */
   justify-items: end;
   padding: 0;
   border: 0;
@@ -1664,16 +1662,6 @@
   transition: opacity 450ms ease, transform 450ms ease, visibility 0ms linear 0ms;
   visibility: visible;
   pointer-events: auto;
-}
-
-/* Mirrors .ledgerLabel: sentence case as typed, no transform, so Index reads as the twin of
-   Project and Info rather than as a second shout. */
-.warpKicker {
-  margin: 0 0 0.85rem;
-  color: var(--showcase-muted);
-  font-family: var(--font-martian), monospace;
-  font-size: 12px;
-  line-height: 15px;
 }
 
 /* Mirrors .projectRow a, down to the tracking */
@@ -2245,11 +2233,6 @@
   .warpButton {
     right: 0.9rem;
     bottom: 3.8rem;
-    height: auto;
-  }
-
-  .warpKicker {
-    display: none;
   }
 
   .warpBlock {
@@ -2337,15 +2320,6 @@
   .ledger {
     padding-right: 188px;
   }
-
-  .warpButton {
-    /* No kicker in this band, so the box is its block and the floor puts it on VIEW's line. */
-    height: auto;
-  }
-
-  .warpKicker {
-    display: none;
-  }
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
@@ -2376,11 +2350,6 @@
     right: calc(1.8rem + 138px);
     bottom: auto;
     z-index: 71;
-    height: auto;
-  }
-
-  .warpKicker {
-    display: none;
   }
 
   .warpBlock {

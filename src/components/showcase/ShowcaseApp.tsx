@@ -196,7 +196,6 @@ function HeroLetters({ text }: { text: string }) {
 export function ShowcaseApp() {
   const shellRef = useRef<HTMLElement>(null);
   const finaleRef = useRef<HTMLElement>(null);
-  const ledgerRef = useRef<HTMLElement>(null);
   const pointerRef = useRef({ x: 0, y: 0, clientX: 0, clientY: 0 });
   /*
    * THE RUN's fast lane. React carries the slow world, the ref carries the fast one. A
@@ -369,35 +368,6 @@ export function ShowcaseApp() {
   useEffect(() => {
     progressRef.current = progress;
   }, [progress]);
-
-  /*
-   * VIEW and VIEW ALL are one control set down twice at opposite ends of the same floor, so
-   * their two blocks have to share a baseline and their two labels a line. The ledger's box is
-   * as tall as whichever of its columns is taller, and that is the Info measure, whose height
-   * is whatever this chapter's summary wraps to. The stylesheet therefore cannot know the
-   * number: it is published from the element that owns it and the control is cut to fit.
-   * Measured before this existed, the two blocks were 7.3 to 8.2px apart across the desktop
-   * range and the kicker floated 42px below the labels, while the shipped comment claimed one
-   * baseline.
-   */
-  useEffect(() => {
-    const shell = shellRef.current;
-    const ledger = ledgerRef.current;
-    if (!shell || !ledger) return;
-
-    const publish = () => {
-      shell.style.setProperty(
-        "--showcase-ledger-height",
-        `${ledger.getBoundingClientRect().height}px`,
-      );
-    };
-
-    publish();
-    const observer = new ResizeObserver(publish);
-    observer.observe(ledger);
-
-    return () => observer.disconnect();
-  }, []);
 
   useEffect(() => {
     const updateCursor = (event: PointerEvent) => {
@@ -1008,7 +978,7 @@ export function ShowcaseApp() {
         <span>{activeProject.eyebrow}</span>
       </p>
 
-      <section className={styles.ledger} ref={ledgerRef} data-visible={ledgerVisible} aria-live="polite">
+      <section className={styles.ledger} data-visible={ledgerVisible} aria-live="polite">
         <div className={styles.ledgerProject}>
           <p className={styles.ledgerLabel}>Project</p>
           <div className={styles.projectRow} key={`project-${activeProject.id}`}>
@@ -1049,7 +1019,6 @@ export function ShowcaseApp() {
         aria-label="View all prototypes"
         onClick={startWarp}
       >
-        <span className={styles.warpKicker}>Index</span>
         <span className={styles.warpBlock}>View all</span>
       </button>
 
