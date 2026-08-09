@@ -1515,6 +1515,22 @@
   transform: translateY(0);
 }
 
+/*
+ * The project bay is drawn down to the ledger's own floor rather than stopping wherever its
+ * own content happens to run out. The box is as tall as the Info measure, which is content, so
+ * before this VIEW sat 7.3 to 8.2px above the floor across the desktop range while VIEW ALL
+ * sat on it, and the two blue blocks were measurably not on one line.
+ */
+.ledgerProject {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-self: stretch;
+}
+
+.ledgerProject .projectRow {
+  align-self: end;
+}
+
 .ledgerLabel {
   margin: 0 0 0.85rem;
   color: var(--showcase-muted);
@@ -1599,6 +1615,152 @@
   line-height: 1.15;
 }
 
+/*
+ * VIEW ALL. Not a new control: the ledger's own VIEW block set down a second time at the far
+ * end of the same floor, on the same 32px inset and the same 52px of floor, at the same 42px
+ * height in the same Martian Mono caps. The bottom of the frame then reads Project, Info, a
+ * long gap, Index, with two blue blocks on one baseline at opposite ends of it. Square, not
+ * a pill, because .projectRow a carries no radius: this is the ledger's twin, not the entry
+ * gate's.
+ *
+ * It rides the ledger's own data-visible, which already carries entrySettled and heroLanded,
+ * so it cannot be reached while the entry choreography is still running. Hidden means
+ * visibility: hidden as well as pointer-events: none, because an invisible button that is
+ * still in the tab order is a trap; the visibility is transitioned with a zero duration and
+ * a delay so it waits for the fade rather than cutting it short.
+ */
+.warpButton {
+  position: fixed;
+  z-index: 46;
+  right: 32px;
+  bottom: 52px;
+  display: grid;
+  /* The box is its block and nothing else, so the floor it is pinned to is the floor the
+     block sits on. That is the same 52px the ledger is pinned to, and .ledgerProject stretches
+     VIEW down to it, so the two blocks share a baseline by construction rather than by a
+     measured height. Verified at 0.00px of delta across the desktop range. */
+  justify-items: end;
+  padding: 0;
+  border: 0;
+  background: none;
+  opacity: 0;
+  transform: translateY(1.2rem);
+  transition: opacity 450ms ease, transform 450ms ease, visibility 0ms linear 450ms;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Its own standalone rule, and never a sixth selector in the comma group at the top of this
+   file: that group is matched exactly, with no wildcards, by the showcase tests. */
+.warpButton {
+  cursor: var(--showcase-house-cursor);
+}
+
+.warpButton[data-visible="true"] {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 450ms ease, transform 450ms ease, visibility 0ms linear 0ms;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* Mirrors .projectRow a, down to the tracking */
+.warpBlock {
+  display: flex;
+  align-items: center;
+  height: 42px;
+  padding: 0 12px;
+  color: var(--showcase-white);
+  background: var(--showcase-blue);
+  font-family: var(--font-martian), monospace;
+  font-size: 21px;
+  line-height: 30px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: color 300ms ease, background 300ms ease;
+}
+
+.warpButton:hover .warpBlock {
+  color: var(--showcase-blue);
+  background: var(--showcase-white);
+}
+
+/*
+ * WHILE THE RUN OWNS THE FRAME. One attribute on the shell drives the whole choreography, so
+ * nothing needs a per-frame style write from JavaScript and the chrome cannot fall out of
+ * step with the camera.
+ *
+ * The control does not unmount for the flight. Tearing a button out from under a resting
+ * cursor is exactly the case the bleach verify pass exists for, and it would drop focus
+ * mid-move; it fades instead, and stays gone under the finale.
+ */
+.shell[data-warping="true"] .warpButton,
+.shell[data-finale="true"] .warpButton {
+  opacity: 0;
+  transition: opacity 220ms ease, visibility 0ms linear 220ms;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/*
+ * THE LEDGER LEAVES WITH THE REST OF THE CHROME. It used to ride the whole flight at full
+ * opacity, naming the chapter the run left at and holding it there for the entire 1962ms of
+ * travel: the largest and most factually wrong block on the screen was the one thing that
+ * stayed. Its own 0.965 gate is still what covers a scroll; this is what covers a run. The
+ * frozen activeIndex underneath is unchanged, because a live region flipping nine times in a
+ * second and a half is the thing that gate exists to prevent.
+ */
+.shell[data-warping="true"] .ledger {
+  opacity: 0;
+  transition: opacity 220ms ease, visibility 0ms linear 220ms;
+  visibility: hidden;
+}
+
+.shell[data-warping="true"] .header {
+  opacity: 0;
+  transition: opacity 200ms ease;
+  pointer-events: none;
+}
+
+/*
+ * And it comes back with the wall rather than with the ref. Measured, the header was still at
+ * zero when the camera stopped and did not reach full until 617ms after it, so the frame the
+ * arrival lands on was missing its own navigation. The finale gate fires at progress 0.978,
+ * which the run crosses about 390ms before it comes to rest, so a 340ms return is home first.
+ * Opacity only: nothing in the header is clickable until the run has actually let go.
+ */
+.shell[data-warping="true"][data-finale="true"] .header {
+  opacity: 1;
+  transition: opacity 340ms ease;
+}
+
+/* The return belongs to the arrival, so it comes back slower than it left. Scoped to the
+   settled world, so the loader's own header reveal keeps its 600ms. */
+.shell[data-entry-settled="true"][data-warping="false"] .header {
+  transition: opacity 420ms ease, transform 600ms ease;
+}
+
+/*
+ * Two selectors, and the second one is not belt and braces. The pill is raised by a rule
+ * carrying a :has(), which weighs more than a plain attribute selector, so a single
+ * [data-warping] rule loses to it and the pill rides the whole run at full blue. And it does
+ * get stranded there: the canvas takes pointer-events: none the moment the run commits, so
+ * the crystal that was hovered when it started never receives a pointerleave and keeps its
+ * data-hovered-project for the duration.
+ */
+.shell[data-warping="true"] .sceneLabel,
+.shell[data-warping="true"]:has(.scene canvas[data-hovered-project]) .sceneLabel[data-visible="true"] {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+/* A crystal is a link. Nothing may be clicked out from under a run that is already travelling
+   past it. */
+.shell[data-warping="true"] .scene {
+  pointer-events: none;
+}
+
 .finale {
   position: fixed;
   z-index: 50;
@@ -1616,7 +1778,10 @@
   text-align: center;
   opacity: 0;
   transform: scale(0.97);
-  transition: transform 560ms cubic-bezier(0.2, 0.75, 0.2, 1);
+  /* The wall's type used to snap on while its own lamp faded up: .finale::before already
+     carries opacity 620ms and this rule did not carry opacity at all. Matched to the lamp it
+     stands in front of, which is right in ordinary scrolling too. */
+  transition: opacity 620ms ease, transform 560ms cubic-bezier(0.2, 0.75, 0.2, 1);
   pointer-events: none;
 }
 
@@ -2059,6 +2224,24 @@
   }
 
   /*
+   * The corner comes back. The handset ledger is one left-aligned column with .ledgerInfo
+   * gone, so the whole right half of that band is empty: same floor, same height and same
+   * type as .projectRow a here, which lands VIEW and VIEW ALL on one line at opposite edges
+   * of the phone. The inversion is real, the handset is the easy case and the tablet is the
+   * hard one.
+   */
+  .warpButton {
+    right: 0.9rem;
+    bottom: 3.8rem;
+  }
+
+  .warpBlock {
+    height: 2.55rem;
+    padding: 0 0.75rem;
+    font-size: 0.99rem;
+  }
+
+  /*
    * The handset regrids the finale to three columns: six cards, the mailto line, nine
    * cards, LinkedIn pinned to the floor. Both navs and the lockup dissolve to contents
    * so grid order can interleave their children without any script.
@@ -2115,6 +2298,30 @@
   }
 }
 
+/*
+ * THE DESKTOP SQUEEZE. The ledger's own content is 310 + 77 + 523 = 910px hanging off a 32px
+ * inset, so its right edge sits at x = 942, and VIEW ALL measures 148.33px rendered at 21px
+ * Martian Mono with 0.04em of tracking and 12px of padding. 942 + 40 of gutter + 148 + 32 of
+ * inset is 1162, which is where the corner stops being free. Under that the INFO MEASURE
+ * yields rather than the control moving: that column is minmax(0, 523px), so it simply gets
+ * shorter and the control keeps one position across the whole desktop range.
+ *
+ * What it reserves is the control plus its gutter, 148 + 40, and that is the correction here.
+ * At 148 the reservation was exactly the block and nothing else, so the two boxes touched at
+ * every width the measure was actually yielding at: measured, a full size block cleared by
+ * zero from 1024 to 1122 and by 29.67 at 1152. The band answered that by shrinking the block
+ * to the entry gate's 36px and 15px, which reads as a demoted control standing beside a 42px
+ * VIEW, and left 35px of reserved space unused. Reserving the gutter as well holds a 39.67px
+ * clearance at every width from 1024 up, which is the same clearance the control has at 1162,
+ * so the block never has to shrink at all and the info measure gives up 40px at its narrowest
+ * to buy it.
+ */
+@media (min-width: 1024px) and (max-width: 1161px) {
+  .ledger {
+    padding-right: 188px;
+  }
+}
+
 @media (min-width: 768px) and (max-width: 1023px) {
   .header,
   .starterBottom,
@@ -2126,6 +2333,30 @@
   .ledger {
     grid-template-columns: minmax(13rem, 0.8fr) minmax(20rem, 1.2fr);
     gap: 2.8rem;
+  }
+
+  /*
+   * THE HARD BAND, and the honest answer is that the bottom right corner does not exist
+   * here: the ledger goes full width with two columns whose own minimums total 573px against
+   * the 710px available at 768. So the control moves to the header row, where the rest of
+   * the global chrome already lives, and a show-me-everything affordance belongs. CSS only,
+   * one DOM node, one focus target. It stays the blue block, only its size changes: the
+   * mail control's inverted palette would make it read as chrome rather than as the ledger's
+   * twin. The offset clears .mailLink, measured at 130px rendered, plus the header's own 8px
+   * gap.
+   */
+  .warpButton {
+    top: 15px;
+    right: calc(1.8rem + 138px);
+    bottom: auto;
+    z-index: 71;
+  }
+
+  .warpBlock {
+    height: 30px;
+    min-width: 96px;
+    padding: 0 10px;
+    font-size: 12px;
   }
 
   .ledgerInfo {
@@ -2172,6 +2403,12 @@
     min-width: 122px;
     height: 30px;
     font-size: 12px;
+  }
+
+  /* Below 901 the header drops to three columns and the mail control moves in beside the
+     wordmark, so the right end of the row is empty and there is nothing left to clear. */
+  .warpButton {
+    right: 1rem;
   }
 }
 

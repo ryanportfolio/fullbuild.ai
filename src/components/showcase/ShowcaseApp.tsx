@@ -3,16 +3,45 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "@/app/prototype/showcase/showcase.module.css";
-import { activeProjectIndex, PROTOTYPE_INDEX, SHOWCASE_PROJECTS, TRACK_SCREENS } from "./data";
+import { activeProjectIndex, clamp01, PROTOTYPE_INDEX, SHOWCASE_PROJECTS, TRACK_SCREENS } from "./data";
 import { hashSeed, seededRandom } from "./prng";
 import { ShowcaseEntryScene, ShowcaseScene } from "./ShowcaseScene";
 import { LoaderPlate } from "./ShowcaseLoader";
+import type { WarpBeat, WarpFrame } from "./warpTiming";
+import { WARP_BEATS, WARP_FOV_REST, warpFrameAt, warpScheduleAt } from "./warpTiming";
 
 declare global {
   interface Window {
     __showcaseLoader?: {
       hold: (percent: number) => void;
       release: () => void;
+    };
+    /*
+     * The warp's own capture surface, and it is a separate global for the same reason the
+     * loader's is: FrameAuthority reassigns __showcaseCapture wholesale on every dep change
+     * and would blow away anything merged into it. This one is owned by the component that
+     * owns the clock and the scrollbar.
+     */
+    __showcaseWarp?: {
+      beats: readonly string[];
+      /** Pin the run at a named beat, armed from `from`. Nothing advances until release. */
+      hold: (beat: string, from?: number) => void;
+      /** Run it for real, from wherever the film is pinned or from the current position. */
+      play: () => void;
+      /** Abandon the run and hand the page back to the scrollbar. */
+      release: () => void;
+      state: () => {
+        beat: string | null;
+        t: number;
+        progress: number;
+        cameraZ: number;
+        fov: number;
+        roll: number;
+        stretch: number;
+        opacity: number;
+        feed: number;
+        flare: number;
+      };
     };
   }
 }
@@ -129,11 +158,21 @@ const LOAD_OPEN_RATIO = 0.06;
 function bleachControl(node: EventTarget | null) {
   if (!(node instanceof Element)) return null;
   const control = node.closest(BLEACH_CONTROL);
-  // The entry's own call to action opens the journey; it never drains it. The control
-  // stands outside the gate in the DOM, so it is named here as well as by its ancestor.
+  /*
+   * The entry's own call to action opens the journey; it never drains it. The control
+   * stands outside the gate in the DOM, so it is named here as well as by its ancestor.
+   *
+   * VIEW ALL is carved out for a harder reason than taste. It is a button, so it matches
+   * BLEACH_CONTROL, and a hundred and fifty milliseconds of dwell on it would set
+   * --showcase-bleach to 1 on the frame before it starts a two and a half second move. The
+   * control then leaves under the finale with no pointerout behind it and nothing left to
+   * verify against, so the entire warp and the arrival would play in greyscale with nothing
+   * able to release them.
+   */
   return control
     && !control.closest(`.${styles.entryGate}`)
     && !control.classList.contains(styles.enterButton)
+    && !control.classList.contains(styles.warpButton)
     ? control
     : null;
 }
@@ -156,7 +195,32 @@ function HeroLetters({ text }: { text: string }) {
 
 export function ShowcaseApp() {
   const shellRef = useRef<HTMLElement>(null);
+  const finaleRef = useRef<HTMLElement>(null);
   const pointerRef = useRef({ x: 0, y: 0, clientX: 0, clientY: 0 });
+  /*
+   * THE RUN's fast lane. React carries the slow world, the ref carries the fast one. A
+   * setState issued from a rAF callback is auto-batched and flushed through the scheduler's
+   * MessageChannel task, which runs after every rAF callback and after paint, so useFrame is
+   * guaranteed one commit behind and two under load. At this run's terminal 132 world units
+   * a second, one dropped commit is a 2.2 unit hold followed by a 4.4 unit jump, which is
+   * plainly visible. Everything that cannot tolerate that reads the ref instead: camera z,
+   * roll, field of view, the streak uniforms and the film grade.
+   *
+   * Both come out of one pure function of wall-clock milliseconds, so they cannot disagree
+   * by more than a frame, and the scrollbar carries the truth underneath them both.
+   */
+  const warpRef = useRef<WarpFrame | null>(null);
+  const warpFromRef = useRef(0);
+  const warpStartRef = useRef(0);
+  const warpHoldRef = useRef<number | null>(null);
+  const warpBeatRef = useRef<WarpBeat | null>(null);
+  const warpControlsRef = useRef<{
+    arm: (from: number) => void;
+    hold: (beat: WarpBeat, from: number) => void;
+    play: () => void;
+    release: () => void;
+  } | null>(null);
+  const progressRef = useRef(0);
   const [entered, setEntered] = useState(false);
   const [entrySettled, setEntrySettled] = useState(false);
   const [heroLanded, setHeroLanded] = useState(false);
@@ -171,6 +235,7 @@ export function ShowcaseApp() {
   const [reducedMotion, setReducedMotion] = useState(false);
   const [compactViewport, setCompactViewport] = useState(false);
   const [controlDwell, setControlDwell] = useState(false);
+  const [warping, setWarping] = useState(false);
   const [grainTile, setGrainTile] = useState<string | null>(null);
 
   const ready = displayPercent >= 100;
@@ -301,9 +366,17 @@ export function ShowcaseApp() {
   }, []);
 
   useEffect(() => {
+    progressRef.current = progress;
+  }, [progress]);
+
+  useEffect(() => {
     const updateCursor = (event: PointerEvent) => {
       const shell = shellRef.current;
-      if (!shell) return;
+      // The pointer stops being an input the moment the run commits. A mouse twitch
+      // otherwise rides straight through it into the camera, the stars, the debris and all
+      // nine crystals, and the sheath is only axis aligned because the lens is looking
+      // straight down its own z.
+      if (!shell || warpRef.current) return;
       pointerRef.current.x = (event.clientX / Math.max(1, window.innerWidth)) * 2 - 1;
       pointerRef.current.y = -(event.clientY / Math.max(1, window.innerHeight)) * 2 + 1;
       pointerRef.current.clientX = event.clientX;
@@ -439,6 +512,15 @@ export function ShowcaseApp() {
     if (!entered) return;
 
     const updateScroll = () => {
+      /*
+       * The run owns the scrollbar for its whole flight and moves it for real, so every
+       * frame of it arrives back here as a scroll event describing a position the run has
+       * already left. Disarmed by a guard rather than by unhooking the listener, so a
+       * resize or a browser scroll restoration mid-flight is covered by the same line, and
+       * one reconciling call at the end puts the page back on the real scrollY.
+       */
+      if (warpRef.current) return;
+
       const shell = shellRef.current;
       if (!shell) return;
 
@@ -457,6 +539,211 @@ export function ShowcaseApp() {
       window.removeEventListener("resize", updateScroll);
     };
   }, [entered]);
+
+  /*
+   * THE RUN. One rAF loop publishing three things a frame, all of them derived from
+   * warpFrameAt, so nothing downstream can drift from anything else: the scrollbar, so the
+   * browser's own idea of the page stays true and the back button, a refresh and the thumb
+   * all describe the page the piece thinks it is on; React's progress, which carries the
+   * fog, the radiation, crystal visibility and the ledger and finale gates; and the ref,
+   * which carries the lens.
+   *
+   * setActiveIndex is deliberately not called. The ledger's row is keyed on the active
+   * project inside an aria-live region with a 500ms entrance animation, so nine flips in a
+   * second and a half would restart that animation nine times and queue nine
+   * announcements. The one reconciling pass at the end sets it once, by which time the
+   * ledger has already faded.
+   */
+  useEffect(() => {
+    let frame = 0;
+
+    const publish = (t: number) => {
+      const value = warpFrameAt(t, warpFromRef.current);
+      // The ref goes first. The scrollTo below arrives back at updateScroll as an event,
+      // and this is what that guard reads to stand down.
+      warpRef.current = value;
+      const shell = shellRef.current;
+      if (shell) {
+        // Recomputed every frame rather than latched, so a resize mid-flight lands the run
+        // on the destination it now has rather than the one it was armed against.
+        const distance = Math.max(1, shell.offsetHeight - window.innerHeight);
+        window.scrollTo(0, Math.round(value.progress * distance));
+      }
+      setProgress(value.progress);
+      return value;
+    };
+
+    // Hand the page back. The reconcile reads the real scrollY rather than trusting the
+    // last published frame, so whatever the browser actually did is what the page believes.
+    const stand = (arrived: boolean) => {
+      if (frame) {
+        window.cancelAnimationFrame(frame);
+        frame = 0;
+      }
+      warpRef.current = null;
+      warpHoldRef.current = null;
+      setWarping(false);
+
+      const shell = shellRef.current;
+      if (shell) {
+        const distance = Math.max(1, shell.offsetHeight - window.innerHeight);
+        const settled = Math.min(1, Math.max(0, window.scrollY / distance));
+        setProgress(settled);
+        setActiveIndex(activeProjectIndex(settled));
+      }
+
+      /*
+       * preventScroll is not optional: focusing an element inside an eighteen thousand
+       * pixel document would otherwise scroll it into view and undo the landing. Precedent
+       * is enterShowcase. The finale is a named region, so a screen reader announces an
+       * honest arrival with no new live region anywhere.
+       */
+      if (arrived) finaleRef.current?.focus({ preventScroll: true });
+    };
+
+    const step = () => {
+      frame = 0;
+      const held = warpHoldRef.current;
+      const t = held === null ? performance.now() - warpStartRef.current : held;
+      publish(t);
+      // The run's own end, not the table's: a click near the wall has a shorter corridor to
+      // cross and a correspondingly shorter clock to cross it on.
+      if (t >= warpScheduleAt(warpFromRef.current).end) {
+        stand(true);
+        return;
+      }
+      // A pinned beat publishes once and stops. Nothing advances until it is released.
+      if (held !== null) return;
+      frame = window.requestAnimationFrame(step);
+    };
+
+    const arm = (from: number) => {
+      warpFromRef.current = clamp01(from);
+      warpStartRef.current = performance.now();
+      warpHoldRef.current = null;
+      warpBeatRef.current = null;
+      /*
+       * THE ARRIVAL HAS TO BE STILL, and the pointer is what was stopping it. The camera's x
+       * and y are pinned to 0 for the flight and then handed straight back to the 0.08
+       * damping, so a mouse resting on the control it was just clicked with sent the whole
+       * frame drifting 0.3 units sideways over the second and a half after the motion was
+       * supposed to have stopped, and every field reading cursorRef went with it. Parking the
+       * stored pointer at arm means the target is already 0 when the ref lets go and stays
+       * there until the reader genuinely moves, which is the same thing a pinned beat does.
+       */
+      pointerRef.current.x = 0;
+      pointerRef.current.y = 0;
+      setWarping(true);
+      // Belt and braces alongside the carve-out in bleachControl: a keyboard activation can
+      // happen while the pointer is resting on something else entirely.
+      setControlDwell(false);
+      publish(0);
+      if (!frame) frame = window.requestAnimationFrame(step);
+    };
+
+    const hold = (beat: WarpBeat, from: number) => {
+      const t = WARP_BEATS[beat];
+      if (t === undefined) return;
+      if (frame) {
+        window.cancelAnimationFrame(frame);
+        frame = 0;
+      }
+      warpFromRef.current = clamp01(from);
+      warpStartRef.current = performance.now() - t;
+      warpHoldRef.current = t;
+      warpBeatRef.current = beat;
+      // A pinned frame cannot depend on where the mouse happened to be.
+      pointerRef.current.x = 0;
+      pointerRef.current.y = 0;
+      setWarping(true);
+      setControlDwell(false);
+      publish(t);
+      // The last beat is the landed page, not a frame of the flight, so it runs the same
+      // handback the live run does.
+      if (t >= warpScheduleAt(warpFromRef.current).end) stand(true);
+    };
+
+    const play = () => {
+      const held = warpHoldRef.current;
+      if (held === null) {
+        arm(progressRef.current);
+        return;
+      }
+      warpHoldRef.current = null;
+      warpStartRef.current = performance.now() - held;
+      if (!frame) frame = window.requestAnimationFrame(step);
+    };
+
+    const release = () => {
+      warpBeatRef.current = null;
+      stand(false);
+    };
+
+    warpControlsRef.current = { arm, hold, play, release };
+
+    window.__showcaseWarp = {
+      beats: Object.keys(WARP_BEATS),
+      hold: (beat: string, from = 0) => {
+        if (beat in WARP_BEATS) hold(beat as WarpBeat, from);
+      },
+      play,
+      release,
+      /*
+       * warpFrameAt is pure, so a beat that has already handed the page back can still be
+       * asked what it looked like: the same t and the same from give the same numbers.
+       * That is what lets verification assert values instead of eyeballing pixels.
+       */
+      state: () => {
+        const beat = warpBeatRef.current;
+        const live = warpRef.current
+          ?? (beat === null ? null : warpFrameAt(WARP_BEATS[beat], warpFromRef.current));
+        return {
+          beat,
+          t: live ? live.t : -1,
+          progress: live ? live.progress : progressRef.current,
+          cameraZ: live ? live.cameraZ : 0,
+          fov: live ? live.fov : WARP_FOV_REST,
+          roll: live ? live.roll : 0,
+          stretch: live ? live.stretch : 0,
+          opacity: live ? live.opacity : 0,
+          feed: live ? live.feed : 0,
+          flare: live ? live.flare : 0,
+        };
+      },
+    };
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      warpRef.current = null;
+      warpControlsRef.current = null;
+      delete window.__showcaseWarp;
+    };
+  }, []);
+
+  /*
+   * A two and a half second full-screen move that cannot be stopped is a trap, so Escape
+   * ends it where it stands rather than jumping it to the end. The wheel and touch blockers
+   * are non-passive on purpose: they exist to stop a flick landing a competing scroll
+   * inside the one stretch where the run is writing the scrollbar every frame.
+   */
+  useEffect(() => {
+    if (!warping) return;
+
+    const block = (event: Event) => event.preventDefault();
+    const cancelOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") warpControlsRef.current?.release();
+    };
+
+    window.addEventListener("wheel", block, { passive: false });
+    window.addEventListener("touchmove", block, { passive: false });
+    window.addEventListener("keydown", cancelOnEscape);
+
+    return () => {
+      window.removeEventListener("wheel", block);
+      window.removeEventListener("touchmove", block);
+      window.removeEventListener("keydown", cancelOnEscape);
+    };
+  }, [warping]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -477,6 +764,32 @@ export function ShowcaseApp() {
     window.requestAnimationFrame(() => shellRef.current?.focus({ preventScroll: true }));
   }, [ready]);
 
+  const startWarp = useCallback(() => {
+    // Re-entrancy: a second activation during the flight is not a second run.
+    if (warpRef.current) return;
+    setControlDwell(false);
+
+    /*
+     * A reader who has asked for less motion does not get a warp at all. The frameloop is
+     * "demand" for them and only FrameAuthority ever calls invalidate, so a ref-driven run
+     * would render exactly zero frames; and an instant jump to the archive is the right
+     * answer for that reader independent of the constraint.
+     */
+    if (reducedMotion) {
+      const shell = shellRef.current;
+      const distance = shell ? Math.max(1, shell.offsetHeight - window.innerHeight) : 0;
+      window.scrollTo(0, distance);
+      finaleRef.current?.focus({ preventScroll: true });
+      return;
+    }
+
+    // The control is about to fade out from under the focus ring, and a focused invisible
+    // button is a trap. Focus parks on the shell for the flight and moves to the finale on
+    // arrival.
+    shellRef.current?.focus({ preventScroll: true });
+    warpControlsRef.current?.arm(progressRef.current);
+  }, [reducedMotion]);
+
   return (
     <main
       ref={shellRef}
@@ -495,6 +808,7 @@ export function ShowcaseApp() {
       data-finale={finaleVisible}
       data-bleaching={bleaching}
       data-bleached={bleached}
+      data-warping={warping}
     >
       <div className={styles.scene} aria-hidden="true">
         <ShowcaseScene
@@ -505,6 +819,7 @@ export function ShowcaseApp() {
           compactViewport={compactViewport}
           reducedMotion={reducedMotion}
           cursorRef={pointerRef}
+          warpRef={warpRef}
           onLoadProgress={onLoadProgress}
         />
         <div className={styles.entryFlood} />
@@ -687,11 +1002,35 @@ export function ShowcaseApp() {
       </section>
 
       {/*
+        VIEW opens one thing. VIEW ALL opens everything. This is not a new control, it is the
+        ledger's own VIEW block set down a second time at the other end of the same floor, so
+        the bottom of the frame reads Project, Info, then a long gap, then Index. It sits
+        between the ledger and the finale in the DOM so the tab walk runs header, VIEW, VIEW
+        ALL, arrival.
+
+        It rides the ledger's own visibility, which already contains entrySettled, so it
+        cannot be reached while the entry choreography is still running and a second WebGL
+        context is still mounted.
+      */}
+      <button
+        className={styles.warpButton}
+        type="button"
+        data-visible={ledgerVisible}
+        aria-label="View all prototypes"
+        onClick={startWarp}
+      >
+        <span className={styles.warpBlock}>View all</span>
+      </button>
+
+      {/*
         The last screen is a typographic wall standing inside the live field, not a card on
         a black page: the canvas keeps rendering behind it and only the pointer on a control
         is ever allowed to take the colour out.
+
+        tabIndex -1 so the run has somewhere honest to land: it is a named region already, so
+        moving focus here on arrival announces the destination with no live region added.
       */}
-      <section className={styles.finale} data-visible={finaleVisible} aria-label="Contact">
+      <section className={styles.finale} ref={finaleRef} data-visible={finaleVisible} aria-label="Contact" tabIndex={-1}>
         {/*
           The last screen is also the site's prototype index: ten cards over the lockup,
           five under it. Plain anchors, so the bleach hover rules already cover them, and

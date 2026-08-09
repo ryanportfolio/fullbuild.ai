@@ -15,6 +15,8 @@ const files = {
   gallery: new URL("../public/prototype/index.html", import.meta.url),
   config: new URL("../next.config.mjs", import.meta.url),
   rail: new URL("../src/components/chrome/TitleBlock.tsx", import.meta.url),
+  warpTiming: new URL("../src/components/showcase/warpTiming.ts", import.meta.url),
+  warpStreaks: new URL("../src/components/showcase/WarpStreaks.tsx", import.meta.url),
 };
 
 async function source(name) {
@@ -865,6 +867,23 @@ test("the entry artifact stays cobalt and keeps the atlas props off the mark", a
     const [red, , blue] = end.split(",").map((value) => Number(value.trim()));
     assert.ok(blue > red, `debris fringe end ${end} has to lead on blue`);
   }
+  /*
+   * THE CRYSTAL'S HOT READS ARE A SPECTRUM, AND A SPECTRUM IN THIS ROOM RUNS COLD. There is
+   * no long wavelength light anywhere in the scene for a wedge to spread, so the ramp runs
+   * cyan through frost to violet and every one of its three anchors leads on blue. That is
+   * algebra rather than taste: the ramp is two nested mixes, so its output is a convex
+   * combination of the anchors, and a convex combination preserves a linear inequality. Pin
+   * the anchors and the whole ramp is pinned with them, at any band, any scatter, any state.
+   * Before this the brightest pixels in the volume were the only colourless ones in it.
+   */
+  assert.match(scene, /vec3 spectralWedge\(float band\)/, "the crystal needs a declared dispersion ramp");
+  const wedge = [...scene.matchAll(/const vec3 WEDGE_(\w+) = vec3\(([^)]*)\);/g)];
+  assert.equal(wedge.length, 3, "the wedge runs on exactly three anchors");
+  for (const [, name, body] of wedge) {
+    const [red, green, blue] = body.split(",").map((value) => Number(value.trim()));
+    assert.ok(blue > red, `WEDGE_${name} (${body}) has to lead blue over red`);
+    assert.ok(blue > green, `WEDGE_${name} (${body}) has to lead blue over green`);
+  }
   const ice = scene.match(/vec3\((0\.\d+), (0\.\d+), (1\.0|0\.\d+)\),\s*\n?\s*ice\s*\n?\s*\);/);
   assert.ok(ice, "the freeze needs a declared bleach colour");
   assert.ok(
@@ -1284,6 +1303,153 @@ test("the loader is a registered drafting sheet cut open by a percent function",
   assert.match(still, /--b-let8: 1;/);
 });
 
+test("view all runs the archive as one timed function, not a jump", async () => {
+  const [app, css, scene, timing, streaks] = await Promise.all([
+    source("app"),
+    source("css"),
+    source("scene"),
+    source("warpTiming"),
+    source("warpStreaks"),
+  ]);
+
+  // The beat table cannot drift from the constants it is built out of.
+  assert.match(timing, /export const WARP_REST = WARP_LAND_START \+ WARP_LAND_MS;/);
+  assert.match(timing, /export const WARP_LAND_START = WARP_RUN_START \+ WARP_RUN_MS;/);
+  assert.match(timing, /export const WARP_RUN_START = WARP_CHARGE_MS;/);
+  // Pure: pinning t and from pins the picture, which is the whole basis of the capture
+  // contract. A clock read or a random source anywhere in here breaks it.
+  assert.doesNotMatch(timing, /Math\.random/);
+  assert.doesNotMatch(timing, /Date\.now|performance\.now/);
+  assert.doesNotMatch(streaks, /Math\.random/);
+  assert.match(streaks, /seededRandom\(hashSeed\("showcase-warp-streaks"\)\)/);
+
+  // The sheath is truthful to the distance being covered: driven from the analytic rate of
+  // travel, not from the run's normalised clock, so a short trip shows short streaks.
+  assert.match(timing, /rate \/ WARP_REF_RATE/);
+  // lookAt derives its quaternion from the up vector and zeroes roll, so the order here is
+  // the difference between the run having roll and silently having none.
+  const rig = scene.match(/function CameraRig[\s\S]*?\n\}/)?.[0] ?? "";
+  assert.ok(
+    rig.indexOf("camera.lookAt(0, 0, camera.position.z - 6)") < rig.indexOf("camera.rotation.z = warp.roll"),
+    "roll is written after lookAt",
+  );
+  // Without the restore the page keeps the run's field of view forever.
+  assert.match(rig, /camera\.fov = WARP_FOV_REST;/);
+  assert.match(rig, /camera\.updateProjectionMatrix\(\);/);
+  // The nine chapters have to resolve as nine events rather than one plateau.
+  assert.match(scene, /warpRef\.current \? WARP_RADIATION_LERP : 0\.08/);
+
+  // The scrollbar carries the truth, so the listener stands down rather than being unhooked,
+  // and the ledger's live region stays silent for the flight.
+  assert.match(app, /if \(warpRef\.current\) return;/);
+  assert.match(app, /window\.scrollTo\(0, Math\.round\(value\.progress \* distance\)\)/);
+  // Its own global: FrameAuthority reassigns __showcaseCapture wholesale on every dep change.
+  assert.match(app, /window\.__showcaseWarp = \{/);
+  assert.doesNotMatch(app, /__showcaseCapture\s*=/);
+
+  // The control, in the ledger's voice: sentence case in the JSX, caps by CSS. The block
+  // stands alone, so the corner carries one shout and not a label above it.
+  assert.match(app, /<span className=\{styles\.warpBlock\}>View all<\/span>/);
+  assert.doesNotMatch(app, /warpKicker/);
+  assert.match(app, /aria-label="View all prototypes"/);
+  // Uppercased by CSS on its own rule, the way every other shouted control on this page is.
+  assert.match(css, /\.warpBlock \{[^}]*text-transform: uppercase;/);
+  // A run has to have an exit, and a reader who asked for less motion never gets one.
+  assert.match(app, /if \(event\.key === "Escape"\) warpControlsRef\.current\?\.release\(\);/);
+  assert.match(app, /if \(reducedMotion\) \{[\s\S]*?window\.scrollTo\(0, distance\);/);
+  // The arrival is a real landing place, announced by the region that is already named.
+  assert.match(app, /finaleRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(app, /className=\{styles\.finale\}[\s\S]*?tabIndex=\{-1\}/);
+
+  // R4 in one line: a button matches BLEACH_CONTROL, so without this the whole run and the
+  // arrival play in greyscale with nothing left to release them.
+  assert.match(app, /control\.classList\.contains\(styles\.warpButton\)/);
+  assert.match(app, /setControlDwell\(false\)/);
+  // Never a leaf inside a filtered container, and never a sixth selector in the cursor group.
+  assert.doesNotMatch(css, /\.shell\[data-bleaching="true"\] \.warpButton/);
+  assert.match(css, /\.warpButton \{\r?\n  cursor: var\(--showcase-house-cursor\);\r?\n\}/);
+  // The wall's type used to snap on while its own lamp faded up.
+  const finale = css.match(/\r?\n\.finale \{[^}]*\}/)?.[0] ?? "";
+  assert.match(finale, /transition: opacity 620ms ease, transform 560ms/);
+  // One position per band, and the corner genuinely does not exist on a tablet.
+  assert.match(css, /@media \(min-width: 1024px\) and \(max-width: 1161px\)/);
+  assert.match(css, /\.warpButton \{\r?\n    top: 15px;/);
+  assert.match(css, /\.shell\[data-warping="true"\] \.scene \{\r?\n  pointer-events: none;/);
+});
+
+/*
+ * EIGHT MUTATIONS THAT USED TO SURVIVE. Every assertion below was written against a specific
+ * deletion that a mutation run proved the suite could not see, and several of them are only
+ * invisible because an innocent duplicate of the same line lives somewhere else in the same
+ * file. So each one is scoped to the block it belongs to rather than to the file: the guard in
+ * updateScroll cannot be satisfied by the identical guard in startWarp, the per-frame
+ * projection matrix write cannot be satisfied by the one in the restore, and the focus call on
+ * arrival cannot be satisfied by the one on the reduced-motion path.
+ */
+test("the run's guards are pinned to the block each one belongs to", async () => {
+  const [app, css, scene] = await Promise.all([source("app"), source("css"), source("scene")]);
+
+  const block = (text, opening) => {
+    const start = text.indexOf(opening);
+    assert.ok(start !== -1, `missing block: ${opening}`);
+    let depth = 0;
+    for (let index = start; index < text.length; index += 1) {
+      if (text[index] === "{") depth += 1;
+      else if (text[index] === "}") {
+        depth -= 1;
+        if (depth === 0) return text.slice(start, index + 1);
+      }
+    }
+    throw new Error(`unterminated block: ${opening}`);
+  };
+
+  // R14, the pointer half. Without it a mouse twitch rides straight through the run into the
+  // camera, the stars, the debris and all nine crystals.
+  const cursor = block(app, "const updateCursor = (event: PointerEvent) => {");
+  assert.match(cursor, /if \(!shell \|\| warpRef\.current\) return;/);
+
+  // R15, the JavaScript half. The stylesheet's pointer-events is the other one, and either
+  // alone leaves a crystal able to navigate out of a run that is travelling past it. Found
+  // from the navigation itself, because the entry mark carries an identically shaped handler.
+  const navigate = scene.indexOf("window.location.assign(SHOWCASE_PROJECTS[index].href)");
+  assert.ok(navigate !== -1, "the crystal no longer navigates");
+  const crystalClick = scene.slice(scene.lastIndexOf("onClick={(event) => {", navigate), navigate);
+  assert.match(crystalClick, /if \(warpRef\.current\) return;/);
+
+  // R2. The listener stands down by a guard rather than by being unhooked, so a resize or a
+  // browser scroll restoration mid-flight is covered by the same line.
+  const updateScroll = block(app, "const updateScroll = () => {");
+  assert.match(updateScroll, /if \(warpRef\.current\) return;/);
+
+  // Re-entrancy. A second activation during the flight is not a second run, and the identical
+  // guard in updateScroll is what used to keep this green after it was deleted.
+  const startWarp = block(app, "const startWarp = useCallback(() => {");
+  assert.match(startWarp, /if \(warpRef\.current\) return;/);
+
+  // R7. Nine flips of a keyed row inside an aria-live region would restart its entrance
+  // animation nine times and queue nine announcements. The one reconciling pass sets it once.
+  const publish = block(app, "const publish = (t: number) => {");
+  assert.doesNotMatch(publish, /setActiveIndex/);
+  const stand = block(app, "const stand = (arrived: boolean) => {");
+  assert.match(stand, /setActiveIndex\(activeProjectIndex\(settled\)\)/);
+  // The arrival is a real landing place. The reduced-motion path carries the identical call,
+  // which is exactly why this one has to be pinned inside the handback.
+  assert.match(stand, /if \(arrived\) finaleRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
+
+  // Mandatory after every field of view write, and the restore's own call is what used to
+  // keep this green when the per-frame one was dropped.
+  const rig = scene.match(/function CameraRig[\s\S]*?\n\}/)?.[0] ?? "";
+  assert.match(
+    rig,
+    /camera\.fov = warp\.fov;\r?\n\s*camera\.updateProjectionMatrix\(\);/,
+  );
+
+  // An invisible button that is still in the tab order is a trap, so hidden means hidden.
+  const control = css.match(/\r?\n\.warpButton \{[^}]*\}/)?.[0] ?? "";
+  assert.match(control, /visibility: hidden;/);
+  assert.match(control, /pointer-events: none;/);
+});
+
 test("showcase does not ship source-owned media, audio, or em dashes", async () => {
   const shipped = await Promise.all([
     source("page"),
@@ -1292,6 +1458,8 @@ test("showcase does not ship source-owned media, audio, or em dashes", async () 
     source("loader"),
     source("scene"),
     source("data"),
+    source("warpTiming"),
+    source("warpStreaks"),
   ]);
   const combined = shipped.join("\n");
 

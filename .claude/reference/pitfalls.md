@@ -280,3 +280,16 @@ checks.
 ## Firefox drops subpaths when a finished stroke keeps its dash
 
 The dash draw-in (`pathLength={1}` + `stroke-dasharray: 1 1`, offset 1 -> 0) must END with both dash attributes REMOVED. Firefox mis-renders a lingering dasharray on multi-subpath paths even at offset 0: later subpaths land in dash gaps, so hatch ticks, dim arrows, and letterforms vanish or "rearrange" while single-subpath strokes look fine. Chromium forgives the residue completely, so Chromium-only verification passes clean and the defect ships to Firefox users. Reproduced 2026-08-08 on the rail sketch (PR #154). The law: a finished stroke carries no dash. Strip attrs on completion (see `.ws-draw` tweens, `useRailSketchDraw`, DrawingSet's sketch scrub, RailLogo's settle timer); `tests/rail-sketch-draw.test.mjs` pins it. Verify dash work in Playwright **Firefox**, not just Chromium. The SAME defect fires at the START: a stroke parked at offset 1 with the rig hung leaks subpath fragments on load, so the waiting state must be carried by the `visibility` attribute, never by the dash (PR #156) — a stroke wears the dash ONLY while actively in flight.
+
+## RTK proxy hook mangles CLI flags for native binaries (2026-08-08)
+
+Symptom: `npx next dev -p 43121` dies with `error: unknown option '-p'`, and
+`npx next dev --help` prints a two-line build summary instead of next's usage
+text. Cause: the RTK shell hook rewrites and output-filters commands, and it
+eats short and long flags on its way to the native exe. The local `next` binary
+and `next` package are both fine. Fix: prefix with `rtk proxy`, which executes
+the raw command unfiltered:
+`NEXT_DIST_DIR=.next-warp rtk proxy npx next dev -p 43121`. Plain `node --test`
+and `npm run typecheck` are unaffected. Isolate concurrent worktrees with
+`NEXT_DIST_DIR` (read at `next.config.mjs:13`) as well as a distinct port: two
+dev servers sharing one build dir corrupt each other silently.
