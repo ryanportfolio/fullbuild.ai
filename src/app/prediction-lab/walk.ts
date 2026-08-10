@@ -84,10 +84,14 @@ export interface WalkStep {
   params: string | null;
   /**
    * Figure beside the step. Captured from the live product at 1600x1000, then
-   * cropped to the region the step is about and scaled up, so the claim is
-   * readable rather than merely present. Dimensions are the file's own.
+   * cropped to the region the step is about and drawn up, so the claim is
+   * readable rather than merely present. The crop region and the file's own
+   * size are both stated: the caption prints them and the scale between them,
+   * so the arithmetic on the sheet closes.
    */
   fig: string;
+  cropW: number;
+  cropH: number;
   figW: number;
   figH: number;
   figAlt: string;
@@ -110,10 +114,12 @@ const STEP_SPEC: WalkStep[] = [
   {
     id: 'W-01',
     title: 'The studio holds chart and chat together',
-    why: 'The full-screen studio docks the conversation beside the evidence rather than over it, so a question and the chart it is about stay on one screen. Three panes: the run’s charts, the chart in hand, the questions.',
+    why: 'Asking used to open a panel on top of the chart. The full-screen studio docks the conversation beside it instead, so a question and the evidence it is about hold one screen between them.',
     prs: [45],
     params: '?full=1&exp=EXP-07&chart=age_curve',
     fig: '/prediction-lab/fig-w01-studio.jpg',
+    cropW: 1600,
+    cropH: 1000,
     figW: 1600,
     figH: 1000,
     figAlt: 'The whole studio: a list of every chart in the run down the left, the driver age chart and its table of exact numbers in the middle, and the question rail down the right',
@@ -126,6 +132,8 @@ const STEP_SPEC: WalkStep[] = [
     prs: [51],
     params: '?full=1&exp=EXP-07&chart=age_curve&sel=89:89',
     fig: '/prediction-lab/fig-w02-rightclick.jpg',
+    cropW: 480,
+    cropH: 130,
     figW: 1200,
     figH: 325,
     figAlt: 'The question box, pre-filled by the right-click, above a grey chip reading: Asking about EXP-07, driver age relativity, 89, level view',
@@ -134,13 +142,15 @@ const STEP_SPEC: WalkStep[] = [
   {
     id: 'W-03',
     title: 'A navigator docks the whole run',
-    why: 'Every chart the run produced, grouped by experiment, each one dotted with its verdict: blue still standing, red thrown out, green the winner. Searchable, and a star floats a chart to the top. Changing charts no longer means leaving the studio.',
+    why: 'Every chart the run produced, grouped by experiment. A coloured dot carries each experiment’s verdict: blue for still standing, red for thrown out, green for the winner. Search reaches any of them, and a star floats one to the top. Changing charts no longer means leaving the studio.',
     prs: [47, 50, 57],
     params: '?full=1&exp=EXP-04&chart=accidents',
-    /* The pins are browser-local, so the link opens the chart and the seat but
-       not the two starred rows in the figure. Said on the sheet, not hidden. */
-    absent: 'the star pins are saved per browser, so the link opens the chart, not the pins',
+    /* The pins are browser-local, so the link carries the chart but leaves the
+       two starred rows in the figure behind. Said on the sheet, not hidden. */
+    absent: 'the star pins are saved per browser, so this link carries the chart and leaves the pins behind',
     fig: '/prediction-lab/fig-w03-navigator.jpg',
+    cropW: 280,
+    cropH: 660,
     figW: 840,
     figH: 1980,
     figAlt: 'The chart list: a pinned section on top holding two starred charts, then experiments EXP-01 through EXP-05, each with a coloured verdict dot and its own charts underneath',
@@ -153,10 +163,12 @@ const STEP_SPEC: WalkStep[] = [
     prs: [59],
     params: '?full=1&exp=EXP-07&chart=age_curve&sel=89:89&tbl=off',
     fig: '/prediction-lab/fig-w04-uncertainty.jpg',
+    cropW: 800,
+    cropH: 640,
     figW: 1200,
     figH: 960,
     figAlt: 'The fitted curve inside a shaded error band, grey bars behind it showing how much data sits at each age, and a line reading: thinnest evidence, age 89, 180 earned car-years',
-    capture: 'the band, the data bars, and the sentence naming the weakest age',
+    capture: 'the band and the data bars, over the sentence naming the weakest age',
   },
   {
     id: 'W-05',
@@ -165,6 +177,8 @@ const STEP_SPEC: WalkStep[] = [
     prs: [59, 64, 65, 67],
     params: '?full=1&exp=EXP-07&chart=age_curve&tbl=side&sel=19:21',
     fig: '/prediction-lab/fig-w05-table-side.jpg',
+    cropW: 800,
+    cropH: 470,
     figW: 1200,
     figH: 705,
     figAlt: 'Rows 19, 20 and 21 swept as a tinted block in the table, with the matching band drawn on the chart beside it',
@@ -177,6 +191,8 @@ const STEP_SPEC: WalkStep[] = [
     prs: [62, 64],
     params: '?full=1&exp=EXP-07&chart=age_curve&tbl=only',
     fig: '/prediction-lab/fig-w06-table-only.jpg',
+    cropW: 800,
+    cropH: 300,
     figW: 1200,
     figH: 450,
     figAlt: 'The table standing alone, its Copy and Download CSV controls in the header above the column titles',
@@ -187,10 +203,12 @@ const STEP_SPEC: WalkStep[] = [
   {
     id: 'W-07',
     title: 'Approval freezes the evidence',
-    why: 'Signing off draws the charts and their exact values once, inside the approval itself, and the record page reprints those stored drawings. What a reader opens years later is what was signed, not what the code draws today.',
+    why: 'Signing off draws the charts and their exact values once, inside the approval itself, and the record page reprints those stored drawings. A reader opening it years later sees what was signed, even if the code that drew it has moved on.',
     prs: [60],
     params: '/record/234',
     fig: '/prediction-lab/fig-w07-record.jpg',
+    cropW: 830,
+    cropH: 700,
     figW: 1245,
     figH: 1050,
     figAlt: 'The decision record: the frozen driver age chart above its table of exact values, set in a print palette rather than the app one',
@@ -203,6 +221,8 @@ const STEP_SPEC: WalkStep[] = [
     prs: [45, 53, 64, 65],
     params: '?full=1&exp=EXP-07&chart=age_curve&mode=change&sel=19:21',
     fig: '/prediction-lab/fig-w08-share-view.jpg',
+    cropW: 800,
+    cropH: 640,
     figW: 1200,
     figH: 960,
     figAlt: 'The chart reopened from a cold link, showing change against v12 rather than the level view, with rows 19 to 21 still selected',
@@ -211,11 +231,13 @@ const STEP_SPEC: WalkStep[] = [
   {
     id: 'W-09',
     title: 'Four themes, styled to the scrollbars',
-    why: 'Light, dark, night, gold. Each theme mixes its own scrollbar thumb rather than leaving the system grey one showing, which is the last piece of chrome most themes forget. Below are two of the four.',
+    why: 'Light, dark, night, gold. Each theme mixes its own scrollbar thumb, which is the last piece of system chrome a theme usually forgets. Below are two of the four.',
     prs: [38, 39, 62],
     params: null,
     absent: 'the theme is saved per browser and never enters the URL, so no link can carry it',
     fig: '/prediction-lab/fig-w09-gold.jpg',
+    cropW: 1600,
+    cropH: 1000,
     figW: 1600,
     figH: 1000,
     figAlt: 'The run overview in the gold theme: yellow ground, olive neutrals, every chart and panel restyled to match',

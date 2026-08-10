@@ -111,11 +111,23 @@
   position: relative;
 }
 
+/* The reel is a 1920x1080 screen recording of an interface built out of small
+   text, so every pixel the plate gives up is legibility gone. The stage takes
+   the sheet's own padding back for itself, which is the widest the Margin Law
+   allows, and the fullscreen control on the deck is what returns the frame to
+   native size. */
+.stage {
+  margin-left: calc(clamp(1rem, 2.5vw, 2rem) * -1);
+  margin-right: calc(clamp(1rem, 2.5vw, 2rem) * -1);
+}
+
 .video {
   width: 100%;
   aspect-ratio: 16 / 9;
   display: block;
   border: 1px solid var(--rule-strong);
+  border-left: none;
+  border-right: none;
   background: var(--capture-bench);
 }
 
@@ -488,37 +500,6 @@
   color: var(--ink-witness);
 }
 
-/* ---- shared section furniture --------------------------------------------- */
-
-.sectionTitle {
-  font-family: var(--font-display);
-  font-stretch: 118%;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  font-size: clamp(1rem, 2vw, 1.3rem);
-  color: var(--ink-graphite);
-}
-
-.sectionLede {
-  max-width: 62ch;
-  margin-top: 0.6rem;
-  font-size: 0.92rem;
-  line-height: 1.55;
-  color: var(--ink-graphite);
-}
-
-.sectionLede a {
-  color: inherit;
-  text-decoration: underline;
-  text-decoration-color: var(--rule-strong);
-  text-underline-offset: 0.2em;
-}
-
-.sectionLede a:hover {
-  text-decoration-color: var(--ink-graphite);
-}
-
 /* ---- highlights ------------------------------------------------------------ */
 
 .highlights {
@@ -527,20 +508,26 @@
   border-top: 1px solid var(--rule-strong);
 }
 
-/* Five readings, five cells: the row is sized so all five stand on one line
-   at sheet width rather than leaving the fifth orphaned under a full row. */
+/* Five readings on one line, and every track wide enough for the reading it
+   carries: the widest is the Gini pair, so the tracks are sized to it rather
+   than to an even split that would let one figure print over its neighbour.
+   Below that width the row wraps to two lines instead of colliding. */
 .highlightRow {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   gap: 0;
   margin-top: clamp(1rem, 3vh, 1.5rem);
   border: 1px solid var(--rule);
 }
 
+/* min-width 0 so a track can never be forced wider by its own content: a
+   reading that outgrows its cell wraps the row instead of overprinting the
+   next one. */
 .highlight {
   padding: 0.7rem 0.85rem 0.8rem;
   border-right: 1px solid var(--rule);
   border-bottom: 1px solid var(--rule);
+  min-width: 0;
 }
 
 .highlightLabel {
@@ -635,14 +622,17 @@
 
 /* The evidence link prints the view's parameters, not the whole URL: the host
    is stated once on the sheet's provenance line, so repeating it nine times
-   only crowds out the part that differs. Breaking is allowed at the query
-   separators rather than at any character, so a link never strands one
-   character on a line of its own. */
+   only crowds out the part that differs. */
 .stepEvidence {
   margin-top: 0.35rem;
   font-size: 0.62rem;
   color: var(--ink-witness);
-  overflow-wrap: break-word;
+}
+
+/* One parameter, unbreakable. The wbr between segments is the only place a
+   link may wrap, so no link can strand a character on a line of its own. */
+.evidenceSeg {
+  white-space: nowrap;
 }
 
 /* Where the link stops. Witness ink, never red: this row is the gate

@@ -19,6 +19,16 @@ export const metadata: Metadata = {
  * Server-rendered floor: native video controls, a plain chapter log, plain
  * figures and anchors. WalkPlayer hydrates the strip-chart transport on top.
  */
+/**
+ * Split a query string at its parameter boundaries, keeping each `&name=value`
+ * whole. The pieces are set unbreakable and joined by explicit break points,
+ * so a long link wraps between parameters and never inside one.
+ */
+function evidenceSegments(params: string): string[] {
+  const [head, ...rest] = params.split('&');
+  return [head, ...rest.map((p) => `&${p}`)];
+}
+
 export default function PredictionLabPage() {
   const figBase = 2; /* FIG 1 is the reel; ledger figures follow in order */
   return (
@@ -45,17 +55,10 @@ export default function PredictionLabPage() {
 
         <WalkPlayer />
 
-        {/* ---- highlights: the run the reel records, in its own numbers ---- */}
+        {/* ---- highlights: the run the reel records, in its own numbers.
+             The readings stand without a lede: the row and its source line
+             say what they are, and the ledger below carries the argument. -- */}
         <section className={styles.highlights} aria-label="The run in its own numbers">
-          <h2 className={styles.sectionTitle}>The run in its own numbers</h2>
-          <p className={styles.sectionLede}>
-            Prediction Lab is my concept for how insurance pricing work should
-            feel, built as a running product. An agent runs bounded modeling
-            experiments against a real fitting engine in Rust, every chart it
-            draws carries its uncertainty and where the numbers came from, and
-            a human signs the result into a record that cannot be redrawn
-            later. The reel above is one run of it.
-          </p>
           <dl className={styles.highlightRow}>
             {HIGHLIGHTS.map((h) => (
               <div key={h.label} className={styles.highlight}>
@@ -73,17 +76,10 @@ export default function PredictionLabPage() {
           </p>
         </section>
 
-        {/* ---- the ledger: nine steps, each with its evidence link --------- */}
+        {/* ---- the ledger: nine steps, each with its evidence link.
+             No lede: each row carries its own reason, its PR trail, and its
+             link, so the section states itself as the reader walks it. ---- */}
         <section className={styles.ledger} aria-label="Walkthrough ledger">
-          <h2 className={styles.sectionTitle}>What changed, and why</h2>
-          <p className={styles.sectionLede}>
-            Nine steps, drawn from the product&apos;s merged pull requests and
-            checked against the live build. Each one links to the running
-            product at the state its figure shows, which works because the
-            product keeps its view in the URL (step <a href="#w-08">W-08</a>).
-            Where a link cannot carry the state, the step says so instead of
-            printing a link that would open something else.
-          </p>
           <ol className={styles.steps}>
             {STEPS.map((s, i) => {
               const href = stepHref(s);
@@ -109,15 +105,26 @@ export default function PredictionLabPage() {
                         </span>
                       ))}
                     </p>
-                    {/* The link carries the whole state, or the sheet says what
-                        it could not carry. The red is gated either way. */}
-                    <p className={`${styles.stepEvidence} u-mono`}>
-                      <LiveLink href={href} probeKey={LAB.href} live={LAB.live}>
-                        {s.params && s.params.startsWith('?') ? s.params : href.replace(/^https:\/\//, '')}
-                      </LiveLink>
-                    </p>
+                    {/* A step prints a link only when a link can carry its
+                        state. Where none can, the refusal stands in the slot
+                        alone: a bare origin here would open the front door and
+                        call it evidence. */}
+                    {s.params !== null ? (
+                      <p className={`${styles.stepEvidence} u-mono`}>
+                        <LiveLink href={href} probeKey={LAB.href} live={LAB.live}>
+                          {/* broken between parameters, never inside one, so a
+                              link can never strand a character on its own line */}
+                          {evidenceSegments(s.params).map((seg, k) => (
+                            <span key={seg + k}>
+                              {k > 0 ? <wbr /> : null}
+                              <span className={styles.evidenceSeg}>{seg}</span>
+                            </span>
+                          ))}
+                        </LiveLink>
+                      </p>
+                    ) : null}
                     {s.absent ? (
-                      <p className={`${styles.stepAbsent} u-mono`}>NOT IN THE LINK · {s.absent}</p>
+                      <p className={`${styles.stepAbsent} u-mono`}>NO LINK · {s.absent}</p>
                     ) : null}
                     {s.artifact ? (
                       <p className={`${styles.stepArtifact} u-mono`}>{s.artifact}</p>
@@ -146,11 +153,16 @@ export default function PredictionLabPage() {
                         {s.id === 'W-09' ? ` + ${figBase + i + 1}` : ''}
                       </span>{' '}
                       <span className={styles.plateSeg}>· {s.capture.toUpperCase()}</span>{' '}
+                      {/* The crop's own provenance: the region taken, the scale
+                          it was drawn at, and the capture it came from. The
+                          arithmetic closes on the sheet. */}
                       <span className={styles.plateSeg}>
                         ·{' '}
-                        {s.figW === 1600 && s.figH === 1000
-                          ? '1600×1000, WHOLE VIEWPORT'
-                          : `${s.figW}×${s.figH}, CROPPED FROM A 1600×1000 VIEWPORT`}
+                        {s.cropW === 1600 && s.cropH === 1000
+                          ? '1600×1000 CAPTURE, WHOLE VIEWPORT'
+                          : `A ${s.cropW}×${s.cropH} REGION OF A 1600×1000 CAPTURE, DRAWN AT ${
+                              Math.round((s.figW / s.cropW) * 100) / 100
+                            }×`}
                         , 2026-08-10
                       </span>
                     </figcaption>
