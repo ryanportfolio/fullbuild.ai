@@ -1,0 +1,802 @@
+/* ============================================================================
+   E-02 · PREDICTION LAB — page contract.
+
+   The exhibit sheet lives inside The Working Set's binding contract
+   (globals.css) and adds the walkthrough ledger on top of the E-01 transport:
+
+   - Inks: the chart plots in graphite; the not-yet-played envelope stands in
+     the RULE token (declared line ink, never opacity on an ink). The pen is
+     graphite and the chart's only full-height stroke; chapter boundaries are
+     short numbered registration ticks. Revision-red appears ONLY on links
+     whose registry row is `live` and whose health probe agrees, the
+     site-wide meaning unchanged. Where a step's state cannot ride a link,
+     the sheet prints the refusal in witness ink instead of a red link that
+     would open something else: the gate is visible, so the red is legible.
+   - The waveform is a plot of measured data (peaks.json, 307 half-second
+     bins of the reel's own audio); the minute ruling under it is the plot's
+     real axis. Nothing on the chart is decorative.
+   - Figures are unretouched captures of the live product inside a drawn 1px
+     rule-strong frame. No synthetic window chrome, no added shadows.
+   - No gradients, no blur, no glassmorphism.
+   - Margin Law: the sheet ends at the rail. Below 900px the rail is a bottom
+     overlay and the sheet clears it with padding, as Sheet.module.css does.
+   - Motion: the pen and re-ink track playback, which is content rather than
+     ornament. The sheet declares no transitions and no animations of its
+     own, so reduced motion has nothing here to collapse.
+   ========================================================================= */
+
+.page {
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: var(--sheet-margin);
+  display: flex;
+}
+
+@media (min-width: 901px) {
+  .page {
+    padding-right: calc(var(--rail-w) + var(--sheet-margin));
+  }
+}
+
+@media (max-width: 900px) {
+  .page {
+    padding-bottom: clamp(3rem, 12vh, 7rem);
+  }
+}
+
+.frame {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--rule-strong);
+  padding: clamp(1rem, 2.5vw, 2rem);
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(0.75rem, 2vw, 1.75rem);
+  padding-bottom: 0.85rem;
+  margin-bottom: clamp(1rem, 3vh, 1.5rem);
+  border-bottom: 1px solid var(--rule);
+}
+
+.headNo {
+  font-size: 0.7rem;
+  color: var(--ink-witness);
+  white-space: nowrap;
+}
+
+/* The sheet's name, carried on the head band as an h1. */
+.headFacts {
+  margin-left: auto;
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--ink-witness);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ---- the sheet's provenance line ------------------------------------------ */
+
+.provenance {
+  margin-bottom: clamp(1rem, 3vh, 2rem);
+  font-size: 0.62rem;
+  color: var(--ink-witness);
+}
+
+.provSeg {
+  white-space: nowrap;
+}
+
+/* ---- player ---------------------------------------------------------------- */
+
+.player {
+  display: flex;
+  flex-direction: column;
+  /* The capture's own ground: the dark bench the recorded screens sit on
+     while frames arrive. NOT a theme token on purpose — the recording's
+     pixels do not invert with the table. */
+  --capture-bench: #101010;
+}
+
+.player:fullscreen {
+  background: var(--ground);
+  padding: clamp(1rem, 2.5vw, 2rem);
+  overflow: auto;
+}
+
+.stage {
+  position: relative;
+}
+
+.video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  display: block;
+  border: 1px solid var(--rule-strong);
+  background: var(--capture-bench);
+}
+
+.player[data-enhanced] .video {
+  cursor: var(--house-cursor);
+}
+
+.plate {
+  margin-top: 0.5rem;
+  font-size: 0.62rem;
+  color: var(--ink-witness);
+}
+
+/* a fact group never breaks internally; wraps land between groups */
+.plateSeg {
+  white-space: nowrap;
+}
+
+/* Pause-state affordance: a drawn chip on the plate's frame. */
+.playChip {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 2.4rem;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.68rem;
+  color: var(--ink-graphite);
+  background: var(--ground);
+  border: 1px solid var(--rule-strong);
+  pointer-events: none;
+}
+
+/* ---- chrome (hidden until hydration; native controls carry the floor) ----- */
+
+.chrome {
+  display: none;
+}
+
+.player[data-enhanced] .chrome {
+  display: block;
+  margin-top: clamp(0.75rem, 2vh, 1.25rem);
+}
+
+.deck {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.6rem, 1.5vw, 1rem);
+  margin-bottom: 0.6rem;
+}
+
+.transport {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 1px solid var(--rule-strong);
+  background: transparent;
+  color: var(--ink-graphite);
+}
+
+.transport svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.transport:hover {
+  border-color: var(--ink-graphite);
+}
+
+.timecode {
+  font-size: 0.78rem;
+  color: var(--ink-graphite);
+  min-width: 11.5ch;
+  white-space: nowrap;
+}
+
+.chapterReadout {
+  font-size: 0.7rem;
+  color: var(--ink-witness);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.frameCount {
+  font-size: 0.62rem;
+  color: var(--ink-witness);
+  white-space: nowrap;
+}
+
+/* ---- the strip chart ------------------------------------------------------- */
+
+.chartBlock {
+  position: relative;
+}
+
+/* Two ruling lines: a callout that would overprint its neighbour drops to
+   the second, the way dimension text staggers on a crowded drawing. */
+.chapterRow {
+  position: relative;
+  height: 2.1rem;
+}
+
+.chapterBtn[data-row='1'] {
+  top: 1rem;
+}
+
+.chapterBtn {
+  position: absolute;
+  top: 0;
+  padding: 0 0.15rem 0.1rem;
+  font-size: 0.62rem;
+  color: var(--ink-witness);
+  background: none;
+  border: none;
+}
+
+.chapterBtn:hover {
+  color: var(--ink-graphite);
+}
+
+.chapterBtn[data-current] {
+  color: var(--ink-graphite);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.chart {
+  position: relative;
+  border: 1px solid var(--rule-strong);
+}
+
+.wave {
+  width: 100%;
+  height: clamp(3.4rem, 9vh, 5rem);
+  display: block;
+}
+
+.waveBase {
+  stroke: var(--rule);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+/* The whole recording standing by in the RULE ink and the played reach
+   re-inked to full graphite: pencil first, then ink. */
+.waveRest {
+  fill: var(--rule-strong);
+}
+
+.waveInked {
+  fill: var(--ink-graphite);
+}
+
+/* Chapter boundaries are short registration ticks at the top edge — the pen
+   below is the only full-height stroke. */
+.chapterTick {
+  stroke: var(--rule-strong);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.pen line {
+  stroke: var(--ink-graphite);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+/* the scrub input owns pointer + keys + AT; drawn layers stay quiet */
+.scrub {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  margin: 0;
+  cursor: var(--house-cursor);
+}
+
+.previewCard {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: center;
+  pointer-events: none;
+  z-index: 2;
+  max-width: none;
+}
+
+.previewThumb {
+  width: 160px;
+  height: 90px;
+  border: 1px solid var(--rule-strong);
+  background-color: var(--capture-bench);
+  background-repeat: no-repeat;
+}
+
+.previewCard span {
+  font-size: 0.62rem;
+  color: var(--ink-graphite);
+  background: var(--ground);
+  padding: 0.1rem 0.35rem;
+  border: 1px solid var(--rule);
+  white-space: nowrap;
+}
+
+/* Minute ruling under the chart: the plot's time axis, in the measured voice.
+   The walk is two minutes long, so both minute marks carry their label. */
+.ruler {
+  position: relative;
+  height: 1.05rem;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  color: var(--ink-witness);
+}
+
+.rulerTick {
+  position: absolute;
+  top: 0;
+  padding-top: 0.3rem;
+  transform: translateX(-50%);
+}
+
+.rulerTick::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 1px;
+  height: 0.34rem;
+  background: var(--rule-strong);
+}
+
+.rulerScale {
+  margin-top: 0.1rem;
+  text-align: right;
+  font-size: 0.55rem;
+  color: var(--ink-witness);
+}
+
+/* ---- chapter log ----------------------------------------------------------- */
+
+.logFold {
+  margin-top: clamp(1.5rem, 4vh, 2.5rem);
+  border-top: 1px solid var(--rule-strong);
+}
+
+.logSummary {
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.6rem 0;
+  font-size: 0.7rem;
+  color: var(--ink-witness);
+  user-select: none;
+}
+
+.logSummary::-webkit-details-marker {
+  display: none;
+}
+
+.logSummary::before {
+  content: '▸';
+  color: var(--ink-graphite);
+}
+
+.logFold[open] .logSummary::before {
+  content: '▾';
+}
+
+.logSummary:hover {
+  color: var(--ink-graphite);
+}
+
+.log {
+  list-style: none;
+  border-top: 1px solid var(--rule);
+}
+
+/* The row packs left: number, timecode and title, then the steps it cites,
+   so the eye never has to track a citation across empty paper to reach it.
+   The trailing column absorbs the slack instead. */
+.logRow {
+  display: grid;
+  grid-template-columns: 2.2rem auto auto 1fr;
+  align-items: baseline;
+  gap: clamp(0.5rem, 1.5vw, 1rem);
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.logRow[data-current] .logN {
+  color: var(--ink-graphite);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.logN {
+  font-size: 0.7rem;
+  color: var(--ink-witness);
+}
+
+.logSeek {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(0.5rem, 1.5vw, 1rem);
+  min-width: 0;
+  color: var(--ink-graphite);
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+}
+
+.logSeek > span:first-child {
+  font-size: 0.78rem;
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 0.2em;
+  white-space: nowrap;
+}
+
+.logSeek:hover > span:first-child {
+  text-decoration-color: var(--ink-graphite);
+}
+
+.logSeek:hover .logTitle {
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 0.25em;
+}
+
+.logTitle {
+  font-family: var(--font-display);
+  font-stretch: 118%;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+/* The log's right column cites ledger steps: in-page anchors in the witness
+   voice, graphite — red stays reserved for the live product. */
+.logCites {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.logCite {
+  font-size: 0.68rem;
+  color: var(--ink-witness);
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 0.2em;
+}
+
+.logCite:hover {
+  color: var(--ink-graphite);
+  text-decoration-color: var(--ink-graphite);
+}
+
+.logNote {
+  padding: 0.55rem 0 0.2rem;
+  font-size: 0.62rem;
+  color: var(--ink-witness);
+}
+
+/* ---- shared section furniture --------------------------------------------- */
+
+.sectionTitle {
+  font-family: var(--font-display);
+  font-stretch: 118%;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  color: var(--ink-graphite);
+}
+
+.sectionLede {
+  max-width: 62ch;
+  margin-top: 0.6rem;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--ink-graphite);
+}
+
+.sectionLede a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 0.2em;
+}
+
+.sectionLede a:hover {
+  text-decoration-color: var(--ink-graphite);
+}
+
+/* ---- highlights ------------------------------------------------------------ */
+
+.highlights {
+  margin-top: clamp(2rem, 6vh, 3.5rem);
+  padding-top: clamp(1rem, 3vh, 1.5rem);
+  border-top: 1px solid var(--rule-strong);
+}
+
+/* Five readings, five cells: the row is sized so all five stand on one line
+   at sheet width rather than leaving the fifth orphaned under a full row. */
+.highlightRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0;
+  margin-top: clamp(1rem, 3vh, 1.5rem);
+  border: 1px solid var(--rule);
+}
+
+.highlight {
+  padding: 0.7rem 0.85rem 0.8rem;
+  border-right: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.highlightLabel {
+  font-size: 0.58rem;
+  color: var(--ink-witness);
+}
+
+.highlightValue {
+  margin-top: 0.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+/* A reading never breaks mid-value: an arrow at the end of a line points at
+   nothing, and a wrapped figure drops its note off the row's baseline. */
+.highlightValue strong {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--ink-graphite);
+  white-space: nowrap;
+}
+
+.highlightNote {
+  font-size: 0.72rem;
+  color: var(--ink-witness);
+}
+
+.highlightSource {
+  margin-top: 0.6rem;
+  font-size: 0.58rem;
+  color: var(--ink-witness);
+}
+
+/* ---- the walkthrough ledger ------------------------------------------------ */
+
+.ledger {
+  margin-top: clamp(2rem, 6vh, 3.5rem);
+  padding-top: clamp(1rem, 3vh, 1.5rem);
+  border-top: 1px solid var(--rule-strong);
+}
+
+.steps {
+  list-style: none;
+  margin-top: clamp(1.25rem, 4vh, 2rem);
+}
+
+/* A ledger row: the drafted text column beside the figure, ruled off from the
+   next row the way the run ledger rules its experiments apart. */
+.step {
+  display: grid;
+  grid-template-columns: minmax(16rem, 30ch) 1fr;
+  gap: clamp(1rem, 2.5vw, 2rem);
+  padding: clamp(1.25rem, 3.5vh, 2rem) 0;
+  border-bottom: 1px solid var(--rule);
+  scroll-margin-top: 1rem;
+}
+
+.step:last-child {
+  border-bottom: none;
+}
+
+.stepNo {
+  font-size: 0.7rem;
+  color: var(--ink-witness);
+}
+
+.stepTitle {
+  margin-top: 0.35rem;
+  font-family: var(--font-display);
+  font-stretch: 118%;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-size: 0.95rem;
+  color: var(--ink-graphite);
+}
+
+.stepWhy {
+  margin-top: 0.6rem;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--ink-graphite);
+}
+
+.stepWitness {
+  margin-top: 0.7rem;
+  font-size: 0.58rem;
+  color: var(--ink-witness);
+}
+
+/* The evidence link prints the view's parameters, not the whole URL: the host
+   is stated once on the sheet's provenance line, so repeating it nine times
+   only crowds out the part that differs. Breaking is allowed at the query
+   separators rather than at any character, so a link never strands one
+   character on a line of its own. */
+.stepEvidence {
+  margin-top: 0.35rem;
+  font-size: 0.62rem;
+  color: var(--ink-witness);
+  overflow-wrap: break-word;
+}
+
+/* Where the link stops. Witness ink, never red: this row is the gate
+   refusing, and the refusal is what proves the red means something. */
+.stepAbsent {
+  margin-top: 0.3rem;
+  font-size: 0.58rem;
+  color: var(--ink-witness);
+  border-left: 1px solid var(--rule-strong);
+  padding-left: 0.5rem;
+}
+
+/* A string the product wrote, quoted as it wrote it. Case is the artifact's
+   own, so this line is never transformed. */
+.stepArtifact {
+  margin-top: 0.4rem;
+  font-size: 0.58rem;
+  color: var(--ink-witness);
+  border-left: 1px solid var(--rule-strong);
+  padding-left: 0.5rem;
+  overflow-wrap: anywhere;
+}
+
+.prLink {
+  color: var(--ink-witness);
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 0.2em;
+}
+
+.prLink:hover {
+  color: var(--ink-graphite);
+  text-decoration-color: var(--ink-graphite);
+}
+
+/* red is EARNED: registry-live and probe-agreed only (same law as the set) */
+.evidenceLink {
+  color: var(--ink-witness);
+}
+
+.evidenceLink[data-live] {
+  color: var(--accent-link);
+}
+
+.evidenceLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.stepFig {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Figures are cropped to the region their step is about, so they arrive at
+   whatever shape that region is. A wide crop fills the column; a tall one
+   (the navigator is a sidebar) is held by its height instead, so no figure
+   can grow taller than a screen. */
+.stepFig img {
+  max-width: 100%;
+  max-height: 32rem;
+  width: auto;
+  height: auto;
+  display: block;
+  border: 1px solid var(--rule-strong);
+}
+
+.stepCaption {
+  font-size: 0.58rem;
+  color: var(--ink-witness);
+}
+
+/* ---- record footer --------------------------------------------------------- */
+
+.record {
+  margin-top: clamp(2rem, 6vh, 3rem);
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--rule-strong);
+}
+
+.recordLine {
+  font-size: 0.62rem;
+  color: var(--ink-witness);
+}
+
+.recordLine + .recordLine {
+  margin-top: 0.3rem;
+}
+
+.recordHref {
+  color: var(--ink-witness);
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 0.2em;
+}
+
+.recordHref:hover {
+  color: var(--ink-graphite);
+}
+
+/* ---- narrow sheets --------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .frameCount {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  /* the ledger stacks: text above its figure, one column */
+  .step {
+    grid-template-columns: 1fr;
+    gap: 0.9rem;
+  }
+}
+
+@media (max-width: 700px) {
+  /* Below phone width a fact group is wider than the sheet, so the groups
+     give up their no-break rule and wrap inside themselves. A wrapped fact
+     beats a sheet that scrolls sideways. */
+  .provSeg,
+  .plateSeg {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .deck {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .timecode {
+    font-size: 0.7rem;
+    min-width: 0;
+  }
+  .chapterReadout {
+    order: 1;
+    flex-basis: 100%;
+  }
+  .logRow {
+    grid-template-columns: 2.2rem 1fr;
+  }
+  .logCites {
+    grid-column: 2 / -1;
+    margin-top: -0.2rem;
+  }
+  .logTitle {
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+  }
+  .chapterBtn {
+    display: none;
+  }
+  .chapterRow {
+    height: 0;
+  }
+}

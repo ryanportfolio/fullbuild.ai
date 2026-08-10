@@ -330,10 +330,31 @@ export const PROJECTS: Project[] = [
     note: 'Claude Code hook that clamps oversized Read results into line-numbered outlines: an 84KB source file lands as about 2KB. RTK kills tokens per command, STK per session.',
   },
   {
+    id: 'prediction-lab',
+    sheet: 'S-04.15',
+    title: 'Prediction Lab',
+    href: 'https://web-production-563b7.up.railway.app',
+    repo: 'https://github.com/ryanportfolio/lab-demo',
+    live: true,
+    role: 'solo build · concept, studio, evidence pipeline',
+    year: "'26",
+    stack: ['TypeScript', 'React 19', 'Rust', 'Vite'],
+    langs: ['TypeScript', 'Rust'],
+    metrics: [
+      { label: 'commits', value: '95', source: 'GitHub API, commit pagination, 2026-08-10' },
+      {
+        label: 'Gini',
+        value: '0.236 → 0.249',
+        source: 'live run 234 decision package, train Gini v12 → v13, read 2026-08-10',
+      },
+    ],
+    note: 'Insurance actuarial modeling workspace: an AI agent runs bounded pricing experiments, every number carries its provenance, and a human signs the frozen record. Walked through on sheet E-02.',
+  },
+  {
     // The self-referential anchor, drawn last: this drawing set is itself a
     // shipped artifact. Red is earned. Its REV field is the real deployed commit.
     id: 'fullbuild-ai',
-    sheet: 'S-04.15',
+    sheet: 'S-04.16',
     title: 'fullbuild.ai',
     href: 'https://fullbuild.ai',
     repo: null,
