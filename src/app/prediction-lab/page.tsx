@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import WalkPlayer from './WalkPlayer';
 import LiveLink from './LiveLink';
-import { WALK, LAB, RUN, HIGHLIGHTS, STEPS, stepHref, timecode } from './walk';
+import { WALK, LAB, STEPS, stepHref, timecode } from './walk';
 import styles from './prediction-lab.module.css';
 
 export const metadata: Metadata = {
@@ -55,26 +55,6 @@ export default function PredictionLabPage() {
 
         <WalkPlayer />
 
-        {/* ---- highlights: the run the reel records, in its own numbers.
-             The readings stand without a lede: the row and its source line
-             say what they are, and the ledger below carries the argument. -- */}
-        <section className={styles.highlights} aria-label="The run in its own numbers">
-          <dl className={styles.highlightRow}>
-            {HIGHLIGHTS.map((h) => (
-              <div key={h.label} className={styles.highlight}>
-                <dt className={`${styles.highlightLabel} u-mono`}>{h.label.toUpperCase()}</dt>
-                <dd className={styles.highlightValue}>
-                  <strong>{h.value}</strong>
-                  <span className={styles.highlightNote}>{h.note}</span>
-                </dd>
-              </div>
-            ))}
-          </dl>
-          <p className={`${styles.highlightSource} u-mono`}>
-            SOURCE · RUN {RUN.id} OVERVIEW AND ITS DECISION RECORD · {RUN.baseline} →{' '}
-            {RUN.approved} · READ 2026-08-10
-          </p>
-        </section>
 
         {/* ---- the ledger: nine steps, each with its evidence link.
              No lede: each row carries its own reason, its PR trail, and its
@@ -147,25 +127,6 @@ export default function PredictionLabPage() {
                         loading="lazy"
                       />
                     ) : null}
-                    <figcaption className={`${styles.stepCaption} u-mono`}>
-                      <span className={styles.plateSeg}>
-                        FIG {figBase + i}
-                        {s.id === 'W-09' ? ` + ${figBase + i + 1}` : ''}
-                      </span>{' '}
-                      <span className={styles.plateSeg}>· {s.capture.toUpperCase()}</span>{' '}
-                      {/* The crop's own provenance: the region taken, the scale
-                          it was drawn at, and the capture it came from. The
-                          arithmetic closes on the sheet. */}
-                      <span className={styles.plateSeg}>
-                        ·{' '}
-                        {s.cropW === 1600 && s.cropH === 1000
-                          ? '1600×1000 CAPTURE, WHOLE VIEWPORT'
-                          : `A ${s.cropW}×${s.cropH} REGION OF A 1600×1000 CAPTURE, DRAWN AT ${
-                              Math.round((s.figW / s.cropW) * 100) / 100
-                            }×`}
-                        , 2026-08-10
-                      </span>
-                    </figcaption>
                   </figure>
                 </li>
               );
