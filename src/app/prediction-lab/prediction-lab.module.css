@@ -582,17 +582,6 @@
   padding-left: 0.5rem;
 }
 
-/* A string the product wrote, quoted as it wrote it. Case is the artifact's
-   own, so this line is never transformed. */
-.stepArtifact {
-  margin-top: 0.4rem;
-  font-size: 0.58rem;
-  color: var(--ink-witness);
-  border-left: 1px solid var(--rule-strong);
-  padding-left: 0.5rem;
-  overflow-wrap: anywhere;
-}
-
 .prLink {
   color: var(--ink-witness);
   text-decoration: underline;

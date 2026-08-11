@@ -7,18 +7,19 @@ import styles from './prediction-lab.module.css';
 export const metadata: Metadata = {
   title: 'prediction lab · E-02',
   description:
-    'A walkthrough of Prediction Lab, an insurance actuarial modeling workspace, as a decision record: nine ledger steps with live evidence links, real captures, and the demonstration reel on a strip-chart transport.',
+    'A walkthrough of Prediction Lab, an insurance actuarial modeling workspace: nine steps, each with a link that reopens the running product at the state its figure shows, and the demonstration reel on a strip-chart transport.',
 };
 
 /**
  * EXHIBIT E-02, next in the exhibit series after E-01. Where E-01 plays the
  * shipped work, this sheet walks through one product and obeys that product's
- * own law while doing it: every number carries its provenance, every claim
- * carries an evidence link that reopens the live product at the state the
- * claim describes, and the figures are unretouched captures.
+ * own law while doing it: every step links to the live product at the state
+ * its figure shows, or says why no link can, and the figures are unretouched
+ * captures drawn at their own size or smaller.
  * Server-rendered floor: native video controls, a plain chapter log, plain
  * figures and anchors. WalkPlayer hydrates the strip-chart transport on top.
  */
+
 /**
  * Split a query string at its parameter boundaries, keeping each `&name=value`
  * whole. The pieces are set unbreakable and joined by explicit break points,
@@ -30,7 +31,6 @@ function evidenceSegments(params: string): string[] {
 }
 
 export default function PredictionLabPage() {
-  const figBase = 2; /* FIG 1 is the reel; ledger figures follow in order */
   return (
     <main className={styles.page}>
       <div className={styles.frame}>
@@ -105,9 +105,6 @@ export default function PredictionLabPage() {
                     ) : null}
                     {s.absent ? (
                       <p className={`${styles.stepAbsent} u-mono`}>NO LINK · {s.absent}</p>
-                    ) : null}
-                    {s.artifact ? (
-                      <p className={`${styles.stepArtifact} u-mono`}>{s.artifact}</p>
                     ) : null}
                   </div>
                   <figure className={styles.stepFig}>

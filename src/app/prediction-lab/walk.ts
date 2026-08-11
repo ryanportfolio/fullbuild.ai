@@ -78,11 +78,6 @@ export interface WalkStep {
    * reader has seen the gate refuse and knows the red means something.
    */
   absent?: string;
-  /**
-   * A string the product itself produced, quoted verbatim where the figure
-   * cannot carry the claim (an exported file is not a screen).
-   */
-  artifact?: string;
 }
 
 const STEP_SPEC: WalkStep[] = [
@@ -146,16 +141,14 @@ const STEP_SPEC: WalkStep[] = [
   },
   {
     id: 'W-06',
-    title: 'Numbers leave with their provenance',
-    why: 'Copy and the CSV open with a line naming the chart, experiment, run, and model version. The file is named the same way.',
+    title: 'Exports say where the numbers came from',
+    why: 'Copy and the CSV open with a line naming the chart, experiment, run, and model version. The file is named the same way, so a spreadsheet full of figures can still be traced back.',
     prs: [62, 64],
     params: '?full=1&exp=EXP-07&chart=age_curve&tbl=only',
     fig: '/prediction-lab/fig-w06-table-only.jpg',
     figW: 1200,
     figH: 450,
     figAlt: 'The table standing alone, its Copy and Download CSV controls in the header above the column titles',
-    artifact:
-      'Driver age relativity · EXP-07 · run 234 · on v12 · BI claims / earned car year   ·   exp-07-age-curve-run-234-v12.csv',
   },
   {
     id: 'W-07',
