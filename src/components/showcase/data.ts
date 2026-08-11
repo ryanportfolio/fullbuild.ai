@@ -155,7 +155,10 @@ export const PROTOTYPE_INDEX: readonly PrototypeIndexEntry[] = [
   { id: "deadlow", title: "Dead Low", href: "/prototype/deadlow", image: "/prototype/showcase/media/index/deadlow.webp" },
   { id: "maranatha", title: "Maranatha", href: "/prototype/maranatha", image: "/prototype/showcase/media/index/maranatha.webp" },
   { id: "open-saas", title: "Open Build", href: "/prototype/open-saas", image: "/prototype/showcase/media/index/open-saas.webp" },
-  { id: "showcase", title: "Showcase", href: "/prototype/showcase", image: "/prototype/showcase/media/index/showcase.webp" },
+  // Prediction Lab lives on its own sheet rather than under /prototype, so this
+  // row points out of the gallery. It took the slot the showcase used to hold
+  // on itself, which was the one card that went nowhere new.
+  { id: "prediction-lab", title: "Prediction Lab", href: "/prediction-lab", image: "/prototype/showcase/media/index/prediction-lab.webp" },
 ] as const;
 
 export function clamp01(value: number) {

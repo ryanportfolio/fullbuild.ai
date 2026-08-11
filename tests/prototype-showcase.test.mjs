@@ -1120,13 +1120,16 @@ test("the finale is the prototype index and /prototype serves the showcase", asy
     source("rail"),
   ]);
 
-  // Fifteen entries in the old gallery's order, showcase last, every capture under the
-  // index media dir and a real graded file on disk rather than a stub.
+  // Fifteen entries in the old gallery's order. The last slot used to hold the
+  // showcase pointing at itself, which was the one card that opened nothing new;
+  // Prediction Lab holds it now and points out of the gallery to its own sheet.
+  // Every capture lives under the index media dir and is a real graded file.
   const index = data.match(/PROTOTYPE_INDEX[\s\S]*?\] as const/)?.[0] ?? "";
   const ids = [...index.matchAll(/\bid: "([a-z-]+)"/g)].map((m) => m[1]);
   assert.equal(ids.length, 15);
   assert.equal(ids[0], "fault-line");
-  assert.equal(ids[14], "showcase");
+  assert.equal(ids[14], "prediction-lab");
+  assert.ok(!ids.includes("showcase"), "no card opens the page it is already on");
   const images = [...index.matchAll(/\bimage: "([^"]+)"/g)].map((m) => m[1]);
   assert.equal(images.length, 15);
   for (const image of images) {

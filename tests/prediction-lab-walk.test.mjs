@@ -56,10 +56,16 @@ test('the walk facts file states the measured figures and ten ascending chapters
   assert.equal(ats[0], 0, 'the reel opens on chapter 1');
   assert.ok(ats[ats.length - 1] < DURATION, 'last chapter starts inside the reel');
 
-  // The registry must hold the row the walk reads its origin from — the import
-  // throws at build time too, but a test failure names the miss without Next.
+  // Prediction Lab is a prototype, not a shipped row on STATE 04, so it must
+  // stay out of the PROJECTS registry and stay in the prototype index.
   const projects = await read('src/lib/projects.ts');
-  assert.match(projects, /id: 'prediction-lab'/, 'registry has prediction-lab');
+  assert.ok(!projects.includes("id: 'prediction-lab'"), 'not a STATE 04 registry row');
+  const showcase = await read('src/components/showcase/data.ts');
+  assert.match(
+    showcase,
+    /id: "prediction-lab", title: "Prediction Lab", href: "\/prediction-lab"/,
+    'the prototype index carries it, pointing at this sheet',
+  );
 });
 
 test('the sprite arithmetic covers the encoded reel exactly', async () => {
@@ -159,11 +165,16 @@ test('the exhibit page prints only claims the data can back', async () => {
   // Exactly one h1, and it is the sheet's name on the head band.
   assert.equal((page.match(/<h1[ >]/g) ?? []).length, 1, 'exactly one h1');
   assert.match(page, /<h1[^>]*>\s*PREDICTION LAB/);
-  // The origin of every evidence link is read from the registry, not restated.
+  // Every evidence link is built from the one origin in LAB, so no step can
+  // point at a host the sheet does not name. The origin appears exactly once.
   assert.match(page, /stepHref\(s\)/);
-  assert.ok(!/web-production-563b7/.test(page), 'page never hand-types the product origin');
-  assert.ok(!/web-production-563b7/.test(await read('src/app/prediction-lab/walk.ts')),
-    'walk.ts never hand-types the product origin');
+  assert.ok(!/web-production-563b7/.test(page), 'the page never hand-types the origin');
+  const walkSrc = await read('src/app/prediction-lab/walk.ts');
+  assert.equal(
+    (walkSrc.match(/https:\/\/web-production-563b7\.up\.railway\.app/g) ?? []).length,
+    1,
+    'the origin is declared once and only once',
+  );
   // Voice rules: no em dashes in anything the reader sees.
   const visible = (src) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
   assert.ok(!visible(page).includes('—'), 'no em dash in page output');

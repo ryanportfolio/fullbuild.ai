@@ -1,5 +1,3 @@
-import { PROJECTS } from '@/lib/projects';
-
 /* ============================================================================
    THE WALK — locked facts for the E-02 record of demonstration.
 
@@ -14,8 +12,8 @@ import { PROJECTS } from '@/lib/projects';
      ±1 s; each `at` lands on or just before the first frame of its chapter.
    - Step evidence links: every URL parameter below was exercised against the
      live product on 2026-08-10 and the restored state was verified by hand.
-     The origin is READ from the registry row, so a link cannot drift from
-     the content gate, and `live` gates every red on the page.
+     Every link is built from the one origin in LAB, so no step can point at a
+     different host than the sheet says it does.
    tests/prediction-lab-walk.test.mjs holds these claims to the data.
    ========================================================================= */
 
@@ -40,16 +38,17 @@ export const WALK = {
   height: 1080,
 } as const;
 
-/* The registry row is the single source for title, origin, and the red gate.
-   The walk cannot exist without it: throw at build time, name the id. */
-const row = PROJECTS.find((p) => p.id === 'prediction-lab');
-if (!row || !row.href) throw new Error('walk requires the prediction-lab registry row with an href');
-
+/* Prediction Lab is a prototype, not a shipped row on STATE 04, so it is not in
+   the PROJECTS registry and this sheet declares its own subject. That has one
+   consequence worth stating: /api/health probes the registry's live rows, so it
+   does not cover this URL. The red here therefore rests on `live` below, which
+   is a claim this file makes and a reader can check by following the link. It
+   was true on 2026-08-10. Set it false the day the demo stops answering. */
 export const LAB = {
-  title: row.title,
-  href: row.href,
-  repo: row.repo,
-  live: row.live,
+  title: 'Prediction Lab',
+  href: 'https://web-production-563b7.up.railway.app',
+  repo: 'https://github.com/ryanportfolio/lab-demo',
+  live: true,
 } as const;
 
 export interface WalkStep {
