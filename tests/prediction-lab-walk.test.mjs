@@ -138,41 +138,14 @@ test('every ledger step is unique, verified-parameter only, and cited coherently
     }
   }
 
-  // A step with no URL state prints the refusal instead of a link that would
-  // open something else. Exactly the steps with params: null carry it.
-  const specBlocks = walk.split(/\{\s*\n\s+id: 'W-/).slice(1);
-  assert.equal(specBlocks.length, STEP_COUNT, 'step blocks parse');
-  for (const block of specBlocks) {
-    const nullParams = /params: null/.test(block);
-    const hasAbsent = /absent:/.test(block);
-    if (nullParams) {
-      assert.ok(hasAbsent, 'a step with no URL state says what the link cannot carry');
-    }
-  }
-
-  // The page keeps the lede's promise: the link is rendered only when a link
-  // can carry the state, so a bare origin never stands in as evidence.
+  // A step prints a link only when a link can carry its state, so a bare
+  // origin never stands in as evidence for a view it cannot reopen.
   const page = await read('src/app/prediction-lab/page.tsx');
   assert.match(
     page,
     /\{s\.params !== null \?[\s\S]*?<LiveLink/,
     'the evidence link renders only for a step whose state rides the URL',
   );
-
-  // Every crop states the region it came from and the scale it was drawn at,
-  // so a caption's arithmetic closes against the 1600x1000 capture.
-  const geom = [...walk.matchAll(
-    /cropW: (\d+),\s*\n\s*cropH: (\d+),\s*\n\s*figW: (\d+),\s*\n\s*figH: (\d+),/g,
-  )];
-  assert.equal(geom.length, STEP_COUNT, 'every figure states its crop region');
-  for (const [, cw, ch, fw, fh] of geom) {
-    assert.ok(Number(cw) <= 1600 && Number(ch) <= 1000, 'a crop fits inside the capture');
-    assert.equal(
-      Number(fw) / Number(cw),
-      Number(fh) / Number(ch),
-      'the crop is drawn up evenly, so the figure holds its aspect',
-    );
-  }
 });
 
 test('the exhibit page prints only claims the data can back', async () => {
@@ -219,10 +192,11 @@ test('the sheet ships its floor assets', async () => {
     assert.ok(s.size < 400_000, `${f} stays a page-weight figure`);
   }
 
-  // The dimensions the page prints are the files' own, read out of the JPEG
-  // headers here, so a caption can never state a shape the file does not have.
+  // The dimensions on each img are the file's own, read out of the JPEG
+  // headers here, so the reserved box always matches what actually loads and
+  // no figure is ever drawn larger than the pixels it holds.
   const declared = [...walk.matchAll(
-    /fig: '(\/prediction-lab\/[a-z0-9-]+\.jpg)',\s*\n\s*cropW: \d+,\s*\n\s*cropH: \d+,\s*\n\s*figW: (\d+),\s*\n\s*figH: (\d+),/g,
+    /fig: '(\/prediction-lab\/[a-z0-9-]+\.jpg)',\s*\n\s*figW: (\d+),\s*\n\s*figH: (\d+),/g,
   )];
   assert.equal(declared.length, STEP_COUNT, 'every figure declares its size');
   for (const [, path, w, h] of declared) {

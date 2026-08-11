@@ -1,24 +1,25 @@
 import type { Metadata } from 'next';
 import WalkPlayer from './WalkPlayer';
 import LiveLink from './LiveLink';
-import { WALK, LAB, RUN, HIGHLIGHTS, STEPS, stepHref, timecode } from './walk';
+import { WALK, LAB, STEPS, stepHref, timecode } from './walk';
 import styles from './prediction-lab.module.css';
 
 export const metadata: Metadata = {
   title: 'prediction lab · E-02',
   description:
-    'A walkthrough of Prediction Lab, an insurance actuarial modeling workspace, as a decision record: nine ledger steps with live evidence links, real captures, and the demonstration reel on a strip-chart transport.',
+    'A walkthrough of Prediction Lab, an insurance actuarial modeling workspace: nine steps, each with a link that reopens the running product at the state its figure shows, and the demonstration reel on a strip-chart transport.',
 };
 
 /**
  * EXHIBIT E-02, next in the exhibit series after E-01. Where E-01 plays the
  * shipped work, this sheet walks through one product and obeys that product's
- * own law while doing it: every number carries its provenance, every claim
- * carries an evidence link that reopens the live product at the state the
- * claim describes, and the figures are unretouched captures.
+ * own law while doing it: every step links to the live product at the state
+ * its figure shows, or says why no link can, and the figures are unretouched
+ * captures drawn at their own size or smaller.
  * Server-rendered floor: native video controls, a plain chapter log, plain
  * figures and anchors. WalkPlayer hydrates the strip-chart transport on top.
  */
+
 /**
  * Split a query string at its parameter boundaries, keeping each `&name=value`
  * whole. The pieces are set unbreakable and joined by explicit break points,
@@ -30,7 +31,6 @@ function evidenceSegments(params: string): string[] {
 }
 
 export default function PredictionLabPage() {
-  const figBase = 2; /* FIG 1 is the reel; ledger figures follow in order */
   return (
     <main className={styles.page}>
       <div className={styles.frame}>
@@ -55,26 +55,6 @@ export default function PredictionLabPage() {
 
         <WalkPlayer />
 
-        {/* ---- highlights: the run the reel records, in its own numbers.
-             The readings stand without a lede: the row and its source line
-             say what they are, and the ledger below carries the argument. -- */}
-        <section className={styles.highlights} aria-label="The run in its own numbers">
-          <dl className={styles.highlightRow}>
-            {HIGHLIGHTS.map((h) => (
-              <div key={h.label} className={styles.highlight}>
-                <dt className={`${styles.highlightLabel} u-mono`}>{h.label.toUpperCase()}</dt>
-                <dd className={styles.highlightValue}>
-                  <strong>{h.value}</strong>
-                  <span className={styles.highlightNote}>{h.note}</span>
-                </dd>
-              </div>
-            ))}
-          </dl>
-          <p className={`${styles.highlightSource} u-mono`}>
-            SOURCE · RUN {RUN.id} OVERVIEW AND ITS DECISION RECORD · {RUN.baseline} →{' '}
-            {RUN.approved} · READ 2026-08-10
-          </p>
-        </section>
 
         {/* ---- the ledger: nine steps, each with its evidence link.
              No lede: each row carries its own reason, its PR trail, and its
@@ -126,9 +106,6 @@ export default function PredictionLabPage() {
                     {s.absent ? (
                       <p className={`${styles.stepAbsent} u-mono`}>NO LINK · {s.absent}</p>
                     ) : null}
-                    {s.artifact ? (
-                      <p className={`${styles.stepArtifact} u-mono`}>{s.artifact}</p>
-                    ) : null}
                   </div>
                   <figure className={styles.stepFig}>
                     <img
@@ -147,25 +124,6 @@ export default function PredictionLabPage() {
                         loading="lazy"
                       />
                     ) : null}
-                    <figcaption className={`${styles.stepCaption} u-mono`}>
-                      <span className={styles.plateSeg}>
-                        FIG {figBase + i}
-                        {s.id === 'W-09' ? ` + ${figBase + i + 1}` : ''}
-                      </span>{' '}
-                      <span className={styles.plateSeg}>· {s.capture.toUpperCase()}</span>{' '}
-                      {/* The crop's own provenance: the region taken, the scale
-                          it was drawn at, and the capture it came from. The
-                          arithmetic closes on the sheet. */}
-                      <span className={styles.plateSeg}>
-                        ·{' '}
-                        {s.cropW === 1600 && s.cropH === 1000
-                          ? '1600×1000 CAPTURE, WHOLE VIEWPORT'
-                          : `A ${s.cropW}×${s.cropH} REGION OF A 1600×1000 CAPTURE, DRAWN AT ${
-                              Math.round((s.figW / s.cropW) * 100) / 100
-                            }×`}
-                        , 2026-08-10
-                      </span>
-                    </figcaption>
                   </figure>
                 </li>
               );
