@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Archivo, Martian_Mono } from 'next/font/google';
 import './globals.css';
 import TitleBlock from '@/components/chrome/TitleBlock';
+import SetEdge from '@/components/chrome/SetEdge';
 import { GIT } from '@/lib/git';
 import { PROTOTYPE_COUNT } from '@/lib/prototypes';
 
@@ -158,6 +159,9 @@ export default function RootLayout({
       <body>
         {children}
         <TitleBlock rev={GIT.rev} sha={GIT.sha} prototypes={PROTOTYPE_COUNT} />
+        {/* The bound edge sits outboard of the rail, so it is mounted after it —
+            the set's outermost margin is the last thing drawn on the sheet. */}
+        <SetEdge />
       </body>
     </html>
   );

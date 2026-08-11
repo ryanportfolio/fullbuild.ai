@@ -92,7 +92,16 @@
      band cell — so content/chrome/canvas occlusion is structurally impossible,
      not patched. Below 900px the rail collapses and the title block becomes a
      bottom overlay (sheets clear it with padding instead). */
-  --rail-w: calc(var(--title-block-w) + 1.25rem);
+
+  /* THE BOUND EDGE — the strip outboard of the rail where the set is bound, and
+     the only place a scrollbar could honestly live on this page: past the title
+     block's border line, at the outermost margin, where a real set shows its
+     sheets edge-on. SetEdge draws it; the rail sits inboard of it and the sheets
+     clear both, because --rail-w (the one clearance token every sheet reads)
+     carries the edge inside it. Zero below 900px, where the rail collapses and
+     the platform's own scrollbar is left alone. */
+  --edge-w: 0.95rem;
+  --rail-w: calc(var(--title-block-w) + 1.25rem + var(--edge-w));
   /* The drawing band: the one cell the R3F island may paint in (STATE 03→04). */
   --band-w: clamp(20rem, 34vw, 37rem);
 
@@ -141,6 +150,29 @@ html {
   scroll-behavior: auto; /* Lenis owns scroll; native smooth is off */
   /* HINGE rotateY can paint a hair past the edge — never let it scroll sideways. */
   overflow-x: clip;
+}
+
+/* The platform bar stands down ONLY where the bound edge is actually drawn, and
+   the flag is stamped by SetEdge at mount rather than written here — so every
+   path that has no custom bar keeps the real one: no-JS, the app-router
+   prototypes (which own their whole canvas and mount no chrome), and any narrow
+   window where the rail has collapsed and the edge with it. Suppressing the
+   scrollbar globally and hoping a component turns up to replace it is how a page
+   ends up with no scrollbar at all. */
+@media (min-width: 901px) {
+  html[data-set-edge] {
+    scrollbar-width: none;
+  }
+  html[data-set-edge]::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  :root {
+    --edge-w: 0px;
+  }
 }
 
 html,

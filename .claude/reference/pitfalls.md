@@ -293,3 +293,42 @@ the raw command unfiltered:
 and `npm run typecheck` are unaffected. Isolate concurrent worktrees with
 `NEXT_DIST_DIR` (read at `next.config.mjs:13`) as well as a distinct port: two
 dev servers sharing one build dir corrupt each other silently.
+
+## Lenis scrollTo refuses in silence while stopped or locked (2026-08-10)
+
+`lenis.scrollTo(target, opts)` opens with
+`if ((this.isStopped || this.isLocked) && !force) return` — no throw, no return
+value, nothing to check. Any custom control that drives the page through Lenis
+(the bound-edge scrollbar in `src/components/chrome/SetEdge.tsx`) therefore has
+to pass `force: true`, or it moves under the cursor while the page stays put:
+the worst failure a control has, because it looks like it worked. The homepage
+intro holds `isStopped` for its whole ~6s run, so the window is real, not
+theoretical.
+
+The same 6s window makes Playwright verification of anything in the margin race
+the intro. `data-intro-pending` lifting is NOT the all-clear — the film keeps
+painting for seconds after it. Gate on the thing you are about to click actually
+being hittable, plus the authority being awake:
+
+```js
+await page.waitForFunction(() => {
+  const el = document.elementFromPoint(window.innerWidth - 6, 40);
+  return !window.__lenis.isStopped && el?.closest('[data-set-edge]') !== null;
+});
+```
+
+Two probes were written off as product bugs before `elementFromPoint` showed the
+pointer was landing on `intro_loadSheet` the whole time.
+
+## Suppressing the native scrollbar must be gated on the replacement (2026-08-10)
+
+`scrollbar-width: none` on `html` is written by `SetEdge` stamping
+`data-set-edge` at mount, never as a static rule, and the CSS is width-gated to
+match where the custom strip actually draws (`min-width: 901px`, since `--edge-w`
+collapses to 0 below that). A blanket suppression leaves no-JS visitors, the
+app-router prototypes (which mount no site chrome), and every narrow window with
+no scrollbar of any kind. Related trap in the same component: the strip's
+"is there anything to scroll" floor must be `range > 1`, not the half-a-viewport
+floor the site log uses — that floor answers a question about whether an
+animation has room, and borrowing it left `/examples` (197px of overhang at
+1440x900) with the native bar suppressed and nothing drawn in its place.

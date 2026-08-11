@@ -8,10 +8,12 @@
 .rail {
   position: fixed;
   top: 0;
-  right: 0;
+  /* Inboard of the bound edge, never over it. --rail-w stays the one number the
+     sheets clear, so it carries both columns and the split happens only here. */
+  right: var(--edge-w);
   bottom: 0;
   z-index: 40;
-  width: var(--rail-w);
+  width: calc(var(--rail-w) - var(--edge-w));
   border-left: 1px solid var(--rule-strong);
   background: var(--ground);
   display: flex;
