@@ -12,7 +12,7 @@ test("facts.json is internally consistent (recomputed, not trusted)", async () =
   const facts = JSON.parse(await read("public/harness-firmware/facts.json"));
 
   assert.equal(facts.skills.length, facts.skillCount);
-  assert.equal(facts.skillCount, 20);
+  assert.equal(facts.skillCount, 23);
 
   const sum = facts.skills.reduce((a, s) => a + s.bytes, 0);
   assert.equal(sum, facts.onDemandBytes);
@@ -28,7 +28,7 @@ test("facts.json is internally consistent (recomputed, not trusted)", async () =
   const tally = { core: 0, discipline: 0, extras: 0 };
   for (const s of facts.skills) tally[s.tier] += 1;
   assert.deepEqual(tally, facts.tierCounts);
-  assert.deepEqual(facts.tierCounts, { core: 6, discipline: 4, extras: 10 });
+  assert.deepEqual(facts.tierCounts, { core: 7, discipline: 5, extras: 11 });
 
   assert.equal(facts.blockBytes, 1024);
   let offset = 0;
@@ -66,7 +66,7 @@ test("dither engine: countable honesty is computed, deterministic, and versioned
   // spectrum: exactly one dot per allocated 1,024-B flash block, per skill,
   // bands in real flash-address order
   const { bands } = spectrumGeometry(facts, 1200, 520);
-  assert.equal(bands.length, 20);
+  assert.equal(bands.length, 23);
   bands.forEach((b, i) => {
     assert.equal(b.name, facts.skills[i].name, `band order ${i}`);
     assert.equal(b.dots.length, b.blocks, `${b.name}: 1 dot = 1 block`);
@@ -143,6 +143,16 @@ test("every figure rendered on the page matches facts.json", async () => {
     assert.match(m[0], /alt="[^"]{40,}"/, `bake img needs descriptive alt: ${m[0].slice(0, 80)}`);
   }
   assert.ok(html.includes('class="skip-link"'), "skip link present");
+  assert.ok(html.includes('href="https://github.com/ryanportfolio/Harness-Firmware/generate"'), "primary CTA opens GitHub template creation");
+
+  const inventory = html.match(/<ul class="sr-only" id="spectrum-inventory">([\s\S]*?)<\/ul>/)?.[1] ?? "";
+  assert.ok(inventory, "full spectrum has a screen-reader inventory");
+  for (const skill of facts.skills) {
+    assert.ok(
+      inventory.includes(`${skill.name}: ${fmt(skill.bytes)} B, ${skill.blocks} blocks, ${skill.tier}`),
+      `accessible spectrum entry: ${skill.name}`,
+    );
+  }
 });
 
 test("constraint contract holds in the stylesheet", async () => {
@@ -161,7 +171,7 @@ test("constraint contract holds in the stylesheet", async () => {
   assert.ok(!/@import|fonts\.googleapis/.test(css), "fonts self-hosted only");
   assert.ok(css.includes('url("/harness-firmware/fonts/Unbounded'), "Unbounded self-hosted");
   assert.ok(css.includes("prefers-reduced-motion"), "reduced motion honored");
-  assert.ok(css.includes("2.079s"), "the pulse is a measurement (2,079 tok / 1000)");
+  assert.ok(css.includes("2.339s"), "the pulse is a measurement (2,339 tok / 1000)");
 
   // one easing curve
   assert.equal((css.match(/cubic-bezier/g) ?? []).length, 1, "single easing definition");

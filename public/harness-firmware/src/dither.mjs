@@ -1,7 +1,7 @@
 // PHOSPHOR dither engine: shared by the browser runtime (phosphor.js) and
 // the build-time baker (scripts/bake-phosphor.mjs via src/bake.html).
 // Everything here is deterministic: the blue-noise seed is the template's
-// measured git revision (0x5224beb) read as hex. Same inputs, same dots.
+// measured git revision (0xd9cd99f5) read as hex. Same inputs, same dots.
 //
 // Pixel states are strictly 4-valued: the P7 phosphor law:
 //   OFF     unpowered glass
@@ -20,7 +20,7 @@ export const PALETTE = {
   [BLUE]: [95, 217, 255], // #5FD9FF
 };
 
-export const SEED = 0x5224beb; // template rev: even the grain is versioned
+export const SEED = 0xd9cd99f5; // template rev: even the grain is versioned
 
 export function mulberry32(seed) {
   let a = seed >>> 0;
@@ -117,7 +117,7 @@ export const noiseAt = (tile, x, y) => tile[((y & 63) << 6) | (x & 63)];
 // Scene geometry (pure math: the node test imports these and recounts)
 // ---------------------------------------------------------------------------
 
-// Spectrum: 20 vertical bands ordered by real hex offset. Each band carries
+// Spectrum: one vertical band per skill, ordered by real hex offset. Each band carries
 // exactly `blocks` glow dots (1 dot = 1 flash block = 1,024 B: countable),
 // a residue wash whose density encodes tier, and a top cap filled to the
 // band's true last-block pad fraction.
@@ -215,8 +215,8 @@ function stampDot(field, w, h, cx, cy, r, state) {
   }
 }
 
-// Core + halo: a small green core (the resident 8,317 B) inside a vast
-// residue halo (the 175,102 B payload). The green amplitude is binary-searched
+// Core + halo: a small green core (the resident 9,355 B) inside a vast
+// residue halo (the 188,216 B payload). The green amplitude is binary-searched
 // until lit-green / lit-residue matches the real byte ratio within 0.2%.
 export function renderCoreHalo(facts, w, h, tile) {
   // the hot core sits exactly where the numeral's decimal point is pinned by
