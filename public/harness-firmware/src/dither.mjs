@@ -215,8 +215,10 @@ function stampDot(field, w, h, cx, cy, r, state) {
   }
 }
 
-// Core + halo: a small green core (the resident 9,355 B) inside a vast
-// residue halo (the 188,216 B payload). The green amplitude is binary-searched
+// Core + halo: a small green core (the maximum measured Claude resident,
+// 9,355 B) inside a vast residue halo (188,216 B across the 23 canonical
+// SKILL.md entry files; support files and generated adapters excluded).
+// The green amplitude is binary-searched
 // until lit-green / lit-residue matches the real byte ratio within 0.2%.
 export function renderCoreHalo(facts, w, h, tile) {
   // the hot core sits exactly where the numeral's decimal point is pinned by
