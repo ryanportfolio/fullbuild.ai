@@ -1,0 +1,169 @@
+/* ============================================================================
+   THE BOUND EDGE — the working set seen edge-on.
+
+   A drawing set is bound at its right margin, and the honest place to read your
+   position in one is the same place you read it on paper: the edge of the stack,
+   where every sheet shows as its own line. So this strip is not a scrollbar
+   dressed as drafting furniture. It is the stack, drawn at true proportion, with
+   the reader's grip on it.
+
+   Contract, as binding here as anywhere else on the sheet:
+   - Every band is a REAL section, at its REAL share of the document. Nothing is
+     divided into pleasing quarters.
+   - Each band carries its own sheet's ink, so the accent lands on the shipped
+     sheet and nowhere else — the same one meaning red carries site-wide.
+   - Linework only. No gradient, no blur, no shadow, no rounded pill.
+   - One subordinate rule (the binding line) beside the rail's dominant one.
+   ========================================================================= */
+
+.edge {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--edge-w);
+  z-index: 41;
+  background: var(--ground);
+  /* The binding line, deliberately the LIGHTER of the two vertical rules on this
+     margin: the rail's border is the title block's boundary and stays dominant. */
+  border-left: 1px solid var(--rule);
+  user-select: none;
+  /* The drag is a pointer gesture the browser must not also read as a scroll. */
+  touch-action: none;
+  /* Site doctrine: anything that answers a click carries the mark. */
+  cursor: var(--house-cursor);
+}
+
+/* Below 900px the rail collapses and --edge-w goes to zero; the platform's own
+   scrollbar is left in place (globals.css gates the suppression to the same
+   width), so there is nothing here to draw. */
+@media (max-width: 900px) {
+  .edge {
+    display: none;
+  }
+}
+
+/* A page with no distance to travel has no position to report. The dispatch
+   sheet at /contact is exactly this: one sheet, a scroll range of zero. A full
+   -height grip parked against a dead track is a dial with no instrument behind
+   it — the same rule the rail's carriage telemetry follows. */
+.edge[data-scrollable='false'] {
+  display: none;
+}
+
+/* ---- the sheets, edge-on ------------------------------------------------- */
+
+.band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  /* The sheet's leading edge: one hairline where a new sheet starts. */
+  border-top: 1px solid var(--band-ink, var(--ink-graphite));
+}
+
+/* The sheet's edge along its length, outboard of the binding.
+
+   AT REST IT IS NOT DRAWN, and that is the second correction this line took.
+   Drawn first as a 2px bar at a third opacity it stopped being a stack of sheet
+   edges and became a coloured progress fill: STATE 04 holds 46% of this
+   document, so a permanent red stripe ran nearly half the margin and outshouted
+   the grip. Thinning it to a hairline fixed the shouting and left the real
+   problem — on a page that spends red on ONE meaning, a red line held down half
+   the margin for the whole visit is a fill wearing the accent's clothes,
+   whatever its width. So the length of a sheet's edge is inked only while that
+   sheet is the one being read, which makes the ink's timing say what the ink
+   already says: live, right now. At rest the stack is its six leading edges,
+   which is what a bound set shows you anyway. */
+.band::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--band-ink, var(--ink-graphite));
+  opacity: 0;
+  transition: opacity 0.18s var(--ease-draw);
+}
+
+/* Reaching for the edge inks the whole stack up — the set answering the hand,
+   and the one gesture that shows every sheet's extent at once. Still under the
+   rail ruler's own 0.4, so the margin keeps one dominant instrument. */
+.edge:hover .band::after,
+.edge[data-drag='true'] .band::after {
+  opacity: 0.45;
+}
+
+/* THE SHEET BEING HELD. A set held open at one drawing shows that sheet's edge
+   proud of the ones stacked behind it, and this is the same fact the grip is
+   already lettering — so the stack says it too, in ink rather than in numerals.
+   One band at a time, always the one under the thumb. Carries the .edge class
+   so it matches the hover rules' specificity and, coming after them, survives a
+   hover instead of being dimmed by one. */
+.edge .band[data-held='true']::after {
+  opacity: 0.6;
+}
+
+/* ---- the grip ------------------------------------------------------------ */
+
+/* THE THUMB, meant twice. The browser has always called this control's handle a
+   thumb; on a drawing set the thumb is what holds the stack open at the sheet
+   you are reading. So it is drawn as a grip — knurled like an instrument wheel,
+   opaque, lifting the sheet it holds clear of the stack behind it — and it
+   reports the sheet number it has hold of. */
+.grip {
+  position: absolute;
+  top: 0;
+  /* Inset past the binding line so the grip sits ON the stack, not across it. */
+  left: 1px;
+  right: 1px;
+  z-index: 1;
+  border: 1px solid var(--grip-ink, var(--ink-graphite));
+  background: var(--ground);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  will-change: transform;
+}
+
+.edge[data-drag='true'] .grip {
+  cursor: grabbing;
+}
+
+/* The knurl: two cuts across the grip, the way a thumbwheel is milled. */
+.grip::before,
+.grip::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  height: 1px;
+  background: var(--grip-ink, var(--ink-graphite));
+  opacity: 0.5;
+}
+
+.grip::before {
+  top: 4px;
+}
+
+.grip::after {
+  bottom: 4px;
+}
+
+/* The sheet under the thumb, in the measured voice like every other real number
+   on this page. Dropped when the grip is too short to letter one honestly —
+   a clipped numeral is worse than none. */
+.gripNo {
+  writing-mode: vertical-rl;
+  font-family: var(--font-mono);
+  font-size: 0.4rem;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--grip-ink, var(--ink-graphite));
+}
+
+.grip[data-tight='true'] .gripNo {
+  display: none;
+}
