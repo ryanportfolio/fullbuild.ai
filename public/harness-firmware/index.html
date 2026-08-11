@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Harness Firmware · boots warm</title>
-<meta name="description" content="Firmware for coding agents. Sessions end. The memory stays. A GitHub template: 8.1 KiB resident kernel, durable committed memory, 20 on-demand skill playbooks.">
+<meta name="description" content="A repo-resident operating layer for coding agents: committed project knowledge, explicit correction loops, generated runtime adapters, and 23 on-demand playbooks.">
 <meta name="theme-color" content="#070B0C">
 <meta name="color-scheme" content="dark">
 <link rel="icon" type="image/svg+xml" href="/harness-firmware/assets/favicon.svg">
 <meta property="og:title" content="Harness Firmware · boots warm">
-<meta property="og:description" content="Firmware for coding agents. Sessions end. The memory stays. ≈2,079 tokens resident per turn.">
+<meta property="og:description" content="Make every repository remember how it works. 23 on-demand playbooks with an approximate 2,339-token file-based resident layer.">
 <meta property="og:image" content="https://fullbuild.ai/harness-firmware/assets/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="/harness-firmware/src/phosphor.css">
@@ -28,15 +28,15 @@
   <div class="hero-inner">
     <p class="hero-name mono">HARNESS FIRMWARE</p>
     <h1 class="hero-title" id="hero-title"><span class="hl">BOOTS</span><span class="hl">WARM</span></h1>
-    <p class="hero-sub">A GitHub template that sets up Claude Code and Codex with standing rules, skills they load on demand, and memory kept in the repo.<br><b>Sessions end. What it learned stays.</b></p>
+    <p class="hero-sub"><b>Make every repository remember how it works.</b><br>Put project knowledge, correction workflows, and runtime-qualified agent guidance under version control.</p>
     <div class="hero-row">
-      <a class="cta" href="https://github.com/ryanportfolio/Harness-Firmware">USE THIS TEMPLATE &rarr;</a>
-      <span class="readout mono" data-stat><i class="tick" aria-hidden="true"></i>8.1 KiB in context every turn</span>
+      <a class="cta" href="https://github.com/ryanportfolio/Harness-Firmware/generate">USE THIS TEMPLATE &rarr;</a>
+      <span class="readout mono" data-stat><i class="tick" aria-hidden="true"></i>9.1 KiB file-based resident layer</span>
     </div>
     <p class="hero-note mono">Claude Code and Codex are terminal coding agents, from Anthropic and OpenAI</p>
     <p class="key mono"><span class="k-green">green = written to the repo</span> <span class="k-blue">blue = only in the live session</span></p>
   </div>
-  <span class="hero-seed mono" aria-hidden="true">grain seeded from rev 5224beb</span>
+  <span class="hero-seed mono" aria-hidden="true">grain seeded from rev d9cd99f5</span>
   <span class="hero-scroll mono" aria-hidden="true"><span class="m">SCROLL &middot; THE BEAM FOLLOWS</span><span class="rm">STATIC &middot; MEMORY HOLDS</span></span>
 </section>
 
@@ -46,8 +46,8 @@
   <section class="sec sec-01" id="s01">
     <span class="ghost" aria-hidden="true">01</span>
     <div class="sec-body">
-      <span class="gtag mono" aria-hidden="true"><b>DURABLE MEMORY</b> &middot; pitfalls.md &middot; 2026-07-18</span>
-      <h2 class="reveal">Solve it once, never again</h2>
+      <span class="gtag mono" aria-hidden="true"><b>COMMITTED PROJECT KNOWLEDGE</b> &middot; pitfalls.md &middot; 2026-07-18</span>
+      <h2 class="reveal">Make the repository remember</h2>
       <figure class="console reveal" id="recall-demo">
         <figcaption class="console-bar mono micro"><span>SESSION LOG &middot; /recall</span><span class="replay-hint" aria-hidden="true">replay</span></figcaption>
         <div class="console-body mono" data-replay>
@@ -55,15 +55,15 @@
           <p class="ln">preview shows an outdated version of the site</p>
           <p class="ln">server reuse on a busy port &middot; stale process from a prior session</p>
           <p class="ln cmd">/recall save local preview servers: stale or wrong site</p>
-          <p class="ln keep">saved &rarr; <span class="nb">.claude/reference/pitfalls.md</span> <span class="nb">&middot; committed</span></p>
+          <p class="ln keep">saved &rarr; <span class="nb">.claude/reference/pitfalls.md</span> <span class="nb">&middot; reviewable repo change</span></p>
           <p class="ln off">session ended &middot; context cleared</p>
           <p class="ln gap" aria-hidden="true">&nbsp;</p>
-          <p class="ln dim">claude &middot; session B &middot; any machine, any day</p>
-          <p class="ln boot">warm boot &middot; reads <span class="keep nb">.claude/reference/pitfalls.md</span></p>
-          <p class="ln keep">pitfall already known &middot; port owner checked &middot; trap skipped</p>
+          <p class="ln dim">agent &middot; session B &middot; future checkout</p>
+          <p class="ln boot">task matches local preview failure &middot; <span class="keep nb">/recall</span></p>
+          <p class="ln keep">reads pitfalls.md &middot; cites the saved entry &middot; trap skipped</p>
         </div>
       </figure>
-      <p class="copy reveal">When the agent hits a problem, you type <span data-stat>/recall</span> in the agent and it writes the lesson into a file in your repo. Every session after that reads it at startup. Because the file is committed, your teammates' agents get it too.</p>
+      <p class="copy reveal"><span data-stat>/recall</span> does not preload every lesson. It routes the task to the relevant reference file, reads the real repo knowledge, and cites its source. Save a new pitfall once; teammates and future sessions can retrieve it when the work matches.</p>
     </div>
   </section>
 
@@ -71,14 +71,14 @@
   <section class="sec sec-02" id="s02">
     <span class="ghost" aria-hidden="true">02</span>
     <div class="sec-body">
-      <span class="gtag mono" aria-hidden="true"><b>WHAT LOADS EVERY TURN</b></span>
-      <h2 class="reveal">8.1 KiB is all it keeps loaded</h2>
+      <span class="gtag mono" aria-hidden="true"><b>DEFAULT FILE-BASED LAYER</b></span>
+      <h2 class="reveal">9.1 KiB keeps the map, not every manual</h2>
       <div class="halo-stage reveal">
-        <img class="bake" src="/harness-firmware/fallback/core-halo.png" alt="A small dense green phosphor core inside a vast faint residue halo; the lit green mass is 4.7% of the lit residue, the measured resident share" width="1200" height="640">
-        <span class="halo-numeral" aria-hidden="true"><span class="lockup">8<span class="dp">.</span>1<i>KiB</i></span></span>
+        <img class="bake" src="/harness-firmware/fallback/core-halo.png" alt="A small dense green phosphor core inside a vast faint residue halo; the lit green mass is 5% of the lit residue, the measured resident share" width="1200" height="640">
+        <span class="halo-numeral" aria-hidden="true"><span class="lockup">9<span class="dp">.</span>1<i>KiB</i></span></span>
       </div>
-      <p class="mono micro reveal metrology" data-stat>kernel 5,401 B + skill index 2,916 B = resident 8,317 B &middot; &approx;2,079 tok/turn &middot; resident end 0x0207D</p>
-      <p class="copy reveal">The rules, plus one line describing each skill, are the only part in the context window every turn: <span data-stat>8,317 bytes</span>, about <span data-stat>2,079 tokens</span>. Paste all twenty skills in instead and you would carry about <span data-stat>43,776 tokens</span> before writing a line of code, so this runs at <span data-stat>4.7%</span> of that, a <span data-stat>21.1&times;</span> difference.</p>
+      <p class="mono micro reveal metrology" data-stat>kernel 5,401 B + routing index 3,954 B = resident 9,355 B &middot; &approx;2,339 tok/turn &middot; resident end 0x0248B &middot; 20.1&times; &middot; 5%</p>
+      <p class="copy reveal">The measured resident repo files total <span data-stat>9,355 bytes</span>, about <span data-stat>2,339 tokens</span> using a four-character estimate. The full <span data-stat>188,216 B</span> playbook library stays on demand. Tool catalogs, runtime injection, billing, and productivity are outside this measurement.</p>
       <figure class="rules reveal">
         <figcaption class="mono micro">FOUR OF THE STANDING RULES, VERBATIM FROM CLAUDE.md</figcaption>
         <ul class="mono">
@@ -96,38 +96,52 @@
   <section class="sec sec-03" id="s03">
     <span class="ghost" aria-hidden="true">03</span>
     <div class="sec-body">
-      <span class="gtag mono" aria-hidden="true"><b>ON-DEMAND SKILLS</b> &middot; 20 skills &middot; 171 KiB</span>
-      <h2 class="reveal">Twenty skills, loaded only when needed</h2>
+      <span class="gtag mono" aria-hidden="true"><b>DEFINING OPERATING LOOPS</b> &middot; 8 workflows &middot; 23 in the full library</span>
+      <h2 class="reveal">Eight workflows make the repository compound</h2>
       <p class="pan-hint mono micro" aria-hidden="true">pan &rarr;</p>
       <div class="spectrum-stage reveal" id="spectrum">
-        <img class="bake" src="/harness-firmware/fallback/spectrum.png" alt="Twenty vertical phosphor bands ordered by flash address, one green dot per 1,024-byte block; writing-skills carries 26 dots, caveman 4. Cap fill at the top of each band shows the true last-block pad" width="1200" height="420">
+        <img class="bake" src="/harness-firmware/fallback/spectrum.png" alt="Twenty-three vertical phosphor bands ordered by flash address, one green dot per 1,024-byte block; writing-skills carries 26 dots, caveman 4. Cap fill shows the true last-block pad" width="1200" height="420">
         <div class="band-labels mono" aria-hidden="true"><span>writing-skills &middot; 26 dots</span><span>caveman &middot; 4 dots</span></div>
       </div>
       <p class="mono readline" id="spectrum-readout" aria-live="polite" data-stat>writing-skills &middot; 26,286 B &middot; 26 blocks &middot; 0x00000</p>
-      <p class="mono micro reveal">one dot = one 1,024 B block &middot; 182 blocks &middot; 175,102 B across 20 skills &middot; largest writing-skills 26,286 B &middot; smallest caveman 3,111 B</p>
-      <p class="copy reveal">A skill is a markdown playbook in <span data-stat>.claude/skills/</span>. The agent reads the one-line summary of each, and loads the whole file only when the work calls for it. Here are all twenty, with the space each takes on disk.</p>
+      <p class="mono micro reveal">one dot = one 1,024 B block &middot; 197 blocks &middot; 188,216 B across 23 skills &middot; largest writing-skills 26,286 B &middot; smallest caveman 3,111 B</p>
+      <ul class="sr-only" id="spectrum-inventory">
+        <li>writing-skills: 26,286 B, 26 blocks, discipline</li>
+        <li>impartial-review: 20,933 B, 21 blocks, discipline</li>
+        <li>init-project: 13,400 B, 14 blocks, core</li>
+        <li>enhance-prompt: 10,335 B, 11 blocks, extras</li>
+        <li>why: 9,121 B, 9 blocks, extras</li>
+        <li>merge: 8,590 B, 9 blocks, core</li>
+        <li>advocate: 7,837 B, 8 blocks, extras</li>
+        <li>fable-mode: 7,770 B, 8 blocks, extras</li>
+        <li>lab: 7,693 B, 8 blocks, extras</li>
+        <li>humanizer: 7,483 B, 8 blocks, extras</li>
+        <li>handoff-audit: 7,182 B, 8 blocks, extras</li>
+        <li>purposeful-writing: 6,383 B, 7 blocks, extras</li>
+        <li>forge-repo-ui-skill: 6,329 B, 7 blocks, extras</li>
+        <li>optimize-context: 6,253 B, 7 blocks, core</li>
+        <li>writing-plans: 5,812 B, 6 blocks, discipline</li>
+        <li>addskill: 5,784 B, 6 blocks, core</li>
+        <li>brainstorming: 5,755 B, 6 blocks, discipline</li>
+        <li>wow-loop: 5,613 B, 6 blocks, extras</li>
+        <li>sync-starter: 5,081 B, 5 blocks, core</li>
+        <li>recall: 4,588 B, 5 blocks, core</li>
+        <li>long-horizon: 3,508 B, 4 blocks, discipline</li>
+        <li>refine: 3,369 B, 4 blocks, core</li>
+        <li>caveman: 3,111 B, 4 blocks, extras</li>
+      </ul>
+      <p class="copy reveal">The full library mixes homegrown, reimplemented, and upstream skills. Raw count is not the differentiation. These eight connect project memory, correction, scaffolding, propagation, context control, and independent verification.</p>
       <ol class="skill-list mono reveal">
-          <li><b>writing-skills</b><span>author and test new skills</span><em>26 blocks</em></li>
-          <li><b>impartial-review</b><span>fresh agents audit your changes</span><em>21 blocks</em></li>
-          <li><b>init-project</b><span>configure a newly created repo</span><em>14 blocks</em></li>
-          <li><b>enhance-prompt</b><span>turn a rough ask into a prompt</span><em>10 blocks</em></li>
-          <li><b>why</b><span>challenge the last recommendation</span><em>9 blocks</em></li>
-          <li><b>merge</b><span>commit, push, PR, merge</span><em>9 blocks</em></li>
-          <li><b>advocate</b><span>argue against a change before it lands</span><em>8 blocks</em></li>
-          <li><b>fable-mode</b><span>deep mode for layered work</span><em>8 blocks</em></li>
-          <li><b>lab</b><span>prototype UI and motion live</span><em>8 blocks</em></li>
-          <li><b>humanizer</b><span>strip AI tells from prose</span><em>8 blocks</em></li>
-          <li><b>handoff-audit</b><span>audit prompt for a fresh session</span><em>8 blocks</em></li>
-          <li><b>purposeful-writing</b><span>prose written for a real reader</span><em>7 blocks</em></li>
-          <li><b>forge-repo-ui-skill</b><span>synthesise a repo UI skill</span><em>7 blocks</em></li>
-          <li><b>optimize-context</b><span>cut per-turn token load</span><em>7 blocks</em></li>
-          <li><b>writing-plans</b><span>plan before touching code</span><em>6 blocks</em></li>
-          <li><b>brainstorming</b><span>design before building</span><em>6 blocks</em></li>
-          <li><b>addskill</b><span>add a repo-local skill</span><em>6 blocks</em></li>
-          <li><b>sync-starter</b><span>pull template updates in</span><em>5 blocks</em></li>
-          <li><b>recall</b><span>save and read project memory</span><em>5 blocks</em></li>
-          <li><b>caveman</b><span>ultra-terse replies</span><em>4 blocks</em></li>
+          <li><b>recall</b><span>retrieve and capture project knowledge</span><em>5 blocks</em></li>
+          <li><b>refine</b><span>turn task friction into a reversible correction</span><em>4 blocks</em></li>
+          <li><b>init-project</b><span>configure a new repo from detected facts</span><em>14 blocks</em></li>
+          <li><b>sync-starter</b><span>move generic improvements without overwriting local knowledge</span><em>5 blocks</em></li>
+          <li><b>optimize-context</b><span>cut guidance that no longer earns its cost</span><em>7 blocks</em></li>
+          <li><b>long-horizon</b><span>preserve an audited contract across verified rounds</span><em>4 blocks</em></li>
+          <li><b>impartial-review</b><span>use fresh agents to audit changes when tools allow</span><em>21 blocks</em></li>
+          <li><b>wow-loop</b><span>drive visual work through screenshot-backed critique</span><em>6 blocks</em></li>
       </ol>
+      <p class="mono micro reveal">23/23 generated adapters current &middot; contract checks pass &middot; CI checks the Windows project generator end to end</p>
     </div>
   </section>
 
@@ -135,33 +149,37 @@
   <section class="sec sec-04" id="s04">
     <span class="ghost" aria-hidden="true">04</span>
     <div class="sec-body">
-      <span class="gtag mono" aria-hidden="true"><b>HOW IT IS BUILT</b> &middot; image end 0x2ABFE</span>
-      <h2 class="reveal">Not a pile of prompts</h2>
-      <p class="copy reveal">The small context bill is a side effect. The reason to run it is that every part follows a practice that holds up when the library and the team grow.</p>
+      <span class="gtag mono" aria-hidden="true"><b>WHAT MAKES IT POWERFUL</b> &middot; image end 0x2DF38</span>
+      <h2 class="reveal">What makes it powerful</h2>
+      <p class="copy reveal">The strength is not the skill count. It is how the mechanisms connect, compound, and stay reviewable.</p>
       <ol class="practices reveal">
         <li>
-          <b>Descriptions route, they do not summarise</b>
-          <span>Every skill's front matter says <em>when to use it</em>, never what it does. That one line is all the agent sees until it opens the file, so it has to work as a classifier.</span>
+          <b>Committed knowledge has a system of record</b>
+          <span>Architecture, commands, deployment facts, and dated pitfalls live in named reference files, not one chat transcript.</span>
         </li>
         <li>
-          <b>Disclosure is progressive</b>
-          <span>The index stays in context. The playbook is read only when the work matches it, through an ordinary file read.</span>
+          <b>Recall is routed and evidence-backed</b>
+          <span><em>/recall</em> selects the relevant topic, reads the actual file, cites its lines, and saves new lessons in the right home.</span>
         </li>
         <li>
-          <b>Skills are tested before they ship</b>
-          <span>A new or edited skill is run against a fresh agent under pressure first, and the rule is blunt: no skill without a failing test. A skill is executable behaviour, not documentation.</span>
+          <b>Correction changes the harness itself</b>
+          <span><em>/refine</em> maps one observed friction to the smallest reviewable rule, memory, or workflow edit, so each fix can stand or roll back alone.</span>
         </li>
         <li>
-          <b>Memory has a system of record</b>
-          <span>Lessons land in a named file that is committed, not in a chat log, so a later session or a teammate can replay where a fact came from.</span>
+          <b>New repositories begin from facts</b>
+          <span><em>/init-project</em> detects the stack first, asks only for unresolved decisions, seeds references, and prunes irrelevant capability.</span>
         </li>
         <li>
-          <b>Claims are verified, not assumed</b>
-          <span>The kernel forbids reporting a check that was not actually run, and requires saying so plainly when verification has to happen somewhere else.</span>
+          <b>One playbook source serves both runtimes</b>
+          <span>Claude workflows remain canonical. Generated Codex adapters add discovery, safety guidance, and honest capability gates without duplicating bodies.</span>
         </li>
         <li>
-          <b>Restraint is enforced</b>
-          <span>New rules and skills have to earn their place. Pruning stale content beats accreting it, because a library nobody trims stops routing correctly.</span>
+          <b>Improvements propagate selectively</b>
+          <span><em>/sync-starter</em> moves generic fixes across repositories while protecting project-specific rules and memory from bulk replacement.</span>
+        </li>
+        <li>
+          <b>Hard work can require independent evidence</b>
+          <span>Long-horizon, impartial review, and visual audit loops use fresh contexts only when the runtime proves those tools exist.</span>
         </li>
       </ol>
     </div>
@@ -172,7 +190,7 @@
     <span class="ghost" aria-hidden="true">05</span>
     <div class="sec-body">
       <span class="gtag mono" aria-hidden="true"><b>INSTALL</b> &middot; MIT &middot; GitHub template</span>
-      <h2 class="reveal">Flash it</h2>
+      <h2 class="reveal">Start with the operating layer already there</h2>
       <div class="slabs">
         <article class="slab slab-wide reveal">
           <h3 class="mono slab-title">NEW REPO &middot; New-ClaudeProject-UI.cmd</h3>
@@ -188,17 +206,17 @@
               <p class="ln">next: open it in Claude Code &middot; run <code>/init-project</code></p>
             </div>
           </figure>
-          <p class="mono micro slab-note">a standalone ZIP from the repo: run it once, it creates and clones each new project<br>Windows only. On macOS or Linux, use <a href="https://github.com/ryanportfolio/Harness-Firmware">the template button</a> on GitHub instead</p>
+          <p class="mono micro slab-note">a standalone <a href="https://github.com/ryanportfolio/Harness-Firmware/releases/latest/download/New-ClaudeProject-UI.zip">ZIP from the repo</a>: run it once, it creates and clones each new project<br>Windows only. On macOS or Linux, use <a href="https://github.com/ryanportfolio/Harness-Firmware/generate">the template button</a> on GitHub instead</p>
         </article>
         <article class="slab reveal">
           <h3 class="mono slab-title">SKILLS ONLY &middot; EXISTING REPO</h3>
           <pre class="mono slab-code"><code>/plugin marketplace add <span class="nb">ryanportfolio/Harness-Firmware</span>
 /plugin install <span class="nb">claude-starter@claude-starter</span></code></pre>
-          <p class="mono micro slab-note">installs 20 skills &middot; 171 KiB on call</p>
+          <p class="mono micro slab-note">installs 23 skills &middot; 184 KiB on call</p>
           <p class="mono micro slab-note">names: <b>Harness Firmware</b> is the template &middot; <b>claude-starter</b> is its plugin on the marketplace &middot; <b>fullbuild.ai</b> is the site you are on</p>
         </article>
       </div>
-      <p class="copy reveal">You need Claude Code or Codex installed, and the GitHub CLI signed in. One run gives you a private repo, cloned and ready; <span data-stat>/init-project</span> then fills in the project-specific rules and checks the setup. Or add just the skills to a repo you already have.</p>
+      <p class="copy reveal">Use the template path for the kernel, references, skills, adapters, and sync wiring. <span data-stat>/init-project</span> then fills in project facts and verifies the setup. Use the plugin path when an existing repo needs only the playbooks.</p>
     </div>
   </section>
 
@@ -206,27 +224,27 @@
   <section class="sec sec-06" id="s06">
     <span class="ghost" aria-hidden="true">06</span>
     <div class="sec-body">
-      <span class="gtag mono" aria-hidden="true"><b>RUNTIMES</b></span>
-      <h2 class="reveal">Works in Claude Code and Codex</h2>
+      <span class="gtag mono" aria-hidden="true"><b>ONE PLAYBOOK SOURCE</b> &middot; TWO RUNTIME BOUNDARIES</span>
+      <h2 class="reveal">Shared workflows, honest differences</h2>
       <div class="tubes-stage reveal">
         <img class="bake" src="/harness-firmware/fallback/tubes.png" alt="One green firmware core splitting into two dithered traces that terminate in two labeled tube faces: Claude Code and Codex" width="1200" height="480">
-        <span class="tube-label mono tube-src" aria-hidden="true">rev 5224beb &middot; one image</span>
+        <span class="tube-label mono tube-src" aria-hidden="true">rev d9cd99f5 &middot; one source</span>
         <span class="face-tag mono tag-a" aria-hidden="true">CC</span>
         <span class="face-tag mono tag-b" aria-hidden="true">CX</span>
-        <span class="tube-label mono tube-a" aria-hidden="true">CLAUDE CODE<i>reads it raw</i><b>resident 8,317 B</b></span>
-        <span class="tube-label mono tube-b" aria-hidden="true">CODEX<i>generated adapters</i><b>resident 8,317 B</b></span>
+        <span class="tube-label mono tube-a" aria-hidden="true">CLAUDE CODE<i>canonical workflows</i><b>hooks + native skills</b></span>
+        <span class="tube-label mono tube-b" aria-hidden="true">CODEX<i>generated adapters</i><b>capability-gated</b></span>
       </div>
-      <p class="copy reveal">One set of files drives both. A script in the repo regenerates the Codex adapters whenever a skill changes, so there is no second copy to keep in sync. <span data-stat>rev 5224beb &middot; tree 97530c9e</span></p>
+      <p class="copy reveal">Canonical skill bodies live once. Codex adapters are regenerated from them, while runtime-specific safety rules stay separate. Shared source does not pretend hooks or capabilities are identical. <span data-stat>rev d9cd99f5 &middot; tree 503356de</span></p>
     </div>
   </section>
 
 </main>
 
 <footer class="exit">
-  <p class="mono exitline"><span class="volatile nb">power-off &middot; context cleared</span> <span class="retained nb">memory retained &middot; next boot warm</span></p>
+  <p class="mono exitline"><span class="volatile nb">power-off &middot; context cleared</span> <span class="retained nb">repo knowledge retained &middot; recall on the next relevant task</span></p>
   <div class="footnotes mono micro">
-    <span>every figure here is measured from the repo, not estimated &middot; the dot grain is seeded from rev 5224beb</span>
-    <span data-stat>measured 2026-07-30 &middot; git objects at rev 5224beb &middot; image end 0x2ABFE &middot; &approx;4 bytes/token</span>
+    <span>byte figures come from repo Git objects &middot; token figures use an approximate four-character conversion &middot; grain seeded from rev d9cd99f5</span>
+    <span data-stat>measured 2026-08-11 &middot; git objects at rev d9cd99f5 &middot; image end 0x2DF38 &middot; &approx;4 characters/token</span>
     <span>built and maintained at fullbuild.ai &middot; <a href="https://github.com/ryanportfolio/Harness-Firmware">github.com/ryanportfolio/Harness-Firmware</a> &middot; MIT</span>
     <span>set in Unbounded, an open-licensed typeface</span>
   </div>

@@ -63,6 +63,18 @@ a:focus-visible, .cta:focus-visible {
 }
 .skip-link:focus { left: 0; }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ---------- chrome ---------- */
 .chrome {
   position: absolute;
@@ -194,7 +206,7 @@ a:focus-visible, .cta:focus-visible {
   height: 7px;
   margin-right: 10px;
   background: var(--green);
-  animation: tickpulse 2.079s var(--ease) infinite; /* 2,079 tok / 1,000 */
+  animation: tickpulse 2.339s var(--ease) infinite; /* 2,339 tok / 1,000 */
 }
 @keyframes tickpulse {
   0%, 88% { background-color: var(--green); }
@@ -650,6 +662,7 @@ h2.excited { color: var(--blue); transition: none; } /* the beam passes */
   .skill-list { font-size: 12px; }
   .skill-list li { grid-template-columns: minmax(0, 1fr) auto; }
   .skill-list span { grid-column: 1 / -1; }
+  .practices { grid-template-columns: minmax(0, 1fr); }
   .tubes-stage .tube-label {
     position: static;
     display: block;

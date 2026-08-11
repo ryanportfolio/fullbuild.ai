@@ -29,7 +29,7 @@ phosphor never went fully dark.
    - No other hues (test-enforced). `::selection` = green on glass.
 2. **Light exists only as dots or type.** All glow is real dithering: 8×8
    Bayer (standard recurrence) and a 64×64 void-and-cluster blue-noise tile
-   seeded `0x5224beb` : the measured git rev. No gradients, no blur, no
+   seeded `0xd9cd99f5` : the measured git rev. No gradients, no blur, no
    box/text shadows (test-enforced). Halos are dot-density falloff.
 3. **Type.** Unbounded (OFL, self-hosted variable TTF) for display: hero
    `clamp(56px, 15vw, 230px)`, headings to 104px, data numerals to 280px.
@@ -37,11 +37,11 @@ phosphor never went fully dark.
    commands, micro-labels. Nothing below 11px (test-enforced). Headings
    never end with a period (test-enforced).
 4. **Countable honesty.** Every figure from `facts.json` (git objects @ rev
-   `5224beb`). The dither is data: spectrum = 20 bands in real flash-address
+   `d9cd99f5`). The dither is data: spectrum = 23 bands in real flash-address
    order, **exactly 1 dot per allocated 1,024-B block** (writing-skills 26,
    caveman 4), cap fill = true last-block pad; core-halo green lit-mass is
-   binary-search calibrated to 8,317:175,102 (±0.2% : baked at 0.04749 vs
-   true 0.047498); ramp head = 4.7% of width; pulse = 2.079 s = tokens/1000.
+   binary-search calibrated to 9,355:188,216 (±0.2% : true ratio 0.049704);
+   ramp head = 5% of width; pulse = 2.339 s = tokens/1000.
    `tests/harness-firmware.test.mjs` imports the engine and recounts.
 5. **One engine.** `src/dither.mjs` is shared verbatim by the browser
    runtime (`src/phosphor.js`) and the baker
@@ -67,11 +67,28 @@ node --test tests/harness-firmware.test.mjs
 ## Locked facts
 
 `public/harness-firmware/facts.json` (single source). Kernel 5,401 B ≈
-1,350 tok; index 2,916 B ≈ 729 tok; resident 8,317 B ≈ 2,079 tok/turn
-(8.1 KiB); on-demand 175,102 B (171 KiB), 20 skills; lazy 21.1×; resident
-4.7%; tiers 6/4/10; tree `97530c9e…`; address marks 0x01519 / 0x0207D /
-0x2ABFE; pitfall example 2026-07-18; repo ryanportfolio/Harness-Firmware,
+1,350 tok; index 3,954 B ≈ 989 tok; resident 9,355 B ≈ 2,339 tok/turn
+(9.1 KiB); on-demand 188,216 B (184 KiB), 23 skills; lazy 20.1×; resident
+5%; tiers 7/5/11; tree `503356de…`; address marks 0x01519 / 0x0248B /
+0x2DF38; pitfall example 2026-07-18; repo ryanportfolio/Harness-Firmware,
 GitHub template, MIT.
+
+## v2.2 copy and measurement refresh (2026-08-11)
+
+- Updated all repo figures to Harness Firmware rev `d9cd99f5` and regenerated
+  the deterministic grain from that revision.
+- Corrected the recall story: project knowledge is selected on demand and
+  cited from the relevant reference file, not loaded wholesale at startup.
+- Reduced the visible catalog to eight defining operating-layer workflows while
+  keeping the spectrum countable across all 23 skills.
+- Replaced generic architecture language with a specific “What makes it
+  powerful” section: committed knowledge, evidence-backed recall, reversible
+  refine edits, fact-driven initialization, generated adapters, selective sync,
+  and capability-gated independent evidence.
+- Qualified the token figure as an approximate file-based conversion. It does
+  not claim model billing, tool-catalog cost, or runtime parity.
+- Added a static screen-reader inventory for every spectrum band and direct
+  links to GitHub's template generator and Windows launcher ZIP.
 
 ## v2.1 additions (user direction, 2026-07-30)
 
@@ -94,14 +111,14 @@ GitHub template, MIT.
 
 ## Deepenings logged, not built (closing pass)
 
-- Cross-section mass ledger: 182 latent dots seeded into the s04 ramp tail.
+- Cross-section mass ledger: 197 latent dots seeded into the s04 ramp tail.
 - Footer self-power-off animation on scroll arrival (motion only).
 - Spectrum keyboard navigation for the band readout.
 
 ## Wit register
 
-- The noise seed is the git rev (`0x5224beb`) : even the grain is versioned.
-- Readout pulse every 2.079 s = resident tokens ÷ 1000.
+- The noise seed is the git rev (`0xd9cd99f5`) : even the grain is versioned.
+- Readout pulse every 2.339 s = resident tokens ÷ 1000.
 - Leave the tab: title becomes "memory retained · harness firmware"; return: one full beam re-sweep.
 - Hover any statistic: flashes blue, decays back green : every figure
   ritually survives its own power-off.
