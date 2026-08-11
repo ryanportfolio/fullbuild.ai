@@ -40,5 +40,5 @@ for (const b of report.spectrum) {
     process.exitCode = 1;
   }
 }
-console.log('spectrum dot counts verified: 1 dot = 1 block for all 20 bands');
+console.log(`spectrum dot counts verified: 1 dot = 1 block for all ${report.spectrum.length} bands`);
 await browser.close();

@@ -11,15 +11,30 @@ const hex = (n) => "0x" + n.toString(16).toUpperCase().padStart(5, "0");
 test("facts.json is internally consistent (recomputed, not trusted)", async () => {
   const facts = JSON.parse(await read("public/harness-firmware/facts.json"));
 
+  assert.equal(facts.templateCommit, "d9cd99f5d6126d58918e117b584369dd610f4f59");
+  assert.equal(facts.templateRev, facts.templateCommit.slice(0, 8));
+  assert.equal(facts.claudeRulesBlobHash, "6203497f5324573564d78286088901fb75a6e3a3");
+  assert.equal(facts.codexRulesBlobHash, "17e15e0e76b0c76722d92ebaf6350a617d3d6777");
+  assert.equal(facts.codexSkillsTreeHash, "a137de9f761ea77b62b1c0aadbbcc4358a037f54");
   assert.equal(facts.skills.length, facts.skillCount);
-  assert.equal(facts.skillCount, 20);
+  assert.equal(facts.skillCount, 23);
+  assert.deepEqual(facts.runtimes, ["Claude Code", "Codex"]);
+  assert.equal(facts.runtimeCount, facts.runtimes.length);
 
   const sum = facts.skills.reduce((a, s) => a + s.bytes, 0);
   assert.equal(sum, facts.onDemandBytes);
   assert.equal(facts.residentBytes, facts.kernelBytes + facts.descIndexBytes);
-  assert.equal(facts.kernelTokens, Math.round(facts.kernelBytes / 4));
-  assert.equal(facts.residentTokens, Math.round(facts.residentBytes / 4));
+  assert.equal(facts.codexResidentBytes, facts.codexKernelBytes + facts.codexDescIndexBytes);
+  assert.equal(facts.descIndexBytes, facts.skillNameIndexBytes + facts.descriptionValueBytes);
+  assert.equal(facts.codexDescIndexBytes, facts.descIndexBytes);
+  assert.equal(facts.tokenEstimateCharactersPerToken, 4);
+  assert.equal(facts.kernelTokens, Math.round(facts.kernelBytes / facts.tokenEstimateCharactersPerToken));
+  assert.equal(facts.residentTokens, Math.round(facts.residentBytes / facts.tokenEstimateCharactersPerToken));
+  assert.equal(facts.codexKernelTokens, Math.round(facts.codexKernelBytes / facts.tokenEstimateCharactersPerToken));
+  assert.equal(facts.codexDescIndexTokens, Math.round(facts.codexDescIndexBytes / facts.tokenEstimateCharactersPerToken));
+  assert.equal(facts.codexResidentTokens, Math.round(facts.codexResidentBytes / facts.tokenEstimateCharactersPerToken));
   assert.equal(facts.lazyRatio, Math.round((facts.onDemandBytes / facts.residentBytes) * 10) / 10);
+  assert.equal(facts.lazyRatioBasis, "canonical skill entry bytes / maximum resident bytes");
   assert.equal(
     facts.residentPctOfOnDemand,
     Math.round((facts.residentBytes / facts.onDemandBytes) * 1000) / 10,
@@ -28,7 +43,7 @@ test("facts.json is internally consistent (recomputed, not trusted)", async () =
   const tally = { core: 0, discipline: 0, extras: 0 };
   for (const s of facts.skills) tally[s.tier] += 1;
   assert.deepEqual(tally, facts.tierCounts);
-  assert.deepEqual(facts.tierCounts, { core: 6, discipline: 4, extras: 10 });
+  assert.deepEqual(facts.tierCounts, { core: 7, discipline: 5, extras: 11 });
 
   assert.equal(facts.blockBytes, 1024);
   let offset = 0;
@@ -52,8 +67,15 @@ test("facts.json is internally consistent (recomputed, not trusted)", async () =
     "allocated blocks = sum of per-skill whole blocks",
   );
   assert.equal(facts.residentKiB, Math.round((facts.residentBytes / 1024) * 10) / 10);
+  assert.equal(facts.codexResidentKiB, Math.round((facts.codexResidentBytes / 1024) * 10) / 10);
+  assert.equal(facts.canonicalSkillDirectoryBytes, facts.onDemandBytes + facts.canonicalSkillSupportBytes);
+  assert.equal(facts.skillTreeBytes, facts.canonicalSkillDirectoryBytes + facts.skillProvenanceBytes);
+  assert.equal(facts.combinedCanonicalAndAdapterEntryBytes, facts.onDemandBytes + facts.codexAdapterSkillEntryBytes);
+  assert.match(facts.onDemandScope, /23 canonical \.claude\/skills\/\*\/SKILL\.md git blobs/);
   assert.match(facts.skillsTreeHash, /^[0-9a-f]{40}$/);
   assert.equal(facts.residentEndHex, hex(facts.residentBytes));
+  assert.equal(facts.codexResidentEndHex, hex(facts.codexResidentBytes));
+  assert.equal(facts.codexKernelEndHex, hex(facts.codexKernelBytes));
   assert.equal(facts.onDemandEndHex, hex(facts.onDemandBytes));
 });
 
@@ -66,7 +88,7 @@ test("dither engine: countable honesty is computed, deterministic, and versioned
   // spectrum: exactly one dot per allocated 1,024-B flash block, per skill,
   // bands in real flash-address order
   const { bands } = spectrumGeometry(facts, 1200, 520);
-  assert.equal(bands.length, 20);
+  assert.equal(bands.length, facts.skillCount);
   bands.forEach((b, i) => {
     assert.equal(b.name, facts.skills[i].name, `band order ${i}`);
     assert.equal(b.dots.length, b.blocks, `${b.name}: 1 dot = 1 block`);
@@ -100,31 +122,30 @@ test("every figure rendered on the page matches facts.json", async () => {
     `&approx;${fmt(facts.residentTokens)} tok/turn`,
     `${fmt(facts.kernelBytes)} B`,
     `${fmt(facts.descIndexBytes)} B`,
+    `${fmt(facts.codexKernelBytes)} B`,
+    `${fmt(facts.codexDescIndexBytes)} B`,
+    `${fmt(facts.codexResidentBytes)} B`,
+    `&approx;${fmt(facts.codexResidentTokens)} tok/turn`,
     `${fmt(facts.onDemandBytes)} B`,
+    `${fmt(facts.canonicalSkillSupportBytes)} B`,
+    `${fmt(facts.codexAdapterSkillEntryBytes)} B`,
     `${facts.residentKiB} KiB`,
     `${fmt(facts.onDemandKiB)} KiB`,
-    `${facts.lazyRatio}&times;`,
-    `${facts.residentPctOfOnDemand}%`,
-    facts.residentEndHex,
-    facts.onDemandEndHex,
     `rev ${facts.templateRev}`,
     facts.skillsTreeHash.slice(0, 8),
+    facts.codexSkillsTreeHash.slice(0, 8),
     facts.pitfallExampleDate,
     facts.measuredOn,
     `${fmt(biggest.bytes)} B`,
-    `${biggest.blocks} blocks`,
     `${fmt(smallest.bytes)} B`,
-    `${smallest.blocks} dots`,
-    `${biggest.blocks} dots`,
-    `${facts.allocatedBlocks} blocks`,
     "github.com/ryanportfolio/Harness-Firmware",
   ]) {
     assert.ok(html.includes(s), `page carries: ${s}`);
   }
 
-  // resident tokens appear consistently (hero readout, section 02, meta)
+  // resident tokens appear consistently in supporting proof, not the hero pitch
   const tokRe = new RegExp(fmt(facts.residentTokens), "g");
-  assert.ok((html.match(tokRe) ?? []).length >= 3);
+  assert.ok((html.match(tokRe) ?? []).length >= 2);
 
   // em dashes are banned page-wide; "glow" is banned as a copy term
   assert.ok(!html.includes("&mdash;") && !html.includes("—"), "no em dashes");
@@ -138,11 +159,151 @@ test("every figure rendered on the page matches facts.json", async () => {
   }
   assert.equal((html.match(/<h1[ >]/g) ?? []).length, 1, "exactly one h1");
 
+  assert.ok(html.includes("project lessons survive the chat"), "proof rail leads with the memory outcome");
+  assert.ok(!html.includes("MEASURED FIRMWARE FACTS"), "page does not lead with footprint metrics");
+  assert.ok(html.includes("token figures use an approximate four-character conversion"), "token estimates are disclosed");
+  assert.ok(!html.includes("context difference"), "byte ratio is not presented as measured context");
+  assert.ok(!html.includes("every figure here is measured from the repo, not estimated"), "footer does not overstate estimated figures");
+  assert.ok(html.includes("23 main SKILL.md files"), "main-file scope is explicit");
+  assert.ok(html.includes("support files are separate"), "support-file separation is disclosed");
+  assert.ok(!html.includes("full on-demand skill payload"), "entry-file sum is not called the full payload");
+  assert.ok(!html.includes("space each takes on disk"), "entry-file sizes are not called full on-disk sizes");
+  assert.ok(!html.includes("9.1 KiB resident every turn"), "runtime maximum is not presented as universal");
+
+  assert.ok(html.includes("ILLUSTRATIVE MEMORY FLOW"), "hypothetical replay is labelled illustrative");
+  assert.ok(!html.includes("Every session after that reads it at startup"), "memory loading is not overstated");
+  assert.ok(!html.includes("SESSION LOG"), "illustrative replay is not presented as an observed log");
+  assert.ok(!html.includes("trap skipped"), "unverified avoided outcome is not claimed");
+
   // every baked visual has real alt text
   for (const m of html.matchAll(/<img class="bake"[^>]*>/g)) {
     assert.match(m[0], /alt="[^"]{40,}"/, `bake img needs descriptive alt: ${m[0].slice(0, 80)}`);
   }
   assert.ok(html.includes('class="skip-link"'), "skip link present");
+  assert.ok(html.includes('href="/harness-firmware/new/">CREATE A PROJECT'), "primary CTA opens the hosted creator");
+  assert.ok(html.includes('href="https://github.com/ryanportfolio/Harness-Firmware/generate"'), "GitHub template remains a safe fallback");
+  assert.ok(html.includes('<link rel="canonical" href="https://fullbuild.ai/harness-firmware">'), "canonical route is explicit");
+  assert.ok(html.includes('<meta property="og:url" content="https://fullbuild.ai/harness-firmware">'), "Open Graph route is explicit");
+  assert.ok(html.includes('<meta name="twitter:image" content="https://fullbuild.ai/harness-firmware/assets/og.png">'), "Twitter card image is explicit");
+
+  const inventory = html.match(/<ul class="sr-only" id="spectrum-inventory">([\s\S]*?)<\/ul>/)?.[1] ?? "";
+  assert.ok(inventory, "full spectrum has a screen-reader inventory");
+  const inventoryText = inventory.replace(/<[^>]+>/g, "");
+  for (const skill of facts.skills) {
+    assert.ok(
+      inventoryText.includes(`${skill.name}: ${fmt(skill.bytes)} B main instruction file, ${skill.tier}`),
+      `accessible spectrum entry: ${skill.name}`,
+    );
+    assert.ok(
+      inventory.includes(`/.claude/skills/${skill.name}/SKILL.md`),
+      `spectrum entry links to canonical source: ${skill.name}`,
+    );
+  }
+
+  const skillRefs = [...html.matchAll(/<a\b(?=[^>]*\bclass="skill-ref")(?=[^>]*\bhref="([^"]+\/\.claude\/skills\/([^/]+)\/SKILL\.md)")[^>]*>([\s\S]*?)<\/a>/g)];
+  assert.ok(skillRefs.length >= facts.skillCount, "skill references link to canonical source files");
+  for (const ref of skillRefs) {
+    const before = html.slice(Math.max(0, ref.index - 16), ref.index);
+    assert.ok(
+      /<(?:strong|b)>\s*$/.test(before) || /<(?:strong|b)>/.test(ref[3]),
+      `skill reference is bold: ${ref[2]}`,
+    );
+  }
+});
+
+test("editorial structure keeps proof, navigation, and controls semantic", async () => {
+  const [html, facts] = await Promise.all([
+    read("public/harness-firmware/index.html"),
+    read("public/harness-firmware/facts.json").then(JSON.parse),
+  ]);
+
+  const mainStart = html.search(/<main\b(?=[^>]*\bid="main")[^>]*>/);
+  const mainEnd = html.indexOf("</main>", mainStart);
+  const heroStart = html.search(/<section\b(?=[^>]*\bid="hero")[^>]*>/);
+  assert.ok(mainStart >= 0 && heroStart > mainStart && heroStart < mainEnd, "skip target contains hero");
+
+  const status = html.match(/<nav\b(?=[^>]*\bdata-status-rail\b)[^>]*>[\s\S]*?<\/nav>/)?.[0] ?? "";
+  assert.match(status, /aria-label="Firmware sections"/, "long page has a labelled index");
+  assert.ok(status.includes(facts.repo), "status rail carries repository action");
+  assert.ok(html.includes('class="chrome-product mono"'), "mobile rail retains product identity");
+  for (const id of ["action", "create", "skills", "flash"]) {
+    assert.ok(status.includes(`href="#${id}"`), `index links to ${id}`);
+    assert.ok(html.includes(`id="${id}"`), `page exposes ${id}`);
+  }
+
+  const proof = html.match(/<section\b(?=[^>]*\bdata-proof-rail\b)[^>]*>[\s\S]*?<\/section>/)?.[0] ?? "";
+  const cells = new Map(
+    [...proof.matchAll(/<a\b(?=[^>]*\bdata-proof="([^"]+)")[^>]*>[\s\S]*?<\/a>/g)]
+      .map((match) => [match[1], match[0]]),
+  );
+  assert.deepEqual([...cells.keys()].sort(), ["memory", "runtimes", "skills", "source"]);
+  for (const [key, value] of new Map([
+    ["skills", facts.skillCount],
+    ["runtimes", facts.runtimeCount],
+  ])) {
+    assert.ok(cells.get(key)?.includes(String(value)), `${key} value comes from facts.json`);
+  }
+  assert.match(cells.get("memory") ?? "", /project lessons survive the chat/);
+  assert.match(cells.get("source") ?? "", />MIT</);
+
+  const creatorStart = html.search(/<section\b(?=[^>]*\bid="create")[^>]*>/);
+  const creatorEnd = html.indexOf("</section>", creatorStart);
+  const creator = creatorStart >= 0 ? html.slice(creatorStart, creatorEnd) : "";
+  assert.ok((creator.match(/class="creator-card"/g) ?? []).length === 3, "creator shows the complete three-step flow");
+  assert.match(creator, /WEB &middot; WINDOWS &middot; MACOS/, "creator exposes every launch surface");
+  assert.match(creator, /existing GH login/i, "creator explains local GitHub reuse");
+
+  const faqStart = html.search(/<section\b(?=[^>]*\bid="faq")[^>]*>/);
+  const faqEnd = html.indexOf("</section>", faqStart);
+  const faq = faqStart >= 0 ? html.slice(faqStart, faqEnd) : "";
+  assert.ok((faq.match(/<details/g) ?? []).length >= 4, "operational FAQ uses native details");
+
+  const spectrum = html.match(/<[^>]+\b(?=[^>]*\bid="spectrum")[^>]*>/)?.[0] ?? "";
+  assert.match(spectrum, /\btabindex="0"/, "spectrum is keyboard focusable");
+  assert.match(spectrum, /\brole="group"/, "spectrum remains a grouped control");
+  assert.match(spectrum, /aria-describedby="[^"]*spectrum-help[^"]*spectrum-readout[^"]*"/);
+  assert.ok((html.match(/loading="lazy"/g) ?? []).length >= 3, "lower diagrams lazy-load");
+});
+
+test("runtime exposes deterministic and inclusive interaction paths", async () => {
+  const [js, css] = await Promise.all([
+    read("public/harness-firmware/src/phosphor.js"),
+    read("public/harness-firmware/src/phosphor.css"),
+  ]);
+
+  assert.match(js, /addEventListener\(\s*['"]keydown['"]/, "spectrum listens for keyboard input");
+  assert.match(js, /ArrowLeft|ArrowRight/, "spectrum supports arrow navigation");
+  assert.match(js, /preventDefault\(\)/, "handled spectrum keys do not scroll the page");
+  assert.match(
+    js,
+    /const\s+motionQuery\s*=\s*matchMedia\(\s*['"]\(prefers-reduced-motion: reduce\)['"]\s*\)/,
+    "runtime retains the MediaQueryList",
+  );
+  assert.match(
+    js,
+    /motionQuery\.addEventListener\(\s*['"]change['"]/,
+    "reduced-motion preference stays live",
+  );
+  assert.match(js, /ResizeObserver|addEventListener\(['"]resize['"]/, "hero responds to geometry changes");
+  assert.match(js, /window\.__capture\s*=/, "capture can freeze the runtime deterministically");
+  assert.match(js, /draw\(beats\[beat\],\s*0\)/, "all named hero beats use fixed drift");
+  assert.match(js, /const\s+captureBeats\s*=\s*\[/, "capture beats are validated before the async hero exists");
+  assert.match(js, /function\s+settleCapture\s*\(/, "capture has one synchronous settle path");
+  assert.match(js, /revealTimers\.clear\(\)/, "capture settles pending reveals");
+  assert.match(js, /captureBeat\s*=\s*beat/, "early named beats are queued");
+  assert.match(js, /if\s*\(captureFrozen\)\s+hold\(captureBeat\)/, "hero resize preserves a held beat");
+  assert.ok((js.match(/controller\.stop\(true\)/g) ?? []).length >= 2, "capture snapshots complete transcripts");
+  assert.match(js, /const\s+ensureBandVisible\s*=/, "keyboard selection keeps its band visible");
+  assert.match(js, /if\s*\(band\.name\s*===\s*currentName\)/, "same-band pointer movement avoids repainting");
+  const replay = js.match(/\/\/ ---------- console replays[\s\S]*?\/\/ ---------- shared engine state/)?.[0] ?? "";
+  assert.match(replay, /clear(?:Timeout|Interval)\s*\(/, "offscreen replay work is cancellable");
+  assert.ok(!replay.includes(".disconnect()"), "replay observer remains able to stop offscreen work");
+  assert.match(css, /@media \(max-width: 700px\)[\s\S]*\.skill-list\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/, "mobile inventory stays compact in two columns");
+  assert.match(css, /\.product-short\s*\{[^}]*display:\s*none/, "status rail has an explicit compact product mark");
+  assert.ok(!css.includes('.firmware-index a[href="#kernel"] { display: none; }'), "narrow rail never drops Kernel");
+  assert.match(css, /\.slab[^\{]*\{[^}]*min-width:\s*0/, "install slabs can shrink inside the mobile grid");
+  assert.match(css, /\.capture-frozen\s+\.reveal\s*\{[^}]*opacity:\s*1/, "capture CSS settles reveal state immediately");
+  assert.match(css, /\.capture-frozen\s+\.readout\s+\.tick\s*\{[^}]*animation:\s*none/, "capture CSS freezes the measured pulse");
 });
 
 test("constraint contract holds in the stylesheet", async () => {
@@ -161,7 +322,7 @@ test("constraint contract holds in the stylesheet", async () => {
   assert.ok(!/@import|fonts\.googleapis/.test(css), "fonts self-hosted only");
   assert.ok(css.includes('url("/harness-firmware/fonts/Unbounded'), "Unbounded self-hosted");
   assert.ok(css.includes("prefers-reduced-motion"), "reduced motion honored");
-  assert.ok(css.includes("2.079s"), "the pulse is a measurement (2,079 tok / 1000)");
+  assert.ok(css.includes("2.339s"), "the pulse is a measurement (2,339 tok / 1000)");
 
   // one easing curve
   assert.equal((css.match(/cubic-bezier/g) ?? []).length, 1, "single easing definition");
@@ -184,7 +345,10 @@ test("page is routed, self-contained, and complete without JS", async () => {
   const refs = [...html.matchAll(/(?:href|src)="([^"]+)"/g)].map((m) => m[1]);
   for (const r of refs) {
     assert.ok(
-      r.startsWith("/") || r.startsWith("#") || r.startsWith("https://github.com/ryanportfolio/"),
+      r.startsWith("/")
+        || r.startsWith("#")
+        || r === "https://fullbuild.ai/harness-firmware"
+        || r.startsWith("https://github.com/ryanportfolio/"),
       `unexpected external reference: ${r}`,
     );
   }

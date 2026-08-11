@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Create a new GitHub repository with the Harness Firmware memory system, skills, and agent workflows already included">
+  <meta name="theme-color" content="#070b0c">
+  <title>New Project · Harness Firmware</title>
+  <link rel="icon" href="/harness-firmware/assets/favicon.svg">
+  <link rel="stylesheet" href="/harness-firmware/new/new-project.css">
+  <script>document.documentElement.className = 'js';</script>
+</head>
+<body>
+  <a class="skip" href="#creator">Skip to creator</a>
+  <header class="topbar">
+    <a class="brand" href="/harness-firmware/">HARNESS FIRMWARE</a>
+    <p>PROJECT CREATOR / WEB</p>
+    <a class="source-link" href="https://github.com/ryanportfolio/Harness-Firmware" rel="noreferrer">SOURCE -&gt;</a>
+  </header>
+
+  <main id="creator">
+    <section class="intro" aria-labelledby="creator-title">
+      <p class="kicker">NEW REPOSITORY / HARNESS INCLUDED</p>
+      <h1 id="creator-title">Start warm</h1>
+      <p class="lede">Create a new repo with project memory, coding workflows, and agent setup already inside</p>
+      <ul class="outcomes" aria-label="Included with every project">
+        <li><span>01</span>Repo memory system</li>
+        <li><span>02</span>23 on-demand skills</li>
+        <li><span>03</span>Claude Code and Codex setup</li>
+      </ul>
+      <p class="init-copy">After creation, run <strong><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/main/.claude/skills/init-project/SKILL.md">init-project</a></strong> once to tailor everything to the repo</p>
+    </section>
+
+    <section class="machine" aria-label="Project creation path">
+      <svg class="creator-diagram" viewBox="0 0 800 560" role="img" aria-labelledby="diagram-title diagram-desc">
+        <title id="diagram-title">A repository receives the Harness Firmware system</title>
+        <desc id="diagram-desc">A new repository moves through a technical assembly path and leaves with memory, skills, and runtime adapters installed</desc>
+        <defs>
+          <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+            <path d="M32 0H0V32" fill="none" stroke="currentColor" stroke-width="1" opacity=".22"/>
+          </pattern>
+          <clipPath id="repo-clip"><path d="M0 18H126L146 38V108H0Z"/></clipPath>
+        </defs>
+        <rect class="grid" x="20" y="20" width="760" height="520" fill="url(#grid)"/>
+        <g class="datum" opacity=".5">
+          <path d="M52 82H748M52 478H748M92 52V508M708 52V508"/>
+          <path d="M80 72h24M92 60v24M696 72h24M708 60v24M80 488h24M92 476v24M696 488h24M708 476v24"/>
+        </g>
+
+        <g class="input-repo">
+          <path d="M70 218H196L216 238V326H70Z"/>
+          <path d="M84 236h54l10 10h54"/>
+          <text x="88" y="278">NEW REPO</text>
+          <text class="dim" x="88" y="300">empty project</text>
+        </g>
+
+        <path class="route route-a" d="M218 272H332"/>
+        <path class="route route-b" d="M466 272H576"/>
+        <g class="packet packet-a"><rect x="0" y="0" width="18" height="18"/><path d="M4 9h10M9 4v10"/></g>
+        <g class="packet packet-b"><rect x="0" y="0" width="18" height="18"/><path d="M4 9h10"/></g>
+
+        <g class="core">
+          <path d="M332 166H452L470 184V362H332Z"/>
+          <path class="core-grid" d="M350 208h102M350 232h102M350 256h102M350 280h102M350 304h102M370 190v148M394 190v148M418 190v148M442 190v148"/>
+          <circle cx="401" cy="264" r="50"/>
+          <circle cx="401" cy="264" r="34"/>
+          <path class="pulse" d="M352 264h28l10-18 18 38 12-20h30"/>
+          <text x="354" y="390">HARNESS CORE</text>
+        </g>
+
+        <g class="output-repo">
+          <path d="M576 190H704L724 210V354H576Z"/>
+          <path d="M592 210h52l10 10h52"/>
+          <text x="594" y="252">PROJECT</text>
+          <g class="install-line line-one"><rect x="594" y="272" width="112" height="16"/><text x="602" y="284">MEMORY</text></g>
+          <g class="install-line line-two"><rect x="594" y="296" width="112" height="16"/><text x="602" y="308">SKILLS</text></g>
+          <g class="install-line line-three"><rect x="594" y="320" width="112" height="16"/><text x="602" y="332">ADAPTERS</text></g>
+        </g>
+
+        <g class="status-tag"><rect x="574" y="382" width="152" height="34"/><text x="592" y="404">READY TO BUILD</text></g>
+        <text class="trace-label" x="248" y="254">ASSEMBLE</text>
+        <text class="trace-label" x="490" y="254">VERIFY</text>
+      </svg>
+      <div class="machine-caption">
+        <span>REPOSITORY</span><span>HARNESS</span><span>READY</span>
+      </div>
+    </section>
+
+    <section class="creator-panel" aria-labelledby="form-title">
+      <div class="panel-head">
+        <p>CREATE / GITHUB</p>
+        <h2 id="form-title">Name your project</h2>
+      </div>
+
+      <div class="connection" id="connection" aria-live="polite">
+        <span aria-hidden="true"></span>
+        <div><strong>Checking creator</strong><p>Looking for a GitHub connection</p></div>
+      </div>
+
+      <form id="github-form" hidden>
+        <button class="text-button" id="disconnect-button" type="button">Change GitHub account</button>
+
+        <label for="repo-name">Repository name</label>
+        <input id="repo-name" name="name" placeholder="my-new-project" pattern="[A-Za-z0-9._-]+" required>
+
+        <label for="repo-description">Description <small>optional</small></label>
+        <input id="repo-description" name="description" maxlength="350" placeholder="What are you building">
+
+        <label class="visibility" for="repo-private">
+          <input id="repo-private" name="private" type="checkbox" checked>
+          <span><strong>Private repository</strong><small>Recommended for a new project</small></span>
+        </label>
+
+        <button class="action primary" type="submit" id="create-button"><span>Create repository</span><span>-&gt;</span></button>
+      </form>
+
+      <div class="fallback" id="fallback">
+        <a class="action primary" id="connect-button" href="/api/harness/github/connect"><span>Connect GitHub</span><span>-&gt;</span></a>
+        <a class="text-link" id="template-button" href="https://github.com/ryanportfolio/Harness-Firmware/generate">Use GitHub template instead</a>
+      </div>
+
+      <form class="account-choice" id="account-choice" hidden>
+        <label for="github-account">Create in</label>
+        <select id="github-account" name="installationId" required></select>
+        <button class="action primary" type="submit"><span>Use this account</span><span>-&gt;</span></button>
+      </form>
+
+      <div class="success" id="success" hidden>
+        <p>PROJECT READY</p>
+        <h2 id="success-name">Repository created</h2>
+        <a class="action primary" id="success-link" href="#"><span>Open on GitHub</span><span>-&gt;</span></a>
+      </div>
+      <p class="error" id="creator-error" role="alert"></p>
+
+      <noscript>
+        <p>JavaScript is unavailable. GitHub can still create the repository directly from the template.</p>
+        <a href="https://github.com/ryanportfolio/Harness-Firmware/generate">Open GitHub template</a>
+      </noscript>
+    </section>
+  </main>
+
+  <footer>
+    <p>Prefer a local launcher</p>
+    <a href="https://github.com/ryanportfolio/Harness-Firmware#full-template">Windows / macOS setup -&gt;</a>
+  </footer>
+  <script src="/harness-firmware/new/new-project.js" defer></script>
+</body>
+</html>

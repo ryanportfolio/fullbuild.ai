@@ -1,35 +1,64 @@
 {
-  "measuredOn": "2026-07-30",
-  "templateRev": "5224beb",
-  "measurement": "git objects at rev 5224beb; description values measured as written (folded lines space-joined, no trailing newline, YAML quoting included); tokens estimated at 4 bytes/token",
-  "skillsTreeHash": "97530c9e791583c821254f101ad59365ed8489ee",
+  "measuredOn": "2026-08-11",
+  "templateRev": "d9cd99f5",
+  "templateCommit": "d9cd99f5d6126d58918e117b584369dd610f4f59",
+  "measurement": "git objects at commit d9cd99f5d6126d58918e117b584369dd610f4f59; each runtime description index is the UTF-8 byte sum of 23 skill names plus YAML-resolved description values; token counts use an approximate 4-character conversion",
+  "tokenEstimateCharactersPerToken": 4,
+  "skillsTreeHash": "503356de94911a3472f3071d5b51212df5cdcd2f",
+  "codexSkillsTreeHash": "a137de9f761ea77b62b1c0aadbbcc4358a037f54",
+  "claudeRulesBlobHash": "6203497f5324573564d78286088901fb75a6e3a3",
+  "codexRulesBlobHash": "17e15e0e76b0c76722d92ebaf6350a617d3d6777",
   "repo": "https://github.com/ryanportfolio/Harness-Firmware",
   "repoIsTemplate": true,
   "license": "MIT",
+  "runtimes": ["Claude Code", "Codex"],
+  "runtimeCount": 2,
   "blockBytes": 1024,
   "kernelBytes": 5401,
   "kernelTokens": 1350,
-  "descIndexBytes": 2916,
-  "descIndexTokens": 729,
-  "minimalDescIndexBytes": 1398,
-  "residentBytes": 8317,
-  "residentKiB": 8.1,
-  "residentTokens": 2079,
-  "residentEndHex": "0x0207D",
+  "descIndexBytes": 3954,
+  "descIndexTokens": 989,
+  "skillNameIndexBytes": 245,
+  "descriptionValueBytes": 3709,
+  "coreDisciplineDescIndexBytes": 2096,
+  "extrasDescIndexBytes": 1858,
+  "residentBytes": 9355,
+  "residentKiB": 9.1,
+  "residentTokens": 2339,
+  "residentRuntime": "Claude Code (maximum measured)",
+  "residentScope": "CLAUDE.md plus the names and description values of 23 canonical skills",
+  "residentEndHex": "0x0248B",
   "kernelEndHex": "0x01519",
-  "onDemandBytes": 175102,
-  "onDemandKiB": 171,
-  "onDemandEndHex": "0x2ABFE",
-  "lazyRatio": 21.1,
-  "residentPctOfOnDemand": 4.7,
-  "skillCount": 20,
+  "codexKernelBytes": 3252,
+  "codexKernelTokens": 813,
+  "codexDescIndexBytes": 3954,
+  "codexDescIndexTokens": 989,
+  "codexResidentBytes": 7206,
+  "codexResidentKiB": 7.0,
+  "codexResidentTokens": 1802,
+  "codexResidentEndHex": "0x01C26",
+  "codexKernelEndHex": "0x00CB4",
+  "onDemandBytes": 188216,
+  "onDemandKiB": 184,
+  "onDemandEndHex": "0x2DF38",
+  "onDemandScope": "sum of 23 canonical .claude/skills/*/SKILL.md git blobs; per-skill support files and generated Codex adapters excluded",
+  "canonicalSkillDirectoryBytes": 350397,
+  "canonicalSkillSupportBytes": 162181,
+  "skillTreeBytes": 352679,
+  "skillProvenanceBytes": 2282,
+  "codexAdapterSkillEntryBytes": 31801,
+  "combinedCanonicalAndAdapterEntryBytes": 220017,
+  "lazyRatio": 20.1,
+  "lazyRatioBasis": "canonical skill entry bytes / maximum resident bytes",
+  "residentPctOfOnDemand": 5,
+  "skillCount": 23,
   "tierCounts": {
-    "core": 6,
-    "discipline": 4,
-    "extras": 10
+    "core": 7,
+    "discipline": 5,
+    "extras": 11
   },
-  "extrasBytesDropped": 72719,
-  "allocatedBlocks": 182,
+  "extrasBytes": 78857,
+  "allocatedBlocks": 197,
   "referenceFileCount": 6,
   "referenceFiles": [
     "secrets",
@@ -63,19 +92,19 @@
     },
     {
       "name": "init-project",
-      "bytes": 13407,
+      "bytes": 13400,
       "tier": "core",
       "blocks": 14,
-      "padFillPct": 9.3,
+      "padFillPct": 8.6,
       "hexOffset": "0x0B873"
     },
     {
       "name": "enhance-prompt",
-      "bytes": 9810,
+      "bytes": 10335,
       "tier": "extras",
-      "blocks": 10,
-      "padFillPct": 58,
-      "hexOffset": "0x0ECD2"
+      "blocks": 11,
+      "padFillPct": 9.3,
+      "hexOffset": "0x0ECCB"
     },
     {
       "name": "why",
@@ -83,7 +112,7 @@
       "tier": "extras",
       "blocks": 9,
       "padFillPct": 90.7,
-      "hexOffset": "0x11324"
+      "hexOffset": "0x1152A"
     },
     {
       "name": "merge",
@@ -91,7 +120,7 @@
       "tier": "core",
       "blocks": 9,
       "padFillPct": 38.9,
-      "hexOffset": "0x136C5"
+      "hexOffset": "0x138CB"
     },
     {
       "name": "advocate",
@@ -99,7 +128,7 @@
       "tier": "extras",
       "blocks": 8,
       "padFillPct": 65.3,
-      "hexOffset": "0x15853"
+      "hexOffset": "0x15A59"
     },
     {
       "name": "fable-mode",
@@ -107,7 +136,7 @@
       "tier": "extras",
       "blocks": 8,
       "padFillPct": 58.8,
-      "hexOffset": "0x176F0"
+      "hexOffset": "0x178F6"
     },
     {
       "name": "lab",
@@ -115,7 +144,7 @@
       "tier": "extras",
       "blocks": 8,
       "padFillPct": 51.3,
-      "hexOffset": "0x1954A"
+      "hexOffset": "0x19750"
     },
     {
       "name": "humanizer",
@@ -123,7 +152,7 @@
       "tier": "extras",
       "blocks": 8,
       "padFillPct": 30.8,
-      "hexOffset": "0x1B357"
+      "hexOffset": "0x1B55D"
     },
     {
       "name": "handoff-audit",
@@ -131,7 +160,7 @@
       "tier": "extras",
       "blocks": 8,
       "padFillPct": 1.4,
-      "hexOffset": "0x1D092"
+      "hexOffset": "0x1D298"
     },
     {
       "name": "purposeful-writing",
@@ -139,7 +168,7 @@
       "tier": "extras",
       "blocks": 7,
       "padFillPct": 23.3,
-      "hexOffset": "0x1ECA0"
+      "hexOffset": "0x1EEA6"
     },
     {
       "name": "forge-repo-ui-skill",
@@ -147,7 +176,7 @@
       "tier": "extras",
       "blocks": 7,
       "padFillPct": 18.1,
-      "hexOffset": "0x2058F"
+      "hexOffset": "0x20795"
     },
     {
       "name": "optimize-context",
@@ -155,7 +184,7 @@
       "tier": "core",
       "blocks": 7,
       "padFillPct": 10.6,
-      "hexOffset": "0x21E48"
+      "hexOffset": "0x2204E"
     },
     {
       "name": "writing-plans",
@@ -163,7 +192,15 @@
       "tier": "discipline",
       "blocks": 6,
       "padFillPct": 67.6,
-      "hexOffset": "0x236B5"
+      "hexOffset": "0x238BB"
+    },
+    {
+      "name": "addskill",
+      "bytes": 5784,
+      "tier": "core",
+      "blocks": 6,
+      "padFillPct": 64.8,
+      "hexOffset": "0x24F6F"
     },
     {
       "name": "brainstorming",
@@ -171,15 +208,15 @@
       "tier": "discipline",
       "blocks": 6,
       "padFillPct": 62,
-      "hexOffset": "0x24D69"
+      "hexOffset": "0x26607"
     },
     {
-      "name": "addskill",
-      "bytes": 5678,
-      "tier": "core",
+      "name": "wow-loop",
+      "bytes": 5613,
+      "tier": "extras",
       "blocks": 6,
-      "padFillPct": 54.5,
-      "hexOffset": "0x263E4"
+      "padFillPct": 48.1,
+      "hexOffset": "0x27C82"
     },
     {
       "name": "sync-starter",
@@ -187,7 +224,7 @@
       "tier": "core",
       "blocks": 5,
       "padFillPct": 96.2,
-      "hexOffset": "0x27A12"
+      "hexOffset": "0x2926F"
     },
     {
       "name": "recall",
@@ -195,7 +232,23 @@
       "tier": "core",
       "blocks": 5,
       "padFillPct": 48,
-      "hexOffset": "0x28DEB"
+      "hexOffset": "0x2A648"
+    },
+    {
+      "name": "long-horizon",
+      "bytes": 3508,
+      "tier": "discipline",
+      "blocks": 4,
+      "padFillPct": 42.6,
+      "hexOffset": "0x2B834"
+    },
+    {
+      "name": "refine",
+      "bytes": 3369,
+      "tier": "core",
+      "blocks": 4,
+      "padFillPct": 29,
+      "hexOffset": "0x2C5E8"
     },
     {
       "name": "caveman",
@@ -203,7 +256,7 @@
       "tier": "extras",
       "blocks": 4,
       "padFillPct": 3.8,
-      "hexOffset": "0x29FD7"
+      "hexOffset": "0x2D311"
     }
   ]
 }

@@ -4,81 +4,291 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Harness Firmware · boots warm</title>
-<meta name="description" content="Firmware for coding agents. Sessions end. The memory stays. A GitHub template: 8.1 KiB resident kernel, durable committed memory, 20 on-demand skill playbooks.">
+<meta name="description" content="An open-source repo template that gives each project its own memory system, reusable workflows, and runtime-specific guidance.">
 <meta name="theme-color" content="#070B0C">
 <meta name="color-scheme" content="dark">
 <link rel="icon" type="image/svg+xml" href="/harness-firmware/assets/favicon.svg">
+<link rel="canonical" href="https://fullbuild.ai/harness-firmware">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://fullbuild.ai/harness-firmware">
 <meta property="og:title" content="Harness Firmware · boots warm">
-<meta property="og:description" content="Firmware for coding agents. Sessions end. The memory stays. ≈2,079 tokens resident per turn.">
+<meta property="og:description" content="Each repo gets its own memory system, reusable workflows, and support for Claude Code and Codex.">
 <meta property="og:image" content="https://fullbuild.ai/harness-firmware/assets/og.png">
+<meta property="og:image:alt" content="Harness Firmware BOOTS WARM graphic showing a repo-resident operating layer for coding agents.">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="/harness-firmware/src/phosphor.css">
-<script type="module" src="/harness-firmware/src/phosphor.js"></script>
+<meta name="twitter:title" content="Harness Firmware · boots warm">
+<meta name="twitter:description" content="Each repo gets its own memory system, reusable workflows, and support for Claude Code and Codex.">
+<meta name="twitter:image" content="https://fullbuild.ai/harness-firmware/assets/og.png">
+<meta name="twitter:image:alt" content="Harness Firmware BOOTS WARM graphic showing a repo-resident operating layer for coding agents.">
+<link rel="stylesheet" href="/harness-firmware/src/phosphor.css?v=20260811f">
+<script type="module" src="/harness-firmware/src/phosphor.js?v=20260811d"></script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
 
-<header class="chrome">
-  <a class="chrome-home" href="/">fullbuild.ai</a>
-  <span class="chrome-meta mono">HARNESS FIRMWARE &middot; GITHUB TEMPLATE &middot; MIT</span>
+<header class="chrome status-rail">
+  <a class="signal-strip mono" href="https://github.com/ryanportfolio/Harness-Firmware"><span>OPEN SOURCE FIRMWARE</span><span>GITHUB TEMPLATE · MIT · VIEW SOURCE →</span></a>
+  <div class="chrome-row">
+    <a class="chrome-home" href="/">fullbuild.ai</a>
+    <a class="chrome-product mono" href="#hero" aria-label="Harness Firmware"><span class="product-long">HARNESS</span><span class="product-short" aria-hidden="true">HF</span></a>
+    <nav class="firmware-index mono" data-status-rail aria-label="Firmware sections">
+      <a href="#action">ACTION</a>
+      <a href="#create">CREATE</a>
+      <a href="#skills">SKILLS</a>
+      <a href="#flash">FLASH</a>
+      <a class="chrome-action" href="https://github.com/ryanportfolio/Harness-Firmware">GITHUB</a>
+    </nav>
+  </div>
 </header>
+
+<main id="main">
 
 <section class="hero" id="hero" aria-label="Harness Firmware">
   <canvas class="hero-field" id="hero-field" aria-hidden="true"></canvas>
   <div class="hero-inner">
-    <p class="hero-name mono">HARNESS FIRMWARE</p>
-    <h1 class="hero-title" id="hero-title"><span class="hl">BOOTS</span><span class="hl">WARM</span></h1>
-    <p class="hero-sub">A GitHub template that sets up Claude Code and Codex with standing rules, skills they load on demand, and memory kept in the repo.<br><b>Sessions end. What it learned stays.</b></p>
-    <div class="hero-row">
-      <a class="cta" href="https://github.com/ryanportfolio/Harness-Firmware">USE THIS TEMPLATE &rarr;</a>
-      <span class="readout mono" data-stat><i class="tick" aria-hidden="true"></i>8.1 KiB in context every turn</span>
+    <div class="hero-copy">
+      <p class="hero-name mono">HARNESS FIRMWARE</p>
+      <h1 class="hero-title" id="hero-title"><span class="hl">BOOTS</span><span class="hl">WARM</span></h1>
+      <p class="hero-sub"><b>Give every repo its own memory system</b><br>Harness stores project-specific rules, lessons, and workflows in the repo, so new sessions start informed.</p>
+      <div class="hero-row">
+        <a class="cta" href="/harness-firmware/new/">CREATE A PROJECT &rarr;</a>
+        <a class="cta cta-secondary" href="https://github.com/ryanportfolio/Harness-Firmware/generate">VIEW TEMPLATE</a>
+        <span class="readout mono"><i class="tick" aria-hidden="true"></i>project knowledge survives session resets</span>
+      </div>
+      <p class="key mono"><span class="k-green">green = written to the repo</span> <span class="k-blue">blue = only in the live session</span></p>
     </div>
-    <p class="hero-note mono">Claude Code and Codex are terminal coding agents, from Anthropic and OpenAI</p>
-    <p class="key mono"><span class="k-green">green = written to the repo</span> <span class="k-blue">blue = only in the live session</span></p>
+    <figure class="hero-plate" aria-label="A volatile coding session writes a retained project lesson into the repository, where a later session recalls it">
+      <div class="plate-hatch" aria-hidden="true"></div>
+      <svg class="memory-bus" viewBox="0 0 560 390" aria-hidden="true">
+        <g class="scene-grid">
+          <path d="M32 44H528M32 92H528M32 140H528M32 188H528M32 236H528M32 284H528M32 332H528"/>
+          <path d="M70 24V366M140 24V366M210 24V366M280 24V366M350 24V366M420 24V366M490 24V366"/>
+        </g>
+        <g class="scene-warp scene-anim">
+          <path d="M32 195C112 84 168 84 248 195S384 306 528 195"/>
+          <path d="M32 195C112 116 168 116 248 195S384 274 528 195"/>
+          <path d="M32 195C112 148 168 148 248 195S384 242 528 195"/>
+          <path d="M32 195C112 227 168 227 248 195S384 163 528 195"/>
+        </g>
+        <g class="session-node session-a">
+          <rect x="52" y="138" width="132" height="112"/>
+          <text x="68" y="164">SESSION 01</text>
+          <path d="M68 188H158M68 205H142M68 222H126"/>
+          <rect class="volatile-block scene-anim" x="150" y="215" width="16" height="16"/>
+        </g>
+        <g class="repo-node">
+          <rect x="228" y="130" width="112" height="130"/>
+          <text x="246" y="156">REPO</text>
+          <path d="M250 180H318M250 198H318M250 216H300"/>
+          <rect class="retained-block" x="270" y="232" width="28" height="12"/>
+        </g>
+        <g class="session-node session-b">
+          <rect x="378" y="138" width="132" height="112"/>
+          <text x="394" y="164">SESSION 02</text>
+          <path d="M394 188H484M394 205H468M394 222H452"/>
+          <rect class="warm-block scene-anim" x="394" y="215" width="16" height="16"/>
+        </g>
+        <path class="packet-track" d="M184 195H228M340 195H378"/>
+        <rect class="packet packet-write scene-anim" x="188" y="187" width="16" height="16"/>
+        <rect class="packet packet-read scene-anim" x="344" y="187" width="16" height="16"/>
+        <text class="bus-label" x="42" y="350">VOLATILE</text>
+        <text class="bus-label kept" x="236" y="350">COMMITTED</text>
+        <text class="bus-label" x="400" y="350">RECALLED</text>
+      </svg>
+      <figcaption class="mono">FIG 01 · SESSION STATE DECAYS · REPO MEMORY REMAINS</figcaption>
+    </figure>
   </div>
-  <span class="hero-seed mono" aria-hidden="true">grain seeded from rev 5224beb</span>
+  <span class="hero-seed mono" aria-hidden="true">grain seeded from rev d9cd99f5</span>
   <span class="hero-scroll mono" aria-hidden="true"><span class="m">SCROLL &middot; THE BEAM FOLLOWS</span><span class="rm">STATIC &middot; MEMORY HOLDS</span></span>
 </section>
 
-<main id="main">
+<section class="proof-rail" data-proof-rail aria-label="Harness Firmware outcomes">
+  <a class="proof-cell" data-proof="memory" href="#action">
+    <b>MEMORY</b>
+    <span>project lessons survive the chat</span>
+    <small class="mono">VERSIONED WITH EACH REPO</small>
+  </a>
+  <a class="proof-cell" data-proof="skills" href="#skills">
+    <b data-stat>23</b>
+    <span>workflows ready when needed</span>
+    <small class="mono">ON DEMAND &middot; SOURCE LINKED</small>
+  </a>
+  <a class="proof-cell" data-proof="runtimes" href="#runtimes">
+    <b data-stat>2</b>
+    <span>coding agent runtimes</span>
+    <small class="mono">CLAUDE CODE &middot; CODEX</small>
+  </a>
+  <a class="proof-cell" data-proof="source" href="https://github.com/ryanportfolio/Harness-Firmware">
+    <b>MIT</b>
+    <span>open source and inspectable</span>
+    <small class="mono">GITHUB TEMPLATE</small>
+  </a>
+</section>
 
   <!-- 01 -->
-  <section class="sec sec-01" id="s01">
+  <section class="sec sec-create" id="create">
     <span class="ghost" aria-hidden="true">01</span>
     <div class="sec-body">
-      <span class="gtag mono" aria-hidden="true"><b>DURABLE MEMORY</b> &middot; pitfalls.md &middot; 2026-07-18</span>
-      <h2 class="reveal">Solve it once, never again</h2>
-      <figure class="console reveal" id="recall-demo">
-        <figcaption class="console-bar mono micro"><span>SESSION LOG &middot; /recall</span><span class="replay-hint" aria-hidden="true">replay</span></figcaption>
-        <div class="console-body mono" data-replay>
-          <p class="ln dim">claude &middot; session A &middot; 2026-07-18</p>
-          <p class="ln">preview shows an outdated version of the site</p>
-          <p class="ln">server reuse on a busy port &middot; stale process from a prior session</p>
-          <p class="ln cmd">/recall save local preview servers: stale or wrong site</p>
-          <p class="ln keep">saved &rarr; <span class="nb">.claude/reference/pitfalls.md</span> <span class="nb">&middot; committed</span></p>
-          <p class="ln off">session ended &middot; context cleared</p>
-          <p class="ln gap" aria-hidden="true">&nbsp;</p>
-          <p class="ln dim">claude &middot; session B &middot; any machine, any day</p>
-          <p class="ln boot">warm boot &middot; reads <span class="keep nb">.claude/reference/pitfalls.md</span></p>
-          <p class="ln keep">pitfall already known &middot; port owner checked &middot; trap skipped</p>
+      <span class="gtag mono"><b>NEW PROJECT</b> &middot; WEB &middot; WINDOWS &middot; MACOS</span>
+      <div class="create-head">
+        <h2 class="reveal">Create the repo and the system together</h2>
+        <div>
+          <p class="copy reveal">Name the project once. Harness creates the repo with memory, workflows, and both agent setups already inside.</p>
+          <div class="create-actions reveal">
+            <a class="cta" href="/harness-firmware/new/">CREATE A PROJECT &rarr;</a>
+            <a class="source-action mono" href="https://github.com/ryanportfolio/Harness-Firmware#full-template">GET THE LOCAL LAUNCHER</a>
+          </div>
         </div>
-      </figure>
-      <p class="copy reveal">When the agent hits a problem, you type <span data-stat>/recall</span> in the agent and it writes the lesson into a file in your repo. Every session after that reads it at startup. Because the file is committed, your teammates' agents get it too.</p>
+      </div>
+
+      <div class="creator-sequence reveal" aria-label="Three steps from project name to ready repository">
+        <article class="creator-card">
+          <div class="creator-visual">
+            <svg viewBox="0 0 420 280" role="img" aria-label="The New Project launcher asks for a project name and destination">
+              <g class="creator-grid"><path d="M20 28H400M20 78H400M20 128H400M20 178H400M20 228H400"/><path d="M54 16V264M114 16V264M174 16V264M234 16V264M294 16V264M354 16V264"/></g>
+              <rect class="launcher-shell" x="52" y="36" width="316" height="208"/>
+              <rect class="launcher-bar" x="52" y="36" width="316" height="34"/>
+              <text class="creator-text" x="70" y="58">NEW PROJECT</text>
+              <text class="creator-label" x="76" y="102">PROJECT NAME</text>
+              <rect class="launcher-field" x="76" y="114" width="268" height="38"/>
+              <text class="creator-value" x="92" y="139">my-new-project</text>
+              <text class="creator-label" x="76" y="178">DESTINATION</text>
+              <rect class="launcher-field" x="76" y="188" width="176" height="34"/>
+              <rect class="launcher-go create-anim" x="262" y="188" width="82" height="34"/>
+              <text class="creator-go-text" x="278" y="210">CREATE</text>
+            </svg>
+          </div>
+          <span class="mono">STEP 01 &middot; NAME IT</span>
+          <b>Pick a name and folder</b>
+          <p>The same launcher works on Windows and macOS. The web path starts from GitHub.</p>
+        </article>
+
+        <article class="creator-card">
+          <div class="creator-visual">
+            <svg viewBox="0 0 420 280" role="img" aria-label="Harness Firmware adds project memory, skills, and runtime adapters to the repository">
+              <g class="creator-tunnel create-anim"><path d="M28 38L170 108V172L28 242"/><path d="M82 38L184 108V172L82 242"/><path d="M392 38L250 108V172L392 242"/><path d="M338 38L236 108V172L338 242"/></g>
+              <path class="repo-shell" d="M152 68H252L274 90V220H152Z"/>
+              <text class="creator-text" x="174" y="98">REPO</text>
+              <g class="install-row install-a create-anim"><rect x="174" y="120" width="78" height="22"/><text x="184" y="135">MEMORY</text></g>
+              <g class="install-row install-b create-anim"><rect x="174" y="150" width="78" height="22"/><text x="184" y="165">SKILLS</text></g>
+              <g class="install-row install-c create-anim"><rect x="174" y="180" width="78" height="22"/><text x="184" y="195">ADAPTERS</text></g>
+              <rect class="creator-packet packet-one create-anim" x="64" y="131" width="18" height="18"/>
+              <rect class="creator-packet packet-two create-anim" x="338" y="131" width="18" height="18"/>
+            </svg>
+          </div>
+          <span class="mono">STEP 02 &middot; ASSEMBLE</span>
+          <b>Harness arrives with the repo</b>
+          <p>Project memory, 23 workflows, Claude Code setup, and Codex adapters are already there.</p>
+        </article>
+
+        <article class="creator-card">
+          <div class="creator-visual">
+            <svg viewBox="0 0 420 280" role="img" aria-label="The new repository is ready to open and tailor with init-project">
+              <g class="ready-orbit create-anim"><ellipse cx="210" cy="140" rx="166" ry="86"/><ellipse cx="210" cy="140" rx="128" ry="86"/><ellipse cx="210" cy="140" rx="88" ry="86"/></g>
+              <rect class="ready-window" x="76" y="76" width="268" height="128"/>
+              <rect class="ready-bar" x="76" y="76" width="268" height="30"/>
+              <text class="creator-text dark" x="94" y="96">PROJECT READY</text>
+              <path class="ready-line" d="M100 132H286M100 154H260"/>
+              <rect class="ready-tag create-anim" x="100" y="172" width="156" height="18"/>
+              <text class="ready-tag-text" x="110" y="185">RUN INIT-PROJECT</text>
+            </svg>
+          </div>
+          <span class="mono">STEP 03 &middot; BUILD</span>
+          <b>Open it and start working</b>
+          <p>Run <strong><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/init-project/SKILL.md">init-project</a></strong> once to tailor the system to the repo.</p>
+        </article>
+      </div>
+      <p class="creator-note mono reveal">WEB: AUTHORIZE GITHUB ONCE &middot; LOCAL: REUSES YOUR EXISTING GH LOGIN &middot; PRIVATE REPO BY DEFAULT</p>
     </div>
   </section>
 
   <!-- 02 -->
-  <section class="sec sec-02" id="s02">
+  <section class="sec sec-01" id="action">
+    <span class="anchor-alias" id="s01" aria-hidden="true"></span>
     <span class="ghost" aria-hidden="true">02</span>
     <div class="sec-body">
-      <span class="gtag mono" aria-hidden="true"><b>WHAT LOADS EVERY TURN</b></span>
-      <h2 class="reveal">8.1 KiB is all it keeps loaded</h2>
-      <div class="halo-stage reveal">
-        <img class="bake" src="/harness-firmware/fallback/core-halo.png" alt="A small dense green phosphor core inside a vast faint residue halo; the lit green mass is 4.7% of the lit residue, the measured resident share" width="1200" height="640">
-        <span class="halo-numeral" aria-hidden="true"><span class="lockup">8<span class="dp">.</span>1<i>KiB</i></span></span>
+      <span class="gtag mono"><b>COMMITTED PROJECT KNOWLEDGE</b> &middot; ILLUSTRATIVE MEMORY FLOW &middot; pitfalls.md &middot; 2026-07-18</span>
+      <h2 class="reveal">Stop solving the same repo problem twice</h2>
+      <div class="memory-sequence reveal" aria-label="Three-step repository memory sequence">
+        <article class="sequence-card">
+          <div class="sequence-visual">
+            <svg viewBox="0 0 360 230" role="img" aria-label="A volatile session trace reveals a stale local server">
+              <g class="mini-grid"><path d="M20 28H340M20 68H340M20 108H340M20 148H340M20 188H340"/><path d="M52 16V214M116 16V214M180 16V214M244 16V214M308 16V214"/></g>
+              <g class="warp-lines scene-anim"><path d="M22 120C82 34 122 34 180 120S278 206 338 120"/><path d="M22 120C82 62 122 62 180 120S278 178 338 120"/><path d="M22 120C82 92 122 92 180 120S278 148 338 120"/></g>
+              <rect class="ui-window" x="84" y="62" width="192" height="112"/>
+              <rect class="ui-bar volatile-fill" x="84" y="62" width="192" height="22"/>
+              <path class="ui-line" d="M106 108H248M106 130H226M106 152H196"/>
+              <rect class="scan-block scene-anim" x="242" y="140" width="16" height="16"/>
+            </svg>
+          </div>
+          <span class="mono">STEP 01 · OBSERVE</span>
+          <b>A session finds a problem</b>
+          <p>Stale local server · volatile trace</p>
+        </article>
+        <article class="sequence-card">
+          <div class="sequence-visual">
+            <svg viewBox="0 0 360 230" role="img" aria-label="Recall commits the discovered lesson into a project reference file">
+              <g class="tunnel scene-anim"><path d="M28 34L152 96V134L28 196"/><path d="M70 34L166 96V134L70 196"/><path d="M332 34L208 96V134L332 196"/><path d="M290 34L194 96V134L290 196"/></g>
+              <rect class="repo-core" x="140" y="72" width="80" height="86"/>
+              <path class="repo-mark" d="M160 98H200M160 116H200M160 134H188"/>
+              <rect class="write-packet scene-anim" x="54" y="105" width="18" height="18"/>
+              <rect class="commit-pulse scene-anim" x="171" y="164" width="18" height="18"/>
+              <text class="svg-label" x="22" y="216">SAVE LESSON</text>
+              <text class="svg-label kept" x="228" y="216">pitfalls.md</text>
+            </svg>
+          </div>
+          <span class="mono">STEP 02 · COMMIT</span>
+          <b>Save the fix in the repo</b>
+          <p>Named reference · reviewable repo change</p>
+        </article>
+        <article class="sequence-card">
+          <div class="sequence-visual">
+            <svg viewBox="0 0 360 230" role="img" aria-label="A later matching task retrieves the retained lesson from the repository">
+              <g class="recall-orbit scene-anim"><ellipse cx="180" cy="115" rx="144" ry="72"/><ellipse cx="180" cy="115" rx="112" ry="72"/><ellipse cx="180" cy="115" rx="76" ry="72"/></g>
+              <rect class="later-window" x="82" y="70" width="196" height="92"/>
+              <rect class="retained-fill" x="82" y="70" width="196" height="24"/>
+              <text class="window-title" x="100" y="87">KNOWN CHECK AVAILABLE</text>
+              <path class="ui-line" d="M104 118H250M104 138H224"/>
+              <rect class="recall-packet scene-anim" x="292" y="106" width="18" height="18"/>
+            </svg>
+          </div>
+          <span class="mono">STEP 03 · RETRIEVE</span>
+          <b>Future sessions reuse it</b>
+          <p>Same repository or clone · retained guidance</p>
+        </article>
       </div>
-      <p class="mono micro reveal metrology" data-stat>kernel 5,401 B + skill index 2,916 B = resident 8,317 B &middot; &approx;2,079 tok/turn &middot; resident end 0x0207D</p>
-      <p class="copy reveal">The rules, plus one line describing each skill, are the only part in the context window every turn: <span data-stat>8,317 bytes</span>, about <span data-stat>2,079 tokens</span>. Paste all twenty skills in instead and you would carry about <span data-stat>43,776 tokens</span> before writing a line of code, so this runs at <span data-stat>4.7%</span> of that, a <span data-stat>21.1&times;</span> difference.</p>
+      <figure class="console reveal" id="recall-demo">
+        <figcaption class="console-bar mono micro"><span>MEMORY FLOW &middot; ILLUSTRATIVE</span><span class="replay-hint" aria-hidden="true">replay</span></figcaption>
+        <div class="console-body mono" data-replay>
+          <p class="ln dim">claude &middot; session A &middot; 2026-07-18</p>
+          <p class="ln">preview shows an outdated version of the site</p>
+          <p class="ln">server reuse on a busy port &middot; stale process from a prior session</p>
+          <p class="ln cmd"><strong><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/recall/SKILL.md">/recall</a></strong> save local preview servers: stale or wrong site</p>
+          <p class="ln keep">saved &rarr; <span class="nb">.claude/reference/pitfalls.md</span> <span class="nb">&middot; reviewable repo change</span></p>
+          <p class="ln off">session ended &middot; context cleared</p>
+          <p class="ln gap" aria-hidden="true">&nbsp;</p>
+          <p class="ln dim">agent &middot; later matching task &middot; same repo or clone</p>
+          <p class="ln boot"><span class="keep nb"><strong><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/recall/SKILL.md">/recall</a></strong></span> routes to <span class="keep nb">.claude/reference/pitfalls.md</span></p>
+          <p class="ln keep">reads cited entry &middot; known check available &middot; port owner checked first</p>
+        </div>
+      </figure>
+      <p class="copy reveal">Save a lesson once. <strong><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/recall/SKILL.md">/recall</a></strong> brings it back when a later task needs it and shows where it came from.</p>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section class="sec sec-02" id="kernel">
+    <span class="anchor-alias" id="s02" aria-hidden="true"></span>
+    <span class="ghost" aria-hidden="true">03</span>
+    <div class="sec-body">
+      <span class="gtag mono"><b>DEFAULT FILE-BASED LAYER</b> &middot; RUNTIME-SPECIFIC</span>
+      <h2 class="reveal">Keep every session lean</h2>
+      <div class="halo-stage reveal">
+        <img class="bake" src="/harness-firmware/fallback/core-halo.png" alt="A small dense green phosphor core inside a vast faint residue halo; the core shows the 9,355 bytes Claude loads at startup beside 188,216 bytes of skill instructions available on demand" width="1200" height="640" loading="lazy" decoding="async">
+        <span class="halo-numeral" aria-hidden="true"><span class="lockup">9<span class="dp">.</span>1<i>KiB</i></span></span>
+      </div>
+      <p class="mono micro reveal metrology" data-stat>CLAUDE: 5,401 B + 3,954 B = 9,355 B &middot; 9.1 KiB &middot; &approx;2,339 tok/turn &middot; CODEX: 3,252 B + 3,954 B = 7,206 B &middot; &approx;1,802 tok/turn</p>
+      <p class="copy reveal">Only a small index loads at startup. The <span data-stat>188,216-byte</span> skill library stays out of context until a task needs it.</p>
       <figure class="rules reveal">
         <figcaption class="mono micro">FOUR OF THE STANDING RULES, VERBATIM FROM CLAUDE.md</figcaption>
         <ul class="mono">
@@ -87,146 +297,215 @@
           <li>Can't run the authoritative check, flag the risk plainly, don't claim it passes.</li>
           <li>Scope discipline: No unrequested refactors, features, abstractions, or extra coding.</li>
         </ul>
-        <p class="mono micro">this is the layer that costs 5,401 B &middot; read the rest before you adopt it</p>
+        <p class="mono micro">CLAUDE.md adds 5,401 B at startup &middot; read it before adopting</p>
       </figure>
     </div>
   </section>
 
-  <!-- 03 -->
-  <section class="sec sec-03" id="s03">
-    <span class="ghost" aria-hidden="true">03</span>
-    <div class="sec-body">
-      <span class="gtag mono" aria-hidden="true"><b>ON-DEMAND SKILLS</b> &middot; 20 skills &middot; 171 KiB</span>
-      <h2 class="reveal">Twenty skills, loaded only when needed</h2>
-      <p class="pan-hint mono micro" aria-hidden="true">pan &rarr;</p>
-      <div class="spectrum-stage reveal" id="spectrum">
-        <img class="bake" src="/harness-firmware/fallback/spectrum.png" alt="Twenty vertical phosphor bands ordered by flash address, one green dot per 1,024-byte block; writing-skills carries 26 dots, caveman 4. Cap fill at the top of each band shows the true last-block pad" width="1200" height="420">
-        <div class="band-labels mono" aria-hidden="true"><span>writing-skills &middot; 26 dots</span><span>caveman &middot; 4 dots</span></div>
-      </div>
-      <p class="mono readline" id="spectrum-readout" aria-live="polite" data-stat>writing-skills &middot; 26,286 B &middot; 26 blocks &middot; 0x00000</p>
-      <p class="mono micro reveal">one dot = one 1,024 B block &middot; 182 blocks &middot; 175,102 B across 20 skills &middot; largest writing-skills 26,286 B &middot; smallest caveman 3,111 B</p>
-      <p class="copy reveal">A skill is a markdown playbook in <span data-stat>.claude/skills/</span>. The agent reads the one-line summary of each, and loads the whole file only when the work calls for it. Here are all twenty, with the space each takes on disk.</p>
-      <ol class="skill-list mono reveal">
-          <li><b>writing-skills</b><span>author and test new skills</span><em>26 blocks</em></li>
-          <li><b>impartial-review</b><span>fresh agents audit your changes</span><em>21 blocks</em></li>
-          <li><b>init-project</b><span>configure a newly created repo</span><em>14 blocks</em></li>
-          <li><b>enhance-prompt</b><span>turn a rough ask into a prompt</span><em>10 blocks</em></li>
-          <li><b>why</b><span>challenge the last recommendation</span><em>9 blocks</em></li>
-          <li><b>merge</b><span>commit, push, PR, merge</span><em>9 blocks</em></li>
-          <li><b>advocate</b><span>argue against a change before it lands</span><em>8 blocks</em></li>
-          <li><b>fable-mode</b><span>deep mode for layered work</span><em>8 blocks</em></li>
-          <li><b>lab</b><span>prototype UI and motion live</span><em>8 blocks</em></li>
-          <li><b>humanizer</b><span>strip AI tells from prose</span><em>8 blocks</em></li>
-          <li><b>handoff-audit</b><span>audit prompt for a fresh session</span><em>8 blocks</em></li>
-          <li><b>purposeful-writing</b><span>prose written for a real reader</span><em>7 blocks</em></li>
-          <li><b>forge-repo-ui-skill</b><span>synthesise a repo UI skill</span><em>7 blocks</em></li>
-          <li><b>optimize-context</b><span>cut per-turn token load</span><em>7 blocks</em></li>
-          <li><b>writing-plans</b><span>plan before touching code</span><em>6 blocks</em></li>
-          <li><b>brainstorming</b><span>design before building</span><em>6 blocks</em></li>
-          <li><b>addskill</b><span>add a repo-local skill</span><em>6 blocks</em></li>
-          <li><b>sync-starter</b><span>pull template updates in</span><em>5 blocks</em></li>
-          <li><b>recall</b><span>save and read project memory</span><em>5 blocks</em></li>
-          <li><b>caveman</b><span>ultra-terse replies</span><em>4 blocks</em></li>
-      </ol>
-    </div>
-  </section>
-
   <!-- 04 -->
-  <section class="sec sec-04" id="s04">
+  <section class="sec sec-03" id="skills">
+    <span class="anchor-alias" id="s03" aria-hidden="true"></span>
     <span class="ghost" aria-hidden="true">04</span>
     <div class="sec-body">
-      <span class="gtag mono" aria-hidden="true"><b>HOW IT IS BUILT</b> &middot; image end 0x2ABFE</span>
-      <h2 class="reveal">Not a pile of prompts</h2>
-      <p class="copy reveal">The small context bill is a side effect. The reason to run it is that every part follows a practice that holds up when the library and the team grow.</p>
-      <ol class="practices reveal">
-        <li>
-          <b>Descriptions route, they do not summarise</b>
-          <span>Every skill's front matter says <em>when to use it</em>, never what it does. That one line is all the agent sees until it opens the file, so it has to work as a classifier.</span>
-        </li>
-        <li>
-          <b>Disclosure is progressive</b>
-          <span>The index stays in context. The playbook is read only when the work matches it, through an ordinary file read.</span>
-        </li>
-        <li>
-          <b>Skills are tested before they ship</b>
-          <span>A new or edited skill is run against a fresh agent under pressure first, and the rule is blunt: no skill without a failing test. A skill is executable behaviour, not documentation.</span>
-        </li>
-        <li>
-          <b>Memory has a system of record</b>
-          <span>Lessons land in a named file that is committed, not in a chat log, so a later session or a teammate can replay where a fact came from.</span>
-        </li>
-        <li>
-          <b>Claims are verified, not assumed</b>
-          <span>The kernel forbids reporting a check that was not actually run, and requires saying so plainly when verification has to happen somewhere else.</span>
-        </li>
-        <li>
-          <b>Restraint is enforced</b>
-          <span>New rules and skills have to earn their place. Pruning stale content beats accreting it, because a library nobody trims stops routing correctly.</span>
-        </li>
+      <span class="gtag mono"><b>DEFINING OPERATING LOOPS</b> &middot; 8 workflows &middot; 23 in the full library</span>
+      <h2 class="reveal">Eight workflows do the heavy lifting</h2>
+      <p class="pan-hint mono micro" id="spectrum-help">pan or point &middot; arrow keys select a skill</p>
+      <div class="spectrum-stage reveal" id="spectrum" tabindex="0" role="group" aria-label="Skill flash map" aria-describedby="spectrum-help spectrum-readout spectrum-inventory">
+        <img class="bake" src="/harness-firmware/fallback/spectrum.png" alt="Twenty-three phosphor bands comparing the byte size of each canonical SKILL.md instruction file; the largest is 26,286 bytes and the smallest is 3,111 bytes" width="1200" height="420" loading="lazy" decoding="async">
+        <div class="band-labels mono" aria-hidden="true"><span>largest entry &middot; 26,286 B</span><span>smallest entry &middot; 3,111 B</span></div>
+      </div>
+      <p class="mono readline" aria-live="polite" data-stat><a class="skill-ref" id="spectrum-readout" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/writing-skills/SKILL.md"><strong>writing-skills</strong> &middot; 26,286 B &middot; main instruction file</a></p>
+      <p class="mono micro reveal">Dot count shows relative file size. The 23 main skill files total 188,216 B, or 184 KiB. Support files are separate.</p>
+      <ul class="sr-only" id="spectrum-inventory">
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/writing-skills/SKILL.md">writing-skills</a></strong>: 26,286 B main instruction file, discipline</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/impartial-review/SKILL.md">impartial-review</a></strong>: 20,933 B main instruction file, discipline</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/init-project/SKILL.md">init-project</a></strong>: 13,400 B main instruction file, core</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/enhance-prompt/SKILL.md">enhance-prompt</a></strong>: 10,335 B main instruction file, extras</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/why/SKILL.md">why</a></strong>: 9,121 B main instruction file, extras</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/merge/SKILL.md">merge</a></strong>: 8,590 B main instruction file, core</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/advocate/SKILL.md">advocate</a></strong>: 7,837 B main instruction file, extras</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/fable-mode/SKILL.md">fable-mode</a></strong>: 7,770 B main instruction file, extras</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/lab/SKILL.md">lab</a></strong>: 7,693 B main instruction file, extras</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/humanizer/SKILL.md">humanizer</a></strong>: 7,483 B main instruction file, extras</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/handoff-audit/SKILL.md">handoff-audit</a></strong>: 7,182 B main instruction file, extras</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/purposeful-writing/SKILL.md">purposeful-writing</a></strong>: 6,383 B main instruction file, extras</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/forge-repo-ui-skill/SKILL.md">forge-repo-ui-skill</a></strong>: 6,329 B main instruction file, extras</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/optimize-context/SKILL.md">optimize-context</a></strong>: 6,253 B main instruction file, core</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/writing-plans/SKILL.md">writing-plans</a></strong>: 5,812 B main instruction file, discipline</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/addskill/SKILL.md">addskill</a></strong>: 5,784 B main instruction file, core</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/brainstorming/SKILL.md">brainstorming</a></strong>: 5,755 B main instruction file, discipline</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/wow-loop/SKILL.md">wow-loop</a></strong>: 5,613 B main instruction file, extras</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/sync-starter/SKILL.md">sync-starter</a></strong>: 5,081 B main instruction file, core</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/recall/SKILL.md">recall</a></strong>: 4,588 B main instruction file, core</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/long-horizon/SKILL.md">long-horizon</a></strong>: 3,508 B main instruction file, discipline</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/refine/SKILL.md">refine</a></strong>: 3,369 B main instruction file, core</li>
+        <li><strong><a href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/caveman/SKILL.md">caveman</a></strong>: 3,111 B main instruction file, extras</li>
+      </ul>
+      <p class="copy reveal">They remember fixes, improve the harness, start repos, share updates, cut context, and verify risky work.</p>
+      <ol class="skill-list mono reveal">
+          <li><b><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/recall/SKILL.md">recall</a></b><span>save and retrieve repo lessons</span></li>
+          <li><b><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/refine/SKILL.md">refine</a></b><span>fix the harness after friction</span></li>
+          <li><b><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/init-project/SKILL.md">init-project</a></b><span>set up a repo from detected facts</span></li>
+          <li><b><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/sync-starter/SKILL.md">sync-starter</a></b><span>share fixes without overwriting local rules</span></li>
+          <li><b><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/optimize-context/SKILL.md">optimize-context</a></b><span>remove guidance that costs more than it helps</span></li>
+          <li><b><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/long-horizon/SKILL.md">long-horizon</a></b><span>carry one contract across long work</span></li>
+          <li><b><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/impartial-review/SKILL.md">impartial-review</a></b><span>ask fresh agents to check the work</span></li>
+          <li><b><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/wow-loop/SKILL.md">wow-loop</a></b><span>improve visuals through screenshot review</span></li>
       </ol>
+      <p class="mono micro reveal">23/23 generated adapters present at Codex tree a137de9f &middot; contract checks cover adapter sync &middot; CI exercises the Windows project generator end to end</p>
     </div>
   </section>
 
   <!-- 05 -->
-  <section class="sec sec-05" id="s05">
+  <section class="sec sec-04" id="principles">
+    <span class="anchor-alias" id="s04" aria-hidden="true"></span>
     <span class="ghost" aria-hidden="true">05</span>
     <div class="sec-body">
-      <span class="gtag mono" aria-hidden="true"><b>INSTALL</b> &middot; MIT &middot; GitHub template</span>
-      <h2 class="reveal">Flash it</h2>
+      <span class="gtag mono"><b>WHAT MAKES IT POWERFUL</b></span>
+      <h2 class="reveal">Built to improve with use</h2>
+      <p class="copy reveal">The repo keeps what works. Every improvement stays visible, reviewable, and easy to undo.</p>
+      <ol class="practices reveal" aria-label="Retain, recall, correct, initialize, adapt, sync, verify">
+        <li data-stage="01 / RETAIN">
+          <b>Project facts live in the repo</b>
+          <span>Architecture, commands, deployment details, and pitfalls survive every session.</span>
+        </li>
+        <li data-stage="02 / RECALL">
+          <b>The right lesson comes back</b>
+          <span><strong><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/recall/SKILL.md">/recall</a></strong> finds and cites the relevant file. It saves new lessons in the right place.</span>
+        </li>
+        <li data-stage="03 / CORRECT">
+          <b>Fix the workflow, not just the output</b>
+          <span><strong><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/refine/SKILL.md">/refine</a></strong> turns recurring friction into one small, reversible change.</span>
+        </li>
+        <li data-stage="04 / INITIALIZE">
+          <b>New repos start from facts</b>
+          <span><strong><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/init-project/SKILL.md">/init-project</a></strong> reads the stack, asks only what it cannot infer, and removes irrelevant setup.</span>
+        </li>
+        <li data-stage="05 / ADAPT">
+          <b>Write each skill once</b>
+          <span>Claude stays canonical. Generated Codex adapters add runtime-specific discovery and safety rules.</span>
+        </li>
+        <li data-stage="06 / SYNC">
+          <b>Share fixes without erasing local rules</b>
+          <span><strong><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/sync-starter/SKILL.md">/sync-starter</a></strong> moves generic improvements while protecting project-specific memory.</span>
+        </li>
+        <li data-stage="07 / VERIFY">
+          <b>Use fresh eyes for hard work</b>
+          <span><strong><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/long-horizon/SKILL.md">long-horizon</a></strong>, <strong><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/impartial-review/SKILL.md">impartial-review</a></strong>, and <strong><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/wow-loop/SKILL.md">wow-loop</a></strong> add independent checks when the runtime supports them.</span>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section class="sec sec-06" id="runtimes">
+    <span class="anchor-alias" id="s06" aria-hidden="true"></span>
+      <span class="ghost" aria-hidden="true">06</span>
+    <div class="sec-body">
+      <span class="gtag mono"><b>ONE PLAYBOOK SOURCE</b> &middot; TWO RUNTIME BOUNDARIES</span>
+      <h2 class="reveal">One source, two honest adapters</h2>
+      <div class="tubes-stage reveal">
+        <div class="tubes-visual">
+          <img class="bake" src="/harness-firmware/fallback/tubes.png" alt="One canonical green playbook source splitting into two dithered traces that terminate at separate Claude Code and Codex runtime boundaries" width="1200" height="480" loading="lazy" decoding="async">
+          <span class="face-tag mono tag-a" aria-hidden="true">CC</span>
+          <span class="face-tag mono tag-b" aria-hidden="true">CX</span>
+        </div>
+        <span class="tube-label mono tube-src" aria-hidden="true">rev d9cd99f5 &middot; one source</span>
+        <span class="tube-label mono tube-a" aria-hidden="true">CLAUDE CODE<i>canonical workflows</i><b>9,355 B &middot; native hooks</b></span>
+        <span class="tube-label mono tube-b" aria-hidden="true">CODEX<i>generated adapters</i><b>7,206 B &middot; capability-gated</b></span>
+      </div>
+      <p class="copy reveal">Write each skill once. Harness generates the Codex adapters, but keeps runtime-specific hooks and limits explicit. All 23 adapters are present and total <span data-stat>31,801 B</span>. <span data-stat>rev d9cd99f5 &middot; canonical tree 503356de &middot; Codex tree a137de9f</span></p>
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section class="sec sec-05" id="flash">
+    <span class="anchor-alias" id="s05" aria-hidden="true"></span>
+      <span class="ghost" aria-hidden="true">07</span>
+    <div class="sec-body">
+      <span class="gtag mono"><b>FLASH IT</b> &middot; MIT &middot; GitHub template</span>
+      <h2 class="reveal">Start warm</h2>
       <div class="slabs">
         <article class="slab slab-wide reveal">
-          <h3 class="mono slab-title">NEW REPO &middot; New-ClaudeProject-UI.cmd</h3>
+          <h3 class="mono slab-title">NEW REPO &middot; NEW PROJECT LAUNCHER</h3>
           <figure class="console" id="spinup-demo">
             <div class="console-body mono" data-replay>
-              <p class="ln dim">project name: my-app &middot; destination: C:&#92;Users&#92;you&#92;code</p>
-              <p class="ln">gh CLI detected and authenticated</p>
+              <p class="ln dim">launcher: Windows or macOS &middot; project name: my-app</p>
+              <p class="ln">existing GitHub CLI login detected</p>
               <p class="ln">Creating private repo 'my-app' from template <span class="nb">ryanportfolio/Harness-Firmware</span> ...</p>
               <p class="ln cmd">&gt; gh repo create my-app --template <span class="nb">ryanportfolio/Harness-Firmware</span> --private --clone</p>
               <p class="ln dim">Stripping template-only files and replacing README ...</p>
               <p class="ln cmd">&gt; git -C my-app push -q</p>
               <p class="ln keep">DONE. Private repo created, cloned, and pushed</p>
-              <p class="ln">next: open it in Claude Code &middot; run <code>/init-project</code></p>
+              <p class="ln">next: open it in Claude Code &middot; run <code><strong><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/init-project/SKILL.md">/init-project</a></strong></code></p>
             </div>
           </figure>
-          <p class="mono micro slab-note">a standalone ZIP from the repo: run it once, it creates and clones each new project<br>Windows only. On macOS or Linux, use <a href="https://github.com/ryanportfolio/Harness-Firmware">the template button</a> on GitHub instead</p>
+          <p class="mono micro slab-note"><a href="/harness-firmware/new/">create from the web</a> or <a href="https://github.com/ryanportfolio/Harness-Firmware#full-template">get the local launcher</a> for Windows and macOS &middot; the local launcher reuses your signed-in GitHub CLI session</p>
         </article>
         <article class="slab reveal">
           <h3 class="mono slab-title">SKILLS ONLY &middot; EXISTING REPO</h3>
           <pre class="mono slab-code"><code>/plugin marketplace add <span class="nb">ryanportfolio/Harness-Firmware</span>
 /plugin install <span class="nb">claude-starter@claude-starter</span></code></pre>
-          <p class="mono micro slab-note">installs 20 skills &middot; 171 KiB on call</p>
+          <p class="mono micro slab-note">installs 23 skills &middot; 184 KiB across the main skill files</p>
           <p class="mono micro slab-note">names: <b>Harness Firmware</b> is the template &middot; <b>claude-starter</b> is its plugin on the marketplace &middot; <b>fullbuild.ai</b> is the site you are on</p>
         </article>
       </div>
-      <p class="copy reveal">You need Claude Code or Codex installed, and the GitHub CLI signed in. One run gives you a private repo, cloned and ready; <span data-stat>/init-project</span> then fills in the project-specific rules and checks the setup. Or add just the skills to a repo you already have.</p>
+      <p class="copy reveal">Use the template for the full system. Run <strong><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/init-project/SKILL.md">/init-project</a></strong> to fill in the repo facts. Use the plugin commands when an existing repo only needs the Claude Code skills.</p>
     </div>
   </section>
 
-  <!-- 06 -->
-  <section class="sec sec-06" id="s06">
-    <span class="ghost" aria-hidden="true">06</span>
+  <!-- 08 -->
+  <section class="sec sec-faq" id="faq">
+    <span class="ghost" aria-hidden="true">08</span>
     <div class="sec-body">
-      <span class="gtag mono" aria-hidden="true"><b>RUNTIMES</b></span>
-      <h2 class="reveal">Works in Claude Code and Codex</h2>
-      <div class="tubes-stage reveal">
-        <img class="bake" src="/harness-firmware/fallback/tubes.png" alt="One green firmware core splitting into two dithered traces that terminate in two labeled tube faces: Claude Code and Codex" width="1200" height="480">
-        <span class="tube-label mono tube-src" aria-hidden="true">rev 5224beb &middot; one image</span>
-        <span class="face-tag mono tag-a" aria-hidden="true">CC</span>
-        <span class="face-tag mono tag-b" aria-hidden="true">CX</span>
-        <span class="tube-label mono tube-a" aria-hidden="true">CLAUDE CODE<i>reads it raw</i><b>resident 8,317 B</b></span>
-        <span class="tube-label mono tube-b" aria-hidden="true">CODEX<i>generated adapters</i><b>resident 8,317 B</b></span>
+      <span class="gtag mono"><b>BEFORE YOU FLASH</b> &middot; OPERATIONAL ANSWERS</span>
+      <h2 class="reveal">Questions the repo answers</h2>
+      <div class="faq-list reveal">
+        <details>
+          <summary>How much context does it add?</summary>
+          <p>Up to <span data-stat>9,355 bytes</span> (about <span data-stat>2,339 tokens</span>) for Claude Code and <span data-stat>7,206 bytes</span> (about <span data-stat>1,802 tokens</span>) for Codex. Tool catalogs and runtime-added context are not included.</p>
+        </details>
+        <details>
+          <summary>How does memory persist?</summary>
+          <p><strong><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/recall/SKILL.md">/recall</a></strong> saves lessons in the repo and brings them back when a later task needs them.</p>
+        </details>
+        <details>
+          <summary>Which runtimes use the same source?</summary>
+          <p>Claude holds the canonical skill. A repo script generates the Codex adapter. Runtime-specific rules stay separate.</p>
+        </details>
+        <details>
+          <summary>What does 184 KiB count?</summary>
+          <p>The 23 canonical SKILL.md files total 184 KiB. Their <span data-stat>162,181 B</span> of support files and <span data-stat>31,801 B</span> of generated Codex adapters are separate.</p>
+        </details>
+        <details>
+          <summary>Can I use it in an existing repo?</summary>
+          <p>Yes. The marketplace commands add the Claude Code skills. Use the template when the repo also needs Codex adapters, references, and sync wiring.</p>
+        </details>
+        <details>
+          <summary>What do I need installed?</summary>
+          <p>The web creator only needs GitHub. The local Windows and macOS launcher needs Node and Git. An authenticated GitHub CLI session makes private repo creation automatic.</p>
+        </details>
+        <details>
+          <summary>Does it use my existing GitHub login?</summary>
+          <p>Locally, yes. The launcher reuses your existing GitHub CLI login. On the web, you authorize the Harness GitHub App once, then later projects can be created in one step.</p>
+        </details>
       </div>
-      <p class="copy reveal">One set of files drives both. A script in the repo regenerates the Codex adapters whenever a skill changes, so there is no second copy to keep in sync. <span data-stat>rev 5224beb &middot; tree 97530c9e</span></p>
     </div>
+  </section>
+
+  <section class="final-call" aria-label="Use the Harness Firmware template">
+    <p class="mono">POWER-ON &middot; NEW PROJECT &middot; MIT</p>
+    <h2>Boot the next repo warm</h2>
+    <a class="cta" href="/harness-firmware/new/">CREATE A PROJECT &rarr;</a>
   </section>
 
 </main>
 
 <footer class="exit">
-  <p class="mono exitline"><span class="volatile nb">power-off &middot; context cleared</span> <span class="retained nb">memory retained &middot; next boot warm</span></p>
+  <p class="mono exitline"><span class="volatile nb">power-off &middot; context cleared</span> <span class="retained nb">repo knowledge retained &middot; <strong><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills/recall/SKILL.md">recall</a></strong> on the next relevant task</span></p>
   <div class="footnotes mono micro">
-    <span>every figure here is measured from the repo, not estimated &middot; the dot grain is seeded from rev 5224beb</span>
-    <span data-stat>measured 2026-07-30 &middot; git objects at rev 5224beb &middot; image end 0x2ABFE &middot; &approx;4 bytes/token</span>
+    <span>byte figures come from repo Git objects &middot; token figures use an approximate four-character conversion &middot; 184 KiB counts the 23 main SKILL.md files; support files are separate</span>
+    <span data-stat>measured 2026-08-11 &middot; git objects at rev d9cd99f5 &middot; dot grain seeded from that revision</span>
     <span>built and maintained at fullbuild.ai &middot; <a href="https://github.com/ryanportfolio/Harness-Firmware">github.com/ryanportfolio/Harness-Firmware</a> &middot; MIT</span>
     <span>set in Unbounded, an open-licensed typeface</span>
   </div>
