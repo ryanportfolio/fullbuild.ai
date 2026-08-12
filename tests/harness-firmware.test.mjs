@@ -172,6 +172,13 @@ test("every figure rendered on the page matches facts.json", async () => {
   assert.ok(!html.includes("9.1 KiB resident every turn"), "runtime maximum is not presented as universal");
   assert.ok(html.includes("Built for Claude Code and Codex"), "runtime heading names the supported agents directly");
   assert.ok(html.includes('href="https://savetokens.tips"'), "context proof links to SaveTokens guidance");
+  assert.ok(!html.includes("SCROLL &middot; THE BEAM FOLLOWS"), "hero does not explain its scroll effect");
+  assert.ok(!html.includes("green = written to the repo") && !html.includes("blue = only in the live session"), "hero omits the colour decoder");
+  assert.match(
+    html,
+    /<a class="hero-reference mono" href="#context-architecture"><strong>REFERENCES<\/strong> &middot; repo facts read when needed &rarr;<\/a>/,
+    "hero explains references in one linked line",
+  );
 
   assert.ok(html.includes("ILLUSTRATIVE MEMORY FLOW"), "hypothetical replay is labelled illustrative");
   assert.ok(

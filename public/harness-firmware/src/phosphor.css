@@ -239,31 +239,24 @@ summary:focus-visible,
   color: color-mix(in srgb, var(--bone) 88%, transparent);
 }
 .hero-sub b { font-weight: 600; color: var(--bone); }
-/* the decoder ring: two words and the whole colour law is legible */
 .hero-note {
   margin-top: 24px;
   font-size: 12px;
   color: color-mix(in srgb, var(--bone) 68%, transparent);
 }
-.key {
+.hero-reference {
+  width: fit-content;
   margin-top: 16px;
+  padding-bottom: 4px;
+  color: color-mix(in srgb, var(--bone) 68%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--bone) 30%, transparent);
   font-size: 12px;
-  display: flex;
-  gap: 26px;
-  flex-wrap: wrap;
+  letter-spacing: 0.08em;
+  text-decoration: none;
 }
-.key span::before {
-  content: "";
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-right: 9px;
-  vertical-align: 1px;
-}
-.k-green { color: color-mix(in srgb, var(--bone) 62%, transparent); }
-.k-green::before { background: var(--green); }
-.k-blue { color: color-mix(in srgb, var(--bone) 62%, transparent); }
-.k-blue::before { background: var(--blue); }
+.hero-reference strong { color: var(--green); font-weight: 700; }
+.hero-reference:hover,
+.hero-reference:focus-visible { color: var(--blue); border-bottom-color: var(--blue); }
 .hero-row {
   margin-top: 36px;
   display: flex;
@@ -311,25 +304,12 @@ summary:focus-visible,
   letter-spacing: 0.14em;
   color: color-mix(in srgb, var(--bone) 60%, transparent);
 }
-.hero-scroll {
-  position: absolute;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 11px;
-  letter-spacing: 0.2em;
-  color: color-mix(in srgb, var(--bone) 60%, transparent);
-}
-.hero-scroll .rm { display: none; }
-.no-js .hero-scroll .m { display: none; }
-.no-js .hero-scroll .rm { display: inline; }
-
 @media (max-height: 760px) and (min-width: 701px) {
   .hero-title { font-size: clamp(48px, 10.5vw, 150px); }
   .hero-sub { margin-top: 20px; }
   .hero-row { margin-top: 24px; }
   .hero-note { display: none; }
-  .key { margin-top: 14px; }
+  .hero-reference { margin-top: 14px; }
 }
 @media (max-height: 700px) and (max-width: 700px) {
   .hero-note { display: none; }
@@ -1196,8 +1176,6 @@ h2.excited { color: var(--blue); transition: none; } /* the beam passes */
   .readout .tick { animation: none; }
   .hero-title { transition: none; }
   .js-replay .ln { opacity: 1; }
-  .hero-scroll .m { display: none; }
-  .hero-scroll .rm { display: inline; }
   * { transition-duration: 0.001s !important; }
 }
 
