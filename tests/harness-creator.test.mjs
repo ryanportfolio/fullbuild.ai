@@ -49,7 +49,7 @@ test('creator motion has static and reduced-motion meaning', async () => {
   assert.equal((html.match(/class="input-shell"/g) ?? []).length, 2);
   assert.equal((html.match(/class="type-cue" aria-hidden="true">TYPE/g) ?? []).length, 2);
   assert.match(css, /@keyframes input-caret/);
-  assert.match(css, /\.input-shell input:focus[\s\S]*?outline:\s*1px solid var\(--blue\)/);
+  assert.match(css, /\.input-shell:focus-within input[\s\S]*?outline:\s*1px solid var\(--blue\)/);
   assert.match(css, /\.input-shell input:not\(:placeholder-shown\) \+ \.type-cue\s*\{\s*opacity:\s*0/);
   assert.ok(!css.includes('linear-gradient'));
   assert.ok(!css.includes('radial-gradient'));
