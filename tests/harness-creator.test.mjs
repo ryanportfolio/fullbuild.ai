@@ -39,10 +39,18 @@ test('creator copy and skill links follow the product contract', async () => {
 });
 
 test('creator motion has static and reduced-motion meaning', async () => {
-  const css = await read('public/harness-firmware/new/new-project.css');
+  const [html, css] = await Promise.all([
+    read('public/harness-firmware/new/index.html'),
+    read('public/harness-firmware/new/new-project.css'),
+  ]);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
   assert.match(css, /\.packet-a\s*\{\s*transform:/);
   assert.match(css, /\.install-line\s*\{\s*opacity:\s*1/);
+  assert.equal((html.match(/class="input-shell"/g) ?? []).length, 2);
+  assert.equal((html.match(/class="type-cue" aria-hidden="true">TYPE/g) ?? []).length, 2);
+  assert.match(css, /@keyframes input-caret/);
+  assert.match(css, /\.input-shell input:focus[\s\S]*?outline:\s*1px solid var\(--blue\)/);
+  assert.match(css, /\.input-shell input:not\(:placeholder-shown\) \+ \.type-cue\s*\{\s*opacity:\s*0/);
   assert.ok(!css.includes('linear-gradient'));
   assert.ok(!css.includes('radial-gradient'));
   assert.ok(!css.includes('backdrop-filter'));
