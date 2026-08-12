@@ -20,7 +20,7 @@
 <meta name="twitter:description" content="Each repo gets its own memory system, reusable workflows, and support for Claude Code and Codex.">
 <meta name="twitter:image" content="https://fullbuild.ai/harness-firmware/assets/og.png">
 <meta name="twitter:image:alt" content="Harness Firmware BOOTS WARM graphic showing a repo-resident operating layer for coding agents.">
-<link rel="stylesheet" href="/harness-firmware/src/phosphor.css?v=20260811f">
+<link rel="stylesheet" href="/harness-firmware/src/phosphor.css?v=20260812a">
 <script type="module" src="/harness-firmware/src/phosphor.js?v=20260811d"></script>
 </head>
 <body>
@@ -143,7 +143,7 @@
 
       <div class="creator-sequence reveal" aria-label="Three steps from project name to ready repository">
         <article class="creator-card">
-          <div class="creator-visual">
+          <a class="creator-visual creator-link" href="/harness-firmware/new/" aria-label="Open the Harness Firmware web project creator">
             <svg viewBox="0 0 420 280" role="img" aria-label="The New Project launcher asks for a project name and destination">
               <g class="creator-grid"><path d="M20 28H400M20 78H400M20 128H400M20 178H400M20 228H400"/><path d="M54 16V264M114 16V264M174 16V264M234 16V264M294 16V264M354 16V264"/></g>
               <rect class="launcher-shell" x="52" y="36" width="316" height="208"/>
@@ -157,7 +157,8 @@
               <rect class="launcher-go create-anim" x="262" y="188" width="82" height="34"/>
               <text class="creator-go-text" x="278" y="210">CREATE</text>
             </svg>
-          </div>
+            <span class="creator-open mono">OPEN WEB CREATOR <b aria-hidden="true">&rarr;</b></span>
+          </a>
           <span class="mono">STEP 01 &middot; NAME IT</span>
           <b>Pick a name and folder</b>
           <p>The same launcher works on Windows and macOS. The web path starts from GitHub.</p>
@@ -357,9 +358,63 @@
   </section>
 
   <!-- 05 -->
+  <section class="sec sec-context" id="context-architecture">
+    <span class="ghost" aria-hidden="true">05</span>
+    <div class="sec-body">
+      <span class="gtag mono"><b>CONTEXT ARCHITECTURE</b> &middot; SMALL ROOTS &middot; FOCUSED SUBFILES</span>
+      <div class="context-head">
+        <h2 class="reveal">Load only what the work needs</h2>
+        <div>
+          <p class="copy reveal"><a class="root-file-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/CLAUDE.md"><strong>CLAUDE.md</strong></a> and <a class="root-file-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/AGENTS.md"><strong>AGENTS.md</strong></a> stay small. They point each agent to focused project files only when the work needs them.</p>
+          <a class="context-cta mono reveal" href="https://savetokens.tips">HOW WE OPTIMIZE CONTEXT &rarr;</a>
+        </div>
+      </div>
+
+      <div class="context-stage reveal" aria-label="Root instructions route coding agents to focused references and skills on demand">
+        <div class="context-roots">
+          <span class="context-stage-label mono">SESSION START &middot; ALWAYS LOADED</span>
+          <div class="context-root-grid">
+            <a class="context-file context-root" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/CLAUDE.md">
+              <small class="mono">CLAUDE CODE</small>
+              <span class="context-file-name">CLAUDE.md</span>
+              <em>Core rules and routing index</em>
+            </a>
+            <a class="context-file context-root" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/AGENTS.md">
+              <small class="mono">CODEX</small>
+              <span class="context-file-name">AGENTS.md</span>
+              <em>Runtime-specific boundary</em>
+            </a>
+          </div>
+        </div>
+
+        <div class="context-router context-router-in" aria-hidden="true"><i></i></div>
+        <div class="context-index">
+          <small class="mono">ROUTING LAW</small>
+          <b>Match the task, then open the relevant file</b>
+        </div>
+        <div class="context-router context-router-out" aria-hidden="true"><i></i></div>
+
+        <div class="context-library">
+          <span class="context-stage-label mono">REFERENCES + SKILLS &middot; LOADED WHEN MATCHED</span>
+          <div class="context-file-grid">
+            <a class="context-file" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/reference/architecture.md"><span class="context-file-name">architecture.md</span><em>system map</em></a>
+            <a class="context-file" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/reference/commands.md"><span class="context-file-name">commands.md</span><em>build and test</em></a>
+            <a class="context-file" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/reference/deployment.md"><span class="context-file-name">deployment.md</span><em>release facts</em></a>
+            <a class="context-file" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/reference/pitfalls.md"><span class="context-file-name">pitfalls.md</span><em>hard-won lessons</em></a>
+            <a class="context-file" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/reference/secrets.md"><span class="context-file-name">secrets.md</span><em>safe secret map</em></a>
+            <a class="context-file" href="https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/reference/tech-stack.md"><span class="context-file-name">tech-stack.md</span><em>tools and versions</em></a>
+            <a class="context-file" href="https://github.com/ryanportfolio/Harness-Firmware/tree/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills"><span class="context-file-name">SKILL.md</span><em>task workflows</em></a>
+          </div>
+        </div>
+      </div>
+      <p class="context-note mono reveal">ROOT RULES STAY SHORT &middot; REPO FACTS LIVE IN REFERENCES &middot; WORKFLOW DETAIL LOADS ON DEMAND</p>
+    </div>
+  </section>
+
+  <!-- 06 -->
   <section class="sec sec-04" id="principles">
     <span class="anchor-alias" id="s04" aria-hidden="true"></span>
-    <span class="ghost" aria-hidden="true">05</span>
+    <span class="ghost" aria-hidden="true">06</span>
     <div class="sec-body">
       <span class="gtag mono"><b>WHAT MAKES IT POWERFUL</b></span>
       <h2 class="reveal">Built to improve with use</h2>
@@ -397,31 +452,68 @@
     </div>
   </section>
 
-  <!-- 06 -->
+  <!-- 07 -->
   <section class="sec sec-06" id="runtimes">
     <span class="anchor-alias" id="s06" aria-hidden="true"></span>
-      <span class="ghost" aria-hidden="true">06</span>
+      <span class="ghost" aria-hidden="true">07</span>
     <div class="sec-body">
-      <span class="gtag mono"><b>ONE PLAYBOOK SOURCE</b> &middot; TWO RUNTIME BOUNDARIES</span>
-      <h2 class="reveal">One source, two honest adapters</h2>
-      <div class="tubes-stage reveal">
-        <div class="tubes-visual">
-          <img class="bake" src="/harness-firmware/fallback/tubes.png" alt="One canonical green playbook source splitting into two dithered traces that terminate at separate Claude Code and Codex runtime boundaries" width="1200" height="480" loading="lazy" decoding="async">
-          <span class="face-tag mono tag-a" aria-hidden="true">CC</span>
-          <span class="face-tag mono tag-b" aria-hidden="true">CX</span>
-        </div>
-        <span class="tube-label mono tube-src" aria-hidden="true">rev d9cd99f5 &middot; one source</span>
-        <span class="tube-label mono tube-a" aria-hidden="true">CLAUDE CODE<i>canonical workflows</i><b>9,355 B &middot; native hooks</b></span>
-        <span class="tube-label mono tube-b" aria-hidden="true">CODEX<i>generated adapters</i><b>7,206 B &middot; capability-gated</b></span>
-      </div>
-      <p class="copy reveal">Write each skill once. Harness generates the Codex adapters, but keeps runtime-specific hooks and limits explicit. All 23 adapters are present and total <span data-stat>31,801 B</span>. <span data-stat>rev d9cd99f5 &middot; canonical tree 503356de &middot; Codex tree a137de9f</span></p>
+      <span class="gtag mono"><b>RUNTIME SUPPORT</b> &middot; SHARED SYSTEM &middot; EXPLICIT ADAPTERS</span>
+      <h2 class="reveal">Built for Claude Code and Codex</h2>
+      <figure class="runtime-stage reveal">
+        <svg class="runtime-map" viewBox="0 0 760 430" role="img" aria-labelledby="runtime-title runtime-desc">
+          <title id="runtime-title">Harness Firmware supports Claude Code and Codex from one canonical skill source</title>
+          <desc id="runtime-desc">Twenty-three canonical workflows pass through a runtime adapter and reach separate Claude Code and Codex setups with different measured resident sizes.</desc>
+          <g class="runtime-grid" aria-hidden="true"><path d="M24 36H736M24 92H736M24 148H736M24 204H736M24 260H736M24 316H736M24 372H736"/><path d="M64 20V410M144 20V410M224 20V410M304 20V410M384 20V410M464 20V410M544 20V410M624 20V410M704 20V410"/></g>
+          <path class="runtime-route runtime-route-in" d="M252 215H326"/>
+          <path class="runtime-route runtime-route-out" d="M404 215H446V117H488M446 215V313H488"/>
+
+          <g class="runtime-card runtime-source">
+            <path d="M42 124H226L252 150V306H42Z"/>
+            <path class="runtime-card-rule" d="M60 164H224"/>
+            <text class="runtime-label" x="60" y="154">CANONICAL</text>
+            <text class="runtime-title" x="60" y="202">SKILL SOURCE</text>
+            <text class="runtime-copy" x="60" y="232">WRITE ONCE</text>
+            <text class="runtime-meta" x="60" y="270">23 WORKFLOWS</text>
+          </g>
+
+          <g class="runtime-router">
+            <rect x="326" y="176" width="78" height="78"/>
+            <path d="M344 195H386M344 213H386M344 231H374"/>
+            <text x="346" y="272">ADAPT PER RUNTIME</text>
+          </g>
+
+          <g class="runtime-card runtime-target">
+            <path d="M488 48H692L718 74V186H488Z"/>
+            <path class="runtime-card-rule" d="M508 88H690"/>
+            <text class="runtime-label" x="508" y="78">RUNTIME 01</text>
+            <text class="runtime-title" x="508" y="122">CLAUDE CODE</text>
+            <text class="runtime-copy" x="508" y="150">CANONICAL WORKFLOWS</text>
+            <text class="runtime-meta" x="508" y="174">9,355 B MAX RESIDENT</text>
+          </g>
+
+          <g class="runtime-card runtime-target">
+            <path d="M488 244H692L718 270V382H488Z"/>
+            <path class="runtime-card-rule" d="M508 284H690"/>
+            <text class="runtime-label" x="508" y="274">RUNTIME 02</text>
+            <text class="runtime-title" x="508" y="318">CODEX</text>
+            <text class="runtime-copy" x="508" y="346">GENERATED ADAPTERS</text>
+            <text class="runtime-meta" x="508" y="370">7,206 B RESIDENT</text>
+          </g>
+
+          <rect class="runtime-packet runtime-packet-in runtime-anim" x="268" y="208" width="14" height="14"/>
+          <rect class="runtime-packet runtime-packet-a runtime-anim" x="450" y="110" width="14" height="14"/>
+          <rect class="runtime-packet runtime-packet-b runtime-anim" x="450" y="306" width="14" height="14"/>
+        </svg>
+        <figcaption class="mono">FIG 07 &middot; ONE PLAYBOOK SOURCE &middot; RUNTIME-SPECIFIC SETUP</figcaption>
+      </figure>
+      <p class="copy reveal">Write each skill once. Harness keeps Claude canonical and generates Codex adapters with runtime-specific rules. All 23 adapters are present. <span data-stat>rev d9cd99f5 &middot; canonical tree 503356de &middot; Codex tree a137de9f</span></p>
     </div>
   </section>
 
-  <!-- 07 -->
+  <!-- 08 -->
   <section class="sec sec-05" id="flash">
     <span class="anchor-alias" id="s05" aria-hidden="true"></span>
-      <span class="ghost" aria-hidden="true">07</span>
+      <span class="ghost" aria-hidden="true">08</span>
     <div class="sec-body">
       <span class="gtag mono"><b>FLASH IT</b> &middot; MIT &middot; GitHub template</span>
       <h2 class="reveal">Start warm</h2>
@@ -454,9 +546,9 @@
     </div>
   </section>
 
-  <!-- 08 -->
+  <!-- 09 -->
   <section class="sec sec-faq" id="faq">
-    <span class="ghost" aria-hidden="true">08</span>
+    <span class="ghost" aria-hidden="true">09</span>
     <div class="sec-body">
       <span class="gtag mono"><b>BEFORE YOU FLASH</b> &middot; OPERATIONAL ANSWERS</span>
       <h2 class="reveal">Questions the repo answers</h2>

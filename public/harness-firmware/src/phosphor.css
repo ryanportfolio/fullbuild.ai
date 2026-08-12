@@ -567,7 +567,7 @@ h2.excited { color: var(--blue); transition: none; } /* the beam passes */
 }
 #runtimes .gtag { grid-area: tag; align-self: start; }
 #runtimes h2 { grid-area: title; max-width: 8ch; align-self: end; }
-#runtimes .tubes-stage { grid-area: art; }
+#runtimes .runtime-stage { grid-area: art; }
 #runtimes .copy { grid-area: copy; margin-top: 0; align-self: start; }
 
 #flash {
@@ -629,7 +629,7 @@ h2.excited { color: var(--blue); transition: none; } /* the beam passes */
 .js-replay .ln.cur::after { content: "\258D"; margin-left: 2px; }
 
 /* ---------- 02 halo ---------- */
-.halo-stage, .tubes-stage, .tubes-visual, .spectrum-stage { position: relative; }
+.halo-stage, .runtime-stage, .spectrum-stage { position: relative; }
 .bake {
   display: block;
   width: 100%;
@@ -863,33 +863,58 @@ h2.excited { color: var(--blue); transition: none; } /* the beam passes */
 }
 .slab .nb { white-space: normal; overflow-wrap: anywhere; }
 
-/* ---------- 06 tubes ---------- */
-.tube-label {
-  position: absolute;
-  font-size: 13px;
-  letter-spacing: 0.16em;
-  color: var(--bone);
+/* ---------- 07 runtime map ---------- */
+.runtime-stage {
+  padding: 14px;
+  border: 8px solid transparent;
+  border-image: var(--hatch) 8 repeat;
+  background-color: color-mix(in srgb, var(--residue) 34%, var(--glass));
+  background-image: var(--grid-glass);
 }
-.tube-src { left: 3%; top: 48%; color: color-mix(in srgb, var(--bone) 64%, transparent); font-size: 11px; }
-.tube-a { left: 72.2%; top: 13%; }
-.tube-b { left: 72.2%; top: 62%; }
-.tube-label i {
-  display: block;
-  font-style: normal;
+.runtime-map { display: block; width: 100%; height: auto; overflow: visible; }
+.runtime-grid path { fill: none; stroke: var(--bone); stroke-width: 1; stroke-opacity: 0.07; }
+.runtime-route {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 2;
+  stroke-dasharray: 7 7;
+}
+.runtime-card > path:first-child {
+  fill: color-mix(in srgb, var(--glass) 88%, transparent);
+  stroke: color-mix(in srgb, var(--bone) 72%, transparent);
+  stroke-width: 1.5;
+}
+.runtime-card.runtime-source > path:first-child { stroke: var(--green); }
+.runtime-card-rule { fill: none; stroke: var(--bone); stroke-width: 1; stroke-opacity: 0.28; }
+.runtime-label { fill: var(--blue); font: 10px var(--mono); letter-spacing: 0.15em; }
+.runtime-title { fill: var(--bone); font: 700 18px var(--display); letter-spacing: -0.02em; }
+.runtime-copy { fill: color-mix(in srgb, var(--bone) 68%, transparent); font: 11px var(--mono); letter-spacing: 0.1em; }
+.runtime-meta { fill: var(--green); font: 11px var(--mono); letter-spacing: 0.08em; }
+.runtime-router rect { fill: var(--glass); stroke: var(--blue); stroke-width: 1.5; }
+.runtime-router path { fill: none; stroke: var(--blue); stroke-width: 2; stroke-opacity: 0.7; }
+.runtime-router text { fill: var(--blue); font: 11px var(--mono); letter-spacing: 0.08em; text-anchor: middle; }
+.runtime-packet { fill: var(--blue); }
+.runtime-stage figcaption {
+  padding-top: 12px;
+  color: color-mix(in srgb, var(--bone) 62%, transparent);
   font-size: 11px;
-  letter-spacing: 0.08em;
-  color: color-mix(in srgb, var(--bone) 64%, transparent);
-  margin-top: 4px;
+  letter-spacing: 0.12em;
+  text-align: center;
 }
-.tube-label b {
-  display: block;
-  font-weight: 400;
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  color: var(--green);
-  margin-top: 64px; /* clear of the trace landing on the face-center dot */
+@keyframes runtime-route-in {
+  0%, 10% { transform: translateX(0); opacity: 0.2; }
+  42%, 72% { transform: translateX(31px); opacity: 1; }
+  100% { transform: translateX(0); opacity: 0.2; }
 }
-.face-tag { display: none; }
+@keyframes runtime-route-out {
+  0%, 34% { transform: translateX(0); opacity: 0.2; }
+  66%, 84% { transform: translateX(27px); opacity: 1; }
+  100% { transform: translateX(0); opacity: 0.2; }
+}
+.runtime-packet-in { animation: runtime-route-in 5.8s var(--ease) infinite; }
+.runtime-packet-a,
+.runtime-packet-b { animation: runtime-route-out 5.8s var(--ease) infinite; }
+.runtime-packet-b { animation-delay: 0.35s; }
 
 /* ---------- operational FAQ ---------- */
 .sec-faq .sec-body {
@@ -1046,33 +1071,13 @@ h2.excited { color: var(--blue); transition: none; } /* the beam passes */
   #runtimes .copy { max-width: 46ch; margin-top: 28px; }
   #action .console,
   #kernel .halo-stage,
-  #runtimes .tubes-stage,
+  #runtimes .runtime-stage,
   .faq-list { margin-top: 36px; }
   #kernel .metrology { margin-top: 14px; }
 
   .skill-list { grid-template-columns: 1fr; }
   .practices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .practices li { grid-column: auto; }
-}
-
-@media (min-width: 701px) and (max-width: 1280px) {
-  #runtimes .tubes-visual .face-tag {
-    display: block;
-    position: absolute;
-    font-size: 12px;
-    color: var(--green);
-    letter-spacing: 0.14em;
-  }
-  #runtimes .tubes-visual .tag-a { left: 73.5%; top: 14%; }
-  #runtimes .tubes-visual .tag-b { left: 73.5%; top: 62%; }
-  #runtimes .tubes-stage .tube-label {
-    position: static;
-    display: block;
-    margin-top: 10px;
-  }
-  #runtimes .tubes-stage .tube-a,
-  #runtimes .tubes-stage .tube-b { margin-top: 14px; }
-  #runtimes .tube-label b { margin-top: 4px; }
 }
 
 @media (max-width: 850px) {
@@ -1116,19 +1121,6 @@ h2.excited { color: var(--blue); transition: none; } /* the beam passes */
   .spectrum-stage { overflow-x: auto; }
   .spectrum-stage img, .spectrum-stage canvas { min-width: 720px; width: 720px; }
   .spectrum-stage .band-labels { min-width: 720px; }
-  .tubes-visual {
-    width: calc(100% + var(--pad-x) + var(--pad-x));
-    margin-left: calc(-1 * var(--pad-x));
-  }
-  .tubes-visual .face-tag {
-    display: block;
-    position: absolute;
-    font-size: 12px;
-    color: var(--green);
-    letter-spacing: 0.14em;
-  }
-  .tubes-visual .tag-a { left: 73.5%; top: 14%; }
-  .tubes-visual .tag-b { left: 73.5%; top: 62%; }
   .slabs { grid-template-columns: 1fr; }
   .console-body { font-size: 12px; }
   .skill-list {
@@ -1149,12 +1141,6 @@ h2.excited { color: var(--blue); transition: none; } /* the beam passes */
   .skill-list b,
   .skill-list span { line-height: 1.35; overflow-wrap: anywhere; }
   .skill-list em { margin-top: auto; font-size: 11px; }
-  .tubes-stage .tube-label {
-    position: static;
-    display: block;
-    margin-top: 12px;
-  }
-  .tube-label b { margin-top: 4px; }
   .exitline .retained { white-space: normal; overflow-wrap: anywhere; }
   .practices { grid-template-columns: 1fr; }
   .practices li { min-height: 0; }
@@ -1674,7 +1660,126 @@ body { background: var(--glass); }
 .capture-frozen .scene-anim,
 .motion-reduced .scene-anim,
 .capture-frozen .create-anim,
-.motion-reduced .create-anim { animation: none !important; }
+.motion-reduced .create-anim,
+.capture-frozen .runtime-anim,
+.motion-reduced .runtime-anim { animation: none !important; }
+
+/* ---------- routed context architecture ---------- */
+.sec-context {
+  color: var(--glass);
+  background-color: var(--paper-kept);
+  background-image: var(--grid-paper);
+  border-bottom-color: var(--rule-ink);
+}
+.sec-context h2 { color: var(--glass); }
+.sec-context .gtag { color: color-mix(in srgb, var(--glass) 66%, transparent); }
+.sec-context .gtag b { color: var(--ink-kept); }
+.sec-context .ghost { color: color-mix(in srgb, var(--residue) 22%, transparent); }
+.context-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.74fr);
+  gap: clamp(34px, 6vw, 92px);
+  align-items: end;
+}
+.context-head h2 { max-width: 10ch; font-size: clamp(48px, 5.8vw, 86px); }
+.context-head .copy { max-width: 38ch; margin: 0; color: color-mix(in srgb, var(--glass) 82%, transparent); }
+.root-file-ref { color: var(--glass); text-underline-offset: 3px; }
+.root-file-ref:hover,
+.root-file-ref:focus-visible { color: var(--ink-kept); }
+.context-cta {
+  display: inline-flex;
+  margin-top: 24px;
+  padding-bottom: 5px;
+  color: var(--ink-kept);
+  border-bottom: 1px solid currentColor;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+}
+.context-cta:hover,
+.context-cta:focus-visible { color: var(--glass); }
+.context-stage {
+  display: grid;
+  grid-template-columns: minmax(230px, 0.76fr) 64px minmax(160px, 0.42fr) 64px minmax(360px, 1.35fr);
+  align-items: stretch;
+  margin-top: clamp(50px, 7vw, 94px);
+  border: 1px solid var(--rule-ink);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+}
+.context-roots,
+.context-library { min-width: 0; padding: clamp(18px, 2vw, 28px); }
+.context-stage-label { display: block; min-height: 30px; color: color-mix(in srgb, var(--glass) 58%, transparent); font-size: 11px; letter-spacing: 0.12em; }
+.context-root-grid,
+.context-file-grid { display: grid; gap: 10px; }
+.context-file-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.context-file {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 72px;
+  flex-direction: column;
+  justify-content: center;
+  padding: 12px 14px;
+  color: var(--glass);
+  border: 1px solid var(--rule-ink);
+  background: var(--paper);
+  text-decoration: none;
+}
+.context-file::after {
+  content: "↗";
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  color: var(--ink-kept);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.context-file:hover,
+.context-file:focus-visible { background: color-mix(in srgb, var(--ink-kept) 13%, var(--paper)); }
+.context-root { min-height: 104px; border-left: 3px solid var(--ink-kept); }
+.context-file small { color: var(--ink-kept); font-size: 11px; letter-spacing: 0.12em; }
+.context-file-name { font-family: var(--display); font-size: clamp(14px, 1.2vw, 17px); font-weight: 650; overflow-wrap: anywhere; }
+.context-root .context-file-name { margin-top: 8px; font-size: clamp(19px, 1.6vw, 24px); }
+.context-file em { margin-top: 5px; color: color-mix(in srgb, var(--glass) 58%, transparent); font: 10px var(--mono); font-style: normal; letter-spacing: 0.04em; }
+.context-index {
+  display: grid;
+  place-content: center;
+  padding: 18px 16px;
+  color: var(--bone);
+  background-color: var(--glass);
+  background-image: var(--grid-glass);
+  text-align: center;
+}
+.context-index small { color: var(--blue); font: 9px var(--mono); letter-spacing: 0.14em; }
+.context-index b { max-width: 14ch; margin-top: 10px; font-family: var(--display); font-size: clamp(13px, 1.15vw, 16px); line-height: 1.35; }
+.context-router { position: relative; min-height: 100%; overflow: hidden; }
+.context-router::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--ink-kept);
+}
+.context-router i {
+  position: absolute;
+  top: calc(50% - 5px);
+  left: 4px;
+  width: 10px;
+  height: 10px;
+  background: var(--blue);
+  animation: context-route 4.8s var(--ease) infinite;
+}
+.context-router-out i { animation-delay: 0.55s; }
+@keyframes context-route {
+  0%, 14% { transform: translateX(0); opacity: 0.2; }
+  54%, 76% { transform: translateX(46px); opacity: 1; background: var(--ink-kept); }
+  100% { transform: translateX(0); opacity: 0.2; }
+}
+.context-note { margin-top: 18px; color: color-mix(in srgb, var(--glass) 58%, transparent); font-size: 11px; letter-spacing: 0.1em; }
+.capture-frozen .context-router i,
+.motion-reduced .context-router i { animation: none !important; transform: translateX(26px); background: var(--ink-kept); opacity: 1; }
 
 /* ---------- new project assembly ---------- */
 #create {
@@ -1715,6 +1820,34 @@ body { background: var(--glass); }
   background-color: color-mix(in srgb, var(--residue) 42%, var(--glass));
   background-image: var(--grid-glass);
 }
+.creator-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.2s var(--ease), background-color 0.2s var(--ease), transform 0.2s var(--ease);
+}
+.creator-link:hover,
+.creator-link:focus-visible {
+  background-color: color-mix(in srgb, var(--green) 18%, var(--glass));
+  outline: 2px solid var(--blue);
+  outline-offset: 4px;
+  transform: translateY(-3px);
+}
+.creator-open {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 2;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  color: var(--glass);
+  background: var(--green);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+.creator-open b { font-size: 13px; }
 .creator-visual svg { display: block; width: 100%; height: auto; overflow: visible; }
 .creator-card > span { display: block; color: var(--green); font-size: 11px; letter-spacing: .16em; }
 .creator-card > b { display: block; margin-top: 8px; font-family: var(--display); font-size: clamp(18px, 1.6vw, 23px); line-height: 1.2; }
@@ -1788,6 +1921,23 @@ body { background: var(--glass); }
 }
 
 @media (max-width: 980px) {
+  .context-head { grid-template-columns: 1fr; align-items: start; }
+  .context-head h2 { max-width: 12ch; }
+  .context-stage { grid-template-columns: 1fr; }
+  .context-router { min-height: 54px; }
+  .context-router::before { top: 0; bottom: 0; left: 50%; right: auto; width: 1px; height: auto; }
+  .context-router i {
+    top: 4px;
+    left: calc(50% - 5px);
+    animation-name: context-route-down;
+  }
+  @keyframes context-route-down {
+    0%, 14% { transform: translateY(0); opacity: 0.2; }
+    54%, 76% { transform: translateY(36px); opacity: 1; background: var(--ink-kept); }
+    100% { transform: translateY(0); opacity: 0.2; }
+  }
+  .capture-frozen .context-router i,
+  .motion-reduced .context-router i { transform: translateY(22px); }
   .hero {
     min-height: auto;
     padding-top: calc(var(--rail-h) + 70px);
@@ -1859,6 +2009,11 @@ body { background: var(--glass); }
   .sequence-card { display: block; }
   .creator-card { display: block; }
   .creator-card .creator-visual { margin-bottom: 20px; }
+  .context-roots,
+  .context-library { padding: 16px; }
+  .context-file-grid { grid-template-columns: 1fr; }
+  .runtime-stage { margin-inline: calc(-1 * var(--pad-x)); padding: 8px; border-width: 6px; }
+  .runtime-stage figcaption { padding-inline: 10px; text-align: left; line-height: 1.5; }
   .sequence-visual { margin-bottom: 20px; }
   #action .console { margin-top: 34px; }
   #skills .spectrum-stage { padding: 12px; }
@@ -1885,5 +2040,7 @@ body { background: var(--glass); }
 
 @media (prefers-reduced-motion: reduce) {
   .scene-anim,
-  .create-anim { animation: none !important; }
+  .create-anim,
+  .runtime-anim,
+  .context-router i { animation: none !important; }
 }

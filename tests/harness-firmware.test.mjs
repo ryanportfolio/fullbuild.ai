@@ -170,6 +170,8 @@ test("every figure rendered on the page matches facts.json", async () => {
   assert.ok(!html.includes("full on-demand skill payload"), "entry-file sum is not called the full payload");
   assert.ok(!html.includes("space each takes on disk"), "entry-file sizes are not called full on-disk sizes");
   assert.ok(!html.includes("9.1 KiB resident every turn"), "runtime maximum is not presented as universal");
+  assert.ok(html.includes("Built for Claude Code and Codex"), "runtime heading names the supported agents directly");
+  assert.ok(html.includes('href="https://savetokens.tips"'), "context proof links to SaveTokens guidance");
 
   assert.ok(html.includes("ILLUSTRATIVE MEMORY FLOW"), "hypothetical replay is labelled illustrative");
   assert.ok(
@@ -267,6 +269,24 @@ test("editorial structure keeps proof, navigation, and controls semantic", async
   assert.ok((creator.match(/class="creator-card"/g) ?? []).length === 3, "creator shows the complete three-step flow");
   assert.match(creator, /WEB &middot; WINDOWS &middot; MACOS/, "creator exposes every launch surface");
   assert.match(creator, /existing GH login/i, "creator explains local GitHub reuse");
+  assert.match(
+    creator,
+    /<a class="creator-visual creator-link" href="\/harness-firmware\/new\/"/,
+    "launcher illustration opens the hosted project creator",
+  );
+
+  const contextStart = html.search(/<section\b(?=[^>]*\bid="context-architecture")[^>]*>/);
+  const contextEnd = html.indexOf("</section>", contextStart);
+  const contextArchitecture = contextStart >= 0 ? html.slice(contextStart, contextEnd) : "";
+  assert.ok(contextArchitecture, "page explains the routed context architecture");
+  assert.match(contextArchitecture, />CLAUDE\.md</, "context diagram names the canonical Claude root file");
+  assert.match(contextArchitecture, />AGENTS\.md</, "context diagram names the Codex root file");
+  assert.match(contextArchitecture, /class="root-file-ref"[^>]+CLAUDE\.md[^>]*><strong>CLAUDE\.md<\/strong>/);
+  assert.match(contextArchitecture, /class="root-file-ref"[^>]+AGENTS\.md[^>]*><strong>AGENTS\.md<\/strong>/);
+  assert.ok(
+    (contextArchitecture.match(/class="context-file/g) ?? []).length >= 8,
+    "context diagram exposes root files and focused references",
+  );
 
   const faqStart = html.search(/<section\b(?=[^>]*\bid="faq")[^>]*>/);
   const faqEnd = html.indexOf("</section>", faqStart);
@@ -277,7 +297,10 @@ test("editorial structure keeps proof, navigation, and controls semantic", async
   assert.match(spectrum, /\btabindex="0"/, "spectrum is keyboard focusable");
   assert.match(spectrum, /\brole="group"/, "spectrum remains a grouped control");
   assert.match(spectrum, /aria-describedby="[^"]*spectrum-help[^"]*spectrum-readout[^"]*"/);
-  assert.ok((html.match(/loading="lazy"/g) ?? []).length >= 3, "lower diagrams lazy-load");
+  const lowerBakes = [...html.matchAll(/<img class="bake"[^>]*>/g)].filter((match) => !match[0].includes("hero"));
+  for (const image of lowerBakes) {
+    assert.match(image[0], /loading="lazy"/, "every lower raster diagram lazy-loads");
+  }
 });
 
 test("runtime exposes deterministic and inclusive interaction paths", async () => {
@@ -363,7 +386,8 @@ test("page is routed, self-contained, and complete without JS", async () => {
       r.startsWith("/")
         || r.startsWith("#")
         || r === "https://fullbuild.ai/harness-firmware"
-        || r.startsWith("https://github.com/ryanportfolio/"),
+        || r.startsWith("https://github.com/ryanportfolio/")
+        || r === "https://savetokens.tips",
       `unexpected external reference: ${r}`,
     );
   }
