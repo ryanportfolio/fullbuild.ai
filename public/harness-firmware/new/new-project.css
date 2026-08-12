@@ -2,7 +2,7 @@
   CREATOR SURFACE CONTRACT
   Palette: phosphor green means action or ready; cyan means route or source; bone is content; coral means failure.
   Type: Unbounded carries outcomes; mono carries controls, state, and measurements.
-  Motion: packets assemble a repo; reduced motion shows the completed assembly.
+  Motion: packets assemble a repo; input ticks mark editable fields; reduced motion shows both ready.
   Bans: gradients, glass, rounded cards, decorative metrics, and generic SaaS chrome.
 */
 
@@ -138,15 +138,56 @@ form { display: grid; gap: 10px; }
 #github-form { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
 #github-form .text-button { grid-column: 1 / -1; }
 .field { display: grid; gap: 8px; min-width: 0; }
-.field label { margin-top: 0; }
+.field label { margin-top: 0; transition: color 140ms linear; }
+.field:focus-within > label { color: var(--blue); }
 #github-form .visibility { grid-column: 1; margin: 0; }
 #github-form .action { grid-column: 2; }
 label { margin-top: 8px; font-size: .68rem; }
 label small { color: var(--muted); }
+.input-shell { position: relative; display: block; min-width: 0; }
+.input-shell::before, .input-shell::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  width: 9px;
+  height: 9px;
+  pointer-events: none;
+  border-color: var(--blue);
+  opacity: .64;
+  transition: opacity 140ms linear, transform 140ms linear;
+}
+.input-shell::before { top: -3px; left: -3px; border-top: 1px solid; border-left: 1px solid; transform-origin: top left; }
+.input-shell::after { right: -3px; bottom: -3px; border-right: 1px solid; border-bottom: 1px solid; transform-origin: bottom right; }
+.type-cue {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 5px;
+  pointer-events: none;
+  color: var(--blue);
+  background: var(--panel);
+  font: 700 .56rem/1 var(--mono);
+  letter-spacing: .12em;
+  transform: translateY(-50%);
+  transition: color 140ms linear, opacity 140ms linear;
+}
+.type-cue > span { width: 5px; height: 9px; background: currentColor; animation: input-caret 1.05s steps(1, end) infinite; }
 input[type="text"], input:not([type]), select {
   width: 100%; min-height: 52px; border: 1px solid var(--line); border-radius: 0; padding: 0 14px; outline: none; color: var(--bone); background: var(--panel);
 }
-input:focus, select:focus { border-color: var(--green); box-shadow: 0 0 0 2px rgba(166, 255, 94, .14); }
+input[type="text"]::placeholder, input:not([type])::placeholder { color: var(--muted); opacity: 1; }
+input[type="text"], input:not([type]) { caret-color: var(--green); cursor: text; transition: border-color 140ms linear, outline-color 140ms linear; }
+.input-shell:hover input { border-color: var(--blue); }
+.input-shell:hover::before, .input-shell:hover::after,
+.input-shell:focus-within::before, .input-shell:focus-within::after { opacity: 1; transform: scale(1.35); }
+.input-shell:focus-within .type-cue { color: var(--green); }
+.input-shell input:not(:placeholder-shown) + .type-cue { opacity: 0; }
+.input-shell input:focus { border-color: var(--blue); outline: 1px solid var(--blue); outline-offset: 2px; box-shadow: none; }
+select:focus { border-color: var(--green); outline: 1px solid var(--green); outline-offset: 2px; box-shadow: none; }
 .visibility { display: flex; gap: 12px; align-items: start; margin: 8px 0; padding: 14px; border: 1px solid var(--line); cursor: pointer; }
 .visibility input { accent-color: var(--green); }
 .visibility span { display: grid; gap: 3px; }
@@ -173,6 +214,7 @@ footer a { color: var(--green); }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes pulse { 45%, 100% { stroke-dashoffset: -120; } }
 @keyframes install { 0%, 42% { opacity: .25; } 43%, 80% { opacity: 1; } 81%, 100% { opacity: .25; } }
+@keyframes input-caret { 0%, 48% { opacity: 1; } 49%, 100% { opacity: 0; } }
 
 @media (min-width: 981px) and (max-width: 1200px) {
   main { grid-template-rows: minmax(330px, .82fr) minmax(0, 1.18fr); }

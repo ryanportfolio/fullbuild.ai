@@ -102,12 +102,18 @@
 
         <div class="field">
           <label for="repo-name">Repository name</label>
-          <input id="repo-name" name="name" placeholder="my-new-project" pattern="[A-Za-z0-9._-]+" required>
+          <span class="input-shell">
+            <input id="repo-name" name="name" placeholder="my-new-project" pattern="[A-Za-z0-9._-]+" required>
+            <span class="type-cue" aria-hidden="true">TYPE<span></span></span>
+          </span>
         </div>
 
         <div class="field">
           <label for="repo-description">Description <small>optional</small></label>
-          <input id="repo-description" name="description" maxlength="350" placeholder="What are you building">
+          <span class="input-shell">
+            <input id="repo-description" name="description" maxlength="350" placeholder="What are you building">
+            <span class="type-cue" aria-hidden="true">TYPE<span></span></span>
+          </span>
         </div>
 
         <label class="visibility" for="repo-private">
