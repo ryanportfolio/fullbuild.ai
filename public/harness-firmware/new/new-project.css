@@ -120,7 +120,7 @@ h1 { max-width: 8ch; margin: 0; font-size: clamp(4rem, 7.5vw, 7.6rem); font-weig
   grid-area: creator;
   display: grid;
   grid-template-columns: minmax(230px, .62fr) minmax(440px, 1.38fr);
-  column-gap: clamp(36px, 6vw, 96px);
+  column-gap: clamp(28px, 4vw, 64px);
   align-items: start;
   align-content: center;
   padding: clamp(24px, 2.5vw, 40px);
@@ -128,7 +128,7 @@ h1 { max-width: 8ch; margin: 0; font-size: clamp(4rem, 7.5vw, 7.6rem); font-weig
 }
 .panel-head { grid-column: 1; grid-row: 1 / span 6; }
 .panel-head p { margin: 0 0 8px; color: var(--blue); font-size: .7rem; }
-.panel-head h2 { max-width: 10ch; margin: 0; font-size: clamp(1.8rem, 3vw, 3rem); line-height: 1.02; letter-spacing: -.035em; word-spacing: .08em; }
+.panel-head h2 { max-width: 10ch; margin: 0; font-size: clamp(2.4rem, 4vw, 3.8rem); line-height: 1.02; letter-spacing: -.035em; word-spacing: .08em; }
 .creator-state-stack {
   grid-column: 2;
   display: grid;
