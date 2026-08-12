@@ -100,11 +100,15 @@
       <form id="github-form" hidden>
         <button class="text-button" id="disconnect-button" type="button">Change GitHub account</button>
 
-        <label for="repo-name">Repository name</label>
-        <input id="repo-name" name="name" placeholder="my-new-project" pattern="[A-Za-z0-9._-]+" required>
+        <div class="field">
+          <label for="repo-name">Repository name</label>
+          <input id="repo-name" name="name" placeholder="my-new-project" pattern="[A-Za-z0-9._-]+" required>
+        </div>
 
-        <label for="repo-description">Description <small>optional</small></label>
-        <input id="repo-description" name="description" maxlength="350" placeholder="What are you building">
+        <div class="field">
+          <label for="repo-description">Description <small>optional</small></label>
+          <input id="repo-description" name="description" maxlength="350" placeholder="What are you building">
+        </div>
 
         <label class="visibility" for="repo-private">
           <input id="repo-private" name="private" type="checkbox" checked>
