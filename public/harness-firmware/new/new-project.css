@@ -186,7 +186,7 @@ input[type="text"], input:not([type]) { caret-color: var(--green); cursor: text;
 .input-shell:focus-within::before, .input-shell:focus-within::after { opacity: 1; transform: scale(1.35); }
 .input-shell:focus-within .type-cue { color: var(--green); }
 .input-shell input:not(:placeholder-shown) + .type-cue { opacity: 0; }
-.input-shell input:focus { border-color: var(--blue); outline: 1px solid var(--blue); outline-offset: 2px; box-shadow: none; }
+.input-shell:focus-within input { border-color: var(--blue); outline: 1px solid var(--blue); outline-offset: 2px; box-shadow: none; }
 select:focus { border-color: var(--green); outline: 1px solid var(--green); outline-offset: 2px; box-shadow: none; }
 .visibility { display: flex; gap: 12px; align-items: start; margin: 8px 0; padding: 14px; border: 1px solid var(--line); cursor: pointer; }
 .visibility input { accent-color: var(--green); }
