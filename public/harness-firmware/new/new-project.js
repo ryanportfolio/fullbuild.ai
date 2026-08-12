@@ -9,6 +9,7 @@ const errorBox = document.querySelector('#creator-error');
 const createButton = document.querySelector('#create-button');
 const disconnectButton = document.querySelector('#disconnect-button');
 const success = document.querySelector('#success');
+const creatorPanel = document.querySelector('.creator-panel');
 
 function setConnection(title, copy, connected = false) {
   connection.classList.toggle('connected', connected);
@@ -28,6 +29,7 @@ async function loadStatus() {
       connectButton.href = status.fallbackUrl;
       connectButton.querySelector('span').textContent = 'Create on GitHub';
       templateButton.hidden = true;
+      fallback.hidden = false;
       return;
     }
 
@@ -45,6 +47,7 @@ async function loadStatus() {
         return;
       }
       setConnection('GitHub connection needed', 'Authorize once, then future projects are one click');
+      fallback.hidden = false;
       return;
     }
 
@@ -56,6 +59,9 @@ async function loadStatus() {
     connectButton.href = 'https://github.com/ryanportfolio/Harness-Firmware/generate';
     connectButton.querySelector('span').textContent = 'Create on GitHub';
     templateButton.hidden = true;
+    fallback.hidden = false;
+  } finally {
+    creatorPanel.classList.remove('is-loading');
   }
 }
 

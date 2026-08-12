@@ -36,6 +36,8 @@ test('creator copy and skill links follow the product contract', async () => {
   );
   assert.match(html, /Repo memory system/);
   assert.match(html, /Windows \/ macOS setup/);
+  assert.match(html, /<p>Local Launcher<\/p>/);
+  assert.doesNotMatch(html, /Prefer a local launcher/i);
 });
 
 test('creator motion has static and reduced-motion meaning', async () => {
@@ -71,6 +73,24 @@ test('creator desktop grid flips the right column and fits the available viewpor
   assert.match(css, /\.skip:focus-visible/);
   assert.doesNotMatch(css, /\.skip:focus\s*\{/);
   assert.equal((html.match(/class="field"/g) ?? []).length, 2);
+});
+
+test('creator reserves one stable auth panel while status loads', async () => {
+  const [html, css, js] = await Promise.all([
+    read('public/harness-firmware/new/index.html'),
+    read('public/harness-firmware/new/new-project.css'),
+    read('public/harness-firmware/new/new-project.js'),
+  ]);
+
+  assert.match(html, /<section class="creator-panel is-loading"/);
+  assert.match(html, /class="creator-state-stack"/);
+  assert.match(html, /class="creator-skeleton"/);
+  assert.match(css, /\.creator-state-stack\s*\{[^}]*min-height:/s);
+  assert.match(css, /\.creator-panel\.is-loading\s+\.creator-state-stack/);
+  assert.match(css, /\.creator-panel\.is-loading\s+\.creator-skeleton\s*\{\s*display:\s*grid/);
+  assert.match(css, /font-display:\s*optional/, 'slow font loads never cause a late swap');
+  assert.match(html, /rel="preload"[^>]+as="font"/, 'display font starts loading from the document head');
+  assert.match(js, /creatorPanel\.classList\.remove\('is-loading'\)/);
 });
 
 test('GitHub routes verify installations and encrypted user sessions', async () => {
