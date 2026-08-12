@@ -48,14 +48,15 @@ test('creator motion has static and reduced-motion meaning', async () => {
   assert.ok(!css.includes('backdrop-filter'));
 });
 
-test('creator desktop grid keeps the machine compact and gives the form a full-width workbench', async () => {
+test('creator desktop grid flips the right column and fits the available viewport', async () => {
   const [html, css] = await Promise.all([
     read('public/harness-firmware/new/index.html'),
     read('public/harness-firmware/new/new-project.css'),
   ]);
 
-  assert.match(css, /grid-template-areas:\s*"intro machine"\s*"creator creator"/);
-  assert.match(css, /grid-template-rows:\s*minmax\(620px, 1\.25fr\)\s*minmax\(360px, \.75fr\)/);
+  assert.match(css, /grid-template-areas:\s*"intro creator"\s*"intro machine"/);
+  assert.match(css, /grid-template-rows:\s*minmax\(300px, \.82fr\)\s*minmax\(0, 1\.18fr\)/);
+  assert.match(css, /height:\s*calc\(100vh - 164px\)/);
   assert.match(css, /\.creator-panel\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:/);
   assert.match(css, /#github-form\s*\{\s*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(css, /@media \(max-width: 980px\)[\s\S]*?grid-template-areas:\s*"intro"\s*"machine"\s*"creator"/);
