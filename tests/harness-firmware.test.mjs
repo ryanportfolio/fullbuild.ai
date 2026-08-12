@@ -110,8 +110,9 @@ test("dither engine: countable honesty is computed, deterministic, and versioned
 });
 
 test("every figure rendered on the page matches facts.json", async () => {
-  const [html, facts] = await Promise.all([
+  const [html, css, facts] = await Promise.all([
     read("public/harness-firmware/index.html"),
+    read("public/harness-firmware/src/phosphor.css"),
     read("public/harness-firmware/facts.json").then(JSON.parse),
   ]);
 
@@ -171,6 +172,20 @@ test("every figure rendered on the page matches facts.json", async () => {
   assert.ok(!html.includes("9.1 KiB resident every turn"), "runtime maximum is not presented as universal");
 
   assert.ok(html.includes("ILLUSTRATIVE MEMORY FLOW"), "hypothetical replay is labelled illustrative");
+  assert.ok(
+    html.indexOf('class="copy reveal">Save a lesson once') < html.indexOf('class="memory-sequence reveal"'),
+    "memory benefit precedes the detailed evidence in linear reading order",
+  );
+  assert.match(
+    css,
+    /#action \.sec-body\s*\{[\s\S]*?"title sequence"[\s\S]*?"copy sequence"/,
+    "memory evidence enters beside the claim instead of below the first view",
+  );
+  assert.match(
+    css,
+    /@media \(min-width: 981px\)[\s\S]*?#action \.memory-sequence\s*\{[\s\S]*?grid-template-columns:\s*1fr/,
+    "desktop memory evidence becomes a compact vertical sequence",
+  );
   assert.ok(!html.includes("Every session after that reads it at startup"), "memory loading is not overstated");
   assert.ok(!html.includes("SESSION LOG"), "illustrative replay is not presented as an observed log");
   assert.ok(!html.includes("trap skipped"), "unverified avoided outcome is not claimed");

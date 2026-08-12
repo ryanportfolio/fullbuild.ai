@@ -1437,14 +1437,14 @@ body { background: var(--glass); }
   grid-template-columns: minmax(0, 0.84fr) minmax(0, 1.16fr);
   grid-template-areas:
     "tag tag"
-    "title copy"
-    "sequence sequence"
+    "title sequence"
+    "copy sequence"
     "evidence evidence";
   gap: 0 clamp(42px, 6vw, 92px);
 }
 #action h2 { max-width: 9ch; }
-#action .copy { max-width: 40ch; align-self: end; }
-#action .memory-sequence { grid-area: sequence; }
+#action .copy { max-width: 40ch; align-self: start; margin-top: 28px; }
+#action .memory-sequence { grid-area: sequence; align-self: start; }
 #action .console {
   grid-area: evidence;
   margin-top: clamp(34px, 5vw, 68px);
@@ -1510,6 +1510,27 @@ body { background: var(--glass); }
   color: color-mix(in srgb, var(--glass) 68%, transparent);
   font-size: 14px;
   line-height: 1.45;
+}
+@media (min-width: 981px) {
+  #action .memory-sequence {
+    grid-template-columns: 1fr;
+    margin-top: 0;
+  }
+  #action .sequence-card {
+    display: grid;
+    grid-template-columns: minmax(190px, 0.88fr) minmax(0, 1.12fr);
+    grid-template-areas:
+      "visual step"
+      "visual title"
+      "visual copy";
+    column-gap: clamp(18px, 2vw, 28px);
+    align-items: start;
+    padding: clamp(14px, 1.4vw, 22px);
+  }
+  #action .sequence-visual { grid-area: visual; margin-bottom: 0; padding: 8px; }
+  #action .sequence-card > span { grid-area: step; align-self: end; }
+  #action .sequence-card > b { grid-area: title; }
+  #action .sequence-card > p { grid-area: copy; }
 }
 .mini-grid path { fill: none; stroke: var(--bone); stroke-opacity: 0.09; }
 .warp-lines path,
@@ -1852,6 +1873,7 @@ body { background: var(--glass); }
   .firmware-index { justify-content: space-between; }
   .hero-title { font-size: min(20vw, 82px); }
   .memory-bus .bus-label { font-size: 11px; }
+  #action .replay-hint { display: none; }
 }
 
 @media (max-width: 380px) {
