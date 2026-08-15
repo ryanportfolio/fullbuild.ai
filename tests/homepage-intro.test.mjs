@@ -944,52 +944,37 @@ test("the entrance starts inside the settle, with a head start", async () => {
   assert.match(mount, /event\.persisted[\s\S]{0,160}?releaseIntroHold\(\);/);
 });
 
-test("the pointer chase never runs under the film", async () => {
-  const [sculpture, scene, intro, timing] = await Promise.all([
-    source("sculpture"), source("scene"), source("intro"), source("timing"),
+test("the pointer never moves the artifact", async () => {
+  const [sculpture, scene, intro] = await Promise.all([
+    source("sculpture"), source("scene"), source("intro"),
   ]);
 
   /*
-   * MEASURED, AT 1440x900. The old gate read "tPost < CHARGE_START", and during the film
-   * tPost is -1, which is emphatically less than the charge. With the pointer parked at
-   * (1424, 862) the film's mark dissolved at the top of the frame while the object it was
-   * meant to become stood down and to the right of it, the two shapes not overlapping at all.
-   * The film's registration is derived from the REST pose and nothing else, so the chase has
-   * to be off for every frame the film is visible for.
+   * NO CHASE, AT ALL. The film's registration is derived from the REST pose and nothing
+   * else, so the one place the artifact may stand is the rest pose: earlier versions let the
+   * pointer drag it around after the handover, and the doorway the camera latched onto was
+   * wherever the cursor had last parked it. Now the sculpture never reads the pointer, the
+   * pose damps to INTRO_REST_POSE alone, and the tilt is idle sines plus the turn, so the
+   * mark holds the center from the film's first frame to the camera's commit.
    */
+  assert.doesNotMatch(sculpture, /pointerRef/);
+  assert.doesNotMatch(sculpture, /chaseGain/);
+  assert.doesNotMatch(sculpture, /introChaseTarget/);
+  assert.doesNotMatch(sculpture, /cursorX|cursorY/);
+  assert.match(sculpture, /group\.position\.x = damp\(group\.position\.x, INTRO_REST_POSE\[0\], [\d.]+\);/);
+  assert.match(sculpture, /group\.position\.y = damp\(group\.position\.y, INTRO_REST_POSE\[1\], [\d.]+\);/);
+  assert.match(sculpture, /group\.position\.z = damp\(group\.position\.z, INTRO_REST_POSE\[2\], [\d.]+\);/);
+
+  // The scene does not hand the sculpture a pointer it has no prop for.
+  assert.match(
+    scene,
+    /<IntroSculpture\s+groupRef=\{artifactRef\}\s+timeRef=\{timeRef\}\s+tPostRef=\{tPostRef\}\s+pinnedRef=\{pinnedRef\}\s*\/>/,
+  );
+
+  // And the old prop-driven gate stays gone.
   assert.doesNotMatch(sculpture, /chase: boolean/);
   assert.doesNotMatch(scene, /chase: boolean/);
   assert.doesNotMatch(intro, /chase=\{/);
-  assert.doesNotMatch(scene, /chase=\{chase\}/);
-
-  // In where the film ends, out across the charge, and read per frame off the clock rather
-  // than handed down as a prop that only changed when the owner happened to re-render.
-  assert.match(sculpture, /const CHASE_IN_START = HANDOVER_MS;/);
-  assert.match(sculpture, /const CHASE_IN_MS = \d+;/);
-  assert.match(
-    sculpture,
-    /const chaseGain =\r?\n\s*smoothstep\(progressBetween\(tPost, CHASE_IN_START, CHASE_IN_START \+ CHASE_IN_MS\)\) \*\r?\n\s*\(1 - smoothstep\(progressBetween\(tPost, CHARGE_START, CHARGE_START \+ CHARGE_MS\)\)\);/,
-  );
-  assert.match(sculpture, /const cursorX = pointer\.x \* chaseGain;/);
-  assert.match(sculpture, /const cursorY = pointer\.y \* chaseGain;/);
-
-  /*
-   * The gain has to be exactly zero for the whole handover, which is what makes the drawing
-   * and the object the same shape in the same place at tPost 0. Recomputed here from the
-   * pinned literals rather than trusted.
-   */
-  const handover = Number(timing.match(/HANDOVER_MS = (\d+)/)?.[1]);
-  const chaseIn = Number(sculpture.match(/CHASE_IN_MS = (\d+)/)?.[1]);
-  const charge = Number(timing.match(/CHARGE_START = REVEAL_MS/) ? timing.match(/REVEAL_MS = (\d+)/)?.[1] : NaN);
-  const gainAt = (t) => {
-    const smooth = (v) => { const c = Math.min(1, Math.max(0, v)); return c * c * (3 - 2 * c); };
-    return smooth((t - handover) / chaseIn);
-  };
-  assert.equal(gainAt(-1), 0, "no chase while the film is the only thing on screen");
-  assert.equal(gainAt(0), 0, "no chase on the frame the film hands over");
-  assert.equal(gainAt(handover), 0, "no chase on the last frame the film is visible for");
-  assert.ok(gainAt(handover + chaseIn) === 1, "the chase is fully open by the middle of the breath");
-  assert.ok(handover + chaseIn < charge, "and fully open before the camera commits");
 });
 
 test("a skip outranks a capture freeze", async () => {

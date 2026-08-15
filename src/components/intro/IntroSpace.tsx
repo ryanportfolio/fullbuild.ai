@@ -247,8 +247,8 @@ export default function IntroSpace({
     const step = Math.min(0.034, delta);
     const stretch = stretchRef.current;
 
-    // The sky leans away from the pointer by a fraction of what the artifact leans toward
-    // it, which is the parallax that says the mark is nearer than the stars.
+    // The sky leans away from the pointer while the artifact holds the center, which is the
+    // parallax that says the mark is nearer than the stars.
     const settled = pinnedRef.current;
     const drift = driftRef.current;
     if (drift) {

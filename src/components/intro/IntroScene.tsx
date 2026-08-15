@@ -259,7 +259,6 @@ export default function IntroScene({
       <IntroSculpture
         groupRef={artifactRef}
         timeRef={timeRef}
-        pointerRef={pointerRef}
         tPostRef={tPostRef}
         pinnedRef={pinnedRef}
       />

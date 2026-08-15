@@ -27,16 +27,12 @@ import {
   INTRO_POURED_STROKES,
   INTRO_REST_POSE,
   INTRO_TICK_STROKES,
-  introChaseTarget,
   introLogoX,
   introLogoY,
   introViewportScale,
   makeIntroLineWork,
 } from "./introGeometry";
 import {
-  CHARGE_MS,
-  CHARGE_START,
-  HANDOVER_MS,
   REVEAL_TURN_END,
   REVEAL_TURN_START,
   progressBetween,
@@ -44,30 +40,11 @@ import {
 } from "./introTiming";
 
 /*
- * THE CHASE WINDOW. The pointer moves the artifact, and there is exactly one act in which it
- * is allowed to: the breath, after the film has gone and before the camera commits.
- *
- * IT USED TO RUN UNDER THE FILM, which broke the registration the whole piece is built on.
- * The film's mark is ruled at a fixed place on the sheet (--mark-unit, --mark-cy, derived
- * from the REST pose and nothing else), so an artifact that had spent the load easing toward
- * a cursor in the corner stood somewhere else entirely: measured at 1440x900 with the pointer
- * parked at (1424, 862), the drawing dissolved at the top of the frame while the object it
- * was meant to become stood down and to the right of it, the two shapes not overlapping at
- * all. The old gate said "not yet at the charge", and during the film tPost is -1, which is
- * emphatically less than the charge.
- *
- * So the chase opens where the film ends rather than merely somewhere before the charge, and
- * it eases in rather than switching on: at tPost 0 the pose is the film's last frame exactly,
- * the gain is still zero on the last frame the film is visible for, and by the middle of the
- * breath the piece answers the cursor fully. It closes again across the charge, which is what
- * R9 asks for: the camera latches the aperture and flies at a doorway that has stopped moving.
- *
- * Read per frame off tPostRef rather than handed down as a prop, which is also a fix: as a
- * prop it only changed when the owner happened to re-render, so the boundary was wherever a
- * React state update landed rather than where the clock said it was.
+ * NO CHASE. The artifact holds the film's registration for the whole act: the film's mark is
+ * ruled at a fixed place on the sheet (--mark-unit, --mark-cy, derived from the REST pose and
+ * nothing else), and the object it becomes stands exactly there until the camera commits. The
+ * pointer never moves it, so the doorway the camera latches onto has never moved either.
  */
-const CHASE_IN_START = HANDOVER_MS;
-const CHASE_IN_MS = 360;
 
 /*
  * THE BUILD, AS A MOVE. The rest pose is the film's own last frame, so it is where the
@@ -166,11 +143,11 @@ function introPanelShader(shader: { vertexShader: string; fragmentShader: string
  * glass wall under three gable pieces, a poured half as one solid body, and the strokes the
  * icon actually carries laid over both.
  *
- * PURITY. This component never reads clock.elapsedTime and never reads the live pointer.
- * Both arrive as refs the owner writes, which is the whole reason a beat can be captured:
- * under a freeze the owner pins timeRef to the beat's own tPost and zeroes the pointer, and
- * every idle sine and every damped chase lands on the same number it landed on last time.
- * Reading the render clock here would put a second, uncapturable clock in the scene.
+ * PURITY. This component never reads clock.elapsedTime and never reads the pointer at all.
+ * Time arrives as a ref the owner writes, which is the whole reason a beat can be captured:
+ * under a freeze the owner pins timeRef to the beat's own tPost, and every idle sine and
+ * every damped pose lands on the same number it landed on last time. Reading the render
+ * clock here would put a second, uncapturable clock in the scene.
  *
  * Deliberately absent, compared with the showcase's entry artifact: the media crop skin and
  * its texture, the foreground shard curtain, and the whole freeze/flare/burst shatter. This
@@ -180,13 +157,11 @@ function introPanelShader(shader: { vertexShader: string; fragmentShader: string
 export default function IntroSculpture({
   groupRef,
   timeRef,
-  pointerRef,
   tPostRef,
   pinnedRef,
 }: {
   groupRef: MutableRefObject<Group | null>;
   timeRef: MutableRefObject<number>;
-  pointerRef: MutableRefObject<{ x: number; y: number }>;
   tPostRef: MutableRefObject<number>;
   /*
    * A PINNED BEAT DOES NOT GET TO SETTLE. Every pose below is damped, and damping converges
@@ -307,29 +282,17 @@ export default function IntroSculpture({
     });
   }, [drawnLineWork, pouredLineWork, depthLineWork, pouredBody, panelParts]);
 
-  useFrame(({ size, viewport }, delta) => {
+  useFrame(({ size }, delta) => {
     const group = groupRef.current;
     if (!group) return;
 
     // The owner's clock, never the renderer's. See the purity note at the top of this file.
     const time = timeRef.current;
-    const pointer = pointerRef.current;
     const step = Math.min(0.034, delta);
 
     const tPost = tPostRef.current;
     const viewportScale = introViewportScale(size.width);
     const pulse = Math.sin(time * 1.7) * 0.025;
-    /*
-     * Zero under the film (tPost is -1 there, and progressBetween clamps), zero on the frame
-     * the film hands over, in across the breath, out across the charge. See the note above the
-     * constants: this is the registration the piece is judged on.
-     */
-    const chaseGain =
-      smoothstep(progressBetween(tPost, CHASE_IN_START, CHASE_IN_START + CHASE_IN_MS)) *
-      (1 - smoothstep(progressBetween(tPost, CHARGE_START, CHARGE_START + CHARGE_MS)));
-    const cursorX = pointer.x * chaseGain;
-    const cursorY = pointer.y * chaseGain;
-    const [chaseX, chaseY] = introChaseTarget(cursorX, cursorY, viewport, size.width);
 
     /*
      * THE TURN. Zero while the film is still opaque over it, so the object the film fades off
@@ -342,30 +305,31 @@ export default function IntroSculpture({
     const damp = (current: number, target: number, lambda: number) =>
       settled ? target : MathUtils.damp(current, target, lambda, step);
 
-    group.position.x = damp(group.position.x, chaseX, 5.2);
-    group.position.y = damp(group.position.y, chaseY, 5.2);
+    group.position.x = damp(group.position.x, INTRO_REST_POSE[0], 5.2);
+    group.position.y = damp(group.position.y, INTRO_REST_POSE[1], 5.2);
     group.position.z = damp(group.position.z, INTRO_REST_POSE[2], 6);
     group.scale.setScalar(viewportScale * (1 + pulse));
 
     /*
-     * The piece rests near face-on and the pointer supplies the tilt that shows it is a
+     * The piece rests near face-on and the idle sines supply the tilt that shows it is a
      * solid. The swings are small on purpose: given a corner's worth of roll the two gables
      * come level with each other and the mark stops being the mark, because the step between
-     * those two gables is its identity. The travel is the chase; the tilt only says solid.
+     * those two gables is its identity. The tilt only says solid; the piece itself holds
+     * the center.
      */
     group.rotation.x = damp(
       group.rotation.x,
-      0.05 + TURN_PITCH * turn - cursorY * 0.12 + Math.sin(time * 0.32) * 0.028,
+      0.05 + TURN_PITCH * turn + Math.sin(time * 0.32) * 0.028,
       4.6,
     );
     group.rotation.y = damp(
       group.rotation.y,
-      0.06 + TURN_YAW * turn + cursorX * 0.085 + Math.sin(time * 0.27 + 0.8) * 0.036,
+      0.06 + TURN_YAW * turn + Math.sin(time * 0.27 + 0.8) * 0.036,
       4.6,
     );
     group.rotation.z = damp(
       group.rotation.z,
-      TURN_ROLL * turn + cursorX * -0.036 + cursorY * 0.034 + Math.sin(time * 0.42) * 0.018,
+      TURN_ROLL * turn + Math.sin(time * 0.42) * 0.018,
       4.6,
     );
   });
