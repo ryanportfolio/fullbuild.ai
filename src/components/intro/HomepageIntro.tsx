@@ -403,7 +403,7 @@ export default function HomepageIntro({ onDone }: { onDone: () => void }) {
      * and is reassigned wholesale on every dep change, so anything merged into it would be
      * blown away. Holding a percent reproduces a film frame exactly, because the film has no
      * clock; pinning a beat reproduces a cinematic frame, because pinning also pins the
-     * owner's clock and zeroes the pointer that every damped chase reads.
+     * owner's clock and zeroes the pointer that the sky's damped drift reads.
      */
     window.__introFilm = {
       hold: (percent: number) => {
@@ -577,8 +577,9 @@ export default function HomepageIntro({ onDone }: { onDone: () => void }) {
 
   useEffect(() => {
     const onPointerMove = (event: PointerEvent) => {
-      // A pinned beat owns the pointer. Letting a stray mouse move nudge the chase during a
-      // capture is exactly the kind of drift the freeze exists to remove.
+      // A pinned beat owns the pointer. Letting a stray mouse move nudge the sky drift during
+      // a capture is exactly the kind of drift the freeze exists to remove. The artifact
+      // itself never reads the pointer; it holds the rest pose.
       if (beatRef.current !== null) return;
       pointerRef.current.x = (event.clientX / Math.max(1, window.innerWidth)) * 2 - 1;
       pointerRef.current.y = -(event.clientY / Math.max(1, window.innerHeight)) * 2 + 1;

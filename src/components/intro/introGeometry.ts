@@ -32,9 +32,6 @@ export function introLogoY(y: number) {
   return (INTRO_LOGO_ORIGIN_Y - y) / INTRO_LOGO_UNIT;
 }
 
-export const INTRO_LOGO_WIDTH = introLogoX(92) - introLogoX(8);
-export const INTRO_LOGO_HEIGHT = introLogoY(32) - introLogoY(82);
-
 /*
  * The plane the visible line work sits on. It is also the plane the camera has to cross to
  * be through the doorway, which is why the aperture below carries it as its own z.
@@ -100,29 +97,6 @@ export const INTRO_SCALE_HANDSET = 0.44;
 
 export function introViewportScale(pixelWidth: number) {
   return pixelWidth < 768 ? INTRO_SCALE_HANDSET : INTRO_SCALE_DESKTOP;
-}
-
-/* The pointer moves the artifact, bounded by the frustum so a corner never posts it off
-   screen. The reveal is the only act that chases; the warp latches and flies straight. */
-export const INTRO_CHASE_X = 2.3;
-export const INTRO_CHASE_Y = 1.42;
-export const INTRO_CHASE_RISE = 0.12;
-
-export function introChaseTarget(
-  pointerX: number,
-  pointerY: number,
-  viewport: { width: number; height: number },
-  pixelWidth: number,
-) {
-  const scale = introViewportScale(pixelWidth);
-  const reachX = Math.max(0.5, viewport.width / 2 - INTRO_LOGO_WIDTH * scale * 0.42);
-  const reachY = Math.max(0.4, viewport.height / 2 - INTRO_LOGO_HEIGHT * scale * 0.42);
-  const x = pointerX * INTRO_CHASE_X;
-  const y = pointerY * INTRO_CHASE_Y + INTRO_CHASE_RISE;
-  return [
-    Math.min(reachX, Math.max(-reachX, x)),
-    Math.min(reachY, Math.max(-reachY, y)),
-  ] as const;
 }
 
 export type IntroLogoPoint = readonly [number, number];
