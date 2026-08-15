@@ -30,6 +30,7 @@ const files = {
   drawingSet: new URL("../src/components/motion/DrawingSet.tsx", import.meta.url),
   railLogo: new URL("../src/components/chrome/RailLogo.tsx", import.meta.url),
   tagline: new URL("../src/components/sheets/TaglineFit.tsx", import.meta.url),
+  copyCss: new URL("../src/components/sheets/copy.module.css", import.meta.url),
   loader: new URL("../src/components/showcase/ShowcaseLoader.tsx", import.meta.url),
   showcaseCss: new URL("../src/app/prototype/showcase/showcase.module.css", import.meta.url),
   showcaseApp: new URL("../src/components/showcase/ShowcaseApp.tsx", import.meta.url),
@@ -975,6 +976,44 @@ test("the pointer never moves the artifact", async () => {
   assert.doesNotMatch(sculpture, /chase: boolean/);
   assert.doesNotMatch(scene, /chase: boolean/);
   assert.doesNotMatch(intro, /chase=\{/);
+});
+
+test("the audit verb cycle rotates its instruments and parks for readers", async () => {
+  const [tagline, copyCss, globals] = await Promise.all([
+    source("tagline"), source("copyCss"), source("globals"),
+  ]);
+
+  /*
+   * The cover's audit slot cycles the review loop's verbs with three
+   * instruments in rotation. The invariants that must not drift: the cycle
+   * starts only when the lettering pass finishes (never on its own timer, or
+   * it letters over the pen), reduced motion parks the slot on "audit", the
+   * slot is aria-hidden with a static "audit" for readers, and the approval
+   * green is spent on the MARK, never on a word — the same law revision-red
+   * obeys, in both themes.
+   */
+  assert.match(tagline, /const CYCLE_WORDS = \['audit', 'iterate', 'refine', 'harden'\];/);
+  assert.match(tagline, /const CYCLE_MECHANISMS = \['greenline', 'plot', 'stamp'\] as const;/);
+
+  // Started by finish(), the last act of the lettering pass.
+  assert.match(
+    tagline,
+    /pen\.style\.opacity = '0';\r?\n\s*\/\/[^\r\n]*\r?\n\s*cycleStartRef\.current\(\);/,
+  );
+  // Reduced motion never arms the cycle; the server markup is the parked state.
+  assert.match(tagline, /if \(reduce\) return;/);
+
+  // A word that changes every few seconds is a ticker, not a tagline, to a
+  // screen reader: the moving slot is hidden and a still "audit" stands in.
+  assert.match(tagline, /className=\{copy\.srOnly\}>audit</);
+  assert.match(tagline, /className=\{copy\.cycleSlot\} ref=\{slotRef\} aria-hidden="true"/);
+
+  // The approval ink exists in both themes and lands on the mark via
+  // currentColor, so the underline re-inks itself at night.
+  assert.match(globals, /--accent-pass: #2f7a4f;/);
+  assert.match(globals, /--accent-pass: #57a476;/);
+  assert.match(copyCss, /\.cycleMark \{[\s\S]{0,200}?color: var\(--accent-pass\);/);
+  assert.match(tagline, /stroke="currentColor"/);
 });
 
 test("a skip outranks a capture freeze", async () => {

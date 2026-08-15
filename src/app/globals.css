@@ -31,6 +31,10 @@
   --accent-live: #cb3a26;
   --accent-link: #b3301f;
 
+  /* The auditor's approval ink: spent on MARKS only (the pass underline in the
+     cover's audit cycle), never on a word — the same law revision-red obeys. */
+  --accent-pass: #2f7a4f;
+
   /* Constants — identical in both themes (used by the cyanotype negative). */
   --vellum: #e9e3d6;
   --cyanotype-deep: #124b63; /* blueprint ground for the negative sheet — clearly blue */
@@ -122,6 +126,7 @@
   --ink-concrete: #8c8579; /* passes on the dark table */
   --accent-live: #ff5138;
   --accent-link: #ff6a54;
+  --accent-pass: #57a476; /* the same approval ink under night light */
   --ink-witness: #97907f; /* AA-passing muted voice on the dark table */
 
   --ground: #14181a; /* night drafting table / blueprint negative */
