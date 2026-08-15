@@ -166,6 +166,78 @@
   }
 }
 
+/* ---- the audit cycle ------------------------------------------------------
+   The audit slot cycles the review loop's verbs: audit → iterate → refine →
+   harden → audit. Three instruments take the transitions in rotation — the
+   auditor's green approval underline, the plotter's erase-and-reletter pen,
+   and the stamp. TaglineFit drives the motion; every number there was tuned
+   in a live lab and ported verbatim. Reduced motion parks the slot on
+   "audit", and no-JS never moves it: the server markup IS the parked state.
+   The slot is aria-hidden and a visually hidden "audit" keeps the sentence
+   stable for readers — a word that changes every few seconds is a ticker,
+   not a tagline, to a screen reader. */
+.cycleSlot {
+  display: inline-block;
+  position: relative;
+  vertical-align: bottom;
+  white-space: nowrap;
+}
+.cycleWord {
+  display: inline-block;
+  position: relative;
+  transform-origin: 50% 60%;
+}
+.cycleGhost {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+/* The approval mark. Green is a new ink and it obeys the red's law: spent on
+   the MARK, never on the word. */
+.cycleMark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
+  color: var(--accent-pass);
+}
+/* The cycle's own pen — same instrument as .taglinePen, scoped to the slot. */
+.cyclePen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 100%;
+  background: currentColor;
+  opacity: 0;
+  pointer-events: none;
+  will-change: left;
+}
+/* Measurement span: hidden IN PLACE (left 0, not parked off screen), because
+   TaglineFit measures the line with a Range and an off-screen absolute child
+   would stretch that rect by nine thousand pixels. */
+.cycleMeasure {
+  position: absolute;
+  left: 0;
+  top: 0;
+  visibility: hidden;
+  white-space: nowrap;
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .heading {
   font-family: var(--font-display);
   font-stretch: 112%;
