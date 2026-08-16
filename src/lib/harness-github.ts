@@ -272,6 +272,19 @@ type RepositorySettingsFile = {
   sha?: string;
 };
 
+const GENERATED_REPOSITORY_RETRY_DELAYS_MS = [
+  250,
+  500,
+  1000,
+  1500,
+  2000,
+  2500,
+  3000,
+  3000,
+  3000,
+  3000,
+];
+
 type GitObjectSha = { sha?: string };
 type GitReference = { object?: GitObjectSha };
 type GitCommit = { sha?: string; tree?: GitObjectSha };
@@ -282,12 +295,14 @@ export async function applyRepositorySkillSelection({
   branch,
   disabledSkills,
   token,
+  sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)),
 }: {
   owner: string;
   repository: string;
   branch: string;
   disabledSkills: string[];
   token: string;
+  sleep?: (milliseconds: number) => Promise<void>;
 }): Promise<void> {
   const selectedSkills = normalizeDisabledSkills(disabledSkills);
   if (!selectedSkills) throw new Error('Harness skill selection is invalid');
@@ -295,7 +310,7 @@ export async function applyRepositorySkillSelection({
   const settingsPath = `${repositoryPath}/contents/.claude/settings.json`;
   let file: RepositorySettingsFile | null = null;
 
-  for (let attempt = 0; attempt < 5; attempt += 1) {
+  for (let attempt = 0; attempt <= GENERATED_REPOSITORY_RETRY_DELAYS_MS.length; attempt += 1) {
     try {
       file = await githubApi<RepositorySettingsFile>(
         `${settingsPath}?ref=${encodeURIComponent(branch)}`,
@@ -304,8 +319,14 @@ export async function applyRepositorySkillSelection({
       );
       break;
     } catch (error) {
-      if (!(error instanceof GithubApiError) || error.status !== 404 || attempt === 4) throw error;
-      await new Promise((resolve) => setTimeout(resolve, 150 * (2 ** attempt)));
+      if (
+        !(error instanceof GithubApiError)
+        || error.status !== 404
+        || attempt === GENERATED_REPOSITORY_RETRY_DELAYS_MS.length
+      ) {
+        throw error;
+      }
+      await sleep(GENERATED_REPOSITORY_RETRY_DELAYS_MS[attempt]);
     }
   }
 

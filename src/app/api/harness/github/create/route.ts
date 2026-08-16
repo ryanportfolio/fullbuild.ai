@@ -122,7 +122,11 @@ export async function POST(request: Request): Promise<NextResponse> {
       } catch (error) {
         customized = false;
         customizationWarning = 'Repository created, but skill choices could not be applied. All skills remain enabled.';
-        console.error('Harness skill customization failed after repository creation', error);
+        console.error('Harness skill customization failed after repository creation', {
+          repository: repository.full_name,
+          status: error instanceof GithubApiError ? error.status : null,
+          message: error instanceof Error ? error.message : 'Unknown customization error',
+        });
       }
     }
     return NextResponse.json({

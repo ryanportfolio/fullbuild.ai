@@ -146,6 +146,13 @@ test('GitHub routes verify installations and encrypted user sessions', async () 
   assert.match(createRoute, /normalizeDisabledSkills/);
   assert.match(createRoute, /applyRepositorySkillSelection/);
   assert.match(createRoute, /customizationWarning/);
+  assert.match(createRoute, /repository:\s*repository\.full_name/);
+  assert.match(createRoute, /status:\s*error instanceof GithubApiError \? error\.status : null/);
+  assert.match(createRoute, /message:\s*error instanceof Error \? error\.message/);
+  assert.doesNotMatch(
+    createRoute,
+    /console\.error\('Harness skill customization failed after repository creation',\s*error\s*\)/,
+  );
   assert.doesNotMatch(createRoute, /\/access_tokens|createGithubAppJwt/);
   assert.match(createRoute, /\/generate/);
   assert.match(connectRoute, /httpOnly:\s*true/);
