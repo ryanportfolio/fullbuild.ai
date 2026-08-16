@@ -281,7 +281,8 @@ select:focus { border-color: var(--green); outline: 1px solid var(--green); outl
 .success-warning { margin: 14px 0; padding: 10px 12px; border: 1px solid var(--error); color: var(--error); font: .72rem/1.45 var(--mono); }
 .next-steps { display: grid; gap: 8px; margin: 0 0 18px; padding: 0; list-style: none; }
 .next-steps li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 8px; color: var(--muted); font-size: .78rem; line-height: 1.4; }
-.next-steps li > span { color: var(--blue); font: .65rem var(--mono); }
+.next-steps .step-number { color: var(--blue); font: .65rem var(--mono); }
+.next-steps .step-copy { min-width: 0; }
 .next-steps a { color: var(--green); white-space: nowrap; }
 .error { min-height: 1.2em; color: var(--error); font-size: .8rem; }
 noscript { color: var(--muted); font-size: .85rem; }

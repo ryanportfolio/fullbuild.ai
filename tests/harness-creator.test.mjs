@@ -47,6 +47,23 @@ test('creator copy and skill links follow the product contract', async () => {
   assert.doesNotMatch(html, /Prefer a local launcher/i);
 });
 
+test('creator next steps keep each instruction in one grid cell', async () => {
+  const [html, css] = await Promise.all([
+    read('public/harness-firmware/new/index.html'),
+    read('public/harness-firmware/new/new-project.css'),
+  ]);
+
+  assert.equal((html.match(/class="step-number"/g) ?? []).length, 2);
+  assert.equal((html.match(/class="step-copy"/g) ?? []).length, 2);
+  assert.match(
+    html,
+    /<li>\s*<span class="step-number">02<\/span>\s*<span class="step-copy">Run <a[^>]+>init-project<\/a> so it can detect the stack<\/span>\s*<\/li>/s,
+  );
+  assert.match(css, /\.next-steps \.step-number\s*\{[^}]*color:\s*var\(--blue\)/s);
+  assert.match(css, /\.next-steps \.step-copy\s*\{[^}]*min-width:\s*0/s);
+  assert.doesNotMatch(css, /\.next-steps li > span/);
+});
+
 test('creator exposes an accessible skill selector with honest omission copy', async () => {
   const [html, css, js, catalog, facts] = await Promise.all([
     read('public/harness-firmware/new/index.html'),
