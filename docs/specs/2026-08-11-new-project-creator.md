@@ -16,8 +16,8 @@ The interfaces use the same four states:
 
 1. **Project**: name, destination or GitHub owner, visibility
 2. **Repository**: create from `ryanportfolio/Harness-Firmware`
-3. **Harness**: preserve the memory system, skills, Claude Code files, and Codex adapters while removing template-maintainer files
-4. **Ready**: open the repository or folder and run the linked **init-project** skill
+3. **Harness**: preserve the memory system, selected skills, Claude Code files, and Codex adapters while removing template-maintainer files
+4. **Ready**: open the repository, add the project's framework, scaffold, or first files, then run the linked **init-project** skill
 
 The flow never suggests that repositories share memories. Each generated repository receives its own memory system.
 
@@ -34,6 +34,8 @@ GitHub App configuration lives in server environment variables:
 - `HARNESS_SESSION_SECRET`
 
 Browser JavaScript receives no GitHub token. User and refresh tokens are encrypted inside Secure, HttpOnly cookies. Repository creation uses a GitHub App user access token so authority is always limited to the permissions shared by the app and the person creating the repository.
+
+Skill choices are allowlisted server-side. Disabled canonical skills remain present in the repository for safe updates and later recovery, `.claude/settings.json` marks them `"off"`, and their generated Codex adapter entry files are removed so both runtimes honor the initial selection. The hosted creator needs Contents read and write permission to make that one atomic post-generation configuration commit. If the commit fails after GitHub has created the repository, the UI returns the repository URL and states that all skills remain enabled rather than inviting a duplicate creation retry.
 
 When configuration is absent, the hosted page remains useful and sends the visitor to the official GitHub template flow.
 

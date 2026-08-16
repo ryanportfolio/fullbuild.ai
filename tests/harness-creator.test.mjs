@@ -18,6 +18,7 @@ test('hosted creator remains useful before GitHub App configuration', async () =
   assert.match(js, /Create on GitHub/);
   assert.match(js, /\/api\/harness\/github\/status/);
   assert.match(js, /\/api\/harness\/github\/create/);
+  assert.match(js, /disabledSkills/);
   assert.match(js, /\/api\/harness\/github\/disconnect/);
   assert.doesNotMatch(html + js, /GITHUB_APP_PRIVATE_KEY|HARNESS_SESSION_SECRET/);
 });
@@ -37,7 +38,44 @@ test('creator copy and skill links follow the product contract', async () => {
   assert.match(html, /Repo memory system/);
   assert.match(html, /Windows \/ macOS setup/);
   assert.match(html, /<p>Local Launcher<\/p>/);
+  assert.match(html, /Add your framework or first project files/);
+  assert.match(html, /then run/);
   assert.doesNotMatch(html, /Prefer a local launcher/i);
+});
+
+test('creator exposes an accessible reversible skill selector', async () => {
+  const [html, css, js, catalog, facts] = await Promise.all([
+    read('public/harness-firmware/new/index.html'),
+    read('public/harness-firmware/new/new-project.css'),
+    read('public/harness-firmware/new/new-project.js'),
+    import('../public/harness-firmware/new/skill-catalog.js'),
+    read('public/harness-firmware/facts.json').then(JSON.parse),
+  ]);
+
+  assert.equal(catalog.HARNESS_SKILL_CATALOG.length, 23);
+  assert.deepEqual(
+    catalog.HARNESS_SKILL_CATALOG.map((skill) => skill.name).toSorted(),
+    facts.skills.map((skill) => skill.name).toSorted(),
+  );
+  assert.deepEqual(
+    catalog.HARNESS_SKILL_CATALOG.filter((skill) => skill.required).map((skill) => skill.name),
+    ['init-project'],
+  );
+  assert.match(html, /<button[^>]+id="skill-trigger"[^>]+aria-controls="skill-picker"[^>]+aria-expanded="false"/);
+  assert.match(html, /<dialog[^>]+id="skill-picker"[^>]+aria-labelledby="skill-picker-title"/);
+  assert.match(html, /<output[^>]+id="skill-count"[^>]+aria-live="polite"/);
+  assert.match(html, /id="skills-enable-all"/);
+  assert.match(html, /id="skills-clear-optional"/);
+  assert.match(html, /id="skills-done"/);
+  assert.match(js, /HARNESS_SKILL_CATALOG/);
+  assert.match(js, /showModal\(\)/);
+  assert.match(js, /event\.key !== 'Escape'/);
+  assert.match(js, /disabledSkills/);
+  assert.match(css, /#skill-trigger:focus-visible/);
+  assert.match(css, /\.skill-option:focus-within/);
+  for (const match of css.matchAll(/border-radius\s*:\s*([^;]+)/g)) {
+    assert.equal(match[1].trim(), '0');
+  }
 });
 
 test('creator motion has static and reduced-motion meaning', async () => {
@@ -105,6 +143,9 @@ test('GitHub routes verify installations and encrypted user sessions', async () 
   assert.match(disconnectRoute, /sameOriginRequest\(request\)/);
   assert.match(createRoute, /decryptHarnessPayload<HarnessSession>/);
   assert.match(createRoute, /currentUserCredentials\(session\)/);
+  assert.match(createRoute, /normalizeDisabledSkills/);
+  assert.match(createRoute, /applyRepositorySkillSelection/);
+  assert.match(createRoute, /customizationWarning/);
   assert.doesNotMatch(createRoute, /\/access_tokens|createGithubAppJwt/);
   assert.match(createRoute, /\/generate/);
   assert.match(connectRoute, /httpOnly:\s*true/);

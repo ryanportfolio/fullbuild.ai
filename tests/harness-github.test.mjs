@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
+  applyRepositorySkillSelection,
   createPkceChallenge,
   createPkceVerifier,
   decryptHarnessPayload,
@@ -8,11 +9,106 @@ import {
   githubAppConfigured,
   isValidRepositoryName,
   listHarnessInstallations,
+  mergeSkillOverrides,
+  normalizeDisabledSkills,
   requestGithubUserCredentials,
   sameOriginRequest,
   signHarnessPayload,
   verifyHarnessPayload,
 } from '../src/lib/harness-github.ts';
+
+test('skill selection accepts only unique optional catalog entries', () => {
+  assert.deepEqual(normalizeDisabledSkills(['lab', 'merge']), ['merge', 'lab']);
+  assert.deepEqual(normalizeDisabledSkills([]), []);
+  assert.equal(normalizeDisabledSkills(['init-project']), null);
+  assert.equal(normalizeDisabledSkills(['lab', 'lab']), null);
+  assert.equal(normalizeDisabledSkills(['unknown-skill']), null);
+  assert.equal(normalizeDisabledSkills('lab'), null);
+});
+
+test('skill overrides merge without disturbing repository settings', () => {
+  const settings = JSON.stringify({
+    hooks: { SessionStart: [{ hooks: [{ type: 'command', command: 'safe-command' }] }] },
+    permissions: { allow: ['Bash(git status)'] },
+    skillOverrides: {
+      humanizer: 'off',
+      merge: 'on',
+      'team-local-skill': 'off',
+    },
+  });
+
+  const merged = JSON.parse(mergeSkillOverrides(settings, ['merge', 'lab']));
+  assert.deepEqual(merged.hooks, {
+    SessionStart: [{ hooks: [{ type: 'command', command: 'safe-command' }] }],
+  });
+  assert.deepEqual(merged.permissions, { allow: ['Bash(git status)'] });
+  assert.deepEqual(merged.skillOverrides, {
+    merge: 'off',
+    'team-local-skill': 'off',
+    lab: 'off',
+  });
+  assert.ok(mergeSkillOverrides(settings, ['merge', 'lab']).endsWith('\n'));
+});
+
+test('repository skill selection atomically updates settings and Codex adapters', async (context) => {
+  const originalFetch = globalThis.fetch;
+  context.after(() => { globalThis.fetch = originalFetch; });
+  const requests = [];
+  const initialSettings = JSON.stringify({ permissions: { allow: ['Bash(git status)'] } });
+
+  globalThis.fetch = async (url, options = {}) => {
+    requests.push({ url: String(url), options });
+    const requestUrl = String(url);
+    if (requestUrl.includes('/contents/.claude/settings.json')) {
+      return Response.json({
+        content: Buffer.from(initialSettings).toString('base64'),
+        encoding: 'base64',
+        sha: 'settings-blob-sha',
+      });
+    }
+    if (requestUrl.endsWith('/git/blobs')) return Response.json({ sha: 'new-settings-blob-sha' });
+    if (requestUrl.includes('/git/ref/heads/')) return Response.json({ object: { sha: 'head-commit-sha' } });
+    if (requestUrl.endsWith('/git/commits/head-commit-sha')) {
+      return Response.json({ tree: { sha: 'base-tree-sha' } });
+    }
+    if (requestUrl.endsWith('/git/trees')) return Response.json({ sha: 'new-tree-sha' });
+    if (requestUrl.endsWith('/git/commits')) return Response.json({ sha: 'new-commit-sha' });
+    if (requestUrl.endsWith('/git/refs/heads/main')) return Response.json({ object: { sha: 'new-commit-sha' } });
+    return Response.json({ message: 'unexpected request' }, { status: 500 });
+  };
+
+  await applyRepositorySkillSelection({
+    owner: 'octocat',
+    repository: 'new-project',
+    branch: 'main',
+    disabledSkills: ['lab', 'merge'],
+    token: 'ghu_user',
+  });
+
+  assert.equal(requests.length, 7);
+  assert.match(requests[0].url, /\/repos\/octocat\/new-project\/contents\/\.claude\/settings\.json\?ref=main$/);
+  assert.equal(requests[0].options.headers.Authorization, 'Bearer ghu_user');
+  assert.equal(requests[1].options.headers['Content-Type'], 'application/json');
+  const blob = JSON.parse(requests[1].options.body);
+  const writtenSettings = JSON.parse(Buffer.from(blob.content, 'base64').toString('utf8'));
+  assert.deepEqual(writtenSettings.permissions, { allow: ['Bash(git status)'] });
+  assert.deepEqual(writtenSettings.skillOverrides, { merge: 'off', lab: 'off' });
+  const tree = JSON.parse(requests[4].options.body);
+  assert.equal(tree.base_tree, 'base-tree-sha');
+  assert.deepEqual(tree.tree, [
+    { path: '.claude/settings.json', mode: '100644', type: 'blob', sha: 'new-settings-blob-sha' },
+    { path: '.agents/skills/merge/SKILL.md', mode: '100644', type: 'blob', sha: null },
+    { path: '.agents/skills/lab/SKILL.md', mode: '100644', type: 'blob', sha: null },
+  ]);
+  const commit = JSON.parse(requests[5].options.body);
+  assert.deepEqual(commit, {
+    message: 'Configure Harness skills',
+    tree: 'new-tree-sha',
+    parents: ['head-commit-sha'],
+  });
+  const refUpdate = JSON.parse(requests[6].options.body);
+  assert.deepEqual(refUpdate, { sha: 'new-commit-sha', force: false });
+});
 
 test('GitHub App mode requires every server secret', () => {
   assert.equal(githubAppConfigured({}), false);

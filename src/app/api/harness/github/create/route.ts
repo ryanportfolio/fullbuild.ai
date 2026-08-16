@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import {
+  applyRepositorySkillSelection,
   decryptHarnessPayload,
   encryptHarnessPayload,
   githubApi,
@@ -12,6 +13,7 @@ import {
   HARNESS_TEMPLATE_OWNER,
   HARNESS_TEMPLATE_REPO,
   isValidRepositoryName,
+  normalizeDisabledSkills,
   requestGithubUserCredentials,
   sameOriginRequest,
   type HarnessSession,
@@ -20,7 +22,12 @@ import {
 
 export const runtime = 'nodejs';
 
-type GeneratedRepository = { html_url: string; full_name: string; private: boolean };
+type GeneratedRepository = {
+  html_url: string;
+  full_name: string;
+  private: boolean;
+  default_branch?: string;
+};
 const TOKEN_REFRESH_SKEW_MS = 60 * 1000;
 
 async function currentUserCredentials(session: HarnessSession): Promise<HarnessUserCredentials> {
@@ -57,7 +64,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: 'Connect GitHub first' }, { status: 401 });
   }
 
-  let body: { name?: unknown; description?: unknown; private?: unknown };
+  let body: { name?: unknown; description?: unknown; private?: unknown; disabledSkills?: unknown };
   try {
     body = await request.json() as typeof body;
   } catch {
@@ -70,6 +77,10 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
   const description = typeof body.description === 'string' ? body.description.trim().slice(0, 350) : '';
   const makePrivate = body.private !== false;
+  const disabledSkills = body.disabledSkills === undefined ? [] : normalizeDisabledSkills(body.disabledSkills);
+  if (!disabledSkills) {
+    return NextResponse.json({ error: 'Choose skills from the available list' }, { status: 422 });
+  }
 
   try {
     const credentials = await currentUserCredentials(session);
@@ -97,11 +108,31 @@ export async function POST(request: Request): Promise<NextResponse> {
       },
       credentials.accessToken,
     );
+    let customized = true;
+    let customizationWarning: string | null = null;
+    if (disabledSkills.length > 0) {
+      try {
+        await applyRepositorySkillSelection({
+          owner: session.owner,
+          repository: name,
+          branch: repository.default_branch || 'main',
+          disabledSkills,
+          token: credentials.accessToken,
+        });
+      } catch (error) {
+        customized = false;
+        customizationWarning = 'Repository created, but skill choices could not be applied. All skills remain enabled.';
+        console.error('Harness skill customization failed after repository creation', error);
+      }
+    }
     return NextResponse.json({
       repositoryUrl: repository.html_url,
       fullName: repository.full_name,
       private: repository.private,
-    });
+      customized,
+      disabledSkillCount: customized ? disabledSkills.length : 0,
+      customizationWarning,
+    }, { status: 201 });
   } catch (error) {
     if (error instanceof GithubApiError && error.status === 401) {
       return NextResponse.json({ error: 'Reconnect GitHub to create a repository' }, { status: 401 });

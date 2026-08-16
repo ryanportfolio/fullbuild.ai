@@ -8,7 +8,7 @@
   <title>New Project · Harness Firmware</title>
   <link rel="icon" href="/harness-firmware/assets/favicon.svg">
   <link rel="preload" href="/harness-firmware/fonts/Unbounded[wght].ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/harness-firmware/new/new-project.css?v=20260812a">
+  <link rel="stylesheet" href="/harness-firmware/new/new-project.css?v=20260816a">
   <script>document.documentElement.className = 'js';</script>
 </head>
 <body>
@@ -29,7 +29,7 @@
         <li><span>02</span>23 on-demand skills</li>
         <li><span>03</span>Claude Code and Codex setup</li>
       </ul>
-      <p class="init-copy">After creation, run <strong><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/main/.claude/skills/init-project/SKILL.md">init-project</a></strong> once to tailor everything to the repo</p>
+      <p class="init-copy">Add your framework or first project files, then run <strong><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/main/.claude/skills/init-project/SKILL.md">init-project</a></strong> once so it can detect and tailor the real stack</p>
     </section>
 
     <section class="machine" aria-label="Project creation path">
@@ -97,6 +97,11 @@
         <div class="connection" id="connection" aria-live="polite">
           <span aria-hidden="true"></span>
           <div><strong>Checking creator</strong><p>Looking for a GitHub connection</p></div>
+          <button class="skill-trigger" id="skill-trigger" type="button" aria-controls="skill-picker" aria-expanded="false" aria-label="Customize skills, 23 enabled" hidden disabled>
+            <span>Skills</span>
+            <output id="skill-count" aria-live="polite">23 enabled</output>
+            <span>Customize -&gt;</span>
+          </button>
         </div>
         <div class="creator-skeleton" aria-hidden="true">
           <i></i><i></i><i></i><i></i>
@@ -143,6 +148,12 @@
         <div class="success" id="success" hidden>
           <p>PROJECT READY</p>
           <h2 id="success-name">Repository created</h2>
+          <p class="success-summary" id="success-summary"></p>
+          <ol class="next-steps" aria-label="Next steps">
+            <li><span>01</span>Add your framework or first project files</li>
+            <li><span>02</span>Run <a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/main/.claude/skills/init-project/SKILL.md">init-project</a> so it can detect the stack</li>
+          </ol>
+          <p class="success-warning" id="success-warning" role="status" hidden></p>
           <a class="action primary" id="success-link" href="#"><span>Open on GitHub</span><span>-&gt;</span></a>
         </div>
         <p class="error" id="creator-error" role="alert"></p>
@@ -155,10 +166,38 @@
     </section>
   </main>
 
+  <dialog class="skill-picker" id="skill-picker" aria-labelledby="skill-picker-title">
+    <div class="skill-picker-shell">
+      <header class="skill-picker-head">
+        <div>
+          <p>HARNESS LOADOUT / REVERSIBLE</p>
+          <h2 id="skill-picker-title">Choose active skills</h2>
+        </div>
+        <button class="skill-picker-close" id="skill-picker-close" type="button" aria-label="Close skill selector">CLOSE ×</button>
+      </header>
+
+      <div class="skill-picker-tools" aria-label="Skill selection controls">
+        <button id="skills-enable-all" type="button">Enable all</button>
+        <button id="skills-clear-optional" type="button">Clear optional</button>
+        <p>Disabled skills stay in the repository and can be restored later</p>
+      </div>
+
+      <div class="skill-groups" id="skill-groups"></div>
+
+      <footer class="skill-picker-foot">
+        <div>
+          <output id="skill-picker-count" aria-live="polite">23 skills enabled</output>
+          <small><strong>init-project</strong> stays enabled for setup after scaffolding</small>
+        </div>
+        <button class="action primary" id="skills-done" type="button"><span>Use selection</span><span>-&gt;</span></button>
+      </footer>
+    </div>
+  </dialog>
+
   <footer>
     <p>Local Launcher</p>
     <a href="https://github.com/ryanportfolio/Harness-Firmware#full-template">Windows / macOS setup -&gt;</a>
   </footer>
-  <script src="/harness-firmware/new/new-project.js?v=20260812a" defer></script>
+  <script src="/harness-firmware/new/new-project.js?v=20260816a" type="module"></script>
 </body>
 </html>
