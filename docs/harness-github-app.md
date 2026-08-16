@@ -14,9 +14,9 @@ Create a GitHub App with these values:
 - Setup URL: `https://fullbuild.ai/api/harness/github/callback`
 - Redirect on update: enabled
 - Repository permissions, Administration: read and write
-- Repository permissions, Contents: read-only
+- Repository permissions, Contents: read and write
 
-The template generation endpoint supports GitHub App user access tokens. The creator always uses that user-scoped token so repository creation cannot exceed the permissions of the person who connected GitHub.
+The template generation endpoint supports GitHub App user access tokens. The creator always uses that user-scoped token so repository creation cannot exceed the permissions of the person who connected GitHub. Contents write access is used only after generation for one configuration commit: it updates `.claude/settings.json` and removes generated Codex adapter entry files for disabled skills. Canonical skill files remain available for later recovery.
 
 ## Server environment
 
@@ -48,4 +48,4 @@ GET /api/harness/github/status
 
 returns `available: false`, and the creator keeps the direct GitHub template fallback usable.
 
-With credentials, install the app into a test account, connect through `/harness-firmware/new/`, then create a private test repository. Confirm the resulting repository was generated from `ryanportfolio/Harness-Firmware` and that no token appears in page source, browser storage, or client network responses.
+With credentials, install the app into a test account, connect through `/harness-firmware/new/`, then create a private test repository with at least one optional skill disabled. Confirm the resulting repository was generated from `ryanportfolio/Harness-Firmware`, `.claude/settings.json` contains only the chosen `"off"` overrides, matching `.agents/skills/<name>/SKILL.md` adapter entries are absent, canonical `.claude/skills/<name>/` files remain, and no token appears in page source, browser storage, or client network responses.
