@@ -110,6 +110,77 @@ test('repository skill selection atomically updates settings and Codex adapters'
   assert.deepEqual(refUpdate, { sha: 'new-commit-sha', force: false });
 });
 
+test('repository skill selection waits for asynchronous template contents', async (context) => {
+  const originalFetch = globalThis.fetch;
+  context.after(() => { globalThis.fetch = originalFetch; });
+  const delays = [];
+  let settingsReads = 0;
+  const initialSettings = JSON.stringify({ permissions: { allow: [] } });
+
+  globalThis.fetch = async (url) => {
+    const requestUrl = String(url);
+    if (requestUrl.includes('/contents/.claude/settings.json')) {
+      settingsReads += 1;
+      if (settingsReads <= 5) {
+        return Response.json({ message: 'This repository is empty.' }, { status: 404 });
+      }
+      return Response.json({
+        content: Buffer.from(initialSettings).toString('base64'),
+        encoding: 'base64',
+        sha: 'settings-blob-sha',
+      });
+    }
+    if (requestUrl.endsWith('/git/blobs')) return Response.json({ sha: 'new-settings-blob-sha' });
+    if (requestUrl.includes('/git/ref/heads/')) return Response.json({ object: { sha: 'head-commit-sha' } });
+    if (requestUrl.endsWith('/git/commits/head-commit-sha')) {
+      return Response.json({ tree: { sha: 'base-tree-sha' } });
+    }
+    if (requestUrl.endsWith('/git/trees')) return Response.json({ sha: 'new-tree-sha' });
+    if (requestUrl.endsWith('/git/commits')) return Response.json({ sha: 'new-commit-sha' });
+    if (requestUrl.endsWith('/git/refs/heads/main')) return Response.json({ object: { sha: 'new-commit-sha' } });
+    return Response.json({ message: 'unexpected request' }, { status: 500 });
+  };
+
+  await applyRepositorySkillSelection({
+    owner: 'octocat',
+    repository: 'new-project',
+    branch: 'main',
+    disabledSkills: ['lab'],
+    token: 'ghu_user',
+    sleep: async (milliseconds) => { delays.push(milliseconds); },
+  });
+
+  assert.equal(settingsReads, 6);
+  assert.deepEqual(delays, [250, 500, 1000, 1500, 2000]);
+});
+
+test('repository skill selection preserves the final readiness error', async (context) => {
+  const originalFetch = globalThis.fetch;
+  context.after(() => { globalThis.fetch = originalFetch; });
+  const delays = [];
+  let settingsReads = 0;
+
+  globalThis.fetch = async () => {
+    settingsReads += 1;
+    return Response.json({ message: 'This repository is empty.' }, { status: 404 });
+  };
+
+  await assert.rejects(
+    applyRepositorySkillSelection({
+      owner: 'octocat',
+      repository: 'new-project',
+      branch: 'main',
+      disabledSkills: ['lab'],
+      token: 'ghu_user',
+      sleep: async (milliseconds) => { delays.push(milliseconds); },
+    }),
+    (error) => error?.status === 404 && error.message === 'This repository is empty.',
+  );
+
+  assert.equal(settingsReads, 11);
+  assert.deepEqual(delays, [250, 500, 1000, 1500, 2000, 2500, 3000, 3000, 3000, 3000]);
+});
+
 test('GitHub App mode requires every server secret', () => {
   assert.equal(githubAppConfigured({}), false);
   assert.equal(githubAppConfigured({

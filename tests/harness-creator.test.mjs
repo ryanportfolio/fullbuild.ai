@@ -24,7 +24,10 @@ test('hosted creator remains useful before GitHub App configuration', async () =
 });
 
 test('creator copy and skill links follow the product contract', async () => {
-  const html = await read('public/harness-firmware/new/index.html');
+  const [html, css] = await Promise.all([
+    read('public/harness-firmware/new/index.html'),
+    read('public/harness-firmware/new/new-project.css'),
+  ]);
   assert.equal((html.match(/<h1[ >]/g) ?? []).length, 1);
   for (const match of html.matchAll(/<h[123][^>]*>(.*?)<\/h[123]>/gs)) {
     const text = match[1].replace(/<[^>]+>/g, '').trim();
@@ -40,6 +43,7 @@ test('creator copy and skill links follow the product contract', async () => {
   assert.match(html, /<p>Local Launcher<\/p>/);
   assert.match(html, /Add your framework or first project files/);
   assert.match(html, /then run/);
+  assert.match(css, /\.init-copy\s*\{[^}]*font-size:\s*1\.1rem/s);
   assert.doesNotMatch(html, /Prefer a local launcher/i);
 });
 
@@ -146,6 +150,13 @@ test('GitHub routes verify installations and encrypted user sessions', async () 
   assert.match(createRoute, /normalizeDisabledSkills/);
   assert.match(createRoute, /applyRepositorySkillSelection/);
   assert.match(createRoute, /customizationWarning/);
+  assert.match(createRoute, /repository:\s*repository\.full_name/);
+  assert.match(createRoute, /status:\s*error instanceof GithubApiError \? error\.status : null/);
+  assert.match(createRoute, /message:\s*error instanceof Error \? error\.message/);
+  assert.doesNotMatch(
+    createRoute,
+    /console\.error\('Harness skill customization failed after repository creation',\s*error\s*\)/,
+  );
   assert.doesNotMatch(createRoute, /\/access_tokens|createGithubAppJwt/);
   assert.match(createRoute, /\/generate/);
   assert.match(connectRoute, /httpOnly:\s*true/);
