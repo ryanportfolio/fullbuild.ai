@@ -24,7 +24,10 @@ test('hosted creator remains useful before GitHub App configuration', async () =
 });
 
 test('creator copy and skill links follow the product contract', async () => {
-  const html = await read('public/harness-firmware/new/index.html');
+  const [html, css] = await Promise.all([
+    read('public/harness-firmware/new/index.html'),
+    read('public/harness-firmware/new/new-project.css'),
+  ]);
   assert.equal((html.match(/<h1[ >]/g) ?? []).length, 1);
   for (const match of html.matchAll(/<h[123][^>]*>(.*?)<\/h[123]>/gs)) {
     const text = match[1].replace(/<[^>]+>/g, '').trim();
@@ -40,6 +43,7 @@ test('creator copy and skill links follow the product contract', async () => {
   assert.match(html, /<p>Local Launcher<\/p>/);
   assert.match(html, /Add your framework or first project files/);
   assert.match(html, /then run/);
+  assert.match(css, /\.init-copy\s*\{[^}]*font-size:\s*1\.1rem/s);
   assert.doesNotMatch(html, /Prefer a local launcher/i);
 });
 
