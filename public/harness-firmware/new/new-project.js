@@ -44,6 +44,18 @@ function enabledSkillCount() {
   return [...skillState.values()].filter(Boolean).length;
 }
 
+function setCreateState(creating) {
+  isCreating = creating;
+  createButton.disabled = creating;
+  skillTrigger.disabled = creating;
+  createButton.classList.toggle('is-creating', creating);
+  createButton.setAttribute('aria-busy', String(creating));
+  createButton.querySelector('[data-action-label]').textContent = creating
+    ? 'Assembling repository'
+    : `Create with ${enabledSkillCount()} skills`;
+  createButton.querySelector('[data-action-glyph]').textContent = creating ? 'Working' : '->';
+}
+
 function selectedDisabledSkills() {
   return HARNESS_SKILL_CATALOG
     .filter((skill) => !skillState.get(skill.name))
@@ -55,7 +67,7 @@ function updateSkillCounts() {
   skillCount.textContent = `${enabled} enabled`;
   skillTrigger.setAttribute('aria-label', `Customize skills, ${enabled} enabled`);
   skillPickerCount.textContent = `${enabled} skills enabled`;
-  if (!isCreating) createButton.querySelector('span').textContent = `Create with ${enabled} skills`;
+  if (!isCreating) createButton.querySelector('[data-action-label]').textContent = `Create with ${enabled} skills`;
 
   for (const group of HARNESS_SKILL_GROUPS) {
     const groupSkills = HARNESS_SKILL_CATALOG.filter((skill) => skill.group === group.id);
@@ -262,10 +274,7 @@ disconnectButton.addEventListener('click', async () => {
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   errorBox.textContent = '';
-  isCreating = true;
-  createButton.disabled = true;
-  skillTrigger.disabled = true;
-  createButton.querySelector('span').textContent = 'Creating repository';
+  setCreateState(true);
 
   const data = new FormData(form);
   try {
@@ -290,16 +299,14 @@ form.addEventListener('submit', async (event) => {
     document.querySelector('#success-link').href = result.repositoryUrl;
     const disabledCount = result.customized ? result.disabledSkillCount : 0;
     successSummary.textContent = disabledCount > 0
-      ? `${HARNESS_SKILL_CATALOG.length - disabledCount} skills enabled. ${disabledCount} disabled and ready to restore.`
+      ? `${HARNESS_SKILL_CATALOG.length - disabledCount} skills included. ${disabledCount} omitted from this repository.`
       : `All ${HARNESS_SKILL_CATALOG.length} skills enabled.`;
     successWarning.hidden = !result.customizationWarning;
     successWarning.textContent = result.customizationWarning || '';
   } catch (error) {
     errorBox.textContent = error.message;
   } finally {
-    isCreating = false;
-    createButton.disabled = false;
-    skillTrigger.disabled = false;
+    setCreateState(false);
     updateSkillCounts();
   }
 });

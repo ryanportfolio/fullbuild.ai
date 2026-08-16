@@ -50,7 +50,7 @@ test('skill overrides merge without disturbing repository settings', () => {
   assert.ok(mergeSkillOverrides(settings, ['merge', 'lab']).endsWith('\n'));
 });
 
-test('repository skill selection atomically updates settings and Codex adapters', async (context) => {
+test('repository skill selection atomically removes complete disabled skill trees', async (context) => {
   const originalFetch = globalThis.fetch;
   context.after(() => { globalThis.fetch = originalFetch; });
   const requests = [];
@@ -71,6 +71,20 @@ test('repository skill selection atomically updates settings and Codex adapters'
     if (requestUrl.endsWith('/git/commits/head-commit-sha')) {
       return Response.json({ tree: { sha: 'base-tree-sha' } });
     }
+    if (requestUrl.endsWith('/git/trees/base-tree-sha?recursive=1')) {
+      return Response.json({
+        truncated: false,
+        tree: [
+          { path: '.agents/skills/lab/SKILL.md', mode: '100644', type: 'blob', sha: 'lab-adapter' },
+          { path: '.agents/skills/lab/templates.md', mode: '100644', type: 'blob', sha: 'lab-adapter-template' },
+          { path: '.agents/skills/merge/SKILL.md', mode: '100644', type: 'blob', sha: 'merge-adapter' },
+          { path: '.claude/skills/lab/SKILL.md', mode: '100644', type: 'blob', sha: 'lab-entry' },
+          { path: '.claude/skills/lab/templates.md', mode: '100644', type: 'blob', sha: 'lab-template' },
+          { path: '.claude/skills/merge/SKILL.md', mode: '100755', type: 'blob', sha: 'merge-entry' },
+          { path: '.claude/skills/init-project/SKILL.md', mode: '100644', type: 'blob', sha: 'required-entry' },
+        ],
+      });
+    }
     if (requestUrl.endsWith('/git/trees')) return Response.json({ sha: 'new-tree-sha' });
     if (requestUrl.endsWith('/git/commits')) return Response.json({ sha: 'new-commit-sha' });
     if (requestUrl.endsWith('/git/refs/heads/main')) return Response.json({ object: { sha: 'new-commit-sha' } });
@@ -85,7 +99,7 @@ test('repository skill selection atomically updates settings and Codex adapters'
     token: 'ghu_user',
   });
 
-  assert.equal(requests.length, 7);
+  assert.equal(requests.length, 8);
   assert.match(requests[0].url, /\/repos\/octocat\/new-project\/contents\/\.claude\/settings\.json\?ref=main$/);
   assert.equal(requests[0].options.headers.Authorization, 'Bearer ghu_user');
   assert.equal(requests[1].options.headers['Content-Type'], 'application/json');
@@ -93,20 +107,25 @@ test('repository skill selection atomically updates settings and Codex adapters'
   const writtenSettings = JSON.parse(Buffer.from(blob.content, 'base64').toString('utf8'));
   assert.deepEqual(writtenSettings.permissions, { allow: ['Bash(git status)'] });
   assert.deepEqual(writtenSettings.skillOverrides, { merge: 'off', lab: 'off' });
-  const tree = JSON.parse(requests[4].options.body);
+  assert.match(requests[4].url, /\/git\/trees\/base-tree-sha\?recursive=1$/);
+  const tree = JSON.parse(requests[5].options.body);
   assert.equal(tree.base_tree, 'base-tree-sha');
   assert.deepEqual(tree.tree, [
     { path: '.claude/settings.json', mode: '100644', type: 'blob', sha: 'new-settings-blob-sha' },
-    { path: '.agents/skills/merge/SKILL.md', mode: '100644', type: 'blob', sha: null },
     { path: '.agents/skills/lab/SKILL.md', mode: '100644', type: 'blob', sha: null },
+    { path: '.agents/skills/lab/templates.md', mode: '100644', type: 'blob', sha: null },
+    { path: '.agents/skills/merge/SKILL.md', mode: '100644', type: 'blob', sha: null },
+    { path: '.claude/skills/lab/SKILL.md', mode: '100644', type: 'blob', sha: null },
+    { path: '.claude/skills/lab/templates.md', mode: '100644', type: 'blob', sha: null },
+    { path: '.claude/skills/merge/SKILL.md', mode: '100755', type: 'blob', sha: null },
   ]);
-  const commit = JSON.parse(requests[5].options.body);
+  const commit = JSON.parse(requests[6].options.body);
   assert.deepEqual(commit, {
     message: 'Configure Harness skills',
     tree: 'new-tree-sha',
     parents: ['head-commit-sha'],
   });
-  const refUpdate = JSON.parse(requests[6].options.body);
+  const refUpdate = JSON.parse(requests[7].options.body);
   assert.deepEqual(refUpdate, { sha: 'new-commit-sha', force: false });
 });
 
@@ -135,6 +154,15 @@ test('repository skill selection waits for asynchronous template contents', asyn
     if (requestUrl.endsWith('/git/commits/head-commit-sha')) {
       return Response.json({ tree: { sha: 'base-tree-sha' } });
     }
+    if (requestUrl.endsWith('/git/trees/base-tree-sha?recursive=1')) {
+      return Response.json({
+        truncated: false,
+        tree: [
+          { path: '.claude/skills/lab/SKILL.md', mode: '100644', type: 'blob', sha: 'lab-entry' },
+          { path: '.agents/skills/lab/SKILL.md', mode: '100644', type: 'blob', sha: 'lab-adapter' },
+        ],
+      });
+    }
     if (requestUrl.endsWith('/git/trees')) return Response.json({ sha: 'new-tree-sha' });
     if (requestUrl.endsWith('/git/commits')) return Response.json({ sha: 'new-commit-sha' });
     if (requestUrl.endsWith('/git/refs/heads/main')) return Response.json({ object: { sha: 'new-commit-sha' } });
@@ -152,6 +180,47 @@ test('repository skill selection waits for asynchronous template contents', asyn
 
   assert.equal(settingsReads, 6);
   assert.deepEqual(delays, [250, 500, 1000, 1500, 2000]);
+});
+
+test('repository skill selection refuses an incomplete recursive tree', async (context) => {
+  const originalFetch = globalThis.fetch;
+  context.after(() => { globalThis.fetch = originalFetch; });
+  const requests = [];
+
+  globalThis.fetch = async (url) => {
+    const requestUrl = String(url);
+    requests.push(requestUrl);
+    if (requestUrl.includes('/contents/.claude/settings.json')) {
+      return Response.json({
+        content: Buffer.from('{}').toString('base64'),
+        encoding: 'base64',
+        sha: 'settings-blob-sha',
+      });
+    }
+    if (requestUrl.endsWith('/git/blobs')) return Response.json({ sha: 'new-settings-blob-sha' });
+    if (requestUrl.includes('/git/ref/heads/')) return Response.json({ object: { sha: 'head-commit-sha' } });
+    if (requestUrl.endsWith('/git/commits/head-commit-sha')) {
+      return Response.json({ tree: { sha: 'base-tree-sha' } });
+    }
+    if (requestUrl.endsWith('/git/trees/base-tree-sha?recursive=1')) {
+      return Response.json({ truncated: true, tree: [] });
+    }
+    return Response.json({ message: 'unexpected request' }, { status: 500 });
+  };
+
+  await assert.rejects(
+    applyRepositorySkillSelection({
+      owner: 'octocat',
+      repository: 'new-project',
+      branch: 'main',
+      disabledSkills: ['lab'],
+      token: 'ghu_user',
+    }),
+    /GitHub did not return the complete generated repository tree/,
+  );
+
+  assert.equal(requests.length, 5);
+  assert.ok(!requests.some((requestUrl) => requestUrl.endsWith('/git/commits')));
 });
 
 test('repository skill selection preserves the final readiness error', async (context) => {

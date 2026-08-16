@@ -235,6 +235,40 @@ select:focus { border-color: var(--green); outline: 1px solid var(--green); outl
 .visibility small { text-transform: none; letter-spacing: 0; }
 .action { display: flex; justify-content: space-between; align-items: center; min-height: 54px; border: 1px solid var(--green); border-radius: 0; padding: 0 18px; font: 700 .74rem var(--mono); letter-spacing: .08em; text-decoration: none; text-transform: uppercase; cursor: pointer; clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px)); }
 .action.primary { color: var(--bg); background: var(--green); }
+.action.is-creating {
+  position: relative;
+  overflow: hidden;
+  border-color: var(--blue);
+  padding-left: 38px;
+  color: var(--blue);
+  background: var(--panel);
+  clip-path: none;
+  cursor: wait;
+}
+.action.is-creating::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 18px;
+  width: 8px;
+  height: 8px;
+  background: var(--blue);
+  transform: translateY(-50%);
+  animation: creating-beacon 900ms steps(1, end) infinite;
+}
+.action.is-creating::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 24%;
+  height: 2px;
+  background: var(--blue);
+  transform: translateX(-110%);
+  will-change: transform;
+  animation: creating-route 1.35s ease-in-out infinite;
+}
+.action.is-creating [data-action-glyph] { color: var(--muted); font-size: .58rem; }
 .action:focus-visible, .text-link:focus-visible { outline: 2px solid var(--blue); outline-offset: 4px; }
 .fallback { display: grid; gap: 16px; }
 .text-link { justify-self: start; color: var(--muted); font-size: .8rem; text-underline-offset: 4px; }
@@ -368,6 +402,14 @@ footer a { color: var(--green); }
 @keyframes pulse { 45%, 100% { stroke-dashoffset: -120; } }
 @keyframes install { 0%, 42% { opacity: .25; } 43%, 80% { opacity: 1; } 81%, 100% { opacity: .25; } }
 @keyframes input-caret { 0%, 48% { opacity: 1; } 49%, 100% { opacity: 0; } }
+@keyframes creating-beacon {
+  0%, 48% { opacity: 1; transform: translateY(-50%) scale(1); }
+  49%, 100% { opacity: .32; transform: translateY(-50%) scale(.72); }
+}
+@keyframes creating-route {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(430%); }
+}
 
 @media (min-width: 981px) and (max-width: 1200px) {
   main { grid-template-rows: minmax(330px, .82fr) minmax(0, 1.18fr); }
@@ -430,8 +472,9 @@ footer a { color: var(--green); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; scroll-behavior: auto !important; }
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
   .packet-a { transform: translate(314px, 263px); }
   .packet-b { transform: translate(552px, 263px); }
   .install-line { opacity: 1; }
+  .action.is-creating::after { transform: translateX(160%); }
 }
