@@ -288,6 +288,12 @@ const GENERATED_REPOSITORY_RETRY_DELAYS_MS = [
 type GitObjectSha = { sha?: string };
 type GitReference = { object?: GitObjectSha };
 type GitCommit = { sha?: string; tree?: GitObjectSha };
+type GitTreeEntry = {
+  path?: string;
+  mode?: '100644' | '100755' | '040000' | '160000' | '120000';
+  type?: 'blob' | 'tree' | 'commit';
+};
+type GitTree = { tree?: GitTreeEntry[]; truncated?: boolean };
 
 export async function applyRepositorySkillSelection({
   owner,
@@ -365,6 +371,43 @@ export async function applyRepositorySkillSelection({
   );
   if (!headCommit.tree?.sha) throw new Error('GitHub did not return the generated repository tree');
 
+  const baseTree = await githubApi<GitTree>(
+    `${repositoryPath}/git/trees/${encodeURIComponent(headCommit.tree.sha)}?recursive=1`,
+    {},
+    token,
+  );
+  if (!baseTree.tree || baseTree.truncated) {
+    throw new Error('GitHub did not return the complete generated repository tree');
+  }
+
+  const skillPrefixes = selectedSkills.flatMap((skill) => [
+    `.claude/skills/${skill}/`,
+    `.agents/skills/${skill}/`,
+  ]);
+  const deletionEntries = baseTree.tree
+    .filter((entry): entry is GitTreeEntry & {
+      path: string;
+      mode: '100644' | '100755' | '120000';
+      type: 'blob';
+    } => (
+      typeof entry.path === 'string'
+      && entry.type === 'blob'
+      && (entry.mode === '100644' || entry.mode === '100755' || entry.mode === '120000')
+      && skillPrefixes.some((prefix) => entry.path.startsWith(prefix))
+    ))
+    .map((entry) => ({
+      path: entry.path,
+      mode: entry.mode,
+      type: entry.type,
+      sha: null,
+    }));
+
+  for (const skill of selectedSkills) {
+    if (!deletionEntries.some((entry) => entry.path === `.claude/skills/${skill}/SKILL.md`)) {
+      throw new Error(`Harness skill files were missing for ${skill}`);
+    }
+  }
+
   const tree = await githubApi<GitObjectSha>(
     `${repositoryPath}/git/trees`,
     {
@@ -378,12 +421,7 @@ export async function applyRepositorySkillSelection({
             type: 'blob',
             sha: settingsBlob.sha,
           },
-          ...selectedSkills.map((skill) => ({
-            path: `.agents/skills/${skill}/SKILL.md`,
-            mode: '100644',
-            type: 'blob',
-            sha: null,
-          })),
+          ...deletionEntries,
         ],
       }),
     },
