@@ -35,7 +35,7 @@ GitHub App configuration lives in server environment variables:
 
 Browser JavaScript receives no GitHub token. User and refresh tokens are encrypted inside Secure, HttpOnly cookies. Repository creation uses a GitHub App user access token so authority is always limited to the permissions shared by the app and the person creating the repository.
 
-Skill choices are allowlisted server-side. Disabled canonical skills remain present in the repository for safe updates and later recovery, `.claude/settings.json` marks them `"off"`, and their generated Codex adapter entry files are removed so both runtimes honor the initial selection. The hosted creator needs Contents read and write permission to make that one atomic post-generation configuration commit. If the commit fails after GitHub has created the repository, the UI returns the repository URL and states that all skills remain enabled rather than inviting a duplicate creation retry.
+Skill choices are allowlisted server-side. Every file under a deselected skill's `.claude/skills/<name>/` and `.agents/skills/<name>/` directories is omitted in one atomic post-generation configuration commit. `.claude/settings.json` also records the selected `"off"` values as durable metadata and defense in depth. The hosted creator needs Contents read and write permission to make that commit. If it fails after GitHub has created the repository, the UI returns the repository URL and states that all skills remain enabled rather than inviting a duplicate creation retry.
 
 When configuration is absent, the hosted page remains useful and sends the visitor to the official GitHub template flow.
 

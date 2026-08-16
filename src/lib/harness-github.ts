@@ -389,12 +389,13 @@ export async function applyRepositorySkillSelection({
       path: string;
       mode: '100644' | '100755' | '120000';
       type: 'blob';
-    } => (
-      typeof entry.path === 'string'
-      && entry.type === 'blob'
-      && (entry.mode === '100644' || entry.mode === '100755' || entry.mode === '120000')
-      && skillPrefixes.some((prefix) => entry.path.startsWith(prefix))
-    ))
+    } => {
+      const { path, mode, type } = entry;
+      return typeof path === 'string'
+        && type === 'blob'
+        && (mode === '100644' || mode === '100755' || mode === '120000')
+        && skillPrefixes.some((prefix) => path.startsWith(prefix));
+    })
     .map((entry) => ({
       path: entry.path,
       mode: entry.mode,

@@ -8,7 +8,7 @@
   <title>New Project · Harness Firmware</title>
   <link rel="icon" href="/harness-firmware/assets/favicon.svg">
   <link rel="preload" href="/harness-firmware/fonts/Unbounded[wght].ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="/harness-firmware/new/new-project.css?v=20260816a">
+  <link rel="stylesheet" href="/harness-firmware/new/new-project.css?v=20260816b">
   <script>document.documentElement.className = 'js';</script>
 </head>
 <body>
@@ -131,7 +131,10 @@
             <span><strong>Private repository</strong><small>Recommended for a new project</small></span>
           </label>
 
-          <button class="action primary" type="submit" id="create-button"><span>Create repository</span><span>-&gt;</span></button>
+          <button class="action primary" type="submit" id="create-button" aria-busy="false">
+            <span data-action-label>Create repository</span>
+            <span data-action-glyph aria-hidden="true">-&gt;</span>
+          </button>
         </form>
 
         <div class="fallback" id="fallback" hidden>
@@ -170,7 +173,7 @@
     <div class="skill-picker-shell">
       <header class="skill-picker-head">
         <div>
-          <p>HARNESS LOADOUT / REVERSIBLE</p>
+          <p>HARNESS LOADOUT / REPOSITORY CONTENTS</p>
           <h2 id="skill-picker-title">Choose active skills</h2>
         </div>
         <button class="skill-picker-close" id="skill-picker-close" type="button" aria-label="Close skill selector">CLOSE ×</button>
@@ -179,7 +182,7 @@
       <div class="skill-picker-tools" aria-label="Skill selection controls">
         <button id="skills-enable-all" type="button">Enable all</button>
         <button id="skills-clear-optional" type="button">Clear optional</button>
-        <p>Disabled skills stay in the repository and can be restored later</p>
+        <p>Deselected skills are omitted from the generated repository</p>
       </div>
 
       <div class="skill-groups" id="skill-groups"></div>
@@ -198,6 +201,6 @@
     <p>Local Launcher</p>
     <a href="https://github.com/ryanportfolio/Harness-Firmware#full-template">Windows / macOS setup -&gt;</a>
   </footer>
-  <script src="/harness-firmware/new/new-project.js?v=20260816a" type="module"></script>
+  <script src="/harness-firmware/new/new-project.js?v=20260816b" type="module"></script>
 </body>
 </html>

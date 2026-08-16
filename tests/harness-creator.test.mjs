@@ -47,7 +47,7 @@ test('creator copy and skill links follow the product contract', async () => {
   assert.doesNotMatch(html, /Prefer a local launcher/i);
 });
 
-test('creator exposes an accessible reversible skill selector', async () => {
+test('creator exposes an accessible skill selector with honest omission copy', async () => {
   const [html, css, js, catalog, facts] = await Promise.all([
     read('public/harness-firmware/new/index.html'),
     read('public/harness-firmware/new/new-project.css'),
@@ -75,11 +75,39 @@ test('creator exposes an accessible reversible skill selector', async () => {
   assert.match(js, /showModal\(\)/);
   assert.match(js, /event\.key !== 'Escape'/);
   assert.match(js, /disabledSkills/);
+  assert.match(html, /Deselected skills are omitted from the generated repository/);
+  assert.doesNotMatch(html, /Disabled skills stay in the repository/);
   assert.match(css, /#skill-trigger:focus-visible/);
   assert.match(css, /\.skill-option:focus-within/);
   for (const match of css.matchAll(/border-radius\s*:\s*([^;]+)/g)) {
     assert.equal(match[1].trim(), '0');
   }
+});
+
+test('creator submit becomes a distinct animated process state', async () => {
+  const [html, css, js] = await Promise.all([
+    read('public/harness-firmware/new/index.html'),
+    read('public/harness-firmware/new/new-project.css'),
+    read('public/harness-firmware/new/new-project.js'),
+  ]);
+
+  assert.match(html, /id="create-button"[^>]+aria-busy="false"/);
+  assert.match(html, /data-action-label/);
+  assert.match(html, /data-action-glyph/);
+  assert.match(js, /function setCreateState\(creating\)/);
+  assert.match(js, /classList\.toggle\('is-creating', creating\)/);
+  assert.match(js, /setAttribute\('aria-busy', String\(creating\)\)/);
+  assert.match(js, /Assembling repository/);
+  assert.match(js, /Working/);
+  assert.match(js, /omitted from this repository/);
+  assert.match(
+    css,
+    /\.action\.is-creating\s*\{[^}]*border-color:\s*var\(--blue\)[^}]*background:\s*var\(--panel\)[^}]*clip-path:\s*none[^}]*cursor:\s*wait/s,
+  );
+  assert.match(css, /\.action\.is-creating::before\s*\{[^}]*animation:\s*creating-beacon/s);
+  assert.match(css, /\.action\.is-creating::after\s*\{[^}]*animation:\s*creating-route/s);
+  assert.match(css, /@keyframes creating-route\s*\{[^}]*transform:[^}]*\}[^}]*transform:/s);
+  assert.doesNotMatch(css, /animation:\s*none/);
 });
 
 test('creator motion has static and reduced-motion meaning', async () => {
