@@ -43,7 +43,7 @@ test('creator copy and skill links follow the product contract', async () => {
   assert.match(html, /<p>Local Launcher<\/p>/);
   assert.match(html, /Add your framework or first project files/);
   assert.match(html, /then run/);
-  assert.match(css, /\.init-copy\s*\{[^}]*font-size:\s*1\.1rem/s);
+  assert.match(css, /\.init-copy\s*\{[^}]*font-size:\s*1rem/s);
   assert.doesNotMatch(html, /Prefer a local launcher/i);
 });
 

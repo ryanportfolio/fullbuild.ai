@@ -90,7 +90,7 @@ h1 { max-width: 8ch; margin: 0; font-size: clamp(4rem, 7.5vw, 7.6rem); font-weig
 .outcomes { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
 .outcomes li { display: grid; grid-template-columns: 40px 1fr; padding: 11px 0; border-bottom: 1px solid var(--line); font-weight: 650; }
 .outcomes span { color: var(--green); font: .7rem var(--mono); }
-.init-copy { margin: 22px 0 0; color: var(--muted); font-size: 1.1rem; line-height: 1.55; }
+.init-copy { margin: 22px 0 0; color: var(--muted); font-size: 1rem; line-height: 1.55; }
 .init-copy a { color: var(--green); text-underline-offset: 3px; }
 
 .machine { grid-area: machine; position: relative; display: grid; place-items: center; overflow: hidden; min-height: 0; border-top: 1px solid var(--line); border-left: 1px solid var(--line); background: var(--machine); }
