@@ -4,6 +4,10 @@
 // the metal), A = 255. Sizes are quantized to 32px buckets so mobile URL bar
 // resizes are no-ops; glyph draws use "900 <px> QuenchDisplay" and callers
 // must re-bake once document.fonts.ready fires.
+//
+// The lifecycle pools are not baked. Their profile is a smooth radial ramp,
+// and no 8 bit texture can carry one without the shader's normals turning
+// every quantization step into a concentric ridge, so the shader builds them.
 
 const HAS_OFFSCREEN = typeof OffscreenCanvas !== "undefined";
 
@@ -143,94 +147,14 @@ function bakeTagline(w, h, opts) {
   };
 }
 
-function bakeOrb(w, h) {
-  const mask = layer(w, h);
-  if (!mask) return null;
-  const ctx = mask.ctx;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillStyle = gray(1.0);
-  ctx.font = fontStr(h * 0.78);
-  ctx.fillText("?", w / 2, h * 0.55);
-  // Wide stroke so the counter and stem catch ridge speculars
-  ctx.strokeStyle = gray(1.0);
-  ctx.lineWidth = 0.035 * w;
-  ctx.strokeText("?", w / 2, h * 0.55);
-  return {
-    height: blurred(mask.canvas, 0.02 * w, w, h),
-    mask: mask.canvas,
-    reflect: null
-  };
-}
+// ---- lifecycle discs ----
 
-function bakeLens(w, h) {
-  const mask = layer(w, h);
-  if (!mask) return null;
-  const ctx = mask.ctx;
-  ctx.strokeStyle = gray(1.0);
-  ctx.lineWidth = 0.09 * w;
-  ctx.beginPath();
-  ctx.ellipse(w / 2, h / 2, w * 0.36, h * 0.29, 0, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.lineWidth = 0.02 * w;
-  ctx.beginPath();
-  ctx.moveTo(w * 0.06, h * 0.94);
-  ctx.lineTo(w * 0.94, h * 0.06);
-  ctx.stroke();
-  return {
-    height: blurred(mask.canvas, 0.02 * w, w, h),
-    mask: mask.canvas,
-    reflect: null
-  };
-}
-
-function bakeIngot(w, h) {
-  const mask = layer(w, h);
-  if (!mask) return null;
-  const ctx = mask.ctx;
-  const rw = w * 0.76;
-  const rh = h * 0.46;
-  const x = (w - rw) / 2;
-  const y = (h - rh) / 2;
-  ctx.fillStyle = gray(1.0);
-  roundRectPath(ctx, x, y, rw, rh, 0.08 * w);
-  ctx.fill();
-  // Two rectangular notches cut from the top edge
-  ctx.globalCompositeOperation = "destination-out";
-  ctx.fillRect(x + rw * 0.24, y - 2, rw * 0.12, rh * 0.22 + 2);
-  ctx.fillRect(x + rw * 0.62, y - 2, rw * 0.12, rh * 0.22 + 2);
-  ctx.globalCompositeOperation = "source-over";
-  return {
-    height: blurred(mask.canvas, 0.04 * w, w, h),
-    mask: mask.canvas,
-    reflect: null
-  };
-}
-
-function bakeGhost(w, h) {
-  const mask = layer(w, h);
-  if (!mask) return null;
-  const ctx = mask.ctx;
-  const r = 0.3 * Math.min(w, h);
-  const cx = w / 2;
-  const cy = h / 2;
-  ctx.fillStyle = gray(1.0);
-  ctx.beginPath();
-  for (let i = 0; i < 6; i++) {
-    const a = (-90 + i * 60) * (Math.PI / 180);
-    const vx = cx + r * Math.cos(a);
-    const vy = cy + r * Math.sin(a);
-    if (i === 0) ctx.moveTo(vx, vy);
-    else ctx.lineTo(vx, vy);
-  }
-  ctx.closePath();
-  ctx.fill();
-  return {
-    height: blurred(mask.canvas, 0.04 * w, w, h),
-    mask: mask.canvas,
-    reflect: null
-  };
-}
+// A cell disc is one circle inscribed in its square anchor. The shader draws
+// the pool analytically (an 8 bit baked lens profile rings the moment
+// forward-difference normals hit it), so this constant is all the disc needs
+// to exist here: the filament reads it to know where the thread breaks, and
+// the shader reads it to place the same circle
+export const DISC_R = 0.39;
 
 function bakeDevice(w, h) {
   const mask = layer(w, h);
@@ -302,16 +226,18 @@ function bakeMirror(w, h) {
   };
 }
 
+// The four lifecycle pools are absent on purpose: they are analytic in the
+// shader and have no baked target at all
 const RECIPES = {
   tagline: bakeTagline,
-  orb: bakeOrb,
-  lens: bakeLens,
-  ingot: bakeIngot,
-  ghost: bakeGhost,
   device: bakeDevice,
   pools: bakePools,
   mirror: bakeMirror
 };
+
+export function hasRecipe(id) {
+  return Object.prototype.hasOwnProperty.call(RECIPES, id);
+}
 
 function channelData(canvas, w, h) {
   if (!canvas) return null;

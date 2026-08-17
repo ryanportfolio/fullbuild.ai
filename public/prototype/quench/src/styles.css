@@ -264,10 +264,11 @@ main > section {
   text-align: center;
   width: fit-content;
   margin-inline: auto;
-  background: linear-gradient(180deg, #F6F8FB, #B9C0CF 45%, #4C515E 55%, #DFE4EE);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  /* Flat, not a chrome gradient. The GL relief is the metal; a hard
+     light-to-dark split baked into the glyphs only competes with it, and
+     reads as a preset rather than as a lit surface */
+  color: var(--ink);
+  text-shadow: 0 1px 3px rgba(6, 7, 10, 0.85), 0 0 18px rgba(6, 7, 10, 0.6);
 }
 
 .tagline-line {
@@ -328,40 +329,188 @@ html.gl-live .tagline {
   border-color: var(--live);
 }
 
-/* lifecycle stages */
+/* lifecycle cells */
 .section-head {
   max-width: 720px;
 }
 
+#lifecycle {
+  position: relative;
+}
+
+/* One thread through every disc. The canvas paints below main, so nothing in
+   the DOM can sit behind a disc: the path is cut where each disc stands
+   instead, which reads the same and costs one element */
+.filament {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.filament-line {
+  fill: none;
+  stroke: rgba(232, 234, 240, 0.24);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
 .stage {
-  min-height: 72svh;
+  --disc: clamp(260px, 36vw, 560px);
+  --sat: 82px;
+  position: relative;
+  z-index: 1;
+  min-height: 78svh;
   display: grid;
-  grid-template-columns: 200px minmax(0, 1fr) minmax(0, 460px);
+  grid-template-columns: 1fr;
   align-items: center;
-  gap: 48px;
-  padding-block: 48px;
+  gap: 32px;
+  padding-block: 56px;
+}
+
+/* The cell: a square anchor holding the mercury pool, its orbit rings, the
+   label that overlaps the pool's upper-left arc, and the satellite */
+.cell-figure {
+  position: relative;
+  width: var(--disc);
+  height: var(--disc);
+  justify-self: center;
+  animation: cell-drift calc(15s + var(--cell, 0) * 2.4s) ease-in-out infinite;
+  animation-delay: calc(var(--cell, 0) * -4.3s);
+  transition: transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.cell-disc {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.stage .molten-anchor {
+  position: absolute;
+  inset: 0;
+}
+
+/* Without live metal the pool is empty, so the silhouette is drawn instead.
+   The shader tells the four states apart by material, and the static plate has
+   to say the same thing in one frame: a diffuse molten glow with no settled
+   edge, a horizon starting to hold, a hard mirror inside a hard rim, and an
+   edge that flares and will not close */
+html:not(.gl-live) .cell-disc::before,
+html.reduced .cell-disc::before {
+  content: "";
+  position: absolute;
+  inset: 11%;
+  border-radius: 50%;
+  border: 1px solid var(--plate-rim, var(--hairline));
+  background: var(--plate, radial-gradient(circle at 38% 30%, rgba(232, 234, 240, 0.07), rgba(6, 7, 10, 0.74) 68%));
+}
+
+#stage-idea {
+  --plate-rim: rgba(232, 234, 240, 0.05);
+  --plate: radial-gradient(circle at 42% 28%, rgba(232, 234, 240, 0.22), rgba(232, 234, 240, 0.06) 44%, rgba(6, 7, 10, 0.86) 76%);
+}
+
+#stage-design {
+  --plate-rim: rgba(232, 234, 240, 0.11);
+  --plate: linear-gradient(178deg, rgba(232, 234, 240, 0.17), rgba(232, 234, 240, 0.06) 46%, rgba(6, 7, 10, 0.9) 60%, rgba(232, 234, 240, 0.04));
+}
+
+#stage-engineering {
+  --plate-rim: rgba(232, 234, 240, 0.26);
+  --plate: linear-gradient(180deg, rgba(232, 234, 240, 0.26), rgba(232, 234, 240, 0.19) 44%, rgba(6, 7, 10, 0.94) 52%, rgba(232, 234, 240, 0.08));
+}
+
+#stage-shipped {
+  --plate-rim: rgba(232, 234, 240, 0.13);
+  --plate:
+    radial-gradient(circle at 50% 46%, rgba(6, 7, 10, 0.92) 58%, rgba(6, 7, 10, 0.2) 86%),
+    conic-gradient(from 200deg, #CDE7EF, #EFD8E9 22%, #D2DEFA 46%, #F4E8CD 68%, #DAF0E9 86%, #CDE7EF);
+}
+
+.orbits {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  transition: transform 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.orbit {
+  fill: none;
+  stroke: var(--ink);
+  stroke-opacity: calc(0.09 + 0.25 * var(--near, 1));
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: orbit-turn linear infinite;
+  transition: stroke-opacity 0.5s ease;
+}
+
+.orbit-a {
+  stroke-dasharray: 620 210;
+  animation-duration: 96s;
+  animation-delay: calc(var(--cell, 0) * -13s);
+}
+
+.orbit-b {
+  stroke-dasharray: 300 120 150 90;
+  animation-duration: 138s;
+  animation-direction: reverse;
+  animation-delay: calc(var(--cell, 0) * -21s);
+}
+
+.orbit-c {
+  stroke-dasharray: 880 260;
+  animation-duration: 184s;
+  animation-delay: calc(var(--cell, 0) * -31s);
 }
 
 .stage-meta {
+  position: absolute;
+  left: 0;
+  top: 7%;
+  z-index: 2;
   display: grid;
-  gap: 6px;
-  align-content: center;
+  gap: 4px;
+  justify-items: start;
+  translate: 0 calc(var(--cross, 0) * -26px + (1 - var(--near, 1)) * 22px);
 }
 
 .stage-index {
-  font-size: clamp(3rem, 6vw, 5rem);
-  font-weight: 200;
+  font-size: clamp(0.72rem, 1vw, 0.9rem);
+  font-weight: 500;
   line-height: 1;
-  color: rgba(232, 234, 240, 0.14);
+  letter-spacing: 0.24em;
+  color: var(--ink-2);
+  opacity: clamp(0.35, calc(var(--near, 1) * 1.9), 1);
+  translate: 0 calc(var(--cross, 0) * -12px);
+  text-shadow: 0 1px 2px rgba(6, 7, 10, 0.9), 0 0 8px rgba(6, 7, 10, 0.8);
 }
 
+.stage-index::before {
+  content: "#";
+  opacity: 0.5;
+}
+
+/* The label crosses the pool's crown, and the pool is now the brightest thing
+   in the frame, so white type needs a halo that holds on lit chrome as well as
+   on the dark field */
 .stage-name {
-  font-size: var(--size-h2);
+  font-size: clamp(2rem, 4.4vw, 3.5rem);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
-  line-height: 1;
-  text-shadow: 0 1px 3px rgba(6, 7, 10, 0.85), 0 0 18px rgba(6, 7, 10, 0.6);
+  letter-spacing: -0.015em;
+  line-height: 0.92;
+  opacity: clamp(0.42, calc((var(--near, 1) - 0.1) * 1.7), 1);
+  text-shadow: 0 1px 2px rgba(6, 7, 10, 0.92), 0 0 9px rgba(6, 7, 10, 0.85), 0 0 26px rgba(6, 7, 10, 0.7);
 }
 
 .stage-state {
@@ -369,48 +518,145 @@ html.gl-live .tagline {
   text-transform: uppercase;
   letter-spacing: 0.18em;
   color: var(--ink-2);
+  opacity: clamp(0.35, calc((var(--near, 1) - 0.22) * 2), 1);
+  text-shadow: 0 1px 2px rgba(6, 7, 10, 0.9), 0 0 8px rgba(6, 7, 10, 0.8);
 }
 
+/* Pending pink is the darkest label colour in the set and it lands on the one
+   pool bright enough to read as a light source, so it needs the halo carried
+   further out than the grey labels do. Same shadow colour, same tight core, more
+   of it: the type is left exactly as it was */
 #stage-shipped .stage-state {
   color: var(--pending);
+  text-shadow:
+    0 0 2px rgba(6, 7, 10, 0.98),
+    0 1px 2px rgba(6, 7, 10, 0.96),
+    0 0 7px rgba(6, 7, 10, 0.95),
+    0 0 16px rgba(6, 7, 10, 0.9);
 }
 
-.stage-visual {
-  position: relative;
-  width: fit-content;
-  margin-inline: auto;
+/* Satellite: mother of pearl on the outer orbit at half past four, the one
+   thing in the cell brighter than the metal. It is the control that opens the
+   cell, so it is a button and carries the button reset */
+.satellite {
+  position: absolute;
+  left: 84.6%;
+  top: 84.6%;
+  z-index: 4;
+  width: var(--sat);
+  height: var(--sat);
+  margin: calc(var(--sat) / -2);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  font: inherit;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  color: var(--void);
+  background:
+    radial-gradient(120% 120% at 30% 22%, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.24) 38%, rgba(116, 124, 146, 0.44) 78%, rgba(255, 255, 255, 0.72)),
+    conic-gradient(from 210deg, #CDE7EF, #EFD8E9 20%, #D2DEFA 42%, #F4E8CD 64%, #DAF0E9 84%, #CDE7EF);
+  box-shadow: 0 0 0 1px rgba(232, 234, 240, 0.32), 0 12px 34px rgba(4, 6, 10, 0.72);
+  transition: scale 0.42s cubic-bezier(0.22, 0.61, 0.36, 1), box-shadow 0.42s ease;
 }
 
-.stage .molten-anchor {
-  width: min(46vw, 560px);
-  aspect-ratio: 1 / 1;
+.satellite svg {
+  width: 46%;
+  height: 46%;
 }
 
-/* Desktop stage composition: caption sits low so it frames the metal instead
-   of bisecting it, and alternate stages mirror so each screen has its own
-   silhouette */
+.satellite-arrow {
+  fill: none;
+  stroke: var(--void);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: translate 0.42s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.satellite::after {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  background: linear-gradient(72deg, transparent 38%, rgba(255, 255, 255, 0.92) 50%, transparent 62%);
+  translate: -130% 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.satellite:hover,
+.satellite:focus-visible {
+  scale: 1.5;
+}
+
+.satellite:hover .satellite-arrow,
+.satellite:focus-visible .satellite-arrow {
+  translate: 3px 0;
+}
+
+.satellite:hover::after,
+.satellite:focus-visible::after {
+  animation: sat-sheen 0.85s cubic-bezier(0.3, 0, 0.2, 1);
+}
+
+.satellite:focus-visible {
+  box-shadow: 0 0 0 2px var(--void), 0 0 0 4px var(--live), 0 12px 34px rgba(4, 6, 10, 0.72);
+}
+
+/* Hand or keyboard on the cell: the pool tightens in the shader, the rings
+   pull in and brighten, the whole cell lifts. Keyed off :hover and
+   :focus-within as well as the js flag, so the emphasis survives the boot
+   path that never reaches the loop */
+.cell-figure:hover,
+.stage:focus-within .cell-figure,
+.stage.is-hot .cell-figure {
+  transform: translateY(-7px);
+}
+
+.cell-figure:hover .orbits,
+.stage:focus-within .orbits,
+.stage.is-hot .orbits {
+  transform: scale(0.968);
+}
+
+.cell-figure:hover .orbit,
+.stage:focus-within .orbit,
+.stage.is-hot .orbit {
+  stroke-opacity: calc(0.2 + 0.3 * var(--near, 1));
+}
+
+/* Desktop cell composition: pool left, copy right, every cell nudged along
+   its own lane. Cells no longer swap sides: the thread has to stay near
+   vertical to read as one filament, and a full side swap turns it into a
+   zigzag. Lane offsets are fixed per index, so captures repeat */
 @media (min-width: 761px) {
   .stage {
-    grid-template-columns: minmax(200px, 260px) minmax(0, 1fr) minmax(0, 420px);
+    grid-template-columns: minmax(0, calc(var(--disc) + 100px)) minmax(0, 1fr);
+    gap: clamp(28px, 6vw, 88px);
   }
 
-  .stage .scrim {
-    align-self: end;
-    margin-bottom: 4vh;
+  .cell-figure {
+    justify-self: start;
   }
 
-  /* ENGINEERING is the long stage name: give it a lane of its own so it
-     never runs across the ingot's lit rim */
-  #stage-engineering {
-    grid-template-columns: minmax(200px, 640px) minmax(0, 1fr) minmax(0, 420px);
+  #lifecycle .stage:nth-of-type(1) .cell-figure {
+    margin-left: 8px;
   }
 
-  #lifecycle .stage:nth-of-type(even) {
-    grid-template-columns: minmax(200px, 260px) minmax(0, 420px) minmax(0, 1fr);
+  #lifecycle .stage:nth-of-type(2) .cell-figure {
+    margin-left: 62px;
   }
 
-  #lifecycle .stage:nth-of-type(even) .stage-visual {
-    order: 3;
+  #lifecycle .stage:nth-of-type(3) .cell-figure {
+    margin-left: 26px;
+  }
+
+  #lifecycle .stage:nth-of-type(4) .cell-figure {
+    margin-left: 96px;
   }
 }
 
@@ -696,7 +942,55 @@ html.gl-live:not(.reduced) .fallback-figure {
   gap: 8px;
 }
 
-/* 9. reveal machinery */
+/* 9. cell motion
+   Every cell phase is derived from --cell (its index in the lifecycle), so two
+   captures of the same frame are identical and no cell shares a beat */
+@keyframes cell-drift {
+  0% { translate: 0 0; }
+  25% { translate: 4px -5px; }
+  50% { translate: -3px -8px; }
+  75% { translate: -5px 3px; }
+  100% { translate: 0 0; }
+}
+
+@keyframes orbit-turn {
+  from { rotate: 0deg; }
+  to { rotate: 360deg; }
+}
+
+@keyframes sat-sheen {
+  0% { translate: -130% 0; opacity: 0; }
+  22% { opacity: 1; }
+  100% { translate: 130% 0; opacity: 0; }
+}
+
+/* window.__quench.freeze() parks the whole page, not just the frame loop. Stated
+   as a declaration rather than paused per animation object so anything that
+   starts while frozen is already held on its first frame */
+html.capture-frozen *,
+html.capture-frozen *::before,
+html.capture-frozen *::after {
+  animation-play-state: paused !important;
+}
+
+/* 10. grain plate */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  display: none;
+  opacity: 0.1;
+  mix-blend-mode: multiply;
+  background-repeat: repeat;
+  background-size: 128px 128px;
+  pointer-events: none;
+}
+
+html.has-js .grain {
+  display: block;
+}
+
+/* 11. reveal machinery */
 html.js-anim .rv {
   opacity: 0;
   translate: 0 14px;
@@ -708,7 +1002,323 @@ html.js-anim .rv.is-in {
   translate: 0 0;
 }
 
-/* 10. media */
+/* 12. detail overlay
+   The satellite's cell, opened. The pool zooms out of the disc until it fills
+   the frame, resolving into the halftone screen as it comes, and the cell's own
+   words scroll over the settled field. Every moving part is a keyframe
+   animation and never a transition, because animation-play-state is what
+   window.__quench.freeze() can park */
+.detail {
+  --dur: 820ms;
+  --lens-ease: cubic-bezier(0.3, 0, 0.2, 1);
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  animation: detail-in 120ms linear both;
+}
+
+/* Contractual: the shell ships hidden, so with no JavaScript it is display:none
+   and covers nothing */
+.detail[hidden] {
+  display: none;
+}
+
+.detail.is-closing {
+  animation: detail-out 240ms ease both;
+}
+
+html.detail-open {
+  overflow: hidden;
+}
+
+/* The lens: radius and centre both travel, so the circle leaves the disc and
+   lands on the middle of the frame */
+.detail-lens {
+  position: fixed;
+  inset: 0;
+  clip-path: circle(var(--dr0, 0px) at var(--dcx, 50%) var(--dcy, 50%));
+}
+
+/* Square, and always wider than the lens: half of 153vmax clears 75vmax at
+   full scale, and at the start it clears the pool radius by the margin built
+   into SAMPLE in detail.mjs */
+.detail-stack {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 153vmax;
+  height: 153vmax;
+  margin: -76.5vmax 0 0 -76.5vmax;
+  transform: translate(var(--dtx, 0px), var(--dty, 0px)) scale(var(--dk, 0.2));
+}
+
+.detail-flat,
+.detail-plate,
+.detail-screen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Fallback hero: the state's own static plate, carried across from the disc.
+   Used wherever the pool cannot be read back, which is no-WebGL and reduced
+   motion */
+.detail-flat {
+  background-color: var(--void);
+  background-image: var(--detail-plate, radial-gradient(circle at 38% 30%, rgba(232, 234, 240, 0.07), rgba(6, 7, 10, 0.74) 68%));
+}
+
+.detail-plate,
+.detail-screen {
+  display: none;
+}
+
+.detail.has-screen .detail-flat {
+  display: none;
+}
+
+.detail.has-screen .detail-plate {
+  display: block;
+}
+
+.detail.has-screen .detail-screen {
+  display: block;
+  opacity: 0;
+}
+
+.detail.is-open .detail-stack {
+  animation: detail-zoom var(--dur) var(--lens-ease) both;
+}
+
+.detail.is-open .detail-lens {
+  animation: detail-widen var(--dur) var(--lens-ease) both;
+}
+
+.detail.is-open.has-screen .detail-screen {
+  animation: detail-in calc(var(--dur) * 0.66) linear calc(var(--dur) * 0.28) both;
+}
+
+.detail.is-open .detail-x,
+.detail.is-open .detail-scroll {
+  animation: detail-in 420ms ease calc(var(--dur) * 0.7) both;
+}
+
+/* Above the scroll layer, which spans the whole frame and would otherwise
+   take the click meant for this control */
+.detail-x {
+  position: fixed;
+  z-index: 2;
+  top: 16px;
+  right: 20px;
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+  opacity: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.detail-x svg {
+  width: 34px;
+  height: 34px;
+}
+
+.detail-x-mark {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 2px rgba(6, 7, 10, 0.96)) drop-shadow(0 1px 6px rgba(6, 7, 10, 0.9));
+}
+
+.detail-x:hover .detail-x-mark {
+  stroke: var(--live);
+}
+
+/* Reference geometry: content runs to roughly 1.76 viewports, the column is a
+   narrow centred measure, and the second way out waits at the foot of it */
+.detail-scroll {
+  position: relative;
+  z-index: 1;
+  min-height: 172vh;
+  padding: 26vh 24px 10vh;
+  opacity: 0;
+}
+
+.detail-col {
+  position: relative;
+  width: min(400px, 100%);
+  min-height: 136vh;
+  margin-inline: auto;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 18px;
+  justify-items: start;
+}
+
+/* The words sit on the house plate, not on a wash. A radial fade wide enough to
+   reach the ends of the lines is necessarily thin by the time it gets there,
+   which is how the copy ended up reading on bare lattice; a plate is opaque
+   under the type and stops at its edge, so it covers a fifth of the area the
+   fade did. Layout only here, the ground comes from .scrim */
+.detail-sheet {
+  width: 100%;
+  display: grid;
+  gap: 18px;
+  justify-items: start;
+}
+
+/* The halftone is the brightest field in the prototype, brighter than the bare
+   metal the stage captions sit on, so the overlay's plate is the deepest of the
+   set: same component, one step further, with the machined inset highlight the
+   stage plates already carry */
+.detail .scrim {
+  background: rgba(6, 7, 10, 0.93);
+  box-shadow: inset 0 1px 0 rgba(232, 234, 240, 0.07), 0 26px 64px rgba(4, 6, 10, 0.72);
+}
+
+.detail-name,
+.detail-body p,
+.detail-specs dd {
+  text-shadow: 0 1px 3px rgba(6, 7, 10, 0.85), 0 0 18px rgba(6, 7, 10, 0.6);
+}
+
+/* The small grey labels are the least contrasty thing on the brightest field
+   in the prototype, so they carry the tight core halo the pending stamp uses */
+.detail-index,
+.detail-state,
+.detail-specs dt,
+.detail-foot {
+  text-shadow:
+    0 0 2px rgba(6, 7, 10, 0.98),
+    0 1px 2px rgba(6, 7, 10, 0.96),
+    0 0 7px rgba(6, 7, 10, 0.95),
+    0 0 16px rgba(6, 7, 10, 0.9);
+}
+
+.detail-index {
+  font-size: var(--size-label);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.24em;
+  color: var(--ink-2);
+}
+
+.detail-index::before {
+  content: "#";
+  opacity: 0.5;
+}
+
+.detail-name {
+  font-size: clamp(1.9rem, 3.4vw, 2.9rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 0.92;
+}
+
+.detail-state {
+  font-size: var(--size-label);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--ink-2);
+}
+
+.detail-body {
+  display: grid;
+  gap: 14px;
+}
+
+.detail-body p {
+  color: var(--ink-2);
+  font-weight: 300;
+}
+
+.detail-specs {
+  width: 100%;
+  margin: 8px 0 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.detail-spec {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 24px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.detail-specs dt {
+  font-size: 0.72rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--ink-2);
+}
+
+.detail-specs dd {
+  margin: 0;
+  font-size: 0.95rem;
+  text-align: right;
+}
+
+.detail-foot {
+  align-self: end;
+  justify-self: center;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--hairline);
+  padding: 10px 8px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.detail-foot:hover {
+  color: var(--live);
+  border-bottom-color: var(--live);
+}
+
+@keyframes detail-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes detail-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes detail-zoom {
+  from { transform: translate(var(--dtx), var(--dty)) scale(var(--dk)); }
+  to { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes detail-widen {
+  from { clip-path: circle(var(--dr0) at var(--dcx) var(--dcy)); }
+  to { clip-path: circle(75vmax at 50% 50%); }
+}
+
+/* 13. media */
 @media (max-width: 760px) {
   .site-head {
     padding: 16px 20px;
@@ -755,33 +1365,41 @@ html.js-anim .rv.is-in {
     gap: 14px;
   }
 
+  /* Quench's own rule wins over the reference here: the display type never
+     bleeds past the viewport edge, it shrinks so the whole cell fits one
+     phone screen */
   .stage {
+    --disc: min(80vw, 340px);
+    --sat: 56px;
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 20px;
     min-height: auto;
-    padding-block: 64px;
+    padding-block: 56px;
   }
 
   #stage-idea {
-    padding-top: 96px;
+    padding-top: 88px;
   }
 
-  .stage .molten-anchor {
-    width: 62vw;
-    margin-top: 24px;
+  .stage-meta {
+    top: 2%;
+  }
+
+  .stage-name {
+    font-size: clamp(1.6rem, 8.4vw, 2.2rem);
+  }
+
+  .satellite-arrow {
+    stroke-width: 2.6;
   }
 
   .stage .scrim {
-    margin-top: 12px;
+    margin-top: 4px;
   }
 
   .exit-head {
     grid-template-columns: 1fr;
     gap: 24px;
-  }
-
-  .stage-meta {
-    justify-items: start;
   }
 
   #case-00 .molten-anchor {
@@ -814,6 +1432,31 @@ html.js-anim .rv.is-in {
   .scrim {
     padding: 22px 24px;
   }
+
+  .detail-x {
+    top: 8px;
+    right: 10px;
+    width: 48px;
+    height: 48px;
+  }
+
+  .detail-x svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .detail-scroll {
+    padding: 22vh 20px 10vh;
+  }
+
+  .detail-col {
+    min-height: 132vh;
+  }
+
+  .detail-name {
+    font-size: clamp(1.9rem, 9vw, 2.6rem);
+  }
+
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -828,10 +1471,40 @@ html.js-anim .rv.is-in {
     animation-iteration-count: 1 !important;
     transition: none !important;
   }
+
+  /* A cross fade carries no vestibular motion, so the overlay keeps one. What
+     is struck is the zoom and the halftone dissolve: the lens opens already
+     full and the hero is the state's own static plate */
+  .detail {
+    animation-duration: 200ms !important;
+  }
+
+  .detail-lens,
+  .detail.is-open .detail-lens {
+    animation: none !important;
+    clip-path: none;
+  }
+
+  .detail-stack,
+  .detail.is-open .detail-stack {
+    animation: none !important;
+    transform: none;
+  }
+
+  .detail-x,
+  .detail-scroll,
+  .detail.is-open .detail-x,
+  .detail.is-open .detail-scroll {
+    animation: none !important;
+    opacity: 1;
+  }
 }
 
 @media (forced-colors: active) {
-  #metal {
+  #metal,
+  .grain,
+  .filament,
+  .orbits {
     display: none !important;
   }
 
@@ -839,11 +1512,25 @@ html.js-anim .rv.is-in {
     display: grid !important;
   }
 
+  /* SVG paint is not forced, so the satellite states its own contrast */
+  .satellite {
+    background: ButtonFace;
+    border: 1px solid ButtonText;
+  }
+
+  .satellite-arrow {
+    stroke: ButtonText;
+  }
+
+  .stage-index,
+  .stage-name,
+  .stage-state {
+    opacity: 1;
+  }
+
   .tagline {
-    background: none;
-    -webkit-background-clip: initial;
-    background-clip: initial;
     color: CanvasText;
+    text-shadow: none;
   }
 
   .scrim,
@@ -854,13 +1541,67 @@ html.js-anim .rv.is-in {
   .site-foot {
     border-color: CanvasText;
   }
+
+  /* No screen and no plate: the overlay falls back to a plain panel so its
+     words carry the system's own contrast */
+  .detail-lens {
+    display: none !important;
+  }
+
+  .detail {
+    background: Canvas;
+  }
+
+  .detail-x,
+  .detail-foot {
+    border: 1px solid ButtonText;
+    color: ButtonText;
+  }
+
+  .detail-x-mark {
+    stroke: ButtonText;
+  }
 }
 
 @media print {
   #metal,
+  .grain,
   .site-head,
-  .fallback-figure {
+  .fallback-figure,
+  .filament,
+  .orbits,
+  .satellite,
+  .detail {
     display: none !important;
+  }
+
+  /* The cell collapses to its words: index, title, state, copy */
+  .cell-figure {
+    width: auto;
+    height: auto;
+  }
+
+  .cell-disc {
+    position: static;
+  }
+
+  .stage-meta {
+    position: static;
+    translate: none;
+  }
+
+  .stage-index,
+  .stage-name,
+  .stage-state,
+  #stage-shipped .stage-state {
+    opacity: 1;
+    text-shadow: none;
+  }
+
+  .stamp {
+    position: static;
+    transform: none;
+    display: inline-block;
   }
 
   body {
@@ -869,10 +1610,8 @@ html.js-anim .rv.is-in {
   }
 
   .tagline {
-    background: none;
-    -webkit-background-clip: initial;
-    background-clip: initial;
     color: #000;
+    text-shadow: none;
   }
 
   .scrim {
