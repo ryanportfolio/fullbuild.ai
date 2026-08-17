@@ -49,6 +49,23 @@ For each target viewport and state: capture source and local, name observable de
 
 Run repository verification. If deployment was explicitly requested, smoke-test the production URL too. Report evidence and known deviations; never claim parity from a score alone.
 
+### 6. Judge GPU work on a GPU
+
+Headless browsers usually fall back to a software rasterizer. Anything WebGL, canvas, heavy compositing, or filter-driven then renders at the wrong resolution, the wrong speed, and sometimes the wrong appearance. A performance budget or an adaptive quality tier measured there is measuring the rasterizer, not the code.
+
+Before reporting any frame time, or judging any material that a GPU shades, check which renderer you actually got:
+
+```js
+const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL);
+```
+
+A SwiftShader, llvmpipe, or "software" string means relaunch headed (`chromium.launch({ headless: false })`) and measure again. Check whether the driver is already installed before concluding it is unavailable; a headed run is often one flag away, not a new dependency.
+
+Never write "unverified on real hardware" into a report until you have confirmed a headed run is genuinely impossible. Stating a limitation is not a substitute for spending the two minutes to remove it.
+
+Software rendering is also not bit-reproducible at the last significant bit, so byte-identical screenshot hashes are the wrong acceptance check. Assert determinism of the inputs and allow a small pixel-delta tolerance on the image.
+
 ## Anti-patterns
 
 - Don't ship clone-generated markup, styles, or scripts by default; extract facts, build fresh.
@@ -56,3 +73,6 @@ Run repository verification. If deployment was explicitly requested, smoke-test 
 - Don't compare only at exact breakpoints; defects live between them.
 - Don't keep logos, distinctive copy, proprietary art, or uncertain fonts without explicit rights.
 - Don't paste, echo, persist, or commit capture-API keys.
+- Don't report frame times, or tune a quality tier, from a software rasterizer. Check the renderer string, then relaunch headed.
+- Don't record a limitation you could have removed. Try the headed run before writing "unverified on real hardware".
+- Don't fake a reference's material with a preset. A hard light-to-dark gradient split baked into type or a shape reads as an effect, not a surface; if the real material is rendered elsewhere on the page, keep the static layer quiet instead of competing with it.
