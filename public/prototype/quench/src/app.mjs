@@ -312,11 +312,17 @@ function main() {
     html.style.setProperty("--coalesce", c.toFixed(2));
   }
 
-  // The DOM tagline stays visible until the metal word is legible, then
-  // melts out; the headline never depends on the GL word existing
+  // The DOM tagline covers the gap before the metal word first forms, then
+  // latches out for good. It is a fallback, not a co-star: the hero melts and
+  // reforms on a 13s cycle, and swapping flat type back in at every trough put
+  // it on screen a third of the time. Once the metal has spelled the headline
+  // once, the metal owns it, molten troughs included. The h1 stays in the DOM
+  // for assistive tech, and the no-JS, no-WebGL and reduced paths never latch
   let lastMelt = -1;
+  let meltLatched = false;
   function writeMelt(v) {
-    const m = Math.max(0, Math.min(1, v));
+    const m = meltLatched ? 1 : Math.max(0, Math.min(1, v));
+    if (m >= 0.98) meltLatched = true;
     if (lastMelt >= 0 && Math.abs(m - lastMelt) < 0.02) return;
     lastMelt = m;
     html.style.setProperty("--melt", m.toFixed(2));

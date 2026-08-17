@@ -72,12 +72,19 @@ export function proximity(sectionCenterY, viewportH) {
 // scrollSet with no discontinuity. Long eased holds at each end keep it calm.
 const AUTO_PERIOD = 13; // seconds per molten -> formed -> molten cycle
 
+// The trough is a floor, not zero. Melting the headline all the way out left
+// the hero with no headline at all for a third of every cycle, and the flat
+// DOM fallback that used to cover that gap read as word art. The metal now
+// softens toward liquid and comes back without ever giving up the letterforms
+const CREST_TROUGH = 0.42;
+
 export function heroCrest(t) {
   const p = ((t % AUTO_PERIOD) + AUTO_PERIOD) % AUTO_PERIOD / AUTO_PERIOD; // 0..1
-  if (p < 0.35) return smoothstep01(p / 0.35);            // rise into formed
-  if (p < 0.55) return 1;                                  // hold formed
-  if (p < 0.9) return 1 - smoothstep01((p - 0.55) / 0.35); // melt back
-  return 0;                                                // hold molten
+  const span = 1 - CREST_TROUGH;
+  if (p < 0.35) return CREST_TROUGH + span * smoothstep01(p / 0.35);            // rise into formed
+  if (p < 0.55) return 1;                                                        // hold formed
+  if (p < 0.9) return CREST_TROUGH + span * (1 - smoothstep01((p - 0.55) / 0.35)); // soften back
+  return CREST_TROUGH;                                                           // hold molten
 }
 
 export function heroTarget(scrollY, heroHeight, t, autoOn = true) {
