@@ -15,16 +15,29 @@ export const CAPS = {
   mirror: 1.00
 };
 
-// 0 sculpt, 1 ghost (wobble + max iridescence), 2 pools, 3 mirror, 4 device
+// 0 sculpt, 2 pools, 3 mirror, 4 device, 5 disc (a lifecycle pool),
+// 6 disc that refuses to set
 export const MODES = {
   tagline: 0,
-  orb: 0,
-  lens: 0,
-  ingot: 0,
-  ghost: 1,
+  orb: 5,
+  lens: 5,
+  ingot: 5,
+  ghost: 6,
   pools: 2,
   mirror: 3,
   device: 4
+};
+
+// How much a disc pool holds its shape: 0 churns like fresh melt, 1 holds
+// like set chrome. Hover and focus pull a disc toward stillness.
+// Shipped sits high because its surface does hold: what fails is the body,
+// which sways forever, and the rim, which never closes. That break lives in
+// mode 6 rather than here, so its stillness reads as "almost set"
+export const STILL = {
+  orb: 0.08,
+  lens: 0.46,
+  ingot: 0.94,
+  ghost: 0.62
 };
 
 export const ZERO_RECT = { x: 0, y: 0, w: 0, h: 0 };
@@ -53,7 +66,7 @@ export function proximity(sectionCenterY, viewportH) {
 // after, then a full release so the word melts back to liquid before the stages.
 //
 // Autonomous cycle: with no scroll the metal slowly crests into the formed
-// headline and melts back to molten, forever (the "refuses to set" concept) —
+// headline and melts back to molten, forever (the "refuses to set" concept),
 // so the transformation plays itself, no click/drag required. It fades out as
 // the reader scrolls into the hero (heroT rises), handing the crest to
 // scrollSet with no discontinuity. Long eased holds at each end keep it calm.
@@ -91,8 +104,10 @@ export function createField(defs = []) {
       texIndex: d.texIndex | 0,
       cap: CAPS[d.id] !== undefined ? CAPS[d.id] : 0.5,
       mode: MODES[d.id] !== undefined ? MODES[d.id] : 0,
+      still: STILL[d.id] !== undefined ? STILL[d.id] : -1,
       set: 0,
       proxy: 0,
+      hover: 0,
       rect: ZERO_RECT
     }));
 
@@ -122,13 +137,17 @@ export function createField(defs = []) {
 
   function toPair(s) {
     if (!s || s.set < 0.02) return zeroPair();
-    return {
+    const pair = {
       sculptId: s.id,
       texIndex: s.texIndex,
       anchorRectPx: s.rect,
       set: s.set,
       mode: s.mode
     };
+    // Hover and focus pull the pool toward stillness, so the disc tightens
+    // under the hand while the field around it keeps yielding to the cursor
+    if (s.still >= 0) pair.gain = s.still + (1 - s.still) * s.hover;
+    return pair;
   }
 
   function update(dt, input) {
@@ -148,12 +167,14 @@ export function createField(defs = []) {
     }
 
     const k = smoothK(dt);
+    const hk = smoothK(dt, 0.82);
     let heroSet = 0;
 
     for (const s of state) {
       const e = byId.get(s.id);
       let target = 0;
       let proxy = 0;
+      s.hover += ((e && e.hover ? 1 : 0) - s.hover) * hk;
       if (e) {
         if (e.anchorRect) s.rect = e.anchorRect;
         if (s.id === "tagline") {

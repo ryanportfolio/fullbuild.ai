@@ -10,6 +10,13 @@
 // inside up to two active anchor rects. Forward-difference normals (3 height
 // evals), chrome shading with fresnel environment and key light, thin-film
 // iridescence on high-curvature ridges that fades as surfaces set.
+//
+// The four lifecycle pools (modes 5 and 6) are the exception: they carry no
+// baked texture at all. Their profile, rim and surface are analytic, so they
+// cannot band, moire or ghost a motif, and they get their own studio shading
+// instead of the field's fresnel.
+
+import { DISC_R } from "./bake.mjs";
 
 const FIELD_SIZE = 256;
 
@@ -125,11 +132,92 @@ float fieldStrength(vec2 p) {
   return f;
 }
 
+// ---- lifecycle pools -------------------------------------------------------
+
+// Pool space for a fitted anchor rect: xy in pool radii from the centre,
+// z the pool radius in framebuffer px. DISC_R is shared with the filament
+vec3 discSpace(vec2 p, vec4 rect) {
+  float rpx = max(1.0, ${DISC_R.toFixed(3)} * min(rect.z, rect.w));
+  return vec3((p - (rect.xy + rect.zw * 0.5)) / rpx, rpx);
+}
+
+// Rim radius, in pool radii. Set chrome closes a clean circle, fresh melt
+// keeps breaking its own edge, and the shipped pool's edge crawls
+float discEdge(vec2 dir, float still, float ghost) {
+  float amp = 0.085 * (1.0 - still) * (1.0 - ghost) + 0.070 * ghost;
+  if (amp < 0.003) return 1.0;
+  float n = vnoise(dir * mix(3.6, 2.3, ghost) + vec2(u_wobblePhase, u_time * mix(0.90, 0.24, ghost)));
+  return 1.0 + amp * (2.0 * n - 1.0);
+}
+
+// One pool resolved at p: x = presence (0 outside), y = radius, z = stillness,
+// w = 1 for the pool that refuses to set. Called once per pair in the shading
+// pass and once per pair per height eval, so it stays cheap on purpose
+vec4 discInfo(vec2 p, vec4 rect, float setv, float gain, int mode) {
+  if (mode < 5 || rect.z < 1.0 || setv <= 0.004) return vec4(0.0);
+  float ghost = (mode == 6) ? 1.0 : 0.0;
+  vec3 ds = discSpace(p, rect);
+  float rr = length(ds.xy);
+  vec2 dir = ds.xy / max(rr, 1e-3);
+  float still = clamp(gain, 0.0, 1.0);
+  float aa = 1.4 / ds.z;
+  // The shipped pool keeps one slow arc of edge that dissolves instead of
+  // closing, so its outline never finishes drawing itself
+  if (mode == 6) {
+    float gap = smoothstep(0.42, 0.95, vnoise(dir * 1.7 + vec2(4.3, u_time * 0.10)));
+    aa *= 1.0 + 11.0 * gap;
+  }
+  float edge = discEdge(dir, still, ghost);
+  float m = 1.0 - smoothstep(edge - aa, edge + aa, rr);
+  // Presence saturates well below each pool's set cap, so the state is told by
+  // the material and not by how strongly the pool is blended into the field
+  return vec4(m * smoothstep(0.16, 0.60, setv), rr, still, ghost);
+}
+
 float sculptBlend(vec2 p, float h, float liquid, float spikes, sampler2D tex, vec4 rect, float setv, float gain, int mode) {
   if (rect.z < 1.0 || setv <= 0.002) return h;
   vec2 uv = (p - rect.xy) / rect.zw;
   float w = rectW(uv);
   if (w <= 0.002) return h;
+
+  if (mode >= 5) {
+    // Disc: the lifecycle pool. gain carries stillness (0 fresh melt, 1 set
+    // chrome) and mode 6 is the pool that refuses to set. The pool overwrites
+    // the cursor spikes inside it, so it resists the pointer while the field
+    // around it keeps yielding
+    vec4 d = discInfo(p, rect, setv, gain, mode);
+    if (d.x <= 0.003) return h;
+    vec3 ds = discSpace(p, rect);
+    vec2 q = ds.xy;
+    float rr = d.y;
+    float still = d.z;
+    float ghost = d.w;
+    // The set front spreads from the centre out, so a half set pool already
+    // holds a mirror in the middle while its edge is still running. Squaring
+    // the churn is what separates cooling from molten: a half churn barely
+    // breaks the reflection, a full one shatters it
+    float front = still * 1.5 - 0.1;
+    float churn = 1.0 - min(1.0, still * 1.35) * (1.0 - smoothstep(front - 0.32, front + 0.32, rr));
+    float amp = churn * churn;
+    // The dome is written straight in gradient units, so the pool keeps the
+    // same curvature at any disc size, dpr or tier scale, and carries no 8 bit
+    // banding, which is what the baked lens profile could never avoid
+    float k = ds.z / (26.0 * u_scale);
+    float n1 = vnoise(q * 3.2 + vec2(u_wobblePhase, u_time * 0.34));
+    float n2 = vnoise(q * 8.4 - vec2(u_time * 0.23, u_time * 0.17));
+    // Shipped: the whole body tilts and breathes forever, so its reflection
+    // swims even though the surface itself is nearly smooth
+    float sway = ghost * sin(u_time * 0.44 + u_wobblePhase);
+    float dome = 1.30 * (1.0 + 0.10 * ghost * sin(u_time * 0.29 + 1.9)) * (1.0 - rr * rr);
+    float pool = 0.5 + k * (
+        dome
+      + amp * ((n1 - 0.5) * 0.24 * (0.75 + 0.5 * rr) + (n2 - 0.5) * 0.105)
+      + churn * 0.30 * (liquid - 0.5)
+      + sway * (q.x * 0.56 + q.y * 0.42)
+    );
+    return mix(h, pool, d.x);
+  }
+
   vec3 t = textureLod(tex, vec2(uv.x, 1.0 - uv.y), 0.0).rgb;
   // Sharp mask blends in as the metal sets, so half-set glyphs already read
   float sculptH = mix(t.r, max(t.r, t.g), smoothstep(0.35, 0.85, setv));
@@ -138,13 +226,6 @@ float sculptBlend(vec2 p, float h, float liquid, float spikes, sampler2D tex, ve
   // Local glyph presence: far from any stroke the liquid stays untouched, so
   // the imprint never reads as a flattened rectangular tray
   float presence = smoothstep(0.08, 0.30, max(t.r, t.g));
-  if (mode == 1) {
-    // Ghost: the shipped cube never stabilizes. Continuous noise wobble so
-    // the hex flexes as one molten body, contained by its sharp silhouette
-    float cell = vnoise(p / u_scale * 0.02);
-    sculptH *= 1.0 + 0.12 * sin(u_time * 1.7 + cell * 6.28318 + u_wobblePhase);
-    return mix(h, sculptH * 1.6 + liquid * 0.12, e * smoothstep(0.3, 0.7, t.g));
-  }
   if (mode == 2) {
     // Pools: deep depressions, never spikes
     return h - t.r * 1.8 * e;
@@ -205,31 +286,39 @@ void main() {
   float ndv = clamp(N.z, 0.0, 1.0);
   vec3 R = reflect(-V, N);
 
-  // Local set weight, ghost iridescence boost, baked page-copy glow,
-  // mirror stillness mask, pool occlusion mask
+  // Local set weight, baked page-copy glow, mirror stillness mask,
+  // pool occlusion mask
   float setLocal = 0.0;
-  float iriBoost = 0.0;
   float glow = 0.0;
   float mirrorMask = 0.0;
   float poolMask = 0.0;
+  // Lifecycle pools carry no texture, so they resolve on their own geometry.
+  // The nearer of the two active pools owns the pixel
+  vec4 pA = discInfo(p, u_rectA, u_setA, u_gainA, u_modeA);
+  vec4 pB = discInfo(p, u_rectB, u_setB, u_gainB, u_modeB);
+  vec4 pool = (pA.x >= pB.x) ? pA : pB;
+  float discMask = pool.x;
   vec2 uvA = (p - u_rectA.xy) / max(u_rectA.zw, vec2(1.0));
-  float wA = (u_rectA.z >= 1.0) ? rectW(uvA) : 0.0;
+  float wA = (u_rectA.z >= 1.0 && u_modeA < 5) ? rectW(uvA) : 0.0;
   if (wA > 0.0) {
+    vec2 tuvA = vec2(uvA.x, 1.0 - uvA.y);
+    vec3 tA = textureLod(u_texA, tuvA, 0.0).rgb;
     setLocal = max(setLocal, easeSet(u_setA) * wA);
-    if (u_modeA == 1) iriBoost = max(iriBoost, wA * smoothstep(0.15, 0.6, textureLod(u_texA, vec2(uvA.x, 1.0 - uvA.y), 0.0).g));
     if (u_modeA == 3) mirrorMask = max(mirrorMask, wA * easeSet(u_setA));
-    if (u_modeA == 2) poolMask = max(poolMask, textureLod(u_texA, vec2(uvA.x, 1.0 - uvA.y), 0.0).r * wA * easeSet(u_setA));
-    glow += textureLod(u_texA, clamp(vec2(uvA.x, 1.0 - uvA.y) + R.xy * 0.08, 0.0, 1.0), 0.0).b * wA;
+    if (u_modeA == 2) poolMask = max(poolMask, tA.r * wA * easeSet(u_setA));
+    glow += textureLod(u_texA, clamp(tuvA + R.xy * 0.08, 0.0, 1.0), 0.0).b * wA;
   }
   vec2 uvB = (p - u_rectB.xy) / max(u_rectB.zw, vec2(1.0));
-  float wB = (u_rectB.z >= 1.0) ? rectW(uvB) : 0.0;
+  float wB = (u_rectB.z >= 1.0 && u_modeB < 5) ? rectW(uvB) : 0.0;
   if (wB > 0.0) {
+    vec2 tuvB = vec2(uvB.x, 1.0 - uvB.y);
+    vec3 tB = textureLod(u_texB, tuvB, 0.0).rgb;
     setLocal = max(setLocal, easeSet(u_setB) * wB);
-    if (u_modeB == 1) iriBoost = max(iriBoost, wB * smoothstep(0.15, 0.6, textureLod(u_texB, vec2(uvB.x, 1.0 - uvB.y), 0.0).g));
     if (u_modeB == 3) mirrorMask = max(mirrorMask, wB * easeSet(u_setB));
-    if (u_modeB == 2) poolMask = max(poolMask, textureLod(u_texB, vec2(uvB.x, 1.0 - uvB.y), 0.0).r * wB * easeSet(u_setB));
-    glow += textureLod(u_texB, clamp(vec2(uvB.x, 1.0 - uvB.y) + R.xy * 0.08, 0.0, 1.0), 0.0).b * wB;
+    if (u_modeB == 2) poolMask = max(poolMask, tB.r * wB * easeSet(u_setB));
+    glow += textureLod(u_texB, clamp(tuvB + R.xy * 0.08, 0.0, 1.0), 0.0).b * wB;
   }
+  setLocal = max(setLocal, discMask);
 
   // Dark mirror: crushed midtones, hot ridge speculars, real black in troughs
   vec3 env = mix(vec3(0.003, 0.004, 0.007), vec3(0.68, 0.72, 0.85), R.y * 0.5 + 0.5);
@@ -250,12 +339,46 @@ void main() {
   float curv = clamp(abs(hx + hy - 2.0 * h0) * 5.0, 0.0, 1.0) * crest;
   float ph = ndv * 1.2 + curv * 3.0 + u_time * 0.02;
   vec3 film = 0.5 + 0.5 * cos(6.28318 * (vec3(ph) + vec3(0.0, 0.36, 0.70)));
-  float gain = u_iriGain * max(max(1.0 - setLocal, iriBoost), 0.12) * (1.0 - mirrorMask) * smoothstep(0.0, 0.35, ndv);
+  float gain = u_iriGain * max(1.0 - setLocal, 0.12) * (1.0 - mirrorMask) * smoothstep(0.0, 0.35, ndv);
   color += film * smoothstep(0.30, 0.75, curv) * gain;
 
   // Baked reflection copy shimmers in color space, brightest in the pool,
   // never divided away by fresnel on flat surfaces
   color += glow * vec3(0.85, 0.92, 1.0) * (0.08 + 0.45 * mirrorMask);
+
+  // ---- the lifecycle pool -------------------------------------------------
+  // Chrome reflects nearly everything at every angle, so the pool is shaded
+  // from its own studio instead of the field's fresnel. That is what makes it
+  // the bright aperture of the frame rather than one more grey ball
+  if (discMask > 0.002) {
+    float rr = pool.y;
+    float still = pool.z;
+    float ghost = pool.w;
+    // A softbox over a hard horizon strip over a dark floor, with the ceiling
+    // above the box falling back off: that keeps the crown of the pool from
+    // blowing out under the display type that crosses it. A set pool holds the
+    // strip as one clean line, a churning one shatters it into hot flecks
+    float sky = smoothstep(-0.80, 0.35, R.y) * (1.0 - 0.42 * smoothstep(0.45, 0.95, R.y));
+    float strip = exp(-pow((R.y - 0.22) * 3.0, 2.0));
+    vec3 penv = mix(vec3(0.020, 0.023, 0.032), vec3(0.50, 0.535, 0.62), sky);
+    penv += strip * vec3(0.92, 0.95, 1.0) * (0.30 + 0.55 * still);
+    // One key light: broad and scattered into flecks while molten, single and
+    // hard once set
+    penv += vec3(pow(max(dot(N, HV), 0.0), mix(26.0, 220.0, still)) * (1.5 + 1.7 * still));
+    // The edge catches the sky and states the pool's own boundary, hardest on
+    // the pool that has fully set
+    penv += vec3(0.46, 0.49, 0.58) * smoothstep(0.74, 1.0, rr) * (0.32 + 0.62 * still);
+    vec3 poolCol = penv * (0.84 + 0.16 * fres);
+    // Shipped flares thin film out at the edge that keeps failing to close.
+    // Held to the outer band and pulled back toward white on purpose: the
+    // pool is chrome that will not set, not a soap bubble
+    if (ghost > 0.5) {
+      float ph2 = rr * 2.1 + ndv * 0.9 + u_time * 0.05;
+      vec3 film2 = 0.5 + 0.5 * cos(6.28318 * (vec3(ph2) + vec3(0.0, 0.36, 0.70)));
+      poolCol += mix(vec3(0.85), film2, 0.72) * smoothstep(0.76, 1.0, rr) * 0.42;
+    }
+    color = mix(color, poolCol, discMask);
+  }
 
   vec2 suv = p / u_res;
   float vig = smoothstep(1.30, 0.55, length(suv - 0.5) * 1.7);
@@ -400,16 +523,20 @@ export function createEngine(canvas) {
     entry.h = imageData.height;
   }
 
-  // Mode-0 relief amplitude per sculpt: stage motifs need more height than
-  // the tagline to survive the fbm noise floor at their smaller anchors
-  const GAINS = { tagline: 2.0, orb: 3.0, lens: 3.0, ingot: 2.6 };
+  // Mode-0 relief amplitude per sculpt. Disc pools override this with their
+  // own per-frame gain (stillness), so only the tagline needs a fixed value
+  const GAINS = { tagline: 2.0 };
 
   // Contain-fit the target texture inside the css anchor rect, then convert
   // to framebuffer px with y flipped
   function fitRect(pair) {
+    const mode = pair ? pair.mode | 0 : 0;
+    // Lifecycle pools are analytic: they own their circle inside the anchor
+    // and never sample a texture, so they need no baked target to render
+    const analytic = mode >= 5;
     const entry = pair ? targets[pair.texIndex | 0] : null;
     const r = pair ? pair.anchorRectPx : null;
-    if (!entry || !r || !(r.w > 2) || !(r.h > 2) || !(pair.set > 0)) {
+    if ((!entry && !analytic) || !r || !(r.w > 2) || !(r.h > 2) || !(pair.set > 0)) {
       return { rect: [0, 0, 0, 0], tex: blackTex, set: 0, gain: 2, mode: 0 };
     }
     let w = r.w;
@@ -417,7 +544,7 @@ export function createEngine(canvas) {
     // Mode 3 (mirror) is a flat fill and the tagline is baked from measured
     // DOM line boxes: both stretch to the anchor so texture uv space maps the
     // anchor rect exactly, keeping GL glyphs registered to the DOM headline
-    if ((pair.mode | 0) !== 3 && pair.sculptId !== "tagline") {
+    if (!analytic && mode !== 3 && pair.sculptId !== "tagline") {
       const ta = entry.w / Math.max(1, entry.h);
       if (w / h > ta) w = h * ta;
       else h = w / ta;
@@ -426,9 +553,11 @@ export function createEngine(canvas) {
     const cssY = r.y + (r.h - h) / 2;
     return {
       rect: [cssX * scale, bufH - (cssY + h) * scale, w * scale, h * scale],
-      tex: entry.tex,
+      tex: entry ? entry.tex : blackTex,
       set: pair.set,
-      gain: GAINS[pair.sculptId] !== undefined ? GAINS[pair.sculptId] : 2,
+      gain: Number.isFinite(pair.gain)
+        ? pair.gain
+        : (GAINS[pair.sculptId] !== undefined ? GAINS[pair.sculptId] : 2),
       mode: pair.mode | 0
     };
   }
