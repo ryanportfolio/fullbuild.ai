@@ -264,10 +264,11 @@ main > section {
   text-align: center;
   width: fit-content;
   margin-inline: auto;
-  background: linear-gradient(180deg, #F6F8FB, #B9C0CF 45%, #4C515E 55%, #DFE4EE);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  /* Flat, not a chrome gradient. The GL relief is the metal; a hard
+     light-to-dark split baked into the glyphs only competes with it, and
+     reads as a preset rather than as a lit surface */
+  color: var(--ink);
+  text-shadow: 0 1px 3px rgba(6, 7, 10, 0.85), 0 0 18px rgba(6, 7, 10, 0.6);
 }
 
 .tagline-line {
@@ -1528,10 +1529,8 @@ html.detail-open {
   }
 
   .tagline {
-    background: none;
-    -webkit-background-clip: initial;
-    background-clip: initial;
     color: CanvasText;
+    text-shadow: none;
   }
 
   .scrim,
@@ -1611,10 +1610,8 @@ html.detail-open {
   }
 
   .tagline {
-    background: none;
-    -webkit-background-clip: initial;
-    background-clip: initial;
     color: #000;
+    text-shadow: none;
   }
 
   .scrim {
