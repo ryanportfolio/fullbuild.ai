@@ -1821,7 +1821,7 @@
 }
 
 /*
- * PROTOTYPE INDEX. Fifteen graded captures as plain anchors inside the finale, so the
+ * PROTOTYPE INDEX. Sixteen graded captures as plain anchors inside the finale, so the
  * bleach rules and the focus outline already govern them. Card height is svh-driven and
  * the width is capped at the 1.9 aspect, so a short viewport shrinks the cards instead
  * of letting a row collide with the lockup or clip off frame.
