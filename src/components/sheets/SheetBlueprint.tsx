@@ -70,9 +70,9 @@ function Plan() {
   // then each room furnished with ITS OWN STAGE'S convention (01 sketch, 02
   // dimensioned figure, 03 column grid, 04 pour hatch), annotations last,
   // walking the perimeter — so the carriage travels like a hand across the
-  // sheet instead of crisscrossing it. On the act dwell this order is what the
-  // reader's scroll plots, and each <text> letters in (--reveal) only after
-  // the linework it names has been drawn.
+  // sheet instead of crisscrossing it. This order is what the act performs on
+  // its own clock, and each <text> letters in (--reveal) only after the
+  // linework it names has been drawn.
   return (
     <svg viewBox="0 0 400 480" role="img" aria-label="Dimensioned plan of the design system">
       {/* outer plan rectangle */}

@@ -473,8 +473,12 @@ export default function DrawingSet({
           scrollTrigger: { trigger: sec, start: 'top 60%', once: true },
           onUpdate: () => sec.style.setProperty('--act', tl.progress().toFixed(4)),
           onComplete: () => {
-            // Performance over — the instrument leaves the sheet.
-            if (penBus.last?.mode === 'draw') hidePen();
+            // Performance over — the instrument leaves the sheet. Only if the
+            // pen is actually THIS act's: the bus is shared, and a fast reader
+            // can be at T-01 with the courier mid-pass when this fires. The
+            // act only ever writes the pen while STATE 02 is current (the
+            // onUpdate gate below), so the same state is the ownership test.
+            if (useWorkingSet.getState().state === 2 && penBus.last?.mode === 'draw') hidePen();
             sec.style.setProperty('--act', '1');
           },
         });
