@@ -62,10 +62,24 @@ export default function VisitorHand() {
       setHolding(true);
     };
 
+    // Over anything that answers a click the house mark stands alone: two
+    // pointers on one spot read as a glitch, so the pen steps aside and
+    // resumes the moment the pointer is back on open ground. Mirrors the
+    // cursor CSS list in globals.css.
+    const INTERACTIVE = 'a[href], button, summary, [role="button"]';
+
     const move = (e: PointerEvent) => {
       pointer.x = e.clientX;
       pointer.y = e.clientY;
       if (!armed || !supported()) return;
+      const overMark =
+        e.target instanceof Element && e.target.closest(INTERACTIVE) !== null;
+      if (overMark) {
+        if (penBus.last?.hand === 'visitor' && penBus.last.mode !== 'hide') {
+          penBus.set({ ...penBus.last, mode: 'hide' });
+        }
+        return;
+      }
       if (mayTake() || released) {
         released = false;
         feed(e.clientX, e.clientY);
