@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Doodad · Little apps from plain words</title>
+  <meta name="description" content="A fullbuild.ai design prototype. Doodad turns one plain sentence into a tiny app you can keep: a countdown, a chore wheel, a quiz for Friday night.">
+  <meta name="theme-color" content="#faf7f5">
+  <meta name="color-scheme" content="light">
+  <meta property="og:title" content="Doodad · Little apps from plain words">
+  <meta property="og:description" content="A fullbuild.ai design prototype. Doodad turns one plain sentence into a tiny app you can keep: a countdown, a chore wheel, a quiz for Friday night.">
+  <link rel="icon" type="image/svg+xml" href="/prototype/doodad/assets/favicon.svg">
+  <link rel="stylesheet" href="/prototype/doodad/src/styles.css">
+  <script>
+    /* Two gates, set before first paint so nothing flashes.
+       data-js   = the wheel gets its absolute stage instead of the scroll row.
+       data-motion = the entrance and word-reveal start states are armed. */
+    document.documentElement.setAttribute("data-js", "on");
+    if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      document.documentElement.setAttribute("data-motion", "on");
+    }
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to the good bit</a>
+
+  <div class="page">
+
+    <div class="bg bg-1" aria-hidden="true">
+      <img src="/prototype/doodad/assets/img/bg-glow-1.svg" alt="" width="500" height="500">
+    </div>
+    <div class="bg bg-2" aria-hidden="true">
+      <img src="/prototype/doodad/assets/img/bg-glow-2.svg" alt="" width="900" height="1700">
+    </div>
+    <div class="bg bg-3" aria-hidden="true">
+      <img src="/prototype/doodad/assets/img/bg-glow-3.svg" alt="" width="1512" height="1900">
+    </div>
+
+    <div class="content">
+
+      <header class="top">
+        <div class="wrap top-row">
+          <a class="wordmark" href="/prototype/doodad/index.html">
+            <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+              <path d="M16 3C16.9 12.1 19.9 15.1 29 16C19.9 16.9 16.9 19.9 16 29C15.1 19.9 12.1 16.9 3 16C12.1 15.1 15.1 12.1 16 3Z" fill="#ff2e95"/>
+            </svg>
+            <span>doodad</span>
+          </a>
+
+          <a class="signin" href="#join">
+            <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+              <circle cx="10" cy="6.6" r="3.3"/>
+              <path d="M3.6 17.2c0-3.3 2.9-5.4 6.4-5.4s6.4 2.1 6.4 5.4"/>
+            </svg>
+            <span>Sign in</span>
+          </a>
+        </div>
+      </header>
+
+      <main id="main" tabindex="-1">
+
+        <section class="hero">
+          <div class="wrap hero-inner">
+            <h1 data-anim>Every little idea deserves<br>an app of its own</h1>
+
+            <p class="lead" data-anim>Doodad turns a sentence into a tiny app you can keep. A birthday countdown for Nan, a chore wheel the flat will actually look at, a quiz for Friday night. Describe it and it shows up ready to use.</p>
+
+            <form class="waitlist" id="join" data-anim novalidate>
+              <div class="waitlist-row">
+                <label class="sr-only" for="join-email">Your email address</label>
+                <input id="join-email" type="email" name="email" required placeholder="Your email" autocomplete="email">
+                <button type="submit">Join the waitlist</button>
+              </div>
+              <p class="waitlist-msg" aria-live="polite" tabindex="-1" hidden></p>
+            </form>
+
+            <div class="icons" data-icons data-anim role="group" aria-label="Little apps people have made">
+              <div class="icon" data-magnet>
+                <img src="/prototype/doodad/assets/img/tile-chores.png" width="512" height="512" alt="App icon for a chore wheel">
+              </div>
+              <div class="icon" data-magnet>
+                <img src="/prototype/doodad/assets/img/tile-mood.png" width="512" height="512" alt="App icon for a mood diary">
+              </div>
+              <div class="icon" data-magnet>
+                <img src="/prototype/doodad/assets/img/tile-quiz.png" width="512" height="512" alt="App icon for a quiz night">
+              </div>
+              <div class="icon" data-magnet>
+                <img src="/prototype/doodad/assets/img/tile-days.png" width="512" height="512" alt="App icon for a countdown to the big day">
+              </div>
+              <div class="icon" data-magnet>
+                <img src="/prototype/doodad/assets/img/tile-pets.png" width="512" height="512" alt="App icon for a pet care routine">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="marquee">
+          <p class="sr-only">Create apps for birthdays, family trips, friends, your cat, creativity, household chores, vacation planning, music, habits, games, study nights and parties.</p>
+          <div class="marquee-track" aria-hidden="true">
+            <div class="marquee-inner" data-loop>
+              <span>Create apps for</span><span>Birthdays</span><span>Family trips</span><span>Friends</span><span>Your cat</span><span>Creativity</span><span>Household chores</span><span>Vacation planning</span><span>Music</span><span>Habits</span><span>Games</span><span>Study nights</span><span>Parties</span><span>Create apps for</span><span>Birthdays</span><span>Family trips</span><span>Friends</span><span>Your cat</span><span>Creativity</span><span>Household chores</span><span>Vacation planning</span><span>Music</span><span>Habits</span><span>Games</span><span>Study nights</span><span>Parties</span>
+            </div>
+          </div>
+        </div>
+
+        <section class="showcase">
+          <div class="wrap">
+            <h2 data-anim><strong>Describe</strong> it and it is <strong><em>yours</em></strong> in minutes</h2>
+
+            <div class="stage" data-stage data-anim>
+              <div class="track">
+
+                <article class="phone phone-live" data-card role="img" aria-label="A new app being started from the prompt: what do you need today">
+                  <div class="mock">
+                    <div class="mock-sky"></div>
+                    <div class="mock-prompt">
+                      <span class="mock-plus">
+                        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 3.5v9M3.5 8h9"/></svg>
+                      </span>
+                      <span class="mock-label">What do you need today<i class="caret" data-loop></i></span>
+                      <span class="mock-send">
+                        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 12.5v-9M4 7.5l4-4 4 4"/></svg>
+                      </span>
+                    </div>
+                  </div>
+                </article>
+
+                <div class="phone" data-card>
+                  <img src="/prototype/doodad/assets/img/screen-trip.png" width="540" height="1060" alt="A family trip app counting down the days until the holiday">
+                </div>
+
+                <div class="phone" data-card>
+                  <img src="/prototype/doodad/assets/img/screen-quiz.png" width="540" height="1060" alt="A quiz night app showing a question and four answers to pick from">
+                </div>
+
+                <div class="phone" data-card>
+                  <img src="/prototype/doodad/assets/img/screen-chores.png" width="540" height="1060" alt="A chore app showing this week's jobs shared out between four people">
+                </div>
+
+              </div>
+
+              <button class="arrow arrow-l" type="button" data-nav="prev" aria-label="Show the previous app">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg>
+              </button>
+              <button class="arrow arrow-r" type="button" data-nav="next" aria-label="Show the next app">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9.5 5.5L16 12l-6.5 6.5"/></svg>
+              </button>
+            </div>
+
+            <div class="dots">
+              <button type="button" data-dot aria-current="true" aria-label="Show app 1 of 4"></button>
+              <button type="button" data-dot aria-current="false" aria-label="Show app 2 of 4"></button>
+              <button type="button" data-dot aria-current="false" aria-label="Show app 3 of 4"></button>
+              <button type="button" data-dot aria-current="false" aria-label="Show app 4 of 4"></button>
+            </div>
+          </div>
+        </section>
+
+        <section class="reveal-section">
+          <div class="wrap">
+            <p class="reveal" data-reveal><span>From</span> <span>one</span> <span>plain</span> <span>sentence</span> <span>to</span> <span>a</span> <span>real</span> <span>app</span> <span>you</span> <span>can</span> <span>hand</span> <span>to</span> <span>the</span> <span>people</span> <span>you</span> <span>love,</span> <span>made</span> <span>in</span> <span>minutes</span> <span>and</span> <span>yours</span> <span>for</span> <span>good</span></p>
+          </div>
+        </section>
+
+        <section class="faq">
+          <div class="wrap faq-row">
+
+            <div class="faq-intro" data-anim>
+              <span class="kicker">Got questions</span>
+              <h2>Things people want to know</h2>
+              <p>If yours is not here, write to us at <a href="mailto:hello@doodad.example">hello@doodad.example</a> and a real person will answer.</p>
+            </div>
+
+            <div class="faq-list" data-anim>
+
+              <details class="qa" name="faq">
+                <summary>
+                  <span>Do I need to know how to code</span>
+                  <span class="chev"><svg viewBox="0 0 14 14" aria-hidden="true" focusable="false"><path d="M2.5 5l4.5 4.5L11.5 5"/></svg></span>
+                </summary>
+                <div class="qa-body">
+                  <p>No, and you never will. If you can send a text message you can make something with Doodad. The sentence you type is the whole skill.</p>
+                </div>
+              </details>
+
+              <details class="qa" name="faq">
+                <summary>
+                  <span>What kinds of apps can it make</span>
+                  <span class="chev"><svg viewBox="0 0 14 14" aria-hidden="true" focusable="false"><path d="M2.5 5l4.5 4.5L11.5 5"/></svg></span>
+                </summary>
+                <div class="qa-body">
+                  <p>Small, useful, personal things. Countdowns, trackers, wheels, quizzes, packing lists, chore rotas, a scoreboard for the games night that always ends in an argument. If it fits on one screen, it fits here.</p>
+                </div>
+              </details>
+
+              <details class="qa" name="faq">
+                <summary>
+                  <span>How long does minutes actually mean</span>
+                  <span class="chev"><svg viewBox="0 0 14 14" aria-hidden="true" focusable="false"><path d="M2.5 5l4.5 4.5L11.5 5"/></svg></span>
+                </summary>
+                <div class="qa-body">
+                  <p>Usually two or three. Something with a lot of moving parts might take ten. You will see it building the whole time, so you are never sat wondering.</p>
+                </div>
+              </details>
+
+              <details class="qa" name="faq">
+                <summary>
+                  <span>What does it cost</span>
+                  <span class="chev"><svg viewBox="0 0 14 14" aria-hidden="true" focusable="false"><path d="M2.5 5l4.5 4.5L11.5 5"/></svg></span>
+                </summary>
+                <div class="qa-body">
+                  <p>Nothing during the beta. Later there will be a simple price that we will tell you about well before it starts. No trial that quietly becomes a subscription, no surprises on your card.</p>
+                </div>
+              </details>
+
+              <details class="qa" name="faq">
+                <summary>
+                  <span>Can I share what I make</span>
+                  <span class="chev"><svg viewBox="0 0 14 14" aria-hidden="true" focusable="false"><path d="M2.5 5l4.5 4.5L11.5 5"/></svg></span>
+                </summary>
+                <div class="qa-body">
+                  <p>Yes, every app has a link you can send to anyone. They open it and it just works, no account and no download. Keep it private if you would rather, that is one tap.</p>
+                </div>
+              </details>
+
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <footer class="foot">
+        <div class="wrap">
+
+          <div class="foot-cta" data-anim>
+            <svg class="foot-mark" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+              <rect width="120" height="120" rx="30" fill="#141414"/>
+              <path d="M60 22C63.4 45.6 74.4 56.6 98 60C74.4 63.4 63.4 74.4 60 98C56.6 74.4 45.6 63.4 22 60C45.6 56.6 56.6 45.6 60 22Z" fill="#ff2e95"/>
+            </svg>
+
+            <h2>Go on, make an app</h2>
+            <p>Join the waitlist and be one of the first to make something small, useful and completely yours</p>
+
+            <form class="waitlist" id="join-2" novalidate>
+              <div class="waitlist-row">
+                <label class="sr-only" for="join-email-2">Your email address</label>
+                <input id="join-email-2" type="email" name="email" required placeholder="Your email" autocomplete="email">
+                <button type="submit">Join the waitlist</button>
+              </div>
+              <p class="waitlist-msg" aria-live="polite" tabindex="-1" hidden></p>
+            </form>
+          </div>
+
+          <div class="copyright">
+            <p>© 2026 Doodad, a fullbuild.ai design prototype</p>
+            <p class="foot-links">
+              <a href="/prototype/index.html">All prototypes</a>
+              <a href="/">fullbuild.ai</a>
+            </p>
+          </div>
+
+        </div>
+      </footer>
+
+    </div>
+  </div>
+
+  <script type="module" src="/prototype/doodad/src/landing.mjs"></script>
+  <script type="module" src="/prototype/doodad/src/wheel.mjs"></script>
+  <script type="module" src="/prototype/doodad/src/form.mjs"></script>
+</body>
+</html>

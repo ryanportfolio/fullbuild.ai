@@ -1,0 +1,1123 @@
+/* doodad · prototype 16 · fullbuild.ai
+
+   CONTRACT · reference-parity rebuild
+
+   This is a rights-safe reimplementation of a live consumer waitlist page,
+   built from measured facts (tokens, geometry, motion constants) rather than
+   copied source. Every asset, every string and every line of code here is
+   ours; the reference supplied the proportions.
+
+   Governing metaphor: warm paper held up to a coloured light. The ground is
+   an off-white stock. Three blurred glows sit behind it like a lamp behind
+   the sheet, so the top of the page is lemon and the middle is magenta while
+   the paper itself never changes. Everything printed on the sheet is ink;
+   one hot pink is the only chromatic voice in the interface, and it marks
+   exactly one thing: the act of starting something. If the product were not
+   "say it plainly and it becomes a real app you own", the lit-paper frame
+   would collapse. That is the swap test passing.
+
+   Palette (one meaning per token):
+   --paper     #faf7f5  page ground, warm off-white, never pure white
+   --paper-2   #f6f2ee  the footer band, one step deeper into the stock
+   --card      #ffffff  lifted paper: FAQ rows, the waitlist pill, arrows
+   --ink       #141414  writing ink: body, wordmark, copyright
+   --ink-h1    #202126  display ink, a shade cooler so 82px does not smear
+   --ink-2     #414040  secondary ink: lead, footer lead, input value
+   --ink-3     #0f172a  FAQ ink, the one cool-leaning ink, kept from measure
+   --ink-4     #727272  faintest ink: kicker, darkened from the measured
+                        #848383 to reach AA at 16px on paper
+   --charcoal  #353535  the sign-in pill and the current carousel dot
+   --band      #000000  the one black strip across the page
+   --pink      #ff2e95  the single accent: buttons, glyph, footer links, the
+                        FAQ intro link, and the skip link's focus outline
+   --pink-hi   #ff64b1  the same accent on hover, never used at rest
+   --line-*    #e2dcd6 waitlist · #e8e5e0 FAQ · #ebe7e3 rule · #bcbdb8 dots
+   De-emphasis is always an ink token, never opacity.
+
+   Type: InterVariable + InterVariable-Italic, self-hosted, ss01 + cv11 on.
+   The reference runs Inter with an optical-size axis we do not ship, so
+   display copy carries letter-spacing -0.02em to close the gap.
+   Roles:
+     display   italic 900, clamp(32px, 5.5vw, 82px)/1.0  hero
+     display-2 italic 900, 40px/1.05                     footer call to action
+     reveal    upright 700, clamp(32px, 5.5vw, 70px)/1.15
+     head      upright 400, 30px (showcase, weight mixed inline)
+     head-2    upright 700, 26px/32px                    FAQ
+     lead      upright 400, 18px/24px · italic 400, 20px in the footer
+     body      upright 400, 14px to 16px
+     label     600 at 16px (pill, button, marquee) · 500 at 16px (copyright)
+   At most two weights speak per band.
+
+   Grid: container 95% / max 1500px / 10px gutters. One idea per band, full
+   bleed, vertical rhythm carried by section padding rather than a scale.
+   The hero is a centred stack ending in a hand of five overlapping tiles.
+   FAQ is the only two-column band (40 / 60, intro left, rows right).
+
+   Motion verbs (rAF and IntersectionObserver only, no scroll listeners):
+   DRIFT   hero tiles ride three critically damped springs toward the cursor
+           and float on a seeded idle cosine when it is nowhere near
+   WHEEL   the showcase carousel turns on a circle: sin drives x and rotation,
+           cos drives depth, scale and opacity
+   RISE    sections enter once, 40px up and 3% out, on a long ease
+   UNBLUR  the reveal sentence resolves word by word from a blurred grey
+   MARCH   the black strip scrolls its categories on a 28s linear loop
+   Micro-motions riding the verbs: the FAQ chevron's rotate and body fade on
+   UNFOLD-style open, the live phone's caret blink, and button hover/active
+   Reduced motion and no-JS both resolve to the finished page: strip still,
+   sections seated, words sharp, carousel a plain scrollable row of phones.
+   [data-js] and [data-motion] on <html> opt in, never out.
+
+   Ban list (this prototype only):
+   - gradients anywhere except the three declared backdrop glows and the one
+     illustration surface (the live phone's night sky)
+   - shadows anywhere except the phone cards and the waitlist pill
+   - a second hue in the interface: the illustration art may be as polychrome
+     as it likes, the chrome around it is ink plus one pink
+   - radii off the 16 / 44 / 50 / 99 scale, the one exception being true
+     circles (arrows, dots, send button) and the 32px phone at mobile size
+   - photography, smooth-scroll libraries, scroll-jacking, parallax
+   - opacity as a way to make text quieter
+
+   Signature element: the hand of five app tiles that leans toward the cursor.
+   Boldness is spent there and on the 82px italic promise above it.
+
+   Risk: a lit-paper backdrop plus hot magenta plus 900-weight italic can tip
+   into candy. Held by a ceiling of one pink per band and a page that is
+   otherwise entirely ink on stock.
+
+   Backdrop authoring note: the three glows keep their declared colours and
+   their declared boxes, but their shape is a radial fade mask over a disc
+   rather than a gaussian over a small disc. A blurred hard disc holds a flat
+   plateau and then falls off a cliff; the field it has to reproduce is far
+   softer and much longer down the page. Each glow's frame is deliberately
+   larger than the glow inside it, because the moment a live edge reaches the
+   image boundary a hard line runs down the page where the picture stops.
+
+   Accepted residuals: the magenta footer links on #f6f2ee and the paper
+   label on the magenta button both sit below AA. Accepted as brand voice;
+   neither carries information the surrounding ink does not also carry, and
+   the links are underlined on hover and focus. The word-reveal start colour
+   rgba(0,0,0,.15) is transitional only and always resolves to full ink. The
+   hand of tiles reads a touch wider than the reference because our tile art
+   is full bleed where theirs carries transparent padding, and the waitlist
+   pill sits at its full 420 cap because our button wears a longer word. */
+
+/* 1. faces */
+@font-face {
+  font-family: "InterVar";
+  src: url("/prototype/doodad/assets/fonts/InterVariable.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "InterVar";
+  src: url("/prototype/doodad/assets/fonts/InterVariable-Italic.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* 2. tokens */
+:root {
+  --paper: #faf7f5;
+  --paper-2: #f6f2ee;
+  --card: #ffffff;
+  --ink: #141414;
+  --ink-h1: #202126;
+  --ink-2: #414040;
+  --ink-3: #0f172a;
+  --ink-4: #727272;
+  --charcoal: #353535;
+  --band: #000000;
+  --pink: #ff2e95;
+  --pink-hi: #ff64b1;
+
+  --line-pill: #e2dcd6;
+  --line-card: #e8e5e0;
+  --line-rule: #ebe7e3;
+  --dot-idle: #bcbdb8;
+
+  --shadow-pill: 0 2.18px 5.44px 0 #4747471a;
+  --shadow-phone: 0 32px 80px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  --r-tile: 16px;
+  --r-phone: 44px;
+  --r-pill: 50px;
+  --r-round: 99px;
+
+  --ease-rise: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-chev: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 3. reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* 4. base */
+html {
+  background: var(--paper);
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "InterVar", ui-sans-serif, system-ui, "Segoe UI", Arial, sans-serif;
+  font-feature-settings: "ss01" on, "cv11" on;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip {
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  transform: translate(-50%, -240%);
+  background: var(--ink);
+  color: var(--card);
+  padding: 10px 20px;
+  border-radius: var(--r-round);
+  font-weight: 500;
+  z-index: 40;
+  transition: transform 160ms ease;
+}
+
+.skip:focus-visible {
+  transform: translate(-50%, 0);
+  outline-color: var(--pink);
+}
+
+.page {
+  position: relative;
+  min-height: 100vh;
+  overflow-x: clip;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+}
+
+.wrap {
+  width: 95%;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 0 10px;
+}
+
+/* 5. backdrop · the lamp behind the sheet */
+.bg {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.bg img {
+  width: 100%;
+  height: 100%;
+}
+
+.bg-1 {
+  top: 0;
+  right: 0;
+  max-width: 500px;
+}
+
+.bg-2 {
+  left: 0;
+  top: 10%;
+}
+
+.bg-3 {
+  left: 0;
+  right: 0;
+  top: 5%;
+  width: 100%;
+  max-height: 950px;
+}
+
+/* 6. header */
+.top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  padding-block: 30px;
+  z-index: 9;
+}
+
+.top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+}
+
+.wordmark svg {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+}
+
+.wordmark span {
+  font-size: 40px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.signin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: var(--charcoal);
+  color: var(--paper);
+  font-size: 16px;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-radius: var(--r-pill);
+}
+
+.signin svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+/* 7. hero */
+.hero {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  padding-block: 180px 60px;
+}
+
+.hero-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 25px;
+}
+
+.hero h1 {
+  width: 83%;
+  margin: 0 auto;
+  font-size: clamp(32px, 5.5vw, 82px);
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-align: center;
+  color: var(--ink-h1);
+}
+
+.lead {
+  width: 53%;
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 400;
+  text-align: center;
+  color: var(--ink-2);
+}
+
+/* 8. waitlist */
+.waitlist {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.waitlist-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 420px;
+  background: var(--card);
+  border: 1px solid var(--line-pill);
+  border-radius: var(--r-round);
+  padding: 5px 10px 5px 20px;
+  box-shadow: var(--shadow-pill);
+}
+
+.waitlist input {
+  flex: 1;
+  min-width: 0;
+  height: 50px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+
+.waitlist input::placeholder {
+  color: var(--ink);
+  opacity: 1;
+}
+
+.waitlist input:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 0;
+}
+
+.waitlist button {
+  flex-shrink: 0;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 0;
+  background: var(--pink);
+  color: var(--paper);
+  border-radius: var(--r-round);
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  /* Label metrics, not prose metrics: at the body 1.55 the button outgrows the
+     50px input and pushes the pill off its 62px height. */
+  line-height: 1.2;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.waitlist button:hover {
+  background: var(--pink-hi);
+}
+
+.waitlist button:active {
+  transform: scale(0.97);
+}
+
+/* Settled, not faded: opacity de-emphasis is banned by this contract, and the
+   0.6 the reference uses drops the label to ~1.9:1. Charcoal keeps the pill
+   clearly inert while the paper label stays at the sign-in pill's contrast. */
+.waitlist button:disabled {
+  background: var(--charcoal);
+  cursor: default;
+}
+
+/* Both outcomes speak in ink: a second signal hue would break the contract,
+   so the rejected path leans on aria-invalid, focus and the words instead. */
+.waitlist-msg {
+  font-size: 14px;
+  color: var(--ink);
+}
+
+/* 9. hero tiles · DRIFT
+   The row swallows pointer events so the springs read cursor position
+   without the tiles themselves ever intercepting a click. */
+.icons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  height: 40vh;
+  pointer-events: none;
+}
+
+.icon {
+  width: clamp(9rem, 100%, 14vw);
+  /* Never let flex thin the hand: on a phone the five tiles are meant to run
+     past both edges of the screen, and shrinking them to fit turns the
+     signature element into five polite little squares in the middle. */
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--r-tile);
+  user-select: none;
+  will-change: transform;
+}
+
+.icon:not(:last-child) {
+  margin-right: -6%;
+}
+
+.icon img {
+  width: auto;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  transform: rotate(var(--rest, 0deg));
+}
+
+.icon:nth-child(4n + 1) img { --rest: 2deg; }
+.icon:nth-child(4n + 2) img { --rest: -3deg; }
+.icon:nth-child(4n + 3) img { --rest: 6deg; }
+.icon:nth-child(4n + 4) img { --rest: -2deg; }
+
+/* 10. marquee · MARCH */
+.marquee {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 44px;
+  background: var(--band);
+  overflow: hidden;
+}
+
+.marquee-track {
+  display: flex;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+}
+
+.marquee-inner {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  will-change: transform;
+  animation: march 28s linear infinite;
+}
+
+.marquee-inner span {
+  flex-shrink: 0;
+  padding: 0 26px;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+@keyframes march {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* 11. showcase · WHEEL */
+.showcase {
+  position: relative;
+  width: 100%;
+  padding-block: 160px 90px;
+  overflow: hidden;
+}
+
+.showcase h2 {
+  text-align: center;
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.showcase h2 strong {
+  font-weight: 700;
+}
+
+.showcase h2 em {
+  font-style: italic;
+}
+
+.stage {
+  position: relative;
+  margin-top: 40px;
+}
+
+/* No-JS ground truth: a plain scrollable row of phones, centred on the first. */
+.track {
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  padding-inline: max(24px, calc(50% - 135px));
+  scrollbar-width: none;
+}
+
+.track::-webkit-scrollbar {
+  display: none;
+}
+
+.phone {
+  flex: 0 0 auto;
+  width: 270px;
+  height: 530px;
+  border-radius: var(--r-phone);
+  overflow: hidden;
+  background: #111111;
+  border: 2.5px solid rgba(0, 0, 0, 0.11);
+  box-shadow: var(--shadow-phone);
+  will-change: transform, opacity;
+}
+
+.phone > * {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+[data-js="on"] .stage {
+  height: 580px;
+}
+
+[data-js="on"] .track {
+  display: block;
+  height: 100%;
+  overflow: visible;
+  padding: 0;
+}
+
+[data-js="on"] .phone {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+}
+
+/* The one illustration surface: a live phone screen, drawn not photographed.
+   Its night sky is the single gradient allowed outside the backdrop glows. */
+.mock {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.mock-sky {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 60% at 50% 34%, rgba(120, 240, 205, 0.42) 0%, rgba(24, 80, 92, 0) 62%),
+    linear-gradient(180deg, #071a26 0%, #0d3b40 46%, #04121b 100%);
+}
+
+.mock-prompt {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: 41%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: var(--r-round);
+  padding: 7px 7px 7px 13px;
+}
+
+.mock-plus svg,
+.mock-send svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mock-plus {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  color: var(--ink-2);
+}
+
+.mock-plus svg {
+  width: 14px;
+  height: 14px;
+}
+
+.mock-label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.caret {
+  flex-shrink: 0;
+  width: 1.5px;
+  height: 13px;
+  background: var(--ink);
+  animation: caret-blink 1.06s steps(1, end) infinite;
+}
+
+@keyframes caret-blink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+
+.mock-send {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--pink);
+  color: var(--paper);
+}
+
+.mock-send svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* wheel controls */
+.arrow {
+  display: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 0;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  color: var(--pink);
+  z-index: 20;
+  transition: background 0.2s;
+}
+
+.arrow svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.arrow:hover {
+  background: var(--card);
+}
+
+.arrow-l { left: 25%; }
+.arrow-r { right: 25%; }
+
+.dots {
+  display: none;
+  gap: 7px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.dots button {
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--dot-idle);
+  cursor: pointer;
+  transition: background 0.3s, transform 0.3s;
+}
+
+.dots button[aria-current="true"] {
+  background: var(--charcoal);
+  transform: scale(1.2);
+}
+
+[data-js="on"] .arrow { display: flex; }
+[data-js="on"] .dots { display: flex; }
+
+/* 12. reveal · UNBLUR */
+.reveal-section {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  padding-block: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reveal {
+  width: 90%;
+  max-width: 1100px;
+  margin: 0 auto;
+  font-size: clamp(32px, 5.5vw, 70px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.reveal span {
+  display: inline-block;
+}
+
+/* 13. faq */
+.faq {
+  position: relative;
+  width: 100%;
+  padding-block: 60px 160px;
+}
+
+.faq-row {
+  display: flex;
+  padding-inline: 6%;
+}
+
+.faq-intro {
+  width: 40%;
+  padding-right: 24px;
+}
+
+.faq-intro .kicker {
+  display: block;
+  font-size: 16px;
+  line-height: 19px;
+  font-weight: 400;
+  color: var(--ink-4);
+}
+
+.faq-intro h2 {
+  margin-top: 10px;
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 700;
+  color: var(--ink-3);
+}
+
+.faq-intro p {
+  margin-top: 16px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink-2);
+  max-width: 30ch;
+}
+
+.faq-intro a {
+  color: var(--pink);
+}
+
+.faq-intro a:hover,
+.faq-intro a:focus-visible {
+  text-decoration: underline;
+}
+
+.faq-list {
+  width: 60%;
+}
+
+.qa {
+  background: var(--card);
+  border: 1px solid var(--line-card);
+  border-radius: var(--r-tile);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.qa summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 32px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 16px;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--ink-3);
+}
+
+.qa summary::-webkit-details-marker {
+  display: none;
+}
+
+.chev {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  transition: transform 0.35s var(--ease-chev);
+}
+
+.chev svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: #888888;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.qa[open] .chev {
+  transform: rotate(180deg);
+}
+
+.qa-body {
+  padding: 0 36px 12px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink-3);
+}
+
+.qa[open] .qa-body {
+  animation: qa-in 0.25s ease both;
+}
+
+@keyframes qa-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* 14. footer */
+.foot {
+  background: var(--paper-2);
+  padding-block: 60px 20px;
+}
+
+.foot-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 25px;
+  padding-block: 40px 90px;
+}
+
+.foot-mark {
+  width: 120px;
+  height: 120px;
+}
+
+.foot-cta h2 {
+  font-size: 40px;
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1.05;
+  letter-spacing: -0.12px;
+  text-align: center;
+  color: var(--ink);
+}
+
+.foot-cta p {
+  width: 100%;
+  max-width: 490px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: -0.25px;
+  color: var(--ink-2);
+}
+
+.copyright {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: 30px;
+  border-top: 1px solid var(--line-rule);
+}
+
+.copyright p {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.foot-links {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.foot-links a {
+  color: var(--pink);
+}
+
+.foot-links a:hover,
+.foot-links a:focus-visible {
+  text-decoration: underline;
+}
+
+/* 15. entrance grammar · RISE and UNBLUR
+   Finished state is the default, so no-JS and reduced motion land on a
+   complete page. data-motion arms the start states; data-shown seats them. */
+[data-motion="on"] [data-anim] {
+  opacity: 0;
+  transform: translateY(40px) scale(0.97);
+  transition: opacity 0.85s var(--ease-rise), transform 0.85s var(--ease-rise);
+}
+
+[data-motion="on"] [data-anim][data-shown="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+[data-motion="on"] .reveal span {
+  color: rgba(0, 0, 0, 0.15);
+  filter: blur(8px);
+  transition: color 0.5s linear, filter 0.5s linear;
+}
+
+[data-motion="on"] .reveal span[data-shown="true"] {
+  color: var(--ink);
+  filter: blur(0);
+}
+
+/* Capture hook: freeze() parks the loops so screenshots are repeatable. */
+.is-frozen .marquee-inner,
+.is-frozen .caret {
+  animation-play-state: paused;
+}
+
+/* 16. breakpoints */
+@media (max-width: 1500px) {
+  .hero {
+    height: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .wordmark svg { width: 26px; height: 26px; }
+  .wordmark span { font-size: 27px; }
+  .wordmark { gap: 6px; }
+
+  .signin { font-size: 14px; padding: 10px 14px; }
+  .signin svg { width: 16px; height: 16px; }
+
+  .lead { width: 80%; }
+  .icons { margin-top: 20px; gap: 10px; }
+
+  .showcase { padding-block: 110px 70px; }
+  .phone { width: 210px; height: 420px; border-radius: 32px; }
+  .track { padding-inline: max(16px, calc(50% - 105px)); }
+
+  /* The prompt has to keep reading as a sentence on a 210px screen. */
+  .mock-prompt { left: 12px; right: 12px; gap: 6px; padding: 5px 5px 5px 10px; }
+  .mock-label { font-size: 9.5px; }
+  .mock-plus, .mock-plus svg { width: 12px; height: 12px; }
+  .caret { height: 10px; }
+  .mock-send { width: 22px; height: 22px; }
+  .mock-send svg { width: 12px; height: 12px; }
+
+  .faq-row { padding-inline: 0; }
+}
+
+@media (max-width: 450px) {
+  .hero h1 { width: 100%; }
+
+  .icons { height: 30vh; gap: 0; }
+  .icon { width: 5rem; aspect-ratio: 1 / 1.2; }
+  .icon:not(:last-child) { margin-right: 0; }
+
+  .lead { width: 100%; font-size: 16px; }
+  .waitlist input { height: 40px; }
+  .waitlist button { padding: 10px 16px; }
+
+  .marquee-inner span { font-weight: 400; }
+
+  .showcase { padding-block: 60px 40px; }
+  .showcase h2 { font-size: 24px; }
+
+  .reveal-section { min-height: 60vh; padding-block: 80px; }
+  .reveal { width: 100%; }
+
+  .faq { padding-block: 60px 90px; }
+  .faq-row { flex-direction: column; gap: 20px; }
+  .faq-intro,
+  .faq-list { width: 100%; }
+  .faq-intro { padding-right: 0; }
+  .faq-intro p { max-width: none; }
+  .qa summary { padding: 12px 20px; }
+  .qa-body { padding: 0 20px 12px; }
+
+  .foot-cta { padding-block: 20px 60px; }
+  .foot-mark { width: 84px; height: 84px; }
+  .foot-cta h2 { font-size: 30px; }
+  .foot-cta p { font-size: 17px; }
+
+  .copyright { flex-direction: column; gap: 10px; text-align: center; }
+}
+
+/* 17. reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .marquee-inner,
+  .caret,
+  .qa[open] .qa-body {
+    animation: none;
+  }
+
+  .caret {
+    opacity: 1;
+  }
+
+  .skip,
+  .chev,
+  .dots button,
+  .waitlist button {
+    transition: none;
+  }
+
+  [data-motion="on"] [data-anim],
+  [data-motion="on"] .reveal span {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    color: inherit;
+    transition: none;
+  }
+}
