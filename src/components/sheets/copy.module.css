@@ -322,6 +322,19 @@
   border-bottom: 1px solid var(--rule);
   font-variant-numeric: tabular-nums;
 }
+/* Act ignition — on the act sheet each spec row lights as the performance
+   earns its figure, the same one-property arithmetic the appendix ledger runs
+   against --rev (unconformity.module.css). --act is the act timeline's own
+   progress, published by DrawingSet on the section — the drawing's clock,
+   never the scroll. Fallback 1 = the finished
+   sheet, so no-JS and reduced-motion readers see every figure at full ink.
+   Never to zero: an unearned figure is faint, not withheld — the spec stays
+   legible to selection, search and screen readers. */
+:global([data-act]) .specRow {
+  --lit: clamp(0, calc((var(--act, 1) * var(--n, 5) - var(--i, 0) - 0.4) * 6), 1);
+  opacity: calc(0.34 + var(--lit) * 0.66);
+}
+
 .specKey {
   color: var(--ink-witness);
   letter-spacing: 0.04em;

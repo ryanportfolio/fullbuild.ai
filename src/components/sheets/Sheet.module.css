@@ -10,6 +10,12 @@
   transform-style: preserve-3d;
 }
 
+/* THE ACT — a crewed sheet: a one-viewport spread like every other, except
+   that DrawingSet plots it in full view on its own clock once it enters the
+   glass, publishing timeline progress as --act (spec ignition, lettering).
+   The HINGE and the flatten observer both skip it, so the performing frame is
+   never composited and stays pixel-crisp for the whole pass. */
+
 .frame {
   position: relative;
   flex: 1;
@@ -155,6 +161,17 @@
   width: 100%;
   height: auto;
   overflow: visible;
+}
+
+/* Act lettering — on the act sheet a drawing's <text> arrives AFTER the
+   linework it names, the way a drafter letters a finished figure. Each text
+   carries --reveal (the point in the act's travel where its mark exists) and
+   letters in over the next tenth of travel; --act is scrubbed by DrawingSet.
+   Both fallbacks resolve to the finished sheet: no-JS and reduced motion see
+   --act 1, so every reveal at or under 0.9 lands at full ink. Keep authored
+   --reveal values <= 0.9 for exactly that reason. */
+.sheet[data-act] .drawing :global(svg) text {
+  opacity: clamp(0, calc((var(--act, 1) - var(--reveal, 0)) * 10), 1);
 }
 
 .copy {

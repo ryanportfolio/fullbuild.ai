@@ -678,9 +678,12 @@ function CameraRig({ frame }: { frame: Frame }) {
   // The turn itself. Driven by pour + growth (never whole-set progress), so it
   // moves only while STATE 03/04 are on screen and the demand loop is already
   // awake for the pour — this adds no wake-ups of its own.
-  useFrame((_, dt) => {
+  useFrame((_, rawDt) => {
     const cam = camRef.current;
     if (!cam) return;
+    // Clamp demand-loop idle gaps out of the delta (see Pour) — an unclamped
+    // wake would snap the turn instead of damping it.
+    const dt = Math.min(rawDt, IDLE_GAP);
     const s = useWorkingSet.getState();
     const advance = clamp01(s.pour * 0.5 + s.grow * 0.5);
     const target = CAM_AZ + (CAM_AZ_END - CAM_AZ) * easeInOutCubic(advance);
@@ -872,7 +875,13 @@ function Pour({
   const basis = useRef(new Matrix4()).current;
   const litColor = useRef(new Color()).current;
 
-  useFrame((_, dt) => {
+  useFrame((_, rawDt) => {
+    // On frameloop="demand" the delta of the FIRST frame after a wake spans the
+    // whole idle gap (nothing invalidates while the reader dwells upstream), so
+    // an unclamped dt hands the erection clock the entire gap in one step and
+    // the shed pops in fully framed. Clamp to IDLE_GAP — the same line
+    // AdaptiveDpr draws between a frame's cost and a demand-loop gap.
+    const dt = Math.min(rawDt, IDLE_GAP);
     const s = useWorkingSet.getState();
     // IDLE GUARD: STATE 03/04 off-screen and nothing built -> do nothing at all.
     // (Ensure the bloom pass is torn down if we idle while it was still lit.)
@@ -1246,7 +1255,10 @@ function Overgrowth({ frame }: { frame: Frame }) {
     };
   }, [built]);
 
-  useFrame((_, dt) => {
+  useFrame((_, rawDt) => {
+    // Clamp demand-loop idle gaps out of the delta (see Pour) — an unclamped
+    // wake would snap the catch-up front instead of growing through it.
+    const dt = Math.min(rawDt, IDLE_GAP);
     const s = useWorkingSet.getState();
     // MONOTONIC: the pencil only adds. Scrolling back up never un-grows.
     if (s.grow > targetRef.current) targetRef.current = s.grow;

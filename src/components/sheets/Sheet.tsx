@@ -18,6 +18,7 @@ export default function Sheet({
   masthead,
   children,
   negative = false,
+  act = false,
 }: {
   n: string;
   state: string;
@@ -29,6 +30,11 @@ export default function Sheet({
   masthead?: ReactNode;
   children: ReactNode;
   negative?: boolean;
+  /** An ACT sheet is crewed: once it enters the glass its drawing plots
+      itself in full view on its own clock (DrawingSet owns the timeline),
+      the carriage riding the front stroke. Reading on does not stop it —
+      the performance is started by arrival, never scrubbed by scroll. */
+  act?: boolean;
 }) {
   return (
     <section
@@ -36,6 +42,7 @@ export default function Sheet({
       data-state={n}
       data-ink={ink}
       data-negative={negative ? 'true' : undefined}
+      data-act={act ? '' : undefined}
       className={styles.sheet}
       aria-label={`Sheet ${n} of 4 · ${state}`}
     >

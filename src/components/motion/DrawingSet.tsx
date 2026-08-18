@@ -18,6 +18,11 @@ import styles from './DrawingSet.module.css';
  *   DRAW  — .ws-draw strokes plot themselves in authored order (no fade).
  *   HINGE — each sheet turns a few degrees about its leading edge as it passes.
  *   POUR  — STATE 03→04 progress drives the section-plane fill (read by the 3D).
+ * A sheet marked data-act is a second CREWED sheet: arrival starts its
+ * performance and scroll never scrubs it — the drawing plots itself in full
+ * view on its own clock (structure, room furniture, annotations, the rise),
+ * the carriage riding the front stroke, and publishes timeline progress as
+ * --act for the sheet's CSS beats (spec ignition, lettering).
  * Under prefers-reduced-motion every verb resolves to its finished end-state and
  * only the title-block state tracker runs.
  */
@@ -109,6 +114,7 @@ export default function DrawingSet({
       return () => io.disconnect();
     }
 
+
     // THE DEPTH RATCHET — one monotonic scalar, 0 at the cover to 1 at END OF
     // SET, published on <html> as --depth. Every escalating quantity reads it:
     // the HINGE gain below in JS, the rail ruler's subdivision and the ledger's
@@ -179,7 +185,12 @@ export default function DrawingSet({
       },
       { threshold: [0, FLAT_OFF, FLAT_ON, 0.9] },
     );
-    sections.forEach((s) => flatIO.observe(s));
+    // Act sheets are never composited at all (no HINGE below), so they need no
+    // flatten ownership — and at 240vh their visible ratio could not reach
+    // FLAT_ON anyway, the same trap the schedule sheet documents above.
+    sections.forEach((s) => {
+      if (s.dataset.act === undefined) flatIO.observe(s);
+    });
 
     gsap.registerPlugin(ScrollTrigger);
 
@@ -275,6 +286,8 @@ export default function DrawingSet({
       const DUR_GAIN = 0.55;
       const STAGGER_GAIN = 0.85;
       sections.forEach((sec, si) => {
+        // The act sheet's strokes belong to the reader's scrub, not a timeline.
+        if (sec.dataset.act !== undefined) return;
         const strokes = gsap.utils.toArray<SVGElement>(sec.querySelectorAll('.ws-draw'));
         if (!strokes.length) return;
         const sd = sections.length > 1 ? si / (sections.length - 1) : 0;
@@ -422,6 +435,97 @@ export default function DrawingSet({
         });
       });
 
+      // ACT — the design sheet is CREWED, on its own clock. Arrival starts the
+      // performance (trigger below), scroll never scrubs it: the plan plots
+      // itself in full view over a few seconds — structure, room furniture,
+      // annotations, then THE RISE — with the carriage riding the front
+      // stroke. Deliberate uniform pace, exempt from the depth escalation:
+      // this sheet is a performance, not a passage. Timeline progress is
+      // published on the section as --act (spec ignition + lettering, both
+      // CSS), so those beats follow the DRAWING's clock, not the scroll.
+      const ACT_DUR = 0.62;
+      const ACT_STAGGER = 0.085;
+      sections.forEach((sec) => {
+        if (sec.dataset.act === undefined) return;
+        const strokes = gsap.utils.toArray<SVGElement>(sec.querySelectorAll('.ws-draw'));
+        if (!strokes.length) return;
+        strokes.sort(
+          (a, b) => Number(a.getAttribute('data-o') ?? 0) - Number(b.getAttribute('data-o') ?? 0),
+        );
+        strokes.forEach((el) => {
+          const authored = el.getAttribute('stroke-dasharray');
+          if (authored) el.dataset.wsDash = authored;
+        });
+        // Hidden until in flight — same Firefox subpath law as the tweens above.
+        gsap.set(strokes, {
+          attr: { 'stroke-dasharray': '1 1', 'stroke-dashoffset': 1, visibility: 'hidden' },
+        });
+        strokes.forEach((el) => el.setAttribute('data-ws-armed', ''));
+        const ink = inkOf(sec);
+        // Pinned to 0 up front so the spec ignition can never POP — the same
+        // move the appendix makes for --rev. The CSS fallback of 1 is the
+        // finished sheet for readers this timeline never reaches (no-JS,
+        // reduced motion — this whole block is behind the reduce return).
+        sec.style.setProperty('--act', '0');
+        let leader = -1;
+        const tl = gsap.timeline({
+          // Lazy by arrival: nothing plots until the sheet holds real glass.
+          scrollTrigger: { trigger: sec, start: 'top 60%', once: true },
+          onUpdate: () => sec.style.setProperty('--act', tl.progress().toFixed(4)),
+          onComplete: () => {
+            // Performance over — the instrument leaves the sheet. Only if the
+            // pen is actually THIS act's: the bus is shared, and a fast reader
+            // can be at T-01 with the courier mid-pass when this fires. The
+            // act only ever writes the pen while STATE 02 is current (the
+            // onUpdate gate below), so the same state is the ownership test.
+            if (useWorkingSet.getState().state === 2 && penBus.last?.mode === 'draw') hidePen();
+            sec.style.setProperty('--act', '1');
+          },
+        });
+        strokes.forEach((el, i) => {
+          const speedAttr = (el.closest('[data-draw-speed]') as HTMLElement | null)
+            ?.dataset.drawSpeed;
+          const speed = Number(speedAttr) > 0 ? Number(speedAttr) : 1;
+          tl.to(
+            el,
+            {
+              attr: { 'stroke-dashoffset': 0 },
+              ease: 'power2.out',
+              duration: ACT_DUR / speed,
+              onStart: () => {
+                leader = i;
+                el.removeAttribute('visibility'); // its turn: nib down
+              },
+              onUpdate() {
+                // ONE HAND: the carriage joins only after the crewed cover's
+                // pass is done (a fast reader can start the act first), and
+                // leaves the nib to the sheet being read — once the reader
+                // moves on, the drawing finishes without dragging the pen
+                // through the next spread.
+                if (leader !== i) return;
+                if (!(window as unknown as { __coverDrawn?: boolean }).__coverDrawn) return;
+                if (useWorkingSet.getState().state !== 2) return;
+                penToStroke(el, this.progress(), ink);
+              },
+              onComplete: () => {
+                // Hand back the authored presentation — same contract as the
+                // sheet tweens above (authored dashes are viewBox units, so
+                // pathLength goes with them).
+                const authored = el.dataset.wsDash;
+                if (authored) {
+                  el.setAttribute('stroke-dasharray', authored);
+                  el.removeAttribute('pathLength');
+                } else {
+                  el.removeAttribute('stroke-dasharray');
+                }
+                el.removeAttribute('stroke-dashoffset');
+              },
+            },
+            i === 0 ? 0 : `<${(ACT_STAGGER / speed).toFixed(4)}`,
+          );
+        });
+      });
+
       // HINGE — subtle page-turn about the leading edge. A 3D-rotated element is
       // composited into one GPU texture and bilinear-resampled, which softens the
       // vector linework and text (worse the larger the window). So we rotate ONLY
@@ -449,6 +553,9 @@ export default function DrawingSet({
       const ENV_LO = 0.12;
       const ENV_HI = 0.28;
       sections.forEach((sec) => {
+        // The act sheet never turns: it is seated on its dwell being read, and
+        // a sticky descendant must not ride a composited 3D transform.
+        if (sec.dataset.act !== undefined) return;
         const el = sec as HTMLElement;
         el.style.transformOrigin = 'left center';
         ScrollTrigger.create({
@@ -677,6 +784,9 @@ export default function DrawingSet({
       sections.forEach((s) => {
         s.style.transform = '';
         s.style.transformStyle = '';
+        // The act timeline's one direct write; its stroke attrs are reverted
+        // with the gsap.set originals by ctx.revert() above.
+        s.style.removeProperty('--act');
       });
       document.querySelectorAll<SVGElement>('.ws-scrub').forEach((s) => {
         s.removeAttribute('stroke-dashoffset');
