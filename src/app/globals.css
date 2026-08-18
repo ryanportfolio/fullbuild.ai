@@ -244,30 +244,6 @@ summary,
   cursor: var(--house-cursor);
 }
 
-/* THE VISITOR HOLDS THE INSTRUMENT (VisitorHand stamps the attribute): the
-   carriage is the pointer, so the native cursor retires everywhere — except
-   over anything that answers a click, which keeps the house mark: the pen
-   draws, the house acts. The attribute only ever appears on fine-pointer,
-   wide, full-motion visits, so touch, narrow, reduced-motion and no-JS
-   visitors never lose a cursor. */
-html[data-visitor-hand='true'] body,
-html[data-visitor-hand='true'] body * {
-  cursor: none;
-}
-/* Descendants included: the cursor:none rule above targets EVERY element, so
-   a span or svg inside a link would otherwise win over the anchor's house
-   mark and the pointer would vanish mid-link. */
-html[data-visitor-hand='true'] a[href],
-html[data-visitor-hand='true'] a[href] *,
-html[data-visitor-hand='true'] button,
-html[data-visitor-hand='true'] button *,
-html[data-visitor-hand='true'] summary,
-html[data-visitor-hand='true'] summary *,
-html[data-visitor-hand='true'] [role='button'],
-html[data-visitor-hand='true'] [role='button'] * {
-  cursor: var(--house-cursor);
-}
-
 svg {
   display: block;
 }

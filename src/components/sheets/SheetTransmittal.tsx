@@ -11,10 +11,9 @@
    ws:t01-drawn and this component takes over:
 
      1. HANDOFF — the carriage glides to the visitor's cursor and locks on
-        (native cursor hidden, telemetry reads `plotting · visitor`). The
-        cursor-follow itself is site-wide now — VisitorHand owns it and takes
-        the completion event as the handoff; this sheet only parks the pen on
-        devices that get no handoff, and flags data-hand for its cursor CSS.
+        (native cursor hidden over the sheet, telemetry reads
+        `plotting · visitor`). Coordinates clamp to the frame: the Margin Law
+        holds even for the visitor's hand.
      2. SGN — pointer strokes lay real SVG polylines; Clear wipes the mark.
      3. TRANSMIT — POST /api/transmit (stub: validates, logs, issues an RFI
         number), the sheet folds into a drawn envelope, the TRANSMITTED stamp
@@ -95,15 +94,44 @@ export default function SheetTransmittal() {
     t0.current = Date.now();
   }, []);
 
-  /* HANDOFF — engage after DrawingSet finishes the sheet's linework. The
-     cursor-follow itself is VisitorHand's, site-wide, and it takes the same
-     completion event as its cue; this sheet only parks the pen on devices
-     that get no handoff, and flags data-hand for its own cursor CSS. */
+  /* HANDOFF — engage after DrawingSet finishes the sheet's linework. */
   useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame) return;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const supported = () =>
       window.matchMedia('(pointer: fine)').matches &&
       window.matchMedia('(min-width: 901px)').matches;
+
+    let engaged = false;
+    let visible = true;
+    const pointer = { x: -1, y: -1 };
+
+    const feed = (x: number, y: number) => {
+      const r = frame.getBoundingClientRect();
+      penBus.set({
+        x: Math.max(r.left, Math.min(r.right, x)),
+        y: Math.max(r.top, Math.min(r.bottom, y)),
+        ink: 'graphite',
+        mode: 'draw',
+        hand: 'visitor',
+      });
+    };
+    const track = (e: PointerEvent) => {
+      pointer.x = e.clientX;
+      pointer.y = e.clientY;
+      if (engaged && visible && phaseRef.current === 'form') feed(e.clientX, e.clientY);
+    };
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        visible = entry.isIntersecting;
+        // Off-sheet the visitor's pen parks: it must never trail the reader
+        // back up the set (the pour and the cover own those reaches).
+        if (!visible && engaged && penBus.last?.hand === 'visitor') hidePenLocal();
+      },
+      { threshold: 0.12 },
+    );
+    io.observe(frame);
 
     const onDrawn = () => {
       if (phaseRef.current !== 'form') return;
@@ -113,10 +141,18 @@ export default function SheetTransmittal() {
         else hidePenLocal();
         return;
       }
+      engaged = true;
       setHand(true);
+      if (pointer.x >= 0 && visible) feed(pointer.x, pointer.y);
     };
     window.addEventListener('ws:t01-drawn', onDrawn);
-    return () => window.removeEventListener('ws:t01-drawn', onDrawn);
+    window.addEventListener('pointermove', track);
+    return () => {
+      window.removeEventListener('ws:t01-drawn', onDrawn);
+      window.removeEventListener('pointermove', track);
+      io.disconnect();
+      if (engaged && penBus.last?.hand === 'visitor') hidePenLocal();
+    };
   }, []);
 
   /* GHOST TYPING — after the form is drawn, sample requests letter themselves

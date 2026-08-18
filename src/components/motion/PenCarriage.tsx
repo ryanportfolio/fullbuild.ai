@@ -117,25 +117,13 @@ export default function PenCarriage() {
   return (
     <div ref={ref} className={styles.pen} aria-hidden="true">
       <svg ref={nibRef} viewBox="0 0 28 28" className={styles.nib}>
-        {/* Heavy under-stroke in the ground's colour, then the ink over it —
-            the same two-pass trick as the house cursor, so the reticle holds
-            an edge on any ground it crosses (the prototypes bring their own,
-            some the negative of the site's). */}
-        <g stroke="var(--ground)" strokeLinecap="round" fill="none">
-          <line x1="14" y1="0" x2="14" y2="9" strokeWidth="3" />
-          <line x1="14" y1="19" x2="14" y2="28" strokeWidth="3" />
-          <line x1="0" y1="14" x2="9" y2="14" strokeWidth="3" />
-          <line x1="19" y1="14" x2="28" y2="14" strokeWidth="3" />
-          <circle cx="14" cy="14" r="4.6" strokeWidth="3.1" />
-        </g>
         {/* reticle */}
         <line x1="14" y1="0" x2="14" y2="9" stroke="currentColor" strokeWidth="1" />
         <line x1="14" y1="19" x2="14" y2="28" stroke="currentColor" strokeWidth="1" />
         <line x1="0" y1="14" x2="9" y2="14" stroke="currentColor" strokeWidth="1" />
         <line x1="19" y1="14" x2="28" y2="14" stroke="currentColor" strokeWidth="1" />
         <circle cx="14" cy="14" r="4.6" fill="none" stroke="currentColor" strokeWidth="1.1" />
-        {/* nib dot — the ink chip, on its own ground pad */}
-        <circle cx="14" cy="14" r="2.8" fill="var(--ground)" />
+        {/* nib dot — the ink chip */}
         <circle cx="14" cy="14" r="1.8" fill="currentColor" />
       </svg>
     </div>

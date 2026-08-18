@@ -8,6 +8,7 @@ import { useWorkingSet, type PipelineState } from '@/lib/store';
 import { penBus, type PenInk } from '@/lib/penBus';
 import { afterIntroHold } from '@/lib/introHold';
 import ExperienceIsland from '../experience/ExperienceIsland';
+import PenCarriage from './PenCarriage';
 import styles from './DrawingSet.module.css';
 
 /**
@@ -656,12 +657,9 @@ export default function DrawingSet({
 
     // The pen's beat sheet, cued by the state tracker: crewed on the cover,
     // parked through the middle sheets, back on for the pour (handled above).
-    // Returning to the cover un-parks it onto the rail dock. The visitor's
-    // hand outranks the parking: once VisitorHand holds the instrument, a
-    // state flip must not snatch it off the cursor.
+    // Returning to the cover un-parks it onto the rail dock.
     const unsubPen = useWorkingSet.subscribe((s, p) => {
       if (s.state === p.state) return;
-      if (penBus.last?.hand === 'visitor') return;
       if (s.state >= 2 && penBus.last && penBus.last.mode !== 'pour') hidePen();
       else if (s.state === 1 && penBus.last?.mode === 'hide') dockPen('graphite');
     });
@@ -710,6 +708,7 @@ export default function DrawingSet({
           <ExperienceIsland />
         </div>
       ) : null}
+      <PenCarriage />
       {/* <main>: the set IS the document's main content. The title block rail
           is the only chrome outside it. The site-log ownership flag is stamped
           on this element from the effect below, not written here, because
