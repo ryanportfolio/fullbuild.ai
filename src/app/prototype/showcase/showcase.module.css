@@ -1834,6 +1834,16 @@
   width: min(92vw, 1500px);
 }
 
+/*
+ * Sixteen cards do not divide into fives, so the band under the lockup carries its own
+ * column count and runs six across as one whole row. Five columns there would leave a
+ * single orphan card hanging under the row, which reads as a mistake rather than a grid.
+ */
+.indexGrid[data-band="bottom"] {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  column-gap: clamp(14px, 1.6vw, 28px);
+}
+
 .indexCard {
   position: relative;
   display: block;

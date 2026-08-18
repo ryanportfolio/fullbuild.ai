@@ -139,6 +139,10 @@ export type PrototypeIndexEntry = {
 /*
  * The finale doubles as the site's prototype index: the old gallery's order, showcase
  * last. Images are pre-graded 608x320 captures shipped in public/, never regenerated.
+ * The grade is measurable off the shipped files rather than guessed, so a new card can
+ * join the field years later: an indigo matrix (R' = .300R + .216G + .052B + 29.9,
+ * G' = .006R + .614G + .102B + 6.7, B' = -.304R + .651G + .422B + 56.0) over a four
+ * pixel chromatic split, red sampled two to the right and blue two to the left.
  */
 export const PROTOTYPE_INDEX: readonly PrototypeIndexEntry[] = [
   { id: "fault-line", title: "Fault Line", href: "/prototype/fault-line", image: "/prototype/showcase/media/index/fault-line.webp" },
@@ -155,6 +159,7 @@ export const PROTOTYPE_INDEX: readonly PrototypeIndexEntry[] = [
   { id: "deadlow", title: "Dead Low", href: "/prototype/deadlow", image: "/prototype/showcase/media/index/deadlow.webp" },
   { id: "maranatha", title: "Maranatha", href: "/prototype/maranatha", image: "/prototype/showcase/media/index/maranatha.webp" },
   { id: "open-saas", title: "Open Build", href: "/prototype/open-saas", image: "/prototype/showcase/media/index/open-saas.webp" },
+  { id: "doodad", title: "Doodad", href: "/prototype/doodad", image: "/prototype/showcase/media/index/doodad.webp" },
   // Prediction Lab lives on its own sheet rather than under /prototype, so this
   // row points out of the gallery. It took the slot the showcase used to hold
   // on itself, which was the one card that went nowhere new.
