@@ -11,11 +11,13 @@ import copy from './copy.module.css';
  * numbers from this site's own design system. Dark theme renders as a true
  * cyanotype negative (blue ground, pale lines).
  *
- * THE SET'S ONE ACT SHEET: the design sheet is where drafting happens, so it
- * is the sheet the reader drafts. `act` seats it on a sticky dwell and
- * DrawingSet hands its DRAW verb to the scroll — the plan plots stroke by
- * stroke under the reader's own hand, the carriage riding the front stroke,
- * and each spec row ignites (--act) as its figure is earned.
+ * THE SET'S SECOND CREWED SHEET: the design sheet is where drafting happens,
+ * so arriving at it starts a performance — DrawingSet plots the plan in full
+ * view on its own clock (never scrubbed by scroll): structure, each room
+ * furnished with its stage's convention, annotations, then THE RISE, a
+ * plan-oblique massing whose room heights are the pipeline order. The
+ * carriage rides the front stroke; spec rows ignite and lettering arrives on
+ * the drawing's clock (--act).
  */
 export default function SheetBlueprint() {
   return (
@@ -119,10 +121,10 @@ function Plan() {
       {/* room tags — each letters in only after its room's mark is drawn
           (--reveal, in act travel; fallback = fully lettered) */}
       {[
-        { x: 135, y: 170, t: '01', rv: 0.2 },
-        { x: 265, y: 170, t: '02', rv: 0.31 },
-        { x: 135, y: 340, t: '03', rv: 0.42 },
-        { x: 265, y: 340, t: '04', rv: 0.53 },
+        { x: 135, y: 170, t: '01', rv: 0.19 },
+        { x: 265, y: 170, t: '02', rv: 0.25 },
+        { x: 135, y: 340, t: '03', rv: 0.31 },
+        { x: 265, y: 340, t: '04', rv: 0.37 },
       ].map((r) => (
         <text
           key={r.t}
@@ -139,10 +141,10 @@ function Plan() {
       ))}
 
       {/* dimension strings — top, down the left, then across the bottom */}
-      <Dim x1={70} y1={48} x2={330} y2={48} value="1440" o={11} reveal={0.68} />
+      <Dim x1={70} y1={48} x2={330} y2={48} value="1440" o={11} reveal={0.44} />
       <Dim x1={44} y1={80} x2={44} y2={420} value={null} o={14} />
-      <Dim x1={70} y1={440} x2={200} y2={440} value="720" o={15} reveal={0.86} />
-      <Dim x1={200} y1={440} x2={330} y2={440} value="720" o={16} reveal={0.9} />
+      <Dim x1={70} y1={440} x2={200} y2={440} value="720" o={15} reveal={0.6} />
+      <Dim x1={200} y1={440} x2={330} y2={440} value="720" o={16} reveal={0.63} />
 
       <text
         x={90}
@@ -150,10 +152,67 @@ function Plan() {
         fill="currentColor"
         fontFamily="var(--font-mono)"
         fontSize={9}
-        style={{ '--reveal': 0.6 } as CSSProperties}
+        style={{ '--reveal': 0.4 } as CSSProperties}
       >
         2.25
       </text>
+
+      {/* THE RISE — the annotated plan projects into a plan-oblique massing,
+          the beat a drawing set earns only after the plan is dimensioned.
+          Heights are honest: each room extrudes to its STAGE's height in the
+          pipeline (01 lowest, 04 tallest), so the massing is a bar chart of
+          progress wearing its own architecture. Same wireframe language the
+          S-03 frame assembles in, so the act hands off to the WebGL band
+          mid-thought. Crossing the dim strings is deliberate — the table's
+          rules pass through the print, and a projection passes through its
+          own annotations. */}
+      <AxonRise />
     </svg>
+  );
+}
+
+/**
+ * Plan-oblique extrusion of the four stages. Plan geometry stays true (the
+ * drafting convention) and each room rises up-right at 45 degrees to a height
+ * proportional to its place in the pipeline — 01 lowest through 04 tallest —
+ * so the massing is a real figure of progress, not decoration. Drawn last
+ * (data-o 20+) and slightly slowed (data-draw-speed) so the rise reads as the
+ * act's finale.
+ */
+function AxonRise() {
+  const rooms: { c: [number, number][]; h: number; o: number }[] = [
+    { c: [[70, 80], [200, 80], [200, 250], [70, 250]], h: 25, o: 20 },
+    { c: [[200, 80], [330, 80], [330, 250], [200, 250]], h: 50, o: 22 },
+    { c: [[70, 250], [200, 250], [200, 420], [70, 420]], h: 75, o: 24 },
+    { c: [[200, 250], [330, 250], [330, 420], [200, 420]], h: 100, o: 26 },
+  ];
+  return (
+    <g data-draw-speed="0.8">
+      {rooms.map((r, ri) => {
+        const dx = Math.round(r.h * 0.7);
+        const dy = -Math.round(r.h * 0.7);
+        const top = r.c.map(([x, y]) => `${x + dx} ${y + dy}`);
+        return (
+          <g key={ri}>
+            {r.c.map(([x, y], ci) => (
+              <Line
+                key={ci}
+                x1={x}
+                y1={y}
+                x2={x + dx}
+                y2={y + dy}
+                w={0.9}
+                o={r.o}
+              />
+            ))}
+            <Path
+              d={`M${top[0]} L${top[1]} L${top[2]} L${top[3]} Z`}
+              w={1.1}
+              o={r.o + 1}
+            />
+          </g>
+        );
+      })}
+    </g>
   );
 }

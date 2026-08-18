@@ -10,37 +10,11 @@
   transform-style: preserve-3d;
 }
 
-/* THE ACT — a sheet that holds the stage while the reader's scroll crews its
-   drawing. The section grows tall (armed below) and a sticky holder keeps the
-   frame seated a full viewport while the scrub spends the extra travel; the
-   HINGE and the flatten observer both skip act sheets, so the seated frame is
-   never composited and stays pixel-crisp for its whole dwell. */
-.sheet[data-act] {
-  display: block;
-  padding: 0;
-}
-.holder {
-  position: sticky;
-  top: 0;
-  min-height: 100vh;
-  min-height: 100svh;
-  display: flex;
-  align-items: stretch;
-  padding: var(--sheet-margin);
-}
-/* The dwell is EARNED BY THE SCRUB EXISTING: DrawingSet stamps data-acts on
-   the set root only on the motion path, so a no-JS or reduced-motion reader
-   never scrolls dead distance past an already-finished drawing. */
-:global(main[data-acts]) .sheet[data-act] {
-  min-height: 240vh;
-  min-height: 240svh;
-}
-@media (prefers-reduced-motion: reduce) {
-  :global(main[data-acts]) .sheet[data-act] {
-    min-height: 100vh;
-    min-height: 100svh;
-  }
-}
+/* THE ACT — a crewed sheet: a one-viewport spread like every other, except
+   that DrawingSet plots it in full view on its own clock once it enters the
+   glass, publishing timeline progress as --act (spec ignition, lettering).
+   The HINGE and the flatten observer both skip it, so the performing frame is
+   never composited and stays pixel-crisp for the whole pass. */
 
 .frame {
   position: relative;
