@@ -3,8 +3,6 @@ import { Archivo, Martian_Mono } from 'next/font/google';
 import './globals.css';
 import TitleBlock from '@/components/chrome/TitleBlock';
 import SetEdge from '@/components/chrome/SetEdge';
-import PenCarriage from '@/components/motion/PenCarriage';
-import VisitorHand from '@/components/motion/VisitorHand';
 import { GIT } from '@/lib/git';
 import { PROTOTYPE_COUNT } from '@/lib/prototypes';
 
@@ -160,11 +158,6 @@ export default function RootLayout({
       </head>
       <body>
         {children}
-        {/* One instrument for the whole site: the carriage lives in the chrome
-            (not in DrawingSet) so every route has the pen, and the visitor's
-            hand feeds it wherever the site itself is not plotting. */}
-        <PenCarriage />
-        <VisitorHand />
         <TitleBlock rev={GIT.rev} sha={GIT.sha} prototypes={PROTOTYPE_COUNT} />
         {/* The bound edge sits outboard of the rail, so it is mounted after it —
             the set's outermost margin is the last thing drawn on the sheet. */}

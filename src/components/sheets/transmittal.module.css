@@ -22,12 +22,11 @@
   padding-bottom: clamp(3rem, 10vh, 6rem);
 }
 /* The handoff: while the visitor holds the instrument, the native cursor
-   yields to the carriage everywhere on the sheet — except the buttons, which
-   keep the house mark like every other clickable on the site (the pen steps
-   aside over them; VisitorHand owns that beat). */
+   yields to the carriage everywhere on the sheet. */
 .frame[data-hand='true'],
 .frame[data-hand='true'] input,
 .frame[data-hand='true'] textarea,
+.frame[data-hand='true'] button,
 .frame[data-hand='true'] svg {
   cursor: none;
 }
