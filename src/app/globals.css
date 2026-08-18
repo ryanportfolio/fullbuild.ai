@@ -254,10 +254,17 @@ html[data-visitor-hand='true'] body,
 html[data-visitor-hand='true'] body * {
   cursor: none;
 }
+/* Descendants included: the cursor:none rule above targets EVERY element, so
+   a span or svg inside a link would otherwise win over the anchor's house
+   mark and the pointer would vanish mid-link. */
 html[data-visitor-hand='true'] a[href],
+html[data-visitor-hand='true'] a[href] *,
 html[data-visitor-hand='true'] button,
+html[data-visitor-hand='true'] button *,
 html[data-visitor-hand='true'] summary,
-html[data-visitor-hand='true'] [role='button'] {
+html[data-visitor-hand='true'] summary *,
+html[data-visitor-hand='true'] [role='button'],
+html[data-visitor-hand='true'] [role='button'] * {
   cursor: var(--house-cursor);
 }
 
