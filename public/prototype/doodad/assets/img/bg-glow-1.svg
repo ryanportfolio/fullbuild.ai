@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500" aria-hidden="true">
+  <!-- backdrop glow 1 · the warm note in the top right corner. Circle under a
+       wide gaussian at the recipe ratio (radius roughly 0.58 of the blur), so
+       the peak lands at about 8% alpha and the warmth has faded back to paper
+       within 250px. Grain sits on top under a radial falloff. -->
+  <defs>
+    <filter id="glow1-blur" x="-150%" y="-150%" width="400%" height="400%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="100"/>
+    </filter>
+    <filter id="glow1-grain" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7"/>
+      <feColorMatrix type="saturate" values="0"/>
+    </filter>
+    <radialGradient id="glow1-falloff" cx="0.72" cy="0.06" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <mask id="glow1-mask">
+      <rect width="500" height="500" fill="url(#glow1-falloff)"/>
+    </mask>
+  </defs>
+  <circle cx="360" cy="30" r="58" fill="#FFC409" opacity="0.5" filter="url(#glow1-blur)"/>
+  <g mask="url(#glow1-mask)">
+    <rect width="500" height="500" filter="url(#glow1-grain)" opacity="0.05"/>
+  </g>
+</svg>

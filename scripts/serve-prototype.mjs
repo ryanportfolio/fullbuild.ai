@@ -16,6 +16,7 @@ const types = new Map([
   ['.mjs', 'text/javascript; charset=utf-8'],
   ['.json', 'application/json; charset=utf-8'],
   ['.svg', 'image/svg+xml'],
+  ['.png', 'image/png'],
   ['.mp4', 'video/mp4'],
   ['.ttf', 'font/ttf'],
   ['.woff2', 'font/woff2'],

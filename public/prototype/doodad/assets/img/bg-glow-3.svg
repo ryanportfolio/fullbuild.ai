@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1512 1900" width="1512" height="1900" aria-hidden="true">
+  <!-- backdrop glow 3 · the page-wide wash, the lamp directly behind the sheet.
+       One disc carrying the lemon-to-magenta-to-violet ramp. The soft edge is a
+       radial fade mask rather than a gaussian: a blurred hard disc holds a flat
+       plateau the reference field does not have, and the mask reproduces the
+       measured falloff (half strength ~430px out, gone by ~800px). The ramp is
+       shifted so the lemon end sits above the artwork; the visible band runs
+       magenta at the top through violet at the foot. -->
+  <defs>
+    <linearGradient id="glow3-ramp" x1="756" y1="-600" x2="756" y2="1900" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FCF77D"/>
+      <stop offset="0.43" stop-color="#FC83E9"/>
+      <stop offset="1" stop-color="#6550B9"/>
+    </linearGradient>
+    <radialGradient id="glow3-fade" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="0.25" stop-color="#ffffff" stop-opacity="0.84"/>
+      <stop offset="0.42" stop-color="#ffffff" stop-opacity="0.61"/>
+      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0.36"/>
+      <stop offset="0.78" stop-color="#ffffff" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <mask id="glow3-mask" maskUnits="userSpaceOnUse" x="-114" y="-31" width="1740" height="1740">
+      <circle cx="756" cy="839" r="870" fill="url(#glow3-fade)"/>
+    </mask>
+  </defs>
+  <circle cx="756" cy="839" r="870" fill="url(#glow3-ramp)" opacity="0.63" mask="url(#glow3-mask)"/>
+</svg>

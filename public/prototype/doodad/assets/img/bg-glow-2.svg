@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1700" width="900" height="1700" aria-hidden="true">
+  <!-- backdrop glow 2 · the pink left flank, the reason the page leans warmer on
+       the left than the right all the way down past the showcase. Measured off
+       the reference it is a tall soft-shouldered ellipse peaking around 10%
+       alpha, so the shape comes from a radial fade mask rather than a gaussian
+       on a small disc: a blurred disc that reads this soft dies away far too
+       early down the page. The frame is deliberately wider and taller than the
+       glow so the field reaches zero inside its own box; clip it and a hard
+       vertical edge runs down the page where the image ends. Grain on top,
+       barely there. -->
+  <defs>
+    <radialGradient id="glow2-fade">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="0.35" stop-color="#ffffff" stop-opacity="0.98"/>
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="0.72" stop-color="#ffffff" stop-opacity="0.62"/>
+      <stop offset="0.87" stop-color="#ffffff" stop-opacity="0.26"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <mask id="glow2-mask" maskUnits="userSpaceOnUse" x="-345" y="20" width="1121" height="1560">
+      <ellipse cx="215.5" cy="800" rx="560" ry="780" fill="url(#glow2-fade)"/>
+    </mask>
+    <filter id="glow2-grain" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="19"/>
+      <feColorMatrix type="saturate" values="0"/>
+    </filter>
+  </defs>
+  <ellipse cx="215.5" cy="800" rx="560" ry="780" fill="#FF2E95" opacity="0.1" mask="url(#glow2-mask)"/>
+  <g mask="url(#glow2-mask)">
+    <rect width="900" height="1700" filter="url(#glow2-grain)" opacity="0.05"/>
+  </g>
+</svg>
