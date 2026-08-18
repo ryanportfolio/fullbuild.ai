@@ -8,6 +8,8 @@
    the drawing.
    ========================================================================= */
 
+import type { CSSProperties } from 'react';
+
 type Ink = 'graphite' | 'cyanotype' | 'concrete' | 'live' | 'ground';
 
 /**
@@ -139,6 +141,7 @@ export function Dim({
   ink,
   o = 0,
   flip = false,
+  reveal,
 }: {
   x1: number;
   y1: number;
@@ -148,6 +151,10 @@ export function Dim({
   ink?: Ink;
   o?: number;
   flip?: boolean;
+  /** Act lettering: the point in an act sheet's travel (0-1) after which this
+      value letters in (--reveal, read by Sheet.module.css). Meaningless off an
+      act sheet — the rule is scoped to [data-act]. */
+  reveal?: number;
 }) {
   const mx = (x1 + x2) / 2;
   const my = (y1 + y2) / 2;
@@ -169,7 +176,13 @@ export function Dim({
           fontSize={10}
           textAnchor="middle"
           dominantBaseline={horizontal ? 'auto' : 'middle'}
-          style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.02em' }}
+          style={
+            {
+              fontVariantNumeric: 'tabular-nums',
+              letterSpacing: '0.02em',
+              ...(reveal !== undefined ? { '--reveal': reveal } : null),
+            } as CSSProperties
+          }
         >
           {value}
         </text>

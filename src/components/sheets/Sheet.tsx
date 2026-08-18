@@ -18,6 +18,7 @@ export default function Sheet({
   masthead,
   children,
   negative = false,
+  act = false,
 }: {
   n: string;
   state: string;
@@ -29,34 +30,42 @@ export default function Sheet({
   masthead?: ReactNode;
   children: ReactNode;
   negative?: boolean;
+  /** An ACT sheet holds the stage on a sticky holder while the reader's scroll
+      crews its drawing (DrawingSet owns the scrub). The extra travel is armed
+      by JS only, so no-JS and reduced-motion readers keep a one-viewport sheet. */
+  act?: boolean;
 }) {
+  const frame = (
+    <div className={styles.frame} data-side={drawingSide} data-cover={masthead ? 'true' : undefined}>
+      <header className={styles.head}>
+        <span className={`${styles.stateNo} u-mono`}>STAGE&nbsp;{n}</span>
+        <span className={`${styles.stateName} u-label`}>{state}</span>
+        <span className={`${styles.sheetNo} u-mono`}>S-{n} / 04</span>
+      </header>
+
+      {masthead ? <div className={styles.masthead}>{masthead}</div> : null}
+
+      <div className={styles.body}>
+        {/* NOT aria-hidden: the cover's drawing slot carries the SHEET INDEX,
+            a real list of links to every shipped project, and each plate's
+            root <svg> already carries role="img" + a described aria-label.
+            Hiding the figure stranded those links — tabbable, unannounced. */}
+        <figure className={styles.drawing}>{drawing}</figure>
+        <div className={styles.copy}>{children}</div>
+      </div>
+    </div>
+  );
   return (
     <section
       id={`state-${n}`}
       data-state={n}
       data-ink={ink}
       data-negative={negative ? 'true' : undefined}
+      data-act={act ? '' : undefined}
       className={styles.sheet}
       aria-label={`Sheet ${n} of 4 · ${state}`}
     >
-      <div className={styles.frame} data-side={drawingSide} data-cover={masthead ? 'true' : undefined}>
-        <header className={styles.head}>
-          <span className={`${styles.stateNo} u-mono`}>STAGE&nbsp;{n}</span>
-          <span className={`${styles.stateName} u-label`}>{state}</span>
-          <span className={`${styles.sheetNo} u-mono`}>S-{n} / 04</span>
-        </header>
-
-        {masthead ? <div className={styles.masthead}>{masthead}</div> : null}
-
-        <div className={styles.body}>
-          {/* NOT aria-hidden: the cover's drawing slot carries the SHEET INDEX,
-              a real list of links to every shipped project, and each plate's
-              root <svg> already carries role="img" + a described aria-label.
-              Hiding the figure stranded those links — tabbable, unannounced. */}
-          <figure className={styles.drawing}>{drawing}</figure>
-          <div className={styles.copy}>{children}</div>
-        </div>
-      </div>
+      {act ? <div className={styles.holder}>{frame}</div> : frame}
     </section>
   );
 }
