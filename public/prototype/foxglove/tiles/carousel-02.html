@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Foxglove Paper, carousel frame 02</title>
+<style>
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 300 500;
+  font-display: block;
+  src: url('../fonts/cormorant-garamond-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: italic;
+  font-weight: 300 500;
+  font-display: block;
+  src: url('../fonts/cormorant-garamond-italic-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: block;
+  src: url('/prototype/foredge/fonts/inter-latin.woff2') format('woff2');
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 1080px;
+  height: 1350px;
+  margin: 0;
+  overflow: hidden;
+  background: #fef1ec;
+}
+
+.frame {
+  position: relative;
+  width: 1080px;
+  height: 1350px;
+  overflow: hidden;
+  background: #fef1ec;
+}
+
+.head {
+  position: absolute;
+  left: 88px;
+  top: 96px;
+}
+
+.label {
+  font-family: 'Inter', Helvetica, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #11223f;
+}
+
+.rule {
+  display: block;
+  width: 88px;
+  height: 4px;
+  margin-top: 32px;
+  background: #ff5734;
+}
+
+.sprig {
+  position: absolute;
+  left: 727px;
+  top: 1px;
+  width: 440px;
+  height: 440px;
+}
+
+.card {
+  position: absolute;
+  left: 220px;
+  top: 215px;
+  width: 640px;
+  height: 896px;
+  padding: 84px 60px;
+  border: 2px solid #f6bba4;
+  border-radius: 0;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.names {
+  font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 300;
+  font-size: 112px;
+  line-height: 1.05;
+  letter-spacing: -0.005em;
+  color: #11223f;
+}
+
+.amp {
+  color: #ff5734;
+}
+
+.card-rule {
+  width: 150px;
+  height: 2px;
+  margin: 56px 0;
+  background: #f6bba4;
+}
+
+.lines {
+  font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  font-weight: 300;
+  font-size: 48px;
+  line-height: 1.7;
+  letter-spacing: 0.01em;
+  color: #11223f;
+}
+
+.index {
+  position: absolute;
+  right: 88px;
+  bottom: 96px;
+  font-family: 'Inter', Helvetica, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: 0.2em;
+  color: #11223f;
+}
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="head">
+    <p class="label">THE INVITATION</p>
+    <span class="rule"></span>
+  </div>
+  <img class="sprig" src="../img/sprig.png" alt="" width="440" height="440">
+  <div class="card">
+    <p class="names">Iris <span class="amp">&amp;</span> Theo</p>
+    <span class="card-rule"></span>
+    <p class="lines">are getting married<br>the twentieth of June<br>Hudson, New York</p>
+  </div>
+  <p class="index">02 / 04</p>
+</div>
+</body>
+</html>

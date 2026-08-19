@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Foxglove Paper, carousel frame 01</title>
+<style>
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 300 500;
+  font-display: block;
+  src: url('../fonts/cormorant-garamond-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: italic;
+  font-weight: 300 500;
+  font-display: block;
+  src: url('../fonts/cormorant-garamond-italic-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: block;
+  src: url('/prototype/foredge/fonts/inter-latin.woff2') format('woff2');
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 1080px;
+  height: 1350px;
+  margin: 0;
+  overflow: hidden;
+  background: #fef1ec;
+}
+
+.frame {
+  position: relative;
+  width: 1080px;
+  height: 1350px;
+  overflow: hidden;
+  background: #fef1ec;
+}
+
+.bloom {
+  position: absolute;
+  left: -70px;
+  top: -130px;
+  width: 860px;
+  height: 860px;
+}
+
+.head {
+  position: absolute;
+  left: 88px;
+  top: 676px;
+  width: 904px;
+}
+
+.eyebrow {
+  font-family: 'Inter', Helvetica, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #11223f;
+}
+
+.rule {
+  display: block;
+  width: 88px;
+  height: 4px;
+  margin-top: 32px;
+  background: #ff5734;
+}
+
+.display {
+  position: absolute;
+  left: 88px;
+  top: 782px;
+  width: 904px;
+  font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  font-weight: 300;
+  font-size: 172px;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  color: #11223f;
+}
+
+.foot {
+  position: absolute;
+  right: 88px;
+  bottom: 96px;
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  font-family: 'Inter', Helvetica, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 30px;
+  line-height: 1.2;
+  color: #11223f;
+}
+
+.index {
+  letter-spacing: 0.2em;
+}
+
+.cue {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  letter-spacing: 0.03em;
+}
+
+.cue svg {
+  display: block;
+}
+</style>
+</head>
+<body>
+<div class="frame">
+  <img class="bloom" src="../img/corner-a.png" alt="" width="860" height="860">
+  <div class="head">
+    <p class="eyebrow">THE GARDEN SUITES</p>
+    <span class="rule"></span>
+  </div>
+  <h1 class="display">One suite,<br>five pieces</h1>
+  <div class="foot">
+    <span class="index">01 / 04</span>
+    <span class="cue">swipe<svg width="64" height="22" viewBox="0 0 64 22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 11H60" stroke="#11223f" stroke-width="3" stroke-linecap="round"/><path d="M49.5 2.5L60 11l-10.5 8.5" stroke="#11223f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+  </div>
+</div>
+</body>
+</html>

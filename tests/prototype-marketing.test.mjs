@@ -41,8 +41,7 @@ test("the shipped emails hold the program's guarantees, and the page shows none 
 
 test("the plan lists only real campaigns: live rows link, planned rows do not", () => {
   const live = [...page.matchAll(/<a class="campaign-row" data-status="live" href="([^"]+)"/g)];
-  assert.equal(live.length, 1);
-  assert.equal(live[0][1], "/prototype/foredge");
+  assert.deepEqual(live.map((m) => m[1]), ["/prototype/foredge", "/prototype/foxglove"]);
   const planned = [...page.matchAll(/<div class="campaign-row" data-status="planned"/g)];
   assert.ok(planned.length >= 1, "the plan should show what comes next");
   assert.ok(!/data-status="planned"[^>]*href/.test(page), "a planned campaign must not link anywhere");
@@ -64,10 +63,17 @@ test("the strip opens each mailing and the page holds the type and character con
     assert.ok(f.size > 10000, `${font} missing or truncated`);
   }
 
-  const previews = [...page.matchAll(/src="\/prototype\/marketing\/img\/(send-[a-z-]+\.jpg)"/g)].map((m) => m[1]);
-  assert.equal(previews.length, 4, "the plate shows a render of each send");
+  const previews = [...page.matchAll(/src="\/prototype\/marketing\/img\/((?:send|tile)-[a-z0-9-]+\.jpg)"/g)].map((m) => m[1]);
+  assert.equal(previews.filter((p) => p.startsWith("send-")).length, 4, "the email plate shows a render of each send");
+  assert.equal(previews.filter((p) => p.startsWith("tile-")).length, 4, "the campaign plate shows four tile renders");
   for (const p of previews) {
     const f = await stat(new URL(`../public/prototype/marketing/img/${p}`, import.meta.url));
     assert.ok(f.size > 10000, `${p} missing or truncated`);
+  }
+
+  const tileLinks = [...page.matchAll(/href="\/prototype\/foxglove\/tiles\/([a-z0-9-]+\.html)"/g)].map((m) => m[1]);
+  const tileFiles = (await readdir(new URL("../public/prototype/foxglove/tiles/", import.meta.url))).filter((f) => f.endsWith(".html"));
+  for (const t of new Set(tileLinks)) {
+    assert.ok(tileFiles.includes(t), `plate links ${t} but the file does not exist`);
   }
 });

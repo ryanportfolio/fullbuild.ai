@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Foxglove Paper: Paper for a garden wedding</title>
+<style>
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 300 500;
+  font-display: swap;
+  src: url('../fonts/cormorant-garamond-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: italic;
+  font-weight: 300 500;
+  font-display: swap;
+  src: url('../fonts/cormorant-garamond-italic-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('/prototype/foredge/fonts/inter-latin.woff2') format('woff2');
+}
+
+:root {
+  --blush: #fef1ec;
+  --ink: #11223f;
+  --coral: #ff5734;
+  --serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --sans: 'Inter', Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 1080px;
+  height: 1350px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body {
+  background: var(--blush);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.tile {
+  position: relative;
+  width: 1080px;
+  height: 1350px;
+  overflow: hidden;
+}
+
+.meadow {
+  position: absolute;
+  left: 50%;
+  bottom: -60px;
+  width: 1400px;
+  height: auto;
+  transform: translateX(-50%);
+}
+
+.stack {
+  position: relative;
+  padding: 96px 88px 0;
+}
+
+.eyebrow {
+  margin: 0;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.rule {
+  display: block;
+  width: 88px;
+  height: 4px;
+  margin-top: 32px;
+  background: var(--coral);
+}
+
+.display {
+  margin: 48px 0 0;
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 144px;
+  line-height: 0.94;
+  letter-spacing: -0.01em;
+}
+
+.support {
+  margin: 56px 0 0;
+  max-width: 720px;
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 1.5;
+  letter-spacing: 0.03em;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  margin: 52px 0 0;
+  height: 104px;
+  padding: 0 60px;
+  border: 2px solid var(--coral);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 40px;
+  line-height: 1.2;
+  letter-spacing: 0.03em;
+}
+</style>
+</head>
+<body>
+<div class="tile">
+  <img class="meadow" src="../img/meadow-band.png" alt="">
+  <div class="stack">
+    <p class="eyebrow">THE GARDEN SUITES</p>
+    <span class="rule"></span>
+    <h1 class="display">Paper for a<br>garden wedding</h1>
+    <p class="support">Six new semi-custom suites, drawn by hand and printed on cotton</p>
+    <p class="cta">Shop the collection</p>
+  </div>
+</div>
+</body>
+</html>

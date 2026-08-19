@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Foxglove Paper: Order by April 3</title>
+<style>
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 300 500;
+  font-display: swap;
+  src: url('../fonts/cormorant-garamond-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: italic;
+  font-weight: 300 500;
+  font-display: swap;
+  src: url('../fonts/cormorant-garamond-italic-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('/prototype/foredge/fonts/inter-latin.woff2') format('woff2');
+}
+
+:root {
+  --blush: #fef1ec;
+  --ink: #11223f;
+  --coral: #ff5734;
+  --serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --sans: 'Inter', Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 1080px;
+  height: 1350px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body {
+  background: var(--blush);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.tile {
+  position: relative;
+  width: 1080px;
+  height: 1350px;
+  overflow: hidden;
+}
+
+.sprig {
+  position: absolute;
+  left: 409px;
+  bottom: -317px;
+  width: 1180px;
+  height: auto;
+}
+
+.stack {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 1080px;
+  height: 1350px;
+  padding: 96px 88px;
+}
+
+.eyebrow {
+  margin: 0;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.rule {
+  display: block;
+  width: 88px;
+  height: 4px;
+  margin-top: 32px;
+  background: var(--coral);
+}
+
+.display {
+  margin: 56px 0 0;
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 186px;
+  line-height: 0.94;
+  letter-spacing: -0.01em;
+  font-feature-settings: 'lnum' 1;
+}
+
+.support {
+  margin: 0;
+  max-width: 700px;
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 1.5;
+  letter-spacing: 0.03em;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  margin: 48px 0 0;
+  height: 104px;
+  padding: 0 60px;
+  border: 2px solid var(--coral);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 40px;
+  line-height: 1.2;
+  letter-spacing: 0.03em;
+}
+</style>
+</head>
+<body>
+<div class="tile">
+  <img class="sprig" src="../img/sprig.png" alt="">
+  <div class="stack">
+    <div class="head">
+      <p class="eyebrow">JUNE WEDDINGS</p>
+      <span class="rule"></span>
+      <h1 class="display">Order by<br>April 3</h1>
+    </div>
+    <div class="foot">
+      <p class="support">Your invitations mail with eight weeks to spare</p>
+      <p class="cta">Book your date</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>
