@@ -332,3 +332,18 @@ no scrollbar of any kind. Related trap in the same component: the strip's
 floor the site log uses — that floor answers a question about whether an
 animation has room, and borrowing it left `/examples` (197px of overhang at
 1440x900) with the native bar suppressed and nothing drawn in its place.
+
+## Static prototype pages: relative asset paths 404 at the clean URL (2026-08-19)
+
+Symptom: /prototype/<name> renders unstyled HTML with broken images, while
+/prototype/<name>/ renders fine. The rewrite serves the clean URL WITHOUT a
+trailing slash, so the browser resolves relative hrefs (`css/site.css`,
+`../foredge/img/...`) one directory up and they 404. serve-prototype.mjs
+mirrors this, so the trap reproduces locally only if you test the no-slash
+form; testing with the slash masks it.
+
+Fix: every asset href/src/url() in a static prototype page is root-absolute
+(`/prototype/<name>/css/site.css`), the convention quench and doodad already
+follow. Files that are always requested at their real path (the foredge email
+.html artifacts) may keep relative paths. Verify new prototype pages at the
+no-slash URL.
