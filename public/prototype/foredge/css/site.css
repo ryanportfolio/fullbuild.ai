@@ -1,0 +1,540 @@
+/*
+  Foredge Books: email program proof sheet
+
+  Contract
+  --------
+  Subject   Four responsive HTML marketing emails built from one brand system
+            for Foredge Books, a fictional independent bookshop and small press.
+  Reader    A hiring manager screening a digital designer application. Ninety
+            seconds, skeptical of flat portfolio JPEGs.
+  Job       Prove the emails are real code that renders at true widths, then
+            hand over the source.
+
+  Metaphor  A press proof: the shop proofs its own mailings the way it proofs
+            a signature off the press. Every artifact on this page is the real
+            file, inspected in place.
+
+  Palette   ink   #1a1a17  all primary text, plates, filled controls (never #000)
+            paper #ffffff  canvas and card surfaces
+            ash   #5f5f5d  secondary text and hairline rules (6.40:1 on paper,
+                           WCAG 2.1 relative luminance formula)
+            frame #f2f1ef  the wells the email viewports sit in, nothing else
+            No other color may appear. Ink on paper measures 17.44:1.
+
+  Type      Fraunces 300, self-hosted, display and headings only, never bold,
+            line-height 1.02 to 1.15. Inter, self-hosted variable 400 to 600,
+            everything else, 0.03em tracking. Floor: nothing below 16px
+            anywhere on this page. Display tops out at 76px.
+
+  Grid      One 1200px sheet, centered. Sections separated by 96px gaps and
+            1px ash hairlines. Email viewports sit side by side at true device
+            widths (600 desktop, 375 mobile) inside frame-colored wells.
+
+  Motion    None. The page is zero-JavaScript static HTML. The emails are the
+            subject; motion on the proof sheet would compete with them.
+
+  Bans      Color beyond the four values above. Gradients. Shadows. Any
+            JavaScript. Screenshots standing in for artifacts: the viewports
+            are iframes of the shipped files. Bold Fraunces. Type below 16px.
+
+  Signature The mailing sections: each email rendered live at desktop and
+            mobile width in one ruled well, with its subject line and
+            preheader typeset above it like a catalog entry.
+
+  Risk      A monochrome zero-motion page can read unfinished next to the
+            animated prototypes in this gallery. Displaced alternative: a
+            screenshot carousel with device chrome. The trade: real artifacts
+            over staging, carried by scale and whitespace.
+*/
+
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/prototype/foredge/fonts/fraunces-300-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('/prototype/foredge/fonts/inter-latin.woff2') format('woff2');
+}
+
+:root {
+  --ink: #1a1a17;
+  --paper: #ffffff;
+  --ash: #5f5f5d;
+  --frame: #f2f1ef;
+  --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --sans: 'Inter', Helvetica, Arial, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--paper);
+}
+
+body {
+  font-family: var(--sans);
+  font-size: 18px;
+  line-height: 1.5;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 16px;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 14px 28px;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  z-index: 10;
+}
+
+.skip:focus {
+  left: 16px;
+}
+
+a:focus-visible,
+.skip:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 4px;
+}
+
+.sheet {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px 120px;
+}
+
+/* Masthead */
+
+.masthead {
+  padding: 96px 0 64px;
+  border-bottom: 1px solid var(--ash);
+}
+
+.masthead .wordmark {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 76px;
+  line-height: 1.02;
+  letter-spacing: 0.01em;
+  max-width: 17ch;
+}
+
+.masthead .standfirst {
+  margin-top: 32px;
+  font-size: 22px;
+  line-height: 1.5;
+  color: var(--ash);
+  max-width: 56ch;
+}
+
+.kicker {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.masthead .kicker {
+  margin-bottom: 40px;
+}
+
+/* Section scaffold */
+
+section {
+  padding: 96px 0 0;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.section-head h2 {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 48px;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+
+.section-head .kicker {
+  color: var(--ash);
+}
+
+/* Brief */
+
+.brief-rows {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  border-top: 1px solid var(--ash);
+}
+
+.brief-rows > div {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--ash);
+}
+
+.brief-rows .label {
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.brief-rows .value {
+  font-size: 20px;
+  line-height: 1.5;
+  color: var(--ash);
+  max-width: 60ch;
+}
+
+/* System plate */
+
+.chips {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 64px;
+}
+
+.chip {
+  border: 1px solid var(--ash);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.chip .swatch {
+  height: 120px;
+}
+
+.chip figcaption {
+  padding: 20px 24px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.chip figcaption strong {
+  display: block;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.chip figcaption span {
+  color: var(--ash);
+}
+
+.specimen {
+  border-top: 1px solid var(--ash);
+}
+
+.specimen > div {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  align-items: baseline;
+  padding: 32px 0;
+  border-bottom: 1px solid var(--ash);
+}
+
+.specimen .label {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ash);
+}
+
+.specimen .sample-display {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 56px;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+}
+
+.specimen .sample-body {
+  font-size: 20px;
+  line-height: 1.5;
+  max-width: 52ch;
+}
+
+.specimen .sample-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.pill {
+  display: inline-block;
+  font-family: var(--sans);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 17px 36px;
+  border-radius: 999px;
+  text-decoration: none;
+}
+
+.pill-filled {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.pill-ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--ink);
+}
+
+/* Mailing sections */
+
+.mailing {
+  border-top: 1px solid var(--ash);
+  margin-top: 96px;
+}
+
+.mailing:first-of-type {
+  margin-top: 0;
+}
+
+.mailing-head {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  padding: 48px 0;
+}
+
+.mailing-head h3 {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 44px;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  margin-top: 16px;
+}
+
+.mailing-head .purpose {
+  margin-top: 24px;
+  font-size: 20px;
+  line-height: 1.5;
+  color: var(--ash);
+  max-width: 44ch;
+}
+
+.envelope {
+  border: 1px solid var(--ash);
+  border-radius: 6px;
+  padding: 8px 28px;
+  align-self: start;
+}
+
+.envelope > div {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 16px;
+  padding: 20px 0;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.envelope > div + div {
+  border-top: 1px solid var(--ash);
+}
+
+.envelope .label {
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ash);
+  padding-top: 2px;
+}
+
+.viewports {
+  display: grid;
+  grid-template-columns: minmax(0, 664px) minmax(0, 439px);
+  gap: 32px;
+  align-items: start;
+}
+
+.viewport {
+  background: var(--frame);
+  border-radius: 6px;
+  padding: 32px;
+}
+
+.viewport .vp-label {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.viewport iframe {
+  display: block;
+  width: 100%;
+  height: 920px;
+  border: 1px solid var(--ash);
+  border-radius: 6px;
+  background: var(--paper);
+}
+
+.viewport-mobile iframe {
+  width: 375px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.mailing-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 32px 0 0;
+}
+
+.mailing-notes {
+  padding: 32px 0 0;
+  max-width: 72ch;
+}
+
+.mailing-notes p {
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--ash);
+}
+
+/* Engineering */
+
+.engineering {
+  border-top: 1px solid var(--ash);
+}
+
+.engineering ul {
+  list-style: none;
+  border-top: 1px solid var(--ash);
+}
+
+.engineering li {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--ash);
+}
+
+.engineering li strong {
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.engineering li span {
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--ash);
+  max-width: 64ch;
+}
+
+/* Colophon */
+
+.colophon {
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 6px;
+  padding: 64px;
+  margin-top: 120px;
+}
+
+.colophon .kicker {
+  color: var(--paper);
+  margin-bottom: 32px;
+}
+
+.colophon p {
+  font-size: 20px;
+  line-height: 1.6;
+  max-width: 64ch;
+}
+
+.colophon p + p {
+  margin-top: 24px;
+}
+
+.colophon a {
+  color: var(--paper);
+}
+
+/* Small screens */
+
+@media (max-width: 1000px) {
+  .viewports {
+    grid-template-columns: 1fr;
+  }
+
+  .mailing-head {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  .sheet {
+    padding: 0 24px 96px;
+  }
+
+  .masthead {
+    padding-top: 64px;
+  }
+
+  .masthead .wordmark {
+    font-size: 48px;
+  }
+
+  .section-head h2 {
+    font-size: 36px;
+  }
+
+  .mailing-head h3 {
+    font-size: 34px;
+  }
+
+  .specimen .sample-display {
+    font-size: 36px;
+  }
+
+  .specimen > div,
+  .brief-rows,
+  .engineering li {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .chips {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .viewport {
+    padding: 16px;
+  }
+
+  .colophon {
+    padding: 40px 24px;
+  }
+}
