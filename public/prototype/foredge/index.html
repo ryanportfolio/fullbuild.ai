@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Foredge Books, an email program proof</title>
+  <meta name="description" content="Four responsive HTML marketing emails built from one brand system for Foredge Books, a fictional bookseller and small press. A portfolio piece.">
+  <link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+  <a class="skip" href="#mailings">Skip to the mailings</a>
+
+  <div class="sheet">
+
+    <header class="masthead">
+      <p class="kicker">Foredge Books · Email program proof</p>
+      <h1 class="wordmark">Four mailings from one system</h1>
+      <p class="standfirst">Foredge Books is a fictional independent bookshop and small press, invented for this piece. Below are four of its marketing emails: a promotion, a welcome, a newsletter, and a seasonal campaign. Each one is a real responsive HTML file, rendered here live at desktop and mobile width. Open any of them and read the source.</p>
+    </header>
+
+    <section aria-labelledby="brief-h">
+      <div class="section-head">
+        <p class="kicker">01</p>
+        <h2 id="brief-h">The brief</h2>
+      </div>
+      <div class="brief-rows">
+        <div class="label">Subject</div>
+        <div class="value">A bookseller that publishes its own short list and mails the people who read it. The email program covers promotion, lifecycle, editorial, and seasonal work.</div>
+        <div class="label">System</div>
+        <div class="value">Editorial monochrome on warm paper. One warm near-black ink, one mid gray, a featherweight display serif, a tracked grotesque, pill controls. Hierarchy comes from scale and whitespace, never from color.</div>
+        <div class="label">Constraint</div>
+        <div class="value">Every email survives Outlook, reads at arm's length, and keeps every string as live text. Nothing on screen renders below 16 pixels, including the footer.</div>
+      </div>
+    </section>
+
+    <section aria-labelledby="system-h">
+      <div class="section-head">
+        <p class="kicker">02</p>
+        <h2 id="system-h">The system</h2>
+      </div>
+
+      <div class="chips">
+        <figure class="chip">
+          <div class="swatch" style="background:#1a1a17"></div>
+          <figcaption><strong>Ink 1a1a17</strong> <span>text, plates, filled controls</span></figcaption>
+        </figure>
+        <figure class="chip">
+          <div class="swatch" style="background:#ffffff;border-bottom:1px solid #5f5f5d"></div>
+          <figcaption><strong>Paper ffffff</strong> <span>canvas and card surfaces</span></figcaption>
+        </figure>
+        <figure class="chip">
+          <div class="swatch" style="background:#5f5f5d"></div>
+          <figcaption><strong>Ash 5f5f5d</strong> <span>secondary text, hairlines</span></figcaption>
+        </figure>
+        <figure class="chip">
+          <div class="swatch" style="background:#f2f1ef;border-bottom:1px solid #5f5f5d"></div>
+          <figcaption><strong>Frame f2f1ef</strong> <span>outside the 600px sheet only</span></figcaption>
+        </figure>
+      </div>
+
+      <div class="specimen">
+        <div>
+          <span class="label">Display</span>
+          <span class="sample-display">Old books, in the best sense</span>
+        </div>
+        <div>
+          <span class="label">Text</span>
+          <span class="sample-body">Fraunces at weight 300 carries every headline. Inter carries everything operational, tracked at 0.03em. Body text is 18 pixels; the floor everywhere is 16.</span>
+        </div>
+        <div>
+          <span class="label">Controls</span>
+          <span class="sample-pills">
+            <span class="pill pill-filled">Browse the sale</span>
+            <span class="pill pill-ghost">Read the full letter</span>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <section id="mailings" aria-labelledby="mailings-h">
+      <div class="section-head">
+        <p class="kicker">03</p>
+        <h2 id="mailings-h">The mailings</h2>
+      </div>
+
+      <article class="mailing">
+        <div class="mailing-head">
+          <div>
+            <p class="kicker">Mailing 01 · Promotion</p>
+            <h3>The backlist sale</h3>
+            <p class="purpose">Conversion work: a four-title merchandise grid, one dominant call to action, and an end date stated plainly.</p>
+          </div>
+          <div class="envelope">
+            <div><span class="label">Subject</span><span>Twenty percent off the backlist, through Sunday</span></div>
+            <div><span class="label">Preheader</span><span>The books we keep reordering, minus a fifth of the price</span></div>
+            <div><span class="label">File</span><span><a href="emails/backlist-sale.html">emails/backlist-sale.html</a></span></div>
+          </div>
+        </div>
+        <div class="viewports">
+          <div class="viewport viewport-desktop">
+            <p class="vp-label">Desktop · 600px</p>
+            <iframe src="emails/backlist-sale.html" title="The backlist sale email at desktop width" loading="lazy"></iframe>
+          </div>
+          <div class="viewport viewport-mobile">
+            <p class="vp-label">Mobile · 375px</p>
+            <iframe src="emails/backlist-sale.html" title="The backlist sale email at mobile width" loading="lazy"></iframe>
+          </div>
+        </div>
+        <div class="mailing-notes">
+          <p>The book covers in the grid are not images: each one is a typeset table cell, so titles and prices remain text and the email still reads with images off. The grid drops to a single column under 480 pixels.</p>
+        </div>
+      </article>
+
+      <article class="mailing">
+        <div class="mailing-head">
+          <div>
+            <p class="kicker">Mailing 02 · Lifecycle</p>
+            <h3>The welcome</h3>
+            <p class="purpose">Expectation setting for new subscribers: what the list is, what it is not, and a first-order code that does not expire.</p>
+          </div>
+          <div class="envelope">
+            <div><span class="label">Subject</span><span>You are on the list</span></div>
+            <div><span class="label">Preheader</span><span>One letter a month, early sale access, and ten percent off your first order</span></div>
+            <div><span class="label">File</span><span><a href="emails/welcome.html">emails/welcome.html</a></span></div>
+          </div>
+        </div>
+        <div class="viewports">
+          <div class="viewport viewport-desktop">
+            <p class="vp-label">Desktop · 600px</p>
+            <iframe src="emails/welcome.html" title="The welcome email at desktop width" loading="lazy"></iframe>
+          </div>
+          <div class="viewport viewport-mobile">
+            <p class="vp-label">Mobile · 375px</p>
+            <iframe src="emails/welcome.html" title="The welcome email at mobile width" loading="lazy"></iframe>
+          </div>
+        </div>
+        <div class="mailing-notes">
+          <p>The offer sits on the system's one dark surface, an ink plate with a paper pill, which makes it the highest-contrast block in the email.</p>
+        </div>
+      </article>
+
+      <article class="mailing">
+        <div class="mailing-head">
+          <div>
+            <p class="kicker">Mailing 03 · Editorial</p>
+            <h3>Shelf notes</h3>
+            <p class="purpose">The monthly letter: a masthead, a two-paragraph editor's note, and three staff picks, set at a comfortable reading measure.</p>
+          </div>
+          <div class="envelope">
+            <div><span class="label">Subject</span><span>Shelf notes for September</span></div>
+            <div><span class="label">Preheader</span><span>Three staff picks and a short defense of writing in your books</span></div>
+            <div><span class="label">File</span><span><a href="emails/shelf-notes.html">emails/shelf-notes.html</a></span></div>
+          </div>
+        </div>
+        <div class="viewports">
+          <div class="viewport viewport-desktop">
+            <p class="vp-label">Desktop · 600px</p>
+            <iframe src="emails/shelf-notes.html" title="The Shelf notes newsletter at desktop width" loading="lazy"></iframe>
+          </div>
+          <div class="viewport viewport-mobile">
+            <p class="vp-label">Mobile · 375px</p>
+            <iframe src="emails/shelf-notes.html" title="The Shelf notes newsletter at mobile width" loading="lazy"></iframe>
+          </div>
+        </div>
+        <div class="mailing-notes">
+          <p>Long-form email typography at a comfortable measure, with the serif held to weight 300 throughout. The picks reuse the same typeset cover component as the sale grid.</p>
+        </div>
+      </article>
+
+      <article class="mailing">
+        <div class="mailing-head">
+          <div>
+            <p class="kicker">Mailing 04 · Seasonal</p>
+            <h3>The gift guide</h3>
+            <p class="purpose">Campaign work: picks organized by recipient, order-by dates up front, and free unbranded wrapping.</p>
+          </div>
+          <div class="envelope">
+            <div><span class="label">Subject</span><span>The gift guide, and the dates that matter</span></div>
+            <div><span class="label">Preheader</span><span>Books by recipient, wrapped free, order by December 18</span></div>
+            <div><span class="label">File</span><span><a href="emails/gift-guide.html">emails/gift-guide.html</a></span></div>
+          </div>
+        </div>
+        <div class="viewports">
+          <div class="viewport viewport-desktop">
+            <p class="vp-label">Desktop · 600px</p>
+            <iframe src="emails/gift-guide.html" title="The gift guide email at desktop width" loading="lazy"></iframe>
+          </div>
+          <div class="viewport viewport-mobile">
+            <p class="vp-label">Mobile · 375px</p>
+            <iframe src="emails/gift-guide.html" title="The gift guide email at mobile width" loading="lazy"></iframe>
+          </div>
+        </div>
+        <div class="mailing-notes">
+          <p>The one email that opens and closes on ink plates, bookending the paper sections. The dates module is a ruled box holding two order-by dates, with no countdown timer.</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="engineering" aria-labelledby="engineering-h">
+      <div class="section-head">
+        <p class="kicker">04</p>
+        <h2 id="engineering-h">The engineering</h2>
+      </div>
+      <ul>
+        <li><strong>Layout</strong><span>Nested tables with role="presentation" throughout, a hybrid 600 pixel container with an mso conditional wrapper, no flexbox or grid in the structure.</span></li>
+        <li><strong>Outlook</strong><span>Every pill button is a VML roundrect with the real anchor in the non-mso branch, and line heights carry mso-line-height-rule where they matter.</span></li>
+        <li><strong>Fonts</strong><span>Self-hosted Fraunces and Inter behind an mso guard, with the full Georgia and Helvetica fallback stacks inline on every declaration, so Outlook falls straight to its fallback and never touches a webfont.</span></li>
+        <li><strong>Preview text</strong><span>Each mailing carries a hidden preheader div that sets the inbox preview line.</span></li>
+        <li><strong>Type floor</strong><span>Nothing below 16 pixels anywhere, including the footer and legal line. Body runs 18, headlines run 48 to 56 in Fraunces 300.</span></li>
+        <li><strong>Contrast</strong><span>Ink on paper measures 17.44:1 and ash on paper 6.40:1 by the WCAG 2.1 relative luminance formula, so both pass AA at every size used.</span></li>
+        <li><strong>Live text</strong><span>Headlines, prices, buttons, and the book covers themselves are HTML text. With images blocked, every mailing still reads in full, and the photographs carry written alt text.</span></li>
+        <li><strong>Accessibility</strong><span>lang on the root, one h1 per mailing with a logical heading order below it, descriptive link text, and buttons padded past a 44 pixel touch target.</span></li>
+      </ul>
+    </section>
+
+    <div class="colophon">
+      <p class="kicker">Colophon</p>
+      <p>Foredge Books is spec work: the shop, the press, the titles, and the authors are invented for this portfolio piece, and no affiliation with any retailer is implied. The mailings are table-based HTML written for this piece and rendered above from the shipped files.</p>
+      <p>Photography was generated with an image model and art-directed to the brand's warm register: blank cloth covers, kraft paper, no legible type. Typefaces are Fraunces and Inter, self-hosted. Part of <a href="https://fullbuild.ai/prototype">the fullbuild.ai gallery</a>.</p>
+    </div>
+
+  </div>
+</body>
+</html>

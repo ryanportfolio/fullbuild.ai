@@ -1121,35 +1121,35 @@ test("the finale is the prototype index and /prototype serves the showcase", asy
     source("css"),
   ]);
 
-  // Sixteen entries in the old gallery's order. The last slot used to hold the
+  // Seventeen entries in the old gallery's order. The last slot used to hold the
   // showcase pointing at itself, which was the one card that opened nothing new;
   // Prediction Lab holds it now and points out of the gallery to its own sheet, so
   // a new prototype joins in front of it rather than displacing it.
   // Every capture lives under the index media dir and is a real graded file.
   const index = data.match(/PROTOTYPE_INDEX[\s\S]*?\] as const/)?.[0] ?? "";
   const ids = [...index.matchAll(/\bid: "([a-z-]+)"/g)].map((m) => m[1]);
-  assert.equal(ids.length, 16);
+  assert.equal(ids.length, 17);
   assert.equal(ids[0], "fault-line");
-  assert.equal(ids[15], "prediction-lab");
+  assert.equal(ids[16], "prediction-lab");
   assert.ok(!ids.includes("showcase"), "no card opens the page it is already on");
   const images = [...index.matchAll(/\bimage: "([^"]+)"/g)].map((m) => m[1]);
-  assert.equal(images.length, 16);
+  assert.equal(images.length, 17);
   for (const image of images) {
     assert.match(image, /^\/prototype\/showcase\/media\/index\/[a-z-]+\.webp$/);
     const capture = await stat(new URL(`../public${image}`, import.meta.url));
     assert.ok(capture.size > 3000, `${image} is a real graded capture`);
   }
 
-  // Ten cards above the lockup and six below it: labelled anchors around lazy images,
+  // Ten cards above the lockup and seven below it: labelled anchors around lazy images,
   // so the link carries the name and the grid ships no script of its own. The lower
-  // band runs six columns rather than five, so sixteen cards leave no orphan row.
+  // band runs seven columns rather than five, so seventeen cards leave no orphan row.
   const finale = app.match(/<section className=\{styles\.finale\}[\s\S]*?<\/section>/)?.[0] ?? "";
   const top = finale.indexOf("PROTOTYPE_INDEX.slice(0, 10)");
   const lockup = finale.indexOf("finaleLockup");
   const bottom = finale.indexOf("PROTOTYPE_INDEX.slice(10)");
   assert.ok(top > -1 && top < lockup, "ten cards render above the lockup");
-  assert.ok(bottom > lockup, "six cards render below the lockup");
-  assert.match(css, /\.indexGrid\[data-band="bottom"\][\s\S]*?grid-template-columns: repeat\(6, minmax\(0, 1fr\)\)/);
+  assert.ok(bottom > lockup, "seven cards render below the lockup");
+  assert.match(css, /\.indexGrid\[data-band="bottom"\][\s\S]*?grid-template-columns: repeat\(7, minmax\(0, 1fr\)\)/);
   assert.match(finale, /aria-label=\{`Open \$\{entry\.title\}`\}/);
   assert.match(finale, /<img src=\{entry\.image\} alt="" loading="lazy" decoding="async" \/>/);
 

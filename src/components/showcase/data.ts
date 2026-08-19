@@ -160,6 +160,7 @@ export const PROTOTYPE_INDEX: readonly PrototypeIndexEntry[] = [
   { id: "maranatha", title: "Maranatha", href: "/prototype/maranatha", image: "/prototype/showcase/media/index/maranatha.webp" },
   { id: "open-saas", title: "Open Build", href: "/prototype/open-saas", image: "/prototype/showcase/media/index/open-saas.webp" },
   { id: "doodad", title: "Doodad", href: "/prototype/doodad", image: "/prototype/showcase/media/index/doodad.webp" },
+  { id: "foredge", title: "Foredge Books", href: "/prototype/foredge", image: "/prototype/showcase/media/index/foredge.webp" },
   // Prediction Lab lives on its own sheet rather than under /prototype, so this
   // row points out of the gallery. It took the slot the showcase used to hold
   // on itself, which was the one card that went nowhere new.

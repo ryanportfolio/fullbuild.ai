@@ -1821,7 +1821,7 @@
 }
 
 /*
- * PROTOTYPE INDEX. Sixteen graded captures as plain anchors inside the finale, so the
+ * PROTOTYPE INDEX. Seventeen graded captures as plain anchors inside the finale, so the
  * bleach rules and the focus outline already govern them. Card height is svh-driven and
  * the width is capped at the 1.9 aspect, so a short viewport shrinks the cards instead
  * of letting a row collide with the lockup or clip off frame.
@@ -1835,12 +1835,12 @@
 }
 
 /*
- * Sixteen cards do not divide into fives, so the band under the lockup carries its own
- * column count and runs six across as one whole row. Five columns there would leave a
- * single orphan card hanging under the row, which reads as a mistake rather than a grid.
+ * Seventeen cards do not divide into fives, so the band under the lockup carries its own
+ * column count and runs seven across as one whole row. Five columns there would leave
+ * orphan cards hanging under the row, which reads as a mistake rather than a grid.
  */
 .indexGrid[data-band="bottom"] {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   column-gap: clamp(14px, 1.6vw, 28px);
 }
 
