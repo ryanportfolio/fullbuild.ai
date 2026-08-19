@@ -10,9 +10,9 @@
 
 | Status | Skills |
 |---|---|
-| Native | `brainstorming`, `caveman`, `enhance-prompt`, `forge-repo-ui-skill`, `handoff-audit`, `humanizer`, `purposeful-writing`, `recall`, `writing-plans` |
-| Adapted | `addskill`, `refine`, `fable-mode`, `init-project`, `lab`, `optimize-context`, `sync-starter`, `writing-skills` |
-| Capability-gated | `advocate`, `design-fullbuild-surfaces`, `impartial-review`, `reference-site-prototyping`, `showcase-register`, `why`, `wow-loop` |
+| Native | `babysit-ci`, `brainstorming`, `bro`, `caveman`, `enhance-prompt`, `forge-repo-ui-skill`, `handoff-audit`, `humanizer`, `purposeful-writing`, `recall`, `unslop`, `verify-this`, `writing-plans` |
+| Adapted | `addskill`, `automate-me`, `refine`, `fable-mode`, `init-project`, `lab`, `optimize-context`, `sync-starter`, `writing-skills` |
+| Capability-gated | `advocate`, `arena`, `design-fullbuild-surfaces`, `impartial-review`, `reference-site-prototyping`, `showcase-register`, `why`, `wow-loop` |
 | Dangerous | `merge` |
 | Claude-only | None in the starter source set. |
 
