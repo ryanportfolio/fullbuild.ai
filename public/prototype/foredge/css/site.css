@@ -52,7 +52,7 @@
   font-style: normal;
   font-weight: 300;
   font-display: swap;
-  src: url('../fonts/fraunces-300-latin.woff2') format('woff2');
+  src: url('/prototype/foredge/fonts/fraunces-300-latin.woff2') format('woff2');
 }
 
 @font-face {
@@ -60,7 +60,7 @@
   font-style: normal;
   font-weight: 400 600;
   font-display: swap;
-  src: url('../fonts/inter-latin.woff2') format('woff2');
+  src: url('/prototype/foredge/fonts/inter-latin.woff2') format('woff2');
 }
 
 :root {
