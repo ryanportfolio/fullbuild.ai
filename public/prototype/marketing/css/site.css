@@ -1,0 +1,252 @@
+/*
+  Marketing design: the concept index
+
+  Contract
+  --------
+  Subject   The front door for a set of marketing design concepts. Each
+            concept is a complete brand system built for one discipline
+            (email, paid social, display) and lives as its own prototype;
+            this page outlines the set and routes to each one.
+  Reader    A hiring manager or client arriving from a resume or the
+            gallery. They should see the shape of the work in ten seconds
+            and be one click from any full concept.
+  Job       Hold one gallery slot for the whole set, so the prototype
+            index never carries a row per concept.
+
+  Palette   ink   #1a1a17  primary text, plates, filled controls
+            paper #ffffff  canvas
+            ash   #5f5f5d  secondary text, hairlines
+            The same editorial monochrome the concepts answer to. The
+            wrapper stays quieter than anything it links to.
+
+  Type      Fraunces 300 for display, Inter for everything else, both
+            loaded from the foredge prototype's self-hosted files so the
+            faces ship once. Floor 16px; body 18px; display to 72px.
+
+  Grid      One 1200px sheet. Concept entries are ruled blocks: kicker,
+            serif title, body, a photography strip, meta line, pill CTA.
+
+  Motion    None. Zero JavaScript.
+
+  Bans      Color beyond the triad. Gradients. Shadows. JavaScript.
+            Placeholder rows for concepts that do not exist yet: the page
+            lists only shipped work.
+
+  Signature The concept entry's photography strip, pulled from the live
+            prototype's own assets, so the index previews real files
+            rather than mockups.
+
+  Risk      A one-entry index can read premature. Displaced alternative:
+            waiting until three concepts exist. The trade: the gallery
+            stays at one slot from day one, and the page grows in place.
+*/
+
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('../../foredge/fonts/fraunces-300-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('../../foredge/fonts/inter-latin.woff2') format('woff2');
+}
+
+:root {
+  --ink: #1a1a17;
+  --paper: #ffffff;
+  --ash: #5f5f5d;
+  --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --sans: 'Inter', Helvetica, Arial, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--paper);
+}
+
+body {
+  font-family: var(--sans);
+  font-size: 18px;
+  line-height: 1.5;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 16px;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 14px 28px;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  z-index: 10;
+}
+
+.skip:focus {
+  left: 16px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 4px;
+}
+
+.sheet {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px 120px;
+}
+
+.kicker {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.masthead {
+  padding: 96px 0 64px;
+  border-bottom: 1px solid var(--ash);
+}
+
+.masthead .kicker {
+  margin-bottom: 40px;
+}
+
+.masthead h1 {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 72px;
+  line-height: 1.04;
+  letter-spacing: 0.01em;
+  max-width: 18ch;
+}
+
+.masthead .standfirst {
+  margin-top: 32px;
+  font-size: 22px;
+  line-height: 1.5;
+  color: var(--ash);
+  max-width: 58ch;
+}
+
+.concept {
+  padding: 72px 0;
+  border-bottom: 1px solid var(--ash);
+}
+
+.concept .kicker {
+  color: var(--ash);
+}
+
+.concept h2 {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 52px;
+  line-height: 1.08;
+  letter-spacing: 0.01em;
+  margin-top: 20px;
+  max-width: 20ch;
+}
+
+.concept .about {
+  margin-top: 24px;
+  font-size: 20px;
+  line-height: 1.55;
+  color: var(--ash);
+  max-width: 62ch;
+}
+
+.strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 48px;
+}
+
+.strip img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+.concept-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 40px;
+}
+
+.meta {
+  font-size: 18px;
+  color: var(--ash);
+}
+
+.pill {
+  display: inline-block;
+  font-family: var(--sans);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 17px 36px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  text-decoration: none;
+}
+
+.colophon {
+  padding-top: 64px;
+}
+
+.colophon p {
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--ash);
+  max-width: 64ch;
+}
+
+.colophon a {
+  color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  .sheet {
+    padding: 0 24px 96px;
+  }
+
+  .masthead {
+    padding-top: 64px;
+  }
+
+  .masthead h1 {
+    font-size: 44px;
+  }
+
+  .concept h2 {
+    font-size: 34px;
+  }
+
+  .strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
