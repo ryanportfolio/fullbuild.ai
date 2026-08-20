@@ -46,6 +46,7 @@ const nextConfig = {
       { source: '/prototype/foredge', destination: '/prototype/foredge/index.html' },
       { source: '/prototype/marketing', destination: '/prototype/marketing/index.html' },
       { source: '/prototype/foxglove', destination: '/prototype/foxglove/index.html' },
+      { source: '/prototype/foxtail', destination: '/prototype/foxtail/index.html' },
       // Harborline is a static export of a Statamic CMS build. It has a service
       // detail page per entry, so the clean URLs are matched by pattern rather
       // than enumerated: adding a service in the CMS should not need a config

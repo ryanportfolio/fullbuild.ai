@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Foxtail Drive-In, leaderboard, price version</title>
+<style>
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300 600;
+  font-display: block;
+  src: url('../fonts/inter-latin.woff2') format('woff2');
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  overflow: auto;
+  background: #fff8f1;
+}
+
+body {
+  width: 728px;
+  height: 90px;
+  margin: 0;
+  overflow: hidden;
+  background: #fff8f1;
+}
+
+.frame {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  width: 728px;
+  height: 90px;
+  padding: 0 26px;
+  overflow: hidden;
+  background: #fff8f1;
+  color: #006eff;
+  font-family: 'Inter', Helvetica, Arial, sans-serif;
+}
+
+.eyebrow {
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.25;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.divider {
+  width: 1.5px;
+  height: 42px;
+  background: #006eff;
+}
+
+.line {
+  flex: 1;
+  font-weight: 300;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 11px 26px;
+  border: 1.5px solid #006eff;
+  border-radius: 999px;
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<div class="frame">
+  <p class="eyebrow">Foxtail<br>Drive-In</p>
+  <span class="divider"></span>
+  <p class="line">$45 covers every movie all summer</p>
+  <span class="pill">Get the pass</span>
+</div>
+</body>
+</html>

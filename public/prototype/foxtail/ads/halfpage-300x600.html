@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Foxtail Drive-In, half page</title>
+<style>
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: block;
+  src: url('../fonts/playfair-display-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300 600;
+  font-display: block;
+  src: url('../fonts/inter-latin.woff2') format('woff2');
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  overflow: auto;
+  background: #006eff;
+}
+
+body {
+  width: 300px;
+  height: 600px;
+  margin: 0;
+  overflow: hidden;
+  background: #006eff;
+}
+
+.frame {
+  position: relative;
+  width: 300px;
+  height: 600px;
+  padding: 28px;
+  overflow: hidden;
+  background: #006eff;
+  color: #fff8f1;
+}
+
+.eyebrow {
+  font-family: 'Inter', Helvetica, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.display {
+  margin-top: 16px;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  font-size: 42px;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+}
+
+.program {
+  margin-top: 28px;
+  list-style: none;
+}
+
+.program li {
+  padding: 13px 0;
+  border-top: 1.5px solid #fff8f1;
+}
+
+.program .month {
+  font-family: 'Inter', Helvetica, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.program li:last-child {
+  position: relative;
+}
+
+.program li:last-child::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 62%;
+  height: 1.5px;
+  background: #fff8f1;
+}
+
+.program .bill {
+  margin-top: 3px;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.pill {
+  position: absolute;
+  left: 28px;
+  bottom: 28px;
+  display: inline-flex;
+  align-items: center;
+  padding: 11px 26px;
+  border: 1.5px solid #fff8f1;
+  border-radius: 999px;
+  font-family: 'Inter', Helvetica, Arial, sans-serif;
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  color: #fff8f1;
+}
+</style>
+</head>
+<body>
+<div class="frame">
+  <p class="eyebrow">Foxtail Drive-In</p>
+  <h1 class="display">The summer program</h1>
+  <ul class="program">
+    <li>
+      <p class="month">June</p>
+      <p class="bill">Westerns</p>
+    </li>
+    <li>
+      <p class="month">July</p>
+      <p class="bill">Car chase classics</p>
+    </li>
+    <li>
+      <p class="month">August</p>
+      <p class="bill">Monster movies</p>
+    </li>
+    <li>
+      <p class="month">September</p>
+      <p class="bill">Pick the ending</p>
+    </li>
+  </ul>
+  <span class="pill">See the season</span>
+</div>
+</body>
+</html>
