@@ -41,9 +41,9 @@ test("the shipped emails hold the program's guarantees, and the page shows none 
 
 test("the plan lists only real campaigns: live rows link, and the set stands complete", () => {
   const live = [...page.matchAll(/<a class="campaign-row" data-status="live" href="([^"]+)"/g)];
-  assert.deepEqual(live.map((m) => m[1]), ["/prototype/foredge", "/prototype/foxglove", "/prototype/foxtail", "/prototype/foundry"]);
+  assert.deepEqual(live.map((m) => m[1]), ["/prototype/foredge", "/prototype/foxglove", "/prototype/foxtail", "/prototype/foundry", "/prototype/forecourt"]);
   const planned = [...page.matchAll(/data-status="planned"/g)];
-  assert.equal(planned.length, 0, "all four campaigns are shipped; no ghost rows remain");
+  assert.equal(planned.length, 0, "all five campaigns are shipped; no ghost rows remain");
 });
 
 test("the strip opens each mailing and the page holds the type and character contract", async () => {
@@ -63,11 +63,18 @@ test("the strip opens each mailing and the page holds the type and character con
   }
 
   const previews = [...page.matchAll(/src="\/prototype\/marketing\/img\/((?:send|tile|ad|mail)-[a-z0-9-]+\.jpg)"/g)].map((m) => m[1]);
+  const fc = (p) => p.includes("-forecourt-");
   assert.equal(previews.filter((p) => p.startsWith("send-")).length, 4, "the email plate shows a render of each send");
-  assert.equal(previews.filter((p) => p.startsWith("tile-")).length, 4, "the social plate shows four tile renders");
-  assert.equal(previews.filter((p) => p.startsWith("ad-")).length, 4, "the paid-media plate shows four unit renders");
-  assert.equal(previews.filter((p) => p.startsWith("mail-")).length, 4, "the dark-mode plate shows four renderings of the one send");
+  assert.equal(previews.filter((p) => p.startsWith("tile-") && !fc(p)).length, 4, "the social plate shows four tile renders");
+  assert.equal(previews.filter((p) => p.startsWith("ad-") && !fc(p)).length, 4, "the paid-media plate shows four unit renders");
+  assert.equal(previews.filter((p) => p.startsWith("mail-") && !fc(p)).length, 4, "the dark-mode plate shows four renderings of the one send");
+  assert.deepEqual(
+    previews.filter(fc).sort(),
+    ["ad-forecourt-halfpage.jpg", "mail-forecourt-light.jpg", "tile-forecourt-announce.jpg", "tile-forecourt-night.jpg"],
+    "the integrated plate shows one render per channel plus the night tile"
+  );
   assert.ok(page.includes('/prototype/foundry/emails/fall-leasing.html'), "the plate opens the foundry send");
+  assert.ok(page.includes('/prototype/forecourt/emails/market-weekend.html'), "the plate opens the forecourt send");
   for (const p of previews) {
     const f = await stat(new URL(`../public/prototype/marketing/img/${p}`, import.meta.url));
     assert.ok(f.size > 10000, `${p} missing or truncated`);
@@ -83,5 +90,11 @@ test("the strip opens each mailing and the page holds the type and character con
   const adFiles = (await readdir(new URL("../public/prototype/foxtail/ads/", import.meta.url))).filter((f) => f.endsWith(".html"));
   for (const a of new Set(adLinks)) {
     assert.ok(adFiles.includes(a), `plate links ${a} but the file does not exist`);
+  }
+
+  const fcLinks = [...page.matchAll(/href="\/prototype\/forecourt\/((?:tiles|ads|emails)\/[a-z0-9-]+\.html)"/g)].map((m) => m[1]);
+  for (const l of new Set(fcLinks)) {
+    const f = await stat(new URL(`../public/prototype/forecourt/${l}`, import.meta.url));
+    assert.ok(f.size > 500, `plate links ${l} but the file does not exist`);
   }
 });
