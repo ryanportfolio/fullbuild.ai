@@ -1,9 +1,13 @@
 .set {
   position: relative;
   z-index: 1;
-  /* HINGE reads as turning a sheet on the table — needs depth. */
-  perspective: 2200px;
-  perspective-origin: 50% 40%;
+  /* No `perspective` here, on purpose. HINGE depth is per-sheet: the
+     controller writes `transform: perspective() rotateY()` on each section,
+     so the vanishing point sits on that sheet's own hinge line. A shared 3D
+     context on this element put the vanishing point at a fraction of the
+     FULL DOCUMENT height (~6000px up the page), and a hinged sheet far below
+     it (T-01 at END OF SET) projected its content hundreds of px up into the
+     appendix. Local perspective() bounds the keystone to the sheet itself. */
 }
 
 /* THE MARGIN LAW: every sheet ends at the rail's border line. */

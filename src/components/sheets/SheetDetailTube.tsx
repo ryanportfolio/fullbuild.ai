@@ -169,9 +169,10 @@ export default function SheetDetailTube() {
           start: 'top top',
           end: () => '+=' + Math.round(strip.scrollWidth - section.clientWidth + window.innerHeight * 0.4),
           pin: true,
-          // DrawingSet's <main> carries `perspective`, which makes it the
-          // containing block for position:fixed — a normally pinned element
-          // would fix against <main> and drift. Reparenting to <body> for the
+          // Hinged sheets carry inline transforms, and DrawingSet's <main>
+          // historically carried `perspective` — either makes an ancestor the
+          // containing block for position:fixed, so a normally pinned element
+          // would fix against it and drift. Reparenting to <body> for the
           // pin's duration is the documented escape hatch; one element, class
           // -scoped styles, so nothing visual depends on its ancestry.
           pinReparent: true,
