@@ -66,6 +66,16 @@
             Pointer events are off; the link under each tile opens the
             real file.
 
+  Scroll    The scrollbar is the 88 by 4 rule stood on end: a 4px coral bar
+            in a 12px blush channel with the same 1px peach hairline the
+            sheet uses to divide rows. Grabbing it thickens the bar to 8px
+            rather than changing its colour, because coral is the only
+            accent and it does not have a second state. WebKit and Blink
+            take the drawn version; Firefox gets scrollbar-color, which
+            carries the two colours and drops the geometry. Cost, stated:
+            styling the bar on macOS replaces the overlay scrollbar with a
+            classic one that is always visible.
+
   Motion    None. Zero JavaScript on this page and inside every tile.
 
   Bans      Color outside the values above. Gradients. Shadows. Black.
@@ -772,5 +782,45 @@ section {
 @media (min-width: 1200px) {
   .post-loud {
     --tile-w: 640;
+  }
+}
+
+/* The rule, stood on end. See the Scroll note in the contract above. */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--blush);
+}
+
+::-webkit-scrollbar-track:vertical {
+  border-left: 1px solid var(--peach);
+}
+
+::-webkit-scrollbar-track:horizontal {
+  border-top: 1px solid var(--peach);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--coral);
+  background-clip: padding-box;
+  border: 4px solid transparent;
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  border-width: 2px;
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--blush);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-color: var(--coral) var(--blush);
+    scrollbar-width: thin;
   }
 }

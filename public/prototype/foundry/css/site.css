@@ -14,6 +14,15 @@
    Shape     Ruthlessly flat. No shadows, no gradients, no elevation. Radius 0
              on every block; 999px on pills and dot badges only. 1px ink
              hairlines do the structure.
+   Scroll    The scrollbar is a slab in the margin: a 14px canvas channel
+             cut by the 1px ink hairline that does the structure here,
+             carrying an 8px ink bar at radius 0, because radius 0 is what
+             every block in this system takes. The widest channel of the
+             six campaigns, which suits the only page whose ground is
+             concrete rather than paper. WebKit and Blink take the drawn
+             version, Firefox takes scrollbar-color. Cost, stated: on
+             macOS a styled bar replaces the overlay scrollbar with a
+             classic one that is always visible.
    Motion    None. Zero JavaScript. The email is the subject.
    Bans      Color used semantically. Shadows. Gradients. Rounded cards.
              A second display face. Type below 16px. */
@@ -463,4 +472,44 @@ h3 {
   .engineering li { grid-template-columns: 1fr; gap: 6px; }
   .viewport { padding: 16px; }
   .render { padding: 16px; }
+}
+
+/* The ink rule on the canvas. See the Scroll note in the contract above. */
+::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--canvas);
+}
+
+::-webkit-scrollbar-track:vertical {
+  border-left: 1px solid var(--ink);
+}
+
+::-webkit-scrollbar-track:horizontal {
+  border-top: 1px solid var(--ink);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ink);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  border-width: 1px;
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--canvas);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-color: var(--ink) var(--canvas);
+    scrollbar-width: thin;
+  }
 }
