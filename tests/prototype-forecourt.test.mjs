@@ -31,7 +31,9 @@ test("dark mode is declared both ways, and the pinned pieces are pinned", () => 
   assert.ok(/@media \(prefers-color-scheme: dark\)/.test(email), "the standards dark-mode path is missing");
   assert.ok(/\[data-ogsc\]/.test(email) && /\[data-ogsb\]/.test(email), "the Outlook rewriter hooks are missing");
   for (const pin of [".band", ".pill-go", ".pill-flip", ".bead-radish", ".bead-cornflower", ".bead-marigold", ".bead-leaf"]) {
-    assert.ok(email.includes(`[data-ogsb] ${pin}`), `${pin} is not pinned for the Outlook rewriter`);
+    for (const hook of ["data-ogsb", "data-ogsc"]) {
+      assert.ok(email.includes(`[${hook}] ${pin}`), `${pin} is not pinned under ${hook}; Outlook has shipped one hook without the other`);
+    }
   }
 });
 
@@ -98,6 +100,10 @@ test("the fonts are real files and nothing invents performance data", async () =
   for (const font of ["lora-latin.woff2", "inter-latin.woff2"]) {
     const f = await stat(new URL(`fonts/${font}`, base));
     assert.ok(f.size > 10000, `${font} missing or truncated`);
+  }
+  for (const img of ["render-light.jpg", "render-dark.jpg"]) {
+    const f = await stat(new URL(`img/${img}`, base));
+    assert.ok(f.size > 10000, `${img} missing or truncated`);
   }
   for (const [name, text] of [["index.html", page], ["market-weekend.html", email], ...Object.entries(units)]) {
     assert.ok(

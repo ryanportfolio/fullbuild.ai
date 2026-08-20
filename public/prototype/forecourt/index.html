@@ -17,9 +17,9 @@
   <div class="sheet">
 
     <header class="masthead">
-      <p class="wordmark"><span>FORECOURT</span> <span>Campaign 05 &middot; One story, three channels</span></p>
+      <p class="wordmark"><span>FORECOURT</span> <span>Campaign 05</span></p>
       <h1>One story,<br>three channels</h1>
-      <p class="standfirst">Forecourt Market is a fictional weekend market, invented for this piece and staged in the same invented Hudson as the rest of this set. One brief, one system, three channels; every unit below is live HTML.</p>
+      <p class="standfirst">Forecourt Market is a fictional weekend market, invented for this piece and staged in the same invented Hudson as its vendors. One brief, one system, three channels; every unit below is live HTML.</p>
       <div class="beads" aria-hidden="true">
         <span class="bead bead-radish"></span>
         <span class="bead bead-cornflower"></span>
@@ -41,7 +41,7 @@
         </div>
         <div class="card">
           <span class="label">Story</span>
-          <p>One line everywhere: one yard, forty makers. The email tells it whole, the feed tells it in pieces, the banners tell it in one breath. No unit contradicts another on a date, an hour, or a name.</p>
+          <p>One line everywhere: one yard, forty makers. The email tells the whole story, the feed breaks it into single posts, and the banners cut it to a headline and a date. No unit contradicts another on a date, an hour, or a name.</p>
         </div>
         <div class="card">
           <span class="label">Constraint</span>
@@ -128,8 +128,19 @@
       </div>
 
       <div class="send-notes">
-        <p>Hybrid 600 pixel tables with an mso conditional wrapper, no images at all, live text throughout, and dark mode carried twice: once as a prefers-color-scheme query, once through the data-ogsc and data-ogsb hooks for the Outlook rewriter. The marigold band, both pills, and the bead strip are pinned so no rewriter moves them; the one exception is deliberate, the hedge-dark bead flips to oat in both dark routes so it stays visible on the dark ground.</p>
-        <p>The marigold arrives the way the system says it must: as a band of atmosphere at the top before it becomes the one button lower down.</p>
+        <p>Hybrid 600 pixel tables with an mso conditional wrapper, no images at all, live text throughout, and dark mode declared twice: once as a prefers-color-scheme query, once through the data-ogsc and data-ogsb hooks for the Outlook rewriter, with every background pin repeated under both hooks. Gmail's dark rewrite and the Word engine's inversion take no instruction from the sender, so the light palette is written as the source they start from. The one deliberate move: the hedge-dark bead flips to oat in both dark routes so it stays visible on the dark ground.</p>
+        <p>The marigold keeps its system rule here too: the band at the top first, then the one button lower down.</p>
+      </div>
+
+      <div class="renders">
+        <figure class="render">
+          <figcaption>Light &middot; prefers-color-scheme light</figcaption>
+          <img src="/prototype/forecourt/img/render-light.jpg" width="600" height="1887" alt="The full market weekend email rendered in light mode: hedge ink on an oat canvas, rye cards, one marigold pill" loading="lazy">
+        </figure>
+        <figure class="render">
+          <figcaption>Dark &middot; prefers-color-scheme dark</figcaption>
+          <img src="/prototype/forecourt/img/render-dark.jpg" width="600" height="1887" alt="The same email rendered in dark mode: the grounds go dark, the text turns oat, and the band, the pills, and the beads hold their colors" loading="lazy">
+        </figure>
       </div>
     </section>
 
@@ -142,7 +153,7 @@
       <div class="unit-grid">
         <div class="unit">
           <div class="unit-head">
-            <p class="unit-name">Feed &middot; announce</p>
+            <p class="unit-name">Feed &middot; the announcement</p>
             <a href="/prototype/forecourt/tiles/feed-announce.html">Open this tile</a>
           </div>
           <div class="slot">
@@ -150,7 +161,7 @@
               <iframe src="/prototype/forecourt/tiles/feed-announce.html" width="1080" height="1350" loading="lazy" title="Feed tile, the announcement"></iframe>
             </div>
           </div>
-          <p class="caption">The whole story in one square: the band, the line, the beads, the button.</p>
+          <p class="caption">The whole story in one tile: the band, the line, the beads, the button.</p>
         </div>
 
         <div class="unit">
@@ -176,7 +187,7 @@
               <iframe src="/prototype/forecourt/tiles/feed-night.html" width="1080" height="1350" loading="lazy" title="Feed tile, projector night"></iframe>
             </div>
           </div>
-          <p class="caption">The one dark tile in the set, because the subject is dusk; the system flips to its night palette without adding a color.</p>
+          <p class="caption">The subject is dusk, so the system flips to its night palette without adding a color.</p>
         </div>
 
         <div class="unit">
@@ -189,7 +200,7 @@
               <iframe src="/prototype/forecourt/tiles/story-lastcall.html" width="1080" height="1920" loading="lazy" title="Story tile, the last call"></iframe>
             </div>
           </div>
-          <p class="caption">The week-of story: the same details card the email carries, restacked for a thumb.</p>
+          <p class="caption">The week-of story: the email's details, rewritten to three lines for a thumb.</p>
         </div>
       </div>
     </section>
@@ -209,7 +220,7 @@
           <div class="slot">
             <iframe src="/prototype/forecourt/ads/billboard-970x250.html" width="970" height="250" loading="lazy" title="Billboard unit, the announcement"></iframe>
           </div>
-          <p class="caption">The widest slot gets the full line plus the where and the when, nothing else.</p>
+          <p class="caption">The widest slot: the line, the where, the when, and the beads minus marigold, because the pill beside them is already wearing it.</p>
         </div>
 
         <div class="unit">
@@ -242,44 +253,48 @@
         <h2 id="translation-h">The translation</h2>
       </div>
 
-      <div class="translation">
-        <div class="trans-head" aria-hidden="true">
-          <span>Element</span>
-          <span>In the send</span>
-          <span>In the feed</span>
-          <span>In the banners</span>
-        </div>
-        <div class="trans-row">
-          <span class="element">The serif</span>
-          <p data-ch="In the send">Lora loads behind an mso guard with a Georgia stack inline on every line, so Word never touches a webfont</p>
-          <p data-ch="In the feed">Loads at capture and ships baked into the pixels</p>
-          <p data-ch="In the banners">Same as the feed: loaded, then frozen</p>
-        </div>
-        <div class="trans-row">
-          <span class="element">The pill</span>
-          <p data-ch="In the send">Drawn twice, a VML roundrect for Word and the real anchor for everyone else</p>
-          <p data-ch="In the feed">One div with a 999 pixel radius</p>
-          <p data-ch="In the banners">One div, padded to stay a target at 300 wide</p>
-        </div>
-        <div class="trans-row">
-          <span class="element">The beads</span>
-          <p data-ch="In the send">A row of colored table cells with rounded corners; classic Outlook squares them and the strip survives as squares</p>
-          <p data-ch="In the feed">Free circles at 36 pixels and up</p>
-          <p data-ch="In the banners">They shrink to 14 pixels in the half page, and the rectangle has no room and goes without</p>
-        </div>
-        <div class="trans-row">
-          <span class="element">Dark mode</span>
-          <p data-ch="In the send">Carried twice, the prefers-color-scheme query and the data-ogsc and data-ogsb hooks</p>
-          <p data-ch="In the feed">Baked pixels carry one palette each; the dusk tile is the dark palette on purpose</p>
-          <p data-ch="In the banners">One palette per unit</p>
-        </div>
-        <div class="trans-row">
-          <span class="element">The floor</span>
-          <p data-ch="In the send">Nothing below 16 pixels, footer and unsubscribe included</p>
-          <p data-ch="In the feed">Nothing below 30 pixels at 1080 wide</p>
-          <p data-ch="In the banners">Nothing below 16 pixels at true size</p>
-        </div>
-      </div>
+      <table class="translation">
+        <thead>
+          <tr>
+            <th scope="col">Element</th>
+            <th scope="col">In the send</th>
+            <th scope="col">In the feed</th>
+            <th scope="col">In the banners</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">The serif</th>
+            <td data-ch="In the send">Lora loads behind an mso guard with a Georgia stack inline on every line, so Word never touches a webfont</td>
+            <td data-ch="In the feed">Loads at capture and ships baked into the pixels</td>
+            <td data-ch="In the banners">Same as the feed: loaded, then frozen</td>
+          </tr>
+          <tr>
+            <th scope="row">The pill</th>
+            <td data-ch="In the send">Drawn twice, a VML roundrect for Word and the real anchor for everyone else</td>
+            <td data-ch="In the feed">One div with a 999 pixel radius</td>
+            <td data-ch="In the banners">One div, padded to stay a target at 300 wide</td>
+          </tr>
+          <tr>
+            <th scope="row">The beads</th>
+            <td data-ch="In the send">A row of colored table cells with rounded corners; classic Outlook squares them and the strip survives as squares</td>
+            <td data-ch="In the feed">Free circles at 36 pixels and up</td>
+            <td data-ch="In the banners">The billboard hands marigold to the pill beside it and keeps four at 18 pixels, the half page keeps all five at 14, and the rectangle has no room and goes without</td>
+          </tr>
+          <tr>
+            <th scope="row">Dark mode</th>
+            <td data-ch="In the send">Declared twice, the prefers-color-scheme query and the data-ogsc and data-ogsb hooks</td>
+            <td data-ch="In the feed">Baked pixels carry one palette each; the dusk tile is the dark palette on purpose</td>
+            <td data-ch="In the banners">One palette per unit</td>
+          </tr>
+          <tr>
+            <th scope="row">The floor</th>
+            <td data-ch="In the send">Nothing below 16 pixels, footer and unsubscribe included</td>
+            <td data-ch="In the feed">Nothing below 30 pixels at 1080 wide</td>
+            <td data-ch="In the banners">Nothing below 16 pixels at true size</td>
+          </tr>
+        </tbody>
+      </table>
 
       <div class="traffic">
         <a class="pill pill-ink" href="/prototype/marketing">Back to the campaigns</a>

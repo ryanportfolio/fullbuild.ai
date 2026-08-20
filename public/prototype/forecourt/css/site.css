@@ -9,12 +9,13 @@
                                  filled action, ink text on it, one per view
              beads      #c8502f radish, #5b7fae cornflower, #6a9e57 leaf,
                                  decoration only, never a button or a label
-   Type      Lora 400 for every heading, lh 1.15, tracking -0.01em,
-             centered. Inter 400 to 600 for everything else. Floor: nothing
-             below 16px on this page.
+   Type      Lora 400 for every heading, leading 1.1 to 1.2, tracking
+             -0.01em, centered. Inter 400 to 600 for everything else.
+             Floor: nothing below 16px on this page.
    Shape     Pills at 999px, cards at 24 to 48px, no other radius. No
              shadows, no gradients. Surface contrast separates the layers;
-             the only hairlines are the rules inside the translation matrix.
+             hairlines appear only as the translation table's rules and the
+             1px frames around live artboards and swatches.
    Motion    None. Zero JavaScript. The units are the subject.
    Bans      Decor colors in UI. Two marigold pills in one viewport.
              Shadows. A second serif. Type below 16px. */
@@ -71,7 +72,7 @@ html, body {
 }
 .skip:focus { left: 16px; top: 16px; z-index: 10; }
 
-/* Announcement band: the action color arrives as atmosphere first */
+/* Announcement band: the action color shows up here before it becomes the button */
 
 .band {
   background: var(--marigold);
@@ -317,9 +318,11 @@ h3 {
   padding-top: 2px;
 }
 
+/* 640 + 415 + the 24px gap = 1079, one pixel inside the sheet's 1080 of
+   track space, so neither well scrolls at full width */
 .viewports {
   display: grid;
-  grid-template-columns: minmax(0, 664px) minmax(0, 439px);
+  grid-template-columns: minmax(0, 640px) minmax(0, 415px);
   gap: 24px;
   align-items: start;
   justify-content: center;
@@ -328,7 +331,7 @@ h3 {
 .viewport {
   background: var(--rye);
   border-radius: 24px;
-  padding: 32px;
+  padding: 20px;
 }
 
 .viewport .vp-label {
@@ -427,10 +430,10 @@ h3 {
   margin: 0;
 }
 
-.scaled-feed { width: 432px; height: 540px; }
+.scaled-feed { width: 434px; height: 542px; }
 .scaled-feed iframe { transform: scale(0.4); }
 
-.scaled-story { width: 378px; height: 672px; }
+.scaled-story { width: 380px; height: 674px; }
 .scaled-story iframe { transform: scale(0.35); }
 
 .unit .caption {
@@ -440,24 +443,75 @@ h3 {
 }
 
 .unit-wide { grid-column: 1 / -1; }
-.unit-wide .slot { overflow-x: auto; justify-content: flex-start; }
 .unit-wide iframe { min-width: 970px; }
 
-/* 06 The translation */
+/* 04 renders of the send, both palettes */
 
-.translation { max-width: 980px; margin: 0 auto; }
-
-.trans-row {
+.renders {
   display: grid;
-  grid-template-columns: 200px 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 24px;
-  padding: 24px 0;
-  border-top: 1px solid var(--rye);
+  max-width: 980px;
+  margin: 48px auto 0;
 }
 
-.trans-row:last-child { border-bottom: 1px solid var(--rye); }
+.render {
+  margin: 0;
+  background: var(--rye);
+  border-radius: 24px;
+  padding: 20px;
+}
 
-.trans-row .element {
+.render img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--fieldstone);
+}
+
+.render figcaption {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+/* 06 The translation: a real table, headers and all */
+
+.translation {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.translation th,
+.translation td {
+  vertical-align: top;
+  padding: 24px 24px 24px 0;
+}
+
+.translation td:last-child,
+.translation thead th:last-child { padding-right: 0; }
+
+.translation thead th {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding-top: 0;
+  padding-bottom: 16px;
+}
+
+.translation thead th:first-child { color: var(--fieldstone); }
+
+.translation tbody tr { border-top: 1px solid var(--rye); }
+.translation tbody tr:last-child { border-bottom: 1px solid var(--rye); }
+
+.translation tbody th {
+  width: 176px;
   font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -465,27 +519,7 @@ h3 {
   color: var(--fieldstone);
 }
 
-.trans-row p { margin: 0; font-size: 17px; line-height: 1.5; }
-
-.trans-head {
-  display: grid;
-  grid-template-columns: 200px 1fr 1fr 1fr;
-  gap: 24px;
-  padding-bottom: 16px;
-}
-
-.trans-head span {
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.trans-head span:first-child { color: var(--fieldstone); }
-
-.trans-notes { max-width: 720px; margin: 48px auto 0; }
-.trans-notes p { margin: 0 0 20px; }
-.trans-notes p:last-child { margin-bottom: 0; }
+.translation td { font-size: 17px; line-height: 1.5; }
 
 .traffic { margin-top: 56px; text-align: center; }
 
@@ -518,10 +552,13 @@ h3 {
   .scaled-feed iframe { transform: scale(0.275); }
   .scaled-story { width: 270px; height: 480px; }
   .scaled-story iframe { transform: scale(0.25); }
-  .trans-head { display: none; }
-  .trans-row { grid-template-columns: 1fr; gap: 10px; }
-  .trans-row p { padding-left: 0; }
-  .trans-row p::before {
+  .renders { grid-template-columns: 1fr; }
+  .render { padding: 16px; }
+  .translation thead { display: none; }
+  .translation tbody tr, .translation tbody th, .translation td { display: block; width: auto; }
+  .translation tbody th { padding: 20px 0 4px; }
+  .translation td { padding: 8px 0 16px; }
+  .translation td::before {
     content: attr(data-ch);
     display: block;
     font-size: 16px;

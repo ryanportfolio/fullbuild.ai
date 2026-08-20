@@ -7,6 +7,7 @@
   <meta name="color-scheme" content="light dark">
   <meta name="supported-color-schemes" content="light dark">
   <meta name="format-detection" content="telephone=no,date=no,address=no,email=no">
+  <meta name="x-apple-disable-message-reformatting">
   <title>One yard, forty makers</title>
 
   <!--[if mso]>
@@ -83,6 +84,17 @@
     [data-ogsc] .txt-oat { color: #f5f0e4 !important; }
     [data-ogsc] .txt-flip { color: #1e2a1e !important; }
     [data-ogsc] .rule { border-top-color: #b5b19d !important; }
+    [data-ogsc] .link-mut:hover { color: #f5f0e4 !important; }
+    /* Outlook for Android has shipped the color hook without the background
+       hook, so every background pin is declared under both attributes */
+    [data-ogsc] .band { background-color: #f6b83c !important; }
+    [data-ogsc] .pill-go { background-color: #f6b83c !important; }
+    [data-ogsc] .pill-flip { background-color: #f5f0e4 !important; }
+    [data-ogsc] .bead-radish { background-color: #c8502f !important; }
+    [data-ogsc] .bead-marigold { background-color: #f6b83c !important; }
+    [data-ogsc] .bead-leaf { background-color: #6a9e57 !important; }
+    [data-ogsc] .bead-cornflower { background-color: #5b7fae !important; }
+    [data-ogsc] .bead-hedge { background-color: #f5f0e4 !important; }
     [data-ogsb] .canvas { background-color: #191f17 !important; }
     [data-ogsb] .card { background-color: #242b21 !important; }
     [data-ogsb] .plate { background-color: #2b3327 !important; }
@@ -116,7 +128,7 @@
     &#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;
   </div>
 
-  <!-- Announcement band: the action color arrives as atmosphere first -->
+  <!-- Announcement band: the action color shows up here before it becomes the button -->
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="band" style="background-color:#f6b83c;">
     <tr>
       <td align="center" bgcolor="#f6b83c" class="band" style="padding:14px 24px;">
@@ -152,9 +164,9 @@
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr>
               <td class="gutter h1-pad" align="center" style="padding:52px 32px 32px 32px;">
-                <table role="heading" aria-level="1" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                   <tr>
-                    <td align="center" class="h1 txt-ink" style="font-family:'Lora', Georgia, 'Times New Roman', serif; font-size:52px; line-height:60px; mso-line-height-rule:exactly; font-weight:400; letter-spacing:-0.5px; color:#1e2a1e;">One yard,<br>forty makers</td>
+                    <td role="heading" aria-level="1" align="center" class="h1 txt-ink" style="font-family:'Lora', Georgia, 'Times New Roman', serif; font-size:52px; line-height:60px; mso-line-height-rule:exactly; font-weight:400; letter-spacing:-0.5px; color:#1e2a1e;">One yard,<br>forty makers</td>
                   </tr>
                 </table>
               </td>
@@ -167,7 +179,7 @@
             <!-- Bead strip: the decor colors, and the only place they live -->
             <tr>
               <td align="center" style="padding:0 32px 44px 32px;">
-                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <table role="presentation" aria-hidden="true" cellpadding="0" cellspacing="0" border="0">
                   <tr>
                     <td width="20" height="20" class="bead-radish" style="width:20px; height:20px; border-radius:999px; background-color:#c8502f; font-size:1px; line-height:1px;">&nbsp;</td>
                     <td width="12" style="width:12px; font-size:1px; line-height:1px;">&nbsp;</td>
@@ -238,7 +250,7 @@
                   <tr>
                     <td class="card" bgcolor="#eae2cd" style="background-color:#eae2cd; border-radius:24px; padding:24px 28px 26px 28px;">
                       <p class="txt-ink" style="margin:0 0 4px 0; font-family:'Lora', Georgia, 'Times New Roman', serif; font-size:22px; line-height:28px; mso-line-height-rule:exactly; color:#1e2a1e;">Foxtail Drive-In</p>
-                      <p class="txt-ink" style="margin:0; font-family:'Inter', Helvetica, Arial, sans-serif; font-size:17px; line-height:24px; color:#1e2a1e;">Popcorn by day, and the projector after dark; see the plate below.</p>
+                      <p class="txt-ink" style="margin:0; font-family:'Inter', Helvetica, Arial, sans-serif; font-size:17px; line-height:24px; color:#1e2a1e;">Popcorn by day, and the projector after dark; details below.</p>
                     </td>
                   </tr>
                 </table>
@@ -273,7 +285,7 @@
                       <p role="heading" aria-level="2" class="txt-oat" style="margin:0 0 8px 0; font-family:'Lora', Georgia, 'Times New Roman', serif; font-size:30px; line-height:36px; mso-line-height-rule:exactly; letter-spacing:-0.3px; color:#f5f0e4;">When the sun drops</p>
                       <p class="txt-oat" style="margin:0 0 26px 0; font-family:'Inter', Helvetica, Arial, sans-serif; font-size:17px; line-height:24px; color:#f5f0e4;">Foxtail runs a projector night in the yard on Saturday, no cars this time. The screen goes up at six and the picture starts when the sky lets it.</p>
                       <!--[if mso]>
-                      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://forecourt.example/projector-night" style="height:52px; width:212px; v-text-anchor:middle;" arcsize="50%" stroke="f" fillcolor="#f5f0e4">
+                      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://forecourt.example/projector-night" style="height:52px; width:184px; v-text-anchor:middle;" arcsize="50%" stroke="f" fillcolor="#f5f0e4">
                         <w:anchorlock/>
                         <center style="color:#1e2a1e; font-family:Helvetica, Arial, sans-serif; font-size:17px; font-weight:600;">See what plays</center>
                       </v:roundrect>
@@ -295,9 +307,9 @@
                 <p class="txt-mut" style="margin:0 0 10px 0; font-family:'Inter', Helvetica, Arial, sans-serif; font-size:16px; line-height:24px; color:#5d5b4c;">Forecourt Market, care of Foundry Works, 12 Water Street, Hudson, NY 12534</p>
                 <p class="txt-mut" style="margin:0 0 10px 0; font-family:'Inter', Helvetica, Arial, sans-serif; font-size:16px; line-height:24px; color:#5d5b4c;">You are getting this because you signed up for market news at Foundry Works or at one of the neighbors' counters.</p>
                 <p style="margin:0 0 36px 0; font-family:'Inter', Helvetica, Arial, sans-serif; font-size:16px; line-height:24px;">
-                  <a href="https://forecourt.example/unsubscribe" class="txt-mut link-mut" style="color:#5d5b4c; text-decoration:underline;">Unsubscribe</a>
+                  <a href="https://forecourt.example/unsubscribe" class="txt-mut link-mut" style="display:inline-block; padding:12px 0; color:#5d5b4c; text-decoration:underline;">Unsubscribe</a>
                   <span class="txt-mut" style="color:#5d5b4c;">&nbsp;&middot;&nbsp;</span>
-                  <a href="https://forecourt.example/preferences" class="txt-mut link-mut" style="color:#5d5b4c; text-decoration:underline;">Change how often we write</a>
+                  <a href="https://forecourt.example/preferences" class="txt-mut link-mut" style="display:inline-block; padding:12px 0; color:#5d5b4c; text-decoration:underline;">Change how often we write</a>
                 </p>
               </td>
             </tr>
