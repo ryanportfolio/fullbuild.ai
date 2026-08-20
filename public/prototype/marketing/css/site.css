@@ -23,14 +23,17 @@
             paper #ffffff  canvas
             ash   #5f5f5d  secondary text, hairlines
             The page holds no accent of its own. The only color in the
-            plan is borrowed: each row's status chip is that campaign's
-            own button, quoted whole, so the column previews the five
-            palettes behind it. The only imagery is renders of the
-            shipped email files, on an ink plate.
+            plan is borrowed: each row's status chip is built from the
+            campaign it opens, so the column previews the five studios
+            behind it. The only imagery is renders of the shipped email
+            files, on an ink plate.
 
   Type      Fraunces 300 display, up to 96px on the masthead; Inter at
             0.03em for everything else. Floor 16px. Scale is the whole
             hierarchy. Numerals are tabular so campaign numbers rail.
+            The status chips are the exception: four more display faces
+            ride in from the campaigns they open, Cormorant Garamond,
+            Anton, Inter Tight and Lora, 113KB and every one swapped.
 
   Grid      One 1200px sheet. The plan is ruled rows, numbered at the
             left and chipped at the right, with the top rule on the
@@ -50,10 +53,12 @@
             that are renders of the real files rather than photography
             standing in for them.
 
-  Risk      Five chips in five palettes can read as five stickers.
-            Displaced alternative: one neutral chip repeated. The trade:
-            height, radius, type and the right rail are fixed, so only
-            the campaign's own fill and stroke change.
+  Risk      Five chips in five voices can read as five stickers.
+            Displaced alternative: one neutral chip repeated, which is
+            what shipped first and read as one status in five paints.
+            The trade: the height, the right rail and the label are
+            fixed, and cap heights are tuned to match, so the five
+            faces sit in one row without one shouting over the others.
 */
 
 @font-face {
@@ -64,14 +69,46 @@
   src: url('/prototype/foredge/fonts/fraunces-300-latin.woff2') format('woff2');
 }
 
-/* The variable file carries the axis to 900; the range was declared to 600, so
-   a 700 request rendered as faux bold. The status chips need a real 700. */
 @font-face {
   font-family: 'Inter';
   font-style: normal;
-  font-weight: 400 700;
+  font-weight: 400 600;
   font-display: swap;
   src: url('/prototype/foredge/fonts/inter-latin.woff2') format('woff2');
+}
+
+/* Each status chip is set in the display face of the campaign it opens, served
+   from that campaign's own font directory. Four faces, 113KB, all swap. */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 300 500;
+  font-display: swap;
+  src: url('/prototype/foxglove/fonts/cormorant-garamond-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Anton';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/prototype/foxtail/fonts/anton-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter Tight';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/prototype/foundry/fonts/inter-tight-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('/prototype/forecourt/fonts/lora-latin.woff2') format('woff2');
 }
 
 :root {
@@ -227,70 +264,103 @@ a.campaign-row:hover .what {
   text-underline-offset: 7px;
 }
 
-/* Each chip is one campaign's own button, quoted whole: the fill, the text
-   color and the stroke come from a single rule in that campaign's stylesheet,
-   never spliced from two. Stroke weight is the property that separates these
-   five button systems, so it varies with the brand while height, radius, type
-   and the right-hand rail stay fixed. Three of the five draw an outline, two
-   fill, exactly as their campaigns do.
+/* Each chip is built from the vocabulary of the campaign it opens: that
+   campaign's display face, its corner radius, its edge weight, its colors.
+   Every value is greppable in that campaign's own stylesheet. The chips share
+   a height, a right-hand rail and a label; everything else is the brand's.
+   Recolouring one shape five times was the earlier version, and it read as one
+   status in five paints rather than five studios.
 
-   Foxtail's voltage on white is 4.49:1, just under the 4.5 required of body
-   text. 20px at a real 700 is WCAG large text, where the bar is 3:1, and
-   Foxtail's palette holds no darker blue to reach 4.5 with. */
+   Sizes are the exception: they are not quoted, they are tuned. Four of the
+   five faces land at 17.5px of cap. Anton runs 20.7px because it has to hold
+   24px for the contrast note below, and a poster face is what Foxtail is.
+
+   Foxtail's voltage on white is 4.49:1, under the 4.5 required of body text.
+   Anton at 24px is WCAG large text, where the bar is 3:1, and Foxtail's
+   palette holds voltage and cream and no darker blue to reach 4.5 with. */
 
 .status-pill {
   box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   height: 52px;
-  /* half the trailing letter-space, which otherwise throws the label off centre */
-  padding: 0 calc(24px - 0.025em) 0 24px;
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  /* the trailing letter-space sits entirely to the right of the last glyph, so
+     the right inset gives all of it back; without this Foundry's tracked caps
+     sit 2.9px left of centre */
+  padding: 0 calc(24px - var(--track)) 0 24px;
+  letter-spacing: var(--track);
   border-style: solid;
   border-color: transparent;
-  border-radius: 999px;
   white-space: nowrap;
 }
 
-/* Foredge .pill-ghost: no color at all, which is the campaign's whole claim */
+/* Foredge: its swatch card whole, 6px with a 1px ash edge. This page is set in
+   Foredge's own two faces, so the chip cannot distinguish itself by type; the
+   card is what carries it. */
 .demo-foredge {
+  --track: 0.01em;
   background: transparent;
   color: #1a1a17;
   border-width: 1px;
-  border-color: #1a1a17;
+  border-color: #5f5f5d;
+  border-radius: 6px;
+  font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
+  font-weight: 300;
+  font-size: 25px;
 }
 
-/* Foxglove .pill-outline */
+/* Foxglove: its swatch card whole, square with a 1px peach edge on blush. The
+   coral stroke belongs to its pills, and a pill is not what this is. */
 .demo-foxglove {
-  background: transparent;
+  --track: 0.01em;
+  background: #fef1ec;
   color: #11223f;
-  border-width: 2px;
-  border-color: #ff5734;
+  border-width: 1px;
+  border-color: #f6bba4;
+  border-radius: 0;
+  font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  font-weight: 300;
+  font-size: 28px;
 }
 
-/* Foxtail .pill: the outline is the button, and it fills only on the last call */
+/* Foxtail: the outline is the button, and Anton is the poster */
 .demo-foxtail {
+  --track: -0.01em;
   background: transparent;
   color: #006eff;
   border-width: 1.5px;
   border-color: #006eff;
+  border-radius: 999px;
+  font-family: 'Anton', 'Arial Narrow', 'Franklin Gothic Medium', sans-serif;
+  font-weight: 400;
+  font-size: 24px;
+  text-transform: uppercase;
 }
 
-/* Foundry .pill-filled */
+/* Foundry: the square ink swatch its palette section fills, with the display
+   face set the way Foundry sets it, tight rather than tracked out */
 .demo-foundry {
+  --track: -0.02em;
   background: #23231f;
   color: #f4f2ee;
   border-width: 0;
+  border-radius: 0;
+  font-family: 'Inter Tight', 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 400;
+  font-size: 24px;
 }
 
-/* Forecourt .pill-go */
+/* Forecourt: its pill-go, marigold on hedge at 999px. Forecourt's 24px cards
+   are rye, never marigold; marigold rides pills, beads and the band. */
 .demo-forecourt {
+  --track: -0.01em;
   background: #f6b83c;
   color: #1e2a1e;
   border-width: 0;
+  border-radius: 999px;
+  font-family: 'Lora', Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  font-size: 25px;
 }
 
 /* Campaign features */
@@ -446,6 +516,20 @@ a.campaign-row:hover .what {
     justify-self: start;
     margin-top: 0;
     padding-top: 14px;
+  }
+
+  /* Foundry's tracked caps are the widest chip; the padding gives way here so
+     the type keeps its size and the plate stays inside the sheet */
+  .status-pill {
+    padding: 0 calc(12px - var(--track)) 0 12px;
+  }
+}
+
+/* Below this the job column is too narrow for the widest chip, so the chip
+   takes the whole row and hangs on the sheet's left edge instead */
+@media (max-width: 430px) {
+  .campaign-row .status {
+    grid-column: 1 / -1;
   }
 
   .campaign-row .what svg {
