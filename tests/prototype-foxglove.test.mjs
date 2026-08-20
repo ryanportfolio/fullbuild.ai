@@ -67,7 +67,7 @@ test("the case page links every tile, uses root-absolute paths, and holds the ch
   const refs = [...page.matchAll(/(?:href|src)="([^"]+)"/g)].map((m) => m[1]);
   for (const ref of refs) {
     assert.ok(
-      ref.startsWith("/prototype") || ref.startsWith("#"),
+      ref.startsWith("/prototype") || ref.startsWith("#") || ref === "/",
       `${ref} must be root-absolute: the rewrite serves /prototype/foxglove without a trailing slash`
     );
   }
@@ -98,7 +98,7 @@ test("the brand page holds the same hygiene contract as the campaign", () => {
   const refs = [...brand.matchAll(/(?:href|src)="([^"]+)"/g)].map((m) => m[1]);
   for (const ref of refs) {
     assert.ok(
-      ref.startsWith("/prototype") || ref.startsWith("#"),
+      ref.startsWith("/prototype") || ref.startsWith("#") || ref === "/",
       `${ref} must be root-absolute: the rewrite serves /prototype/foxglove/brand without a trailing slash`
     );
   }

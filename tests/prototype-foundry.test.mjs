@@ -42,7 +42,7 @@ test("the case page links the artifacts, uses root-absolute paths, and holds the
   const refs = [...page.matchAll(/(?:href|src)="([^"]+)"/g)].map((m) => m[1]);
   for (const ref of refs) {
     assert.ok(
-      ref.startsWith("/prototype") || ref.startsWith("#"),
+      ref.startsWith("/prototype") || ref.startsWith("#") || ref === "/",
       `${ref} must be root-absolute: the rewrite serves /prototype/foundry without a trailing slash`
     );
   }

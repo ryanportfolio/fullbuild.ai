@@ -26,6 +26,12 @@
              Firefox takes scrollbar-color. Cost, stated: on macOS a
              styled bar replaces the overlay scrollbar with a classic one
              that is always visible.
+   Chrome    A set bar across the six campaign pages: the fullbuild.ai
+             mark links home, six links reach the index and the other
+             campaigns. Hedge on oat over the rye hairline; marigold
+             stays out of the chrome, since it is the one filled action
+             per view. Static under 760px.
+
    Motion    None. Zero JavaScript. The units are the subject.
    Bans      Decor colors in UI. Two marigold pills in one viewport.
              Shadows. A second serif. Type below 16px. */
@@ -616,5 +622,110 @@ h3 {
   html {
     scrollbar-color: var(--hedge) var(--oat);
     scrollbar-width: thin;
+  }
+}
+
+/* Set navigation: one bar across the six campaign pages, painted in this
+   page's own tokens. The rule under it is the rye hairline, with hedge on the current page; marigold stays out of the chrome, since it is the one filled action per view.
+   The house mark is the fullbuild.ai logo, drawn in its finished state, since
+   these pages ship no JavaScript. Sticky, because the pages run long. */
+.setnav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 32px;
+  padding: 14px 48px;
+  background: var(--oat);
+  border-bottom: 1px solid var(--rye);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.skip {
+  z-index: 30;
+}
+
+.setnav-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--hedge);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+}
+
+.setnav-mark {
+  display: block;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+}
+
+.setnav-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  /* Foundry and Forecourt reset box-sizing but not margins, so the list
+     keeps its UA padding and the bar grows 18px unless it is zeroed here */
+  margin: 0 0 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.setnav-links a {
+  display: block;
+  padding-bottom: 2px;
+  border-bottom: 2px solid transparent;
+  color: var(--fieldstone);
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+}
+
+.setnav-links a:hover {
+  color: var(--hedge);
+  border-bottom-color: var(--hedge);
+}
+
+.setnav-links a[aria-current="page"] {
+  color: var(--hedge);
+  border-bottom-color: var(--hedge);
+}
+
+.setnav-home:focus-visible,
+.setnav-links a:focus-visible {
+  outline: 2px solid var(--hedge);
+  outline-offset: 4px;
+}
+
+/* The bar covers the top of the page, so anything jumped to clears it */
+:target {
+  scroll-margin-top: 96px;
+}
+
+@media (max-width: 759px) {
+  .setnav {
+    gap: 10px 20px;
+    padding: 12px 24px;
+  }
+
+  .setnav-mark {
+    width: 30px;
+    height: 30px;
+  }
+
+  .setnav-links {
+    gap: 6px 18px;
+  }
+
+  /* A wrapped bar eats a tenth of a phone screen, so it scrolls away here
+     and the campaign gets the viewport back */
+  .setnav {
+    position: static;
   }
 }
