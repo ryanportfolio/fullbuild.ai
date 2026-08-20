@@ -6,7 +6,9 @@
   align-items: stretch;
   padding: var(--sheet-margin);
   /* HINGE pivots the sheet about its leading edge; the controller sets the
-     angle. Perspective lives on the scroll container. */
+     angle and carries perspective() in the same transform (a shared 3D
+     context on the scroll container projected far sheets into their
+     neighbors — see DrawingSet.module.css). */
   transform-style: preserve-3d;
 }
 

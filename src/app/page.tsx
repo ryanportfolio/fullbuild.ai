@@ -21,10 +21,11 @@ import IntroMount from '@/components/intro/IntroMount';
  * reduced motion and on a history-cache restore.
  *
  * It sits OUTSIDE <DrawingSet>, and that is structural rather than stylistic.
- * DrawingSet's <main> carries `perspective`, which makes it the containing block
- * for position:fixed descendants — the same trap its own comment documents for the
- * WebGL backdrop. A fixed overlay nested inside would size to the full document
- * height and scroll away with the page instead of covering the viewport.
+ * DrawingSet's sheets carry inline hinge transforms (perspective() rotateY()),
+ * and a transformed ancestor is the containing block for position:fixed
+ * descendants — a fixed overlay nested inside would anchor to a sheet instead
+ * of the viewport. (Historically <main> itself carried `perspective`, which
+ * set the same trap one level higher.)
  */
 export default function Home() {
   return (

@@ -555,6 +555,14 @@ export default function DrawingSet({
       // rasterize pixel-crisp. The page-turn survives; the blur does not.
       const HINGE_START = 1.6;
       const HINGE_END = -1.4;
+      // Depth is carried IN the transform (perspective() rotateY()), never as
+      // `perspective` on .set: a shared 3D context puts the vanishing point at
+      // a fraction of the document's full height, and a hinged sheet far from
+      // it is projected about that remote origin — T-01 entering at END OF SET
+      // sheared ~300px up into the appendix. perspective() projects about the
+      // sheet's own transform-origin (its hinge line), so the left edge holds
+      // and the turn is a pure keystone bounded by the sheet's own box.
+      const HINGE_PERSPECTIVE = 2200;
       // Depth gain on the turn: by END OF SET the sheets hinge FOUR times as
       // hard as at the cover (1.6deg -> 6.4deg), which is where a page-turn
       // actually starts reading as a page-turn. At 2x it measured correctly and
@@ -599,7 +607,7 @@ export default function DrawingSet({
               env *
               (1 + HINGE_DEPTH_GAIN * depth);
             el.style.transformStyle = 'preserve-3d';
-            el.style.transform = `rotateY(${angle.toFixed(3)}deg)`;
+            el.style.transform = `perspective(${HINGE_PERSPECTIVE}px) rotateY(${angle.toFixed(3)}deg)`;
           },
         });
       });
@@ -987,10 +995,12 @@ export default function DrawingSet({
 
   return (
     <>
-      {/* The WebGL backdrop MUST live outside .set: .set has `perspective`, which
-          makes it the containing block for position:fixed descendants, so a fixed
-          canvas nested inside would size to the full document height and scroll
-          with the page instead of staying a viewport-fixed backdrop. */}
+      {/* The WebGL backdrop lives outside .set. Historically .set carried
+          `perspective` (a containing block for position:fixed, so a fixed
+          canvas nested inside would size to the full document height and
+          scroll with the page); the hinge now carries perspective() per sheet,
+          but the backdrop stays out here so no ancestor transform can ever
+          become its containing block. */}
       {island ? (
         <div ref={canvasRef} className={styles.canvasLayer} aria-hidden="true">
           <ExperienceIsland />
