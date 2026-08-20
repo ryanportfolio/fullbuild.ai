@@ -12,45 +12,48 @@
             concept one tap away. The page explains nothing in prose that
             the plan and the previews can show.
 
-  Conceit   A campaign schedule. Concepts are numbered campaigns: dated,
-            statused, ruled like the calendars the reader runs at work.
-            The plan carries only real data: a shipped month for live
-            work, empty cells for planned work, no invented windows or
-            brands. "Flight", the media-buying word for a campaign's run
-            window, was tried and cut (owner: confusing, 2026-08-19);
-            every word on the page is plain.
+  Conceit   A campaign schedule. Concepts are numbered campaigns, ruled
+            like the calendars the reader runs at work. The plan carries
+            only real data: no invented windows or brands. "Flight", the
+            media-buying word for a campaign's run window, was tried and
+            cut (owner: confusing, 2026-08-19); every word on the page is
+            plain.
 
   Palette   ink   #1a1a17  text, plates, filled controls
             paper #ffffff  canvas
             ash   #5f5f5d  secondary text, hairlines
-            No accent color. Status is shape, not color: filled pill is
-            live and clickable, ghost pill is planned. The only imagery
-            is renders of the shipped email files, on an ink plate.
+            The page holds no accent of its own. The only color in the
+            plan is borrowed: each row's status chip is that campaign's
+            own button, quoted whole, so the column previews the five
+            palettes behind it. The only imagery is renders of the
+            shipped email files, on an ink plate.
 
   Type      Fraunces 300 display, up to 96px on the masthead; Inter at
             0.03em for everything else. Floor 16px. Scale is the whole
             hierarchy. Numerals are tabular so campaign numbers rail.
 
-  Grid      One 1200px sheet. The plan is ruled rows under a labelled
-            header, and the header survives on the phone: the table is
-            the signature, so it never dissolves into a list.
+  Grid      One 1200px sheet. The plan is ruled rows, numbered at the
+            left and chipped at the right, with the top rule on the
+            first row. On the phone the chip drops under the job it
+            labels and the rail is left-aligned.
 
   Motion    None. Zero JavaScript.
 
-  Bans      Chromatic accents. Gradients. Shadows. JavaScript. Plan rows
-            or cells for work that is not real. Prose that restates what
-            a pill or a preview already shows. Build metadata in the
-            reader's view (file sizes, script counts, type floors): the
-            reader screens creative, and the verify test holds those
-            guarantees off the page.
+  Bans      Accent color the page invents for itself. Gradients.
+            Shadows. JavaScript. Plan rows or cells for work that is not
+            real. Prose that restates what a chip or a preview already
+            shows. Build metadata in the reader's view (file sizes,
+            script counts, type floors): the reader screens creative,
+            and the verify test holds those guarantees off the page.
 
-  Signature The plan table, and email previews that are renders of the
-            real files rather than photography standing in for them.
+  Signature The ruled plan, the five borrowed chips, and email previews
+            that are renders of the real files rather than photography
+            standing in for them.
 
-  Risk      A two-row schedule can read thin. Displaced alternative:
-            padding the table with invented future campaigns. The trade:
-            every cell on the plan is true, and the table grows only
-            when work ships.
+  Risk      Five chips in five palettes can read as five stickers.
+            Displaced alternative: one neutral chip repeated. The trade:
+            height, radius, type and the right rail are fixed, so only
+            the campaign's own fill and stroke change.
 */
 
 @font-face {
@@ -61,10 +64,12 @@
   src: url('/prototype/foredge/fonts/fraunces-300-latin.woff2') format('woff2');
 }
 
+/* The variable file carries the axis to 900; the range was declared to 600, so
+   a 700 request rendered as faux bold. The status chips need a real 700. */
 @font-face {
   font-family: 'Inter';
   font-style: normal;
-  font-weight: 400 600;
+  font-weight: 400 700;
   font-display: swap;
   src: url('/prototype/foredge/fonts/inter-latin.woff2') format('woff2');
 }
@@ -190,6 +195,11 @@ a:focus-visible {
   letter-spacing: 0.01em;
 }
 
+/* Keeps the arrow on the last word instead of stranding it on its own line */
+.campaign-row .tail {
+  white-space: nowrap;
+}
+
 .campaign-row .what svg {
   margin-left: 14px;
   vertical-align: baseline;
@@ -205,8 +215,10 @@ a:focus-visible {
   color: var(--ash);
 }
 
+/* Sits the chip on the heading's cap band rather than on its line box top */
 .campaign-row .status {
   justify-self: end;
+  margin-top: -5px;
 }
 
 a.campaign-row:hover .what {
@@ -215,33 +227,73 @@ a.campaign-row:hover .what {
   text-underline-offset: 7px;
 }
 
-.campaign-row[data-status="planned"] .no,
-.campaign-row[data-status="planned"] .what {
-  color: var(--ash);
-}
+/* Each chip is one campaign's own button, quoted whole: the fill, the text
+   color and the stroke come from a single rule in that campaign's stylesheet,
+   never spliced from two. Stroke weight is the property that separates these
+   five button systems, so it varies with the brand while height, radius, type
+   and the right-hand rail stay fixed. Three of the five draw an outline, two
+   fill, exactly as their campaigns do.
+
+   Foxtail's voltage on white is 4.49:1, just under the 4.5 required of body
+   text. 20px at a real 700 is WCAG large text, where the bar is 3:1, and
+   Foxtail's palette holds no darker blue to reach 4.5 with. */
 
 .status-pill {
-  display: inline-block;
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  height: 52px;
+  /* half the trailing letter-space, which otherwise throws the label off centre */
+  padding: 0 calc(24px - 0.025em) 0 24px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  padding: 10px 22px;
+  border-style: solid;
+  border-color: transparent;
   border-radius: 999px;
-}
-
-.status-demo {
-  background: var(--ink);
-  color: var(--paper);
   white-space: nowrap;
 }
 
-.status-ghost {
-  border: 1px solid var(--ash);
-  color: var(--ash);
+/* Foredge .pill-ghost: no color at all, which is the campaign's whole claim */
+.demo-foredge {
+  background: transparent;
+  color: #1a1a17;
+  border-width: 1px;
+  border-color: #1a1a17;
 }
 
-/* Campaign 01 feature */
+/* Foxglove .pill-outline */
+.demo-foxglove {
+  background: transparent;
+  color: #11223f;
+  border-width: 2px;
+  border-color: #ff5734;
+}
+
+/* Foxtail .pill: the outline is the button, and it fills only on the last call */
+.demo-foxtail {
+  background: transparent;
+  color: #006eff;
+  border-width: 1.5px;
+  border-color: #006eff;
+}
+
+/* Foundry .pill-filled */
+.demo-foundry {
+  background: #23231f;
+  color: #f4f2ee;
+  border-width: 0;
+}
+
+/* Forecourt .pill-go */
+.demo-forecourt {
+  background: #f6b83c;
+  color: #1e2a1e;
+  border-width: 0;
+}
+
+/* Campaign features */
 
 .feature {
   padding: 96px 0 0;
@@ -388,10 +440,11 @@ a.campaign-row:hover .what {
     grid-area: 1 / 2;
   }
 
-  /* Too narrow for a third column: the pill drops under the job it labels */
+  /* Too narrow for a third column: the chip drops under the job it labels */
   .campaign-row .status {
     grid-area: 2 / 2;
     justify-self: start;
+    margin-top: 0;
     padding-top: 14px;
   }
 

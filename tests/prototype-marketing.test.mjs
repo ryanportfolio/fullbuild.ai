@@ -2,6 +2,16 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile, stat, readdir } from "node:fs/promises";
 
+const channel = (v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+const luminance = (hex) => {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map(channel);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const contrast = (a, b) => {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+};
+
 const page = await readFile(new URL("../public/prototype/marketing/index.html", import.meta.url), "utf8");
 const css = await readFile(new URL("../public/prototype/marketing/css/site.css", import.meta.url), "utf8");
 const emailDir = new URL("../public/prototype/foredge/emails/", import.meta.url);
@@ -46,6 +56,43 @@ test("the plan lists only real campaigns: live rows link, and the set stands com
   assert.equal(planned.length, 0, "all five campaigns are built; no ghost rows remain");
   assert.equal((page.match(/>Demo Example</g) ?? []).length, 5, "every row must label itself a demo; nothing here ran for a client");
   assert.ok(!/class="plan-head"|class="shipped"/.test(page), "the header row and the shipped column are gone; their markup must go with them");
+});
+
+test("each status chip is one campaign's own button, quoted whole", async () => {
+  // fill "transparent" means the chip sits on the page's paper, like the ghost
+  // and outline buttons these three campaigns ship
+  const chips = {
+    foredge: { fill: "transparent", text: "#1a1a17", edge: "#1a1a17", stroke: "1px" },
+    foxglove: { fill: "transparent", text: "#11223f", edge: "#ff5734", stroke: "2px" },
+    foxtail: { fill: "transparent", text: "#006eff", edge: "#006eff", stroke: "1.5px" },
+    foundry: { fill: "#23231f", text: "#f4f2ee", stroke: "0" },
+    forecourt: { fill: "#f6b83c", text: "#1e2a1e", stroke: "0" },
+  };
+
+  for (const [brand, chip] of Object.entries(chips)) {
+    assert.ok(page.includes(`status-pill demo-${brand}`), `row ${brand} lost its branded chip`);
+    const rule = css.match(new RegExp(`\\.demo-${brand} \\{[^}]+\\}`))?.[0];
+    assert.ok(rule, `.demo-${brand} has no rule`);
+    assert.ok(rule.includes(`border-width: ${chip.stroke}`), `.demo-${brand} must draw its own ${chip.stroke} stroke; stroke weight is what separates these five button systems`);
+
+    const source = await readFile(new URL(`../public/prototype/${brand}/css/site.css`, import.meta.url), "utf8");
+    for (const hex of [chip.text, chip.edge, chip.fill].filter((v) => v && v.startsWith("#"))) {
+      assert.ok(rule.includes(hex), `.demo-${brand} does not use ${hex}`);
+      assert.ok(source.toLowerCase().includes(hex), `${hex} is not a ${brand} color; a chip may only quote hexes that campaign already ships`);
+    }
+
+    const ground = chip.fill === "transparent" ? "#ffffff" : chip.fill;
+    const ratio = contrast(chip.text, ground);
+    assert.ok(ratio >= 3, `${brand} chip text is ${ratio.toFixed(2)}:1 on its ground, under the 3:1 floor for large text`);
+    if (brand !== "foxtail") {
+      assert.ok(ratio >= 4.5, `${brand} chip text is ${ratio.toFixed(2)}:1; only Foxtail is allowed the large-text floor, because its palette holds no darker blue`);
+    }
+  }
+
+  const geometry = css.match(/\.status-pill \{[^}]+\}/)[0];
+  assert.ok(/font-size: 20px/.test(geometry) && /font-weight: 700/.test(geometry), "Foxtail's 4.49:1 only clears WCAG as large text, which needs 20px at a real 700");
+  assert.ok(/font-weight: 400 700/.test(css), "the Inter face must declare 700 or the chips render as faux bold");
+  assert.ok(!/\.status-live|\.status-ghost|status-demo/.test(css + page), "the retired status classes must be gone");
 });
 
 test("the strip opens each mailing and the page holds the type and character contract", async () => {
