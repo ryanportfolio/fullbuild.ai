@@ -6,6 +6,10 @@ const FAHRZEUGMARKT_API =
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Linting is `npm run lint`, on demand. Once an eslint config exists, `next
+  // build` starts lint-gating and would fail deploys on the 6 pre-existing
+  // no-html-link-for-pages errors; this keeps builds at their prior behavior.
+  eslint: { ignoreDuringBuilds: true },
   // three.js ships untranspiled ESM examples; let Next transpile them
   transpilePackages: ['three'],
   // CI/verification can build into an isolated dir so a running dev server's
