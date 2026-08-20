@@ -42,6 +42,9 @@ test("both pills land on live pages; only the list-management links stay placeho
   assert.equal((email.match(/href="https:\/\/fullbuild\.ai\/prototype\/foxtail"/g) ?? []).length, 2, "the projector-night pill must point at the live Foxtail page in both the VML and the anchor");
   const placeholders = [...email.matchAll(/https:\/\/forecourt\.example\/([a-z-]+)/g)].map((m) => m[1]);
   assert.deepEqual([...new Set(placeholders)].sort(), ["preferences", "unsubscribe"], "only unsubscribe and preferences may stay on the placeholder domain; every button a reader clicks must resolve");
+  const anchors = (email.match(/<a href/g) ?? []).length;
+  const blank = (email.match(/target="_blank" rel="noopener"/g) ?? []).length;
+  assert.equal(blank, anchors, "every anchor needs target=\"_blank\"; without it a click inside the case-page iframe navigates the iframe itself");
 });
 
 test("the send stays under Gmail's clip point and holds the type and character contract", async () => {
