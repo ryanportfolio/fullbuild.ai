@@ -87,11 +87,21 @@ export default function SheetTransmittal() {
   const [busy, setBusy] = useState(false);
   const [marks, setMarks] = useState<string[]>([]);
   const drawing = useRef<string[] | null>(null);
+  // Owns the fold/rail-post timelines, which are built inside event handlers
+  // and would otherwise outlive the component: unmounting mid-fold would keep
+  // tweening detached nodes and onComplete would set state on an unmounted
+  // component. Null after unmount, so late rAF callbacks can bail.
+  const motionCtx = useRef<gsap.Context | null>(null);
 
   phaseRef.current = phase;
 
   useEffect(() => {
     t0.current = Date.now();
+    motionCtx.current = gsap.context(() => {});
+    return () => {
+      motionCtx.current?.kill();
+      motionCtx.current = null;
+    };
   }, []);
 
   /* HANDOFF — engage after DrawingSet finishes the sheet's linework. */
@@ -317,6 +327,8 @@ export default function SheetTransmittal() {
       return;
     }
     requestAnimationFrame(() => {
+      const ctx = motionCtx.current;
+      if (!ctx) return; // unmounted between submit and this frame
       const formEl = formRef.current;
       const envEl = envRef.current;
       if (!formEl || !envEl) {
@@ -342,7 +354,10 @@ export default function SheetTransmittal() {
         el.removeAttribute('stroke-dasharray');
         el.removeAttribute('stroke-dashoffset');
       };
-      const tl = gsap.timeline({
+      // Created inside the context so unmount kills it (child tweens with it);
+      // otherwise onComplete would fire on detached nodes and set state on an
+      // unmounted component.
+      const tl = ctx.add(() => gsap.timeline({
         onComplete: () => {
           // Land everything at its final state no matter what the ticker did
           // mid-flight: the sent envelope must never hold a part-drawn line.
@@ -352,7 +367,7 @@ export default function SheetTransmittal() {
           if (receiptRef.current) gsap.set(receiptRef.current, { autoAlpha: 1 });
           setPhase('sent');
         },
-      });
+      }));
       tl.to(formEl, {
         rotationX: 56,
         yPercent: 10,
@@ -396,14 +411,16 @@ export default function SheetTransmittal() {
 
   const revealRailPost = (instant: boolean) => {
     const post = document.getElementById('ws-rail-post');
-    if (!post) return;
+    const ctx = motionCtx.current;
+    if (!post || !ctx) return;
     post.dataset.posted = 'true';
     if (instant) return;
     const strokes = Array.from(post.querySelectorAll<SVGElement>('.ws-post')).sort(
       (a, b) => Number(a.getAttribute('data-o') ?? 0) - Number(b.getAttribute('data-o') ?? 0),
     );
     gsap.set(strokes, { attr: { 'stroke-dasharray': '1 1', 'stroke-dashoffset': 1 } });
-    const tl = gsap.timeline();
+    // In the context so unmount kills the stroke tweens with the timeline.
+    const tl = ctx.add(() => gsap.timeline());
     strokes.forEach((el, i) => {
       tl.to(
         el,
