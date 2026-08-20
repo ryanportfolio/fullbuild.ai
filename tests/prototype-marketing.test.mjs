@@ -41,9 +41,9 @@ test("the shipped emails hold the program's guarantees, and the page shows none 
 
 test("the plan lists only real campaigns: live rows link, and the set stands complete", () => {
   const live = [...page.matchAll(/<a class="campaign-row" data-status="live" href="([^"]+)"/g)];
-  assert.deepEqual(live.map((m) => m[1]), ["/prototype/foredge", "/prototype/foxglove", "/prototype/foxtail"]);
+  assert.deepEqual(live.map((m) => m[1]), ["/prototype/foredge", "/prototype/foxglove", "/prototype/foxtail", "/prototype/foundry"]);
   const planned = [...page.matchAll(/data-status="planned"/g)];
-  assert.equal(planned.length, 0, "email, social, and paid media are all shipped; no ghost rows remain");
+  assert.equal(planned.length, 0, "all four campaigns are shipped; no ghost rows remain");
 });
 
 test("the strip opens each mailing and the page holds the type and character contract", async () => {
@@ -62,10 +62,12 @@ test("the strip opens each mailing and the page holds the type and character con
     assert.ok(f.size > 10000, `${font} missing or truncated`);
   }
 
-  const previews = [...page.matchAll(/src="\/prototype\/marketing\/img\/((?:send|tile|ad)-[a-z0-9-]+\.jpg)"/g)].map((m) => m[1]);
+  const previews = [...page.matchAll(/src="\/prototype\/marketing\/img\/((?:send|tile|ad|mail)-[a-z0-9-]+\.jpg)"/g)].map((m) => m[1]);
   assert.equal(previews.filter((p) => p.startsWith("send-")).length, 4, "the email plate shows a render of each send");
   assert.equal(previews.filter((p) => p.startsWith("tile-")).length, 4, "the social plate shows four tile renders");
   assert.equal(previews.filter((p) => p.startsWith("ad-")).length, 4, "the paid-media plate shows four unit renders");
+  assert.equal(previews.filter((p) => p.startsWith("mail-")).length, 4, "the dark-mode plate shows four renderings of the one send");
+  assert.ok(page.includes('/prototype/foundry/emails/fall-leasing.html'), "the plate opens the foundry send");
   for (const p of previews) {
     const f = await stat(new URL(`../public/prototype/marketing/img/${p}`, import.meta.url));
     assert.ok(f.size > 10000, `${p} missing or truncated`);
