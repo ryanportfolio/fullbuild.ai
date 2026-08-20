@@ -1,0 +1,88 @@
+/* ============================================================================
+   DETAIL LIBRARY — the pinned band's contract.
+   Floor first: with no JS, reduced motion, touch, or a narrow window, the
+   plates render as a wrapped, fully inked grid (no pin, no strip). The tube
+   exists only once the component stamps data-tube: the strip goes single-row,
+   overflows, and the scrubbed tween drives it. Ink follows the set's rules:
+   witness ink for annotation, graphite for linework, no fades, no blur.
+   Tried and rejected: a CSS scroll-snap x-scroller as the floor — it hid the
+   later plates behind a scrollbar nobody notices; the wrapped grid shows the
+   whole library to every reader.
+   ========================================================================= */
+
+.band {
+  padding: 4.5rem clamp(1.2rem, 4vw, 4rem) 4rem;
+  border-top: 1px solid var(--rule);
+  background: var(--ground);
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-graphite);
+  margin-bottom: 2.2rem;
+}
+.headNote {
+  color: var(--ink-witness);
+}
+
+/* floor: the whole library, wrapped and inked */
+.strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2.2rem 2.6rem;
+  will-change: auto;
+}
+
+/* the tube: one row, driven sideways by the scrub */
+.band[data-tube] {
+  /* pinned band fills the glass so the pin has a stage */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.band[data-tube] .strip {
+  flex-wrap: nowrap;
+  gap: clamp(2.4rem, 5vw, 5rem);
+  width: max-content;
+  padding-right: 20vw;
+}
+
+.card {
+  margin: 0;
+  width: clamp(200px, 22vw, 300px);
+  flex: none;
+  color: var(--ink-graphite);
+}
+.card svg {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--rule-strong);
+}
+.caption {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.15rem 0.7rem;
+  margin-top: 0.6rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+}
+.no {
+  color: var(--ink-witness);
+}
+.name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--ink-graphite);
+}
+.note {
+  grid-column: 1 / -1;
+  color: var(--ink-witness);
+}

@@ -25,7 +25,7 @@ export default function SheetElevation() {
       drawingSide="right"
       masthead={
         <>
-          <p className={copy.eyebrow}>Working drawing set · rev&#8209;controlled</p>
+          <p className={copy.eyebrow} data-rise="">Working drawing set · rev&#8209;controlled</p>
           <MastheadPlot text="fullbuild.ai" />
         </>
       }

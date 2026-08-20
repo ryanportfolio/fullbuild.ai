@@ -61,12 +61,12 @@ export default function SheetFrame() {
 
         <div className={s.body}>
           <div className={s.copyCol}>
-            <p className={copy.eyebrow}>Sheet S-03 · structure</p>
+            <p className={copy.eyebrow} data-rise="">Sheet S-03 · structure</p>
             <h2 className={copy.heading}>
               <span className={copy.headingGoal}>Goal</span>
               Verification <span className={copy.headingMark}>Loop</span>
             </h2>
-            <p className={`${copy.lede} ${copy.ledeLarge}`}>
+            <p className={`${copy.lede} ${copy.ledeLarge}`} data-rise="">
               Building with AI in a safe, maintainable, and request-aligned way
             </p>
 

@@ -2,6 +2,7 @@ import SheetElevation from '@/components/sheets/SheetElevation';
 import SheetBlueprint from '@/components/sheets/SheetBlueprint';
 import SheetFrame from '@/components/sheets/SheetFrame';
 import SheetShipped from '@/components/sheets/SheetShipped';
+import SheetDetailTube from '@/components/sheets/SheetDetailTube';
 import SheetUnconformity from '@/components/sheets/SheetUnconformity';
 import SheetTransmittal from '@/components/sheets/SheetTransmittal';
 import DrawingSet from '@/components/motion/DrawingSet';
@@ -34,6 +35,8 @@ export default function Home() {
         <SheetBlueprint />
         <SheetFrame />
         <SheetShipped />
+        {/* the set documents its own construction before the record closes */}
+        <SheetDetailTube />
         <SheetUnconformity />
         <SheetTransmittal />
       </DrawingSet>

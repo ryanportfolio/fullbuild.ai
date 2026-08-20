@@ -8,7 +8,19 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { TextPlugin } from 'gsap/TextPlugin';
 import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin';
+import { SplitText } from 'gsap/SplitText';
+import { MorphSVGPlugin } from 'gsap/MorphSVGPlugin';
+import { Draggable } from 'gsap/Draggable';
+import { InertiaPlugin } from 'gsap/InertiaPlugin';
 
-gsap.registerPlugin(ScrollTrigger, TextPlugin, ScrambleTextPlugin);
+gsap.registerPlugin(
+  ScrollTrigger,
+  TextPlugin,
+  ScrambleTextPlugin,
+  SplitText,
+  MorphSVGPlugin,
+  Draggable,
+  InertiaPlugin,
+);
 
-export { gsap, ScrollTrigger };
+export { gsap, ScrollTrigger, SplitText, MorphSVGPlugin, Draggable };

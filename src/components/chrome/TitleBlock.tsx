@@ -62,6 +62,59 @@ const STATE_NAMES = ['Idea', 'Design', 'Engineering', 'Shipped'] as const;
 const ANCHORS = ['state-01', 'state-02', 'state-03', 'state-04'] as const;
 
 /**
+ * MARGIN SYMBOL — one drafting symbol in the margin, redrawn as the discipline
+ * changes. Real vocabulary with a shared silhouette, two subpaths each so the
+ * morph maps subpath to subpath: north arrow (01, orientation), section marker
+ * (02, cutting through the design), detail bubble (03, zooming into the build),
+ * revision delta (04, issued). MorphSVG 'rotational' keeps the turn honest.
+ */
+const MARGIN_SYMBOLS: Record<PipelineState, string> = {
+  1: 'M12 20 L12 4 L8 8 M12 4 L16 8',
+  2: 'M12 3 A9 9 0 1 0 12 21 A9 9 0 1 0 12 3 M5 19 L19 5',
+  3: 'M12 5 A7 7 0 1 0 12 19 A7 7 0 1 0 12 5 M17 17 L22 22',
+  4: 'M12 4 L21 20 L3 20 Z M12 12 L12 16',
+};
+
+function MarginSymbol() {
+  const state = useWorkingSet((s) => s.state);
+  const ref = useRef<SVGPathElement>(null);
+  const prev = useRef<PipelineState | null>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || prev.current === state) return;
+    const first = prev.current === null;
+    prev.current = state;
+    const d = MARGIN_SYMBOLS[state];
+    if (first || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.setAttribute('d', d);
+      return;
+    }
+    const tween = gsap.to(el, {
+      duration: 0.7,
+      ease: 'power2.inOut',
+      morphSVG: { shape: d, type: 'rotational', origin: '50% 50%' },
+    });
+    return () => {
+      tween.kill();
+      el.setAttribute('d', d);
+    };
+  }, [state]);
+  return (
+    <svg className={styles.marginSymbol} viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        ref={ref}
+        d={MARGIN_SYMBOLS[1]}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/**
  * A title-block field that fills itself in the way a drafter fills a cell:
  * 'type' letters the value in stroke by stroke (state names), 'scramble'
  * cycles a plotter wheel through its charset before committing (numerics).
@@ -271,6 +324,11 @@ export default function TitleBlock({
           </g>
         </svg>
         <RailSketch className={styles.sketch} />
+      </div>
+
+      {/* the margin's one symbol, redrawn per discipline (state) */}
+      <div className={styles.marginSymbolRow} aria-hidden="true">
+        <MarginSymbol />
       </div>
 
       {/* Carriage telemetry — live readout of the one instrument. PenCarriage
