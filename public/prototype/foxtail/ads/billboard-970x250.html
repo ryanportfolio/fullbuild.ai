@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Foxtail Drive-In, billboard</title>
+<style>
+@font-face {
+  font-family: 'Anton';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('../fonts/anton-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: block;
+  src: url('../fonts/playfair-display-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300 600;
+  font-display: block;
+  src: url('../fonts/inter-latin.woff2') format('woff2');
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  overflow: auto;
+  background: #fff8f1;
+}
+
+body {
+  width: 970px;
+  height: 250px;
+  margin: 0;
+  overflow: hidden;
+  background: #fff8f1;
+}
+
+.frame {
+  position: relative;
+  width: 970px;
+  height: 250px;
+  overflow: hidden;
+  background: #fff8f1;
+  color: #006eff;
+}
+
+.eyebrow {
+  position: absolute;
+  left: 36px;
+  top: 32px;
+  font-family: 'Inter', Helvetica, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.display {
+  position: absolute;
+  left: 34px;
+  top: 54px;
+  font-family: 'Anton', 'Arial Narrow', 'Franklin Gothic Medium', sans-serif;
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
+.display .l1 {
+  display: block;
+  font-size: 64px;
+}
+
+.display .l2 {
+  display: block;
+  font-size: 110px;
+}
+
+.meta {
+  position: absolute;
+  left: 490px;
+  top: 40px;
+  width: 190px;
+}
+
+.meta .label {
+  font-family: 'Inter', Helvetica, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.meta .value {
+  margin: 4px 0 18px;
+  font-family: 'Inter', Helvetica, Arial, sans-serif;
+  font-weight: 300;
+  font-size: 27px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: lining-nums;
+}
+
+.pill {
+  position: absolute;
+  left: 490px;
+  bottom: 36px;
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 30px;
+  border: 1.5px solid #006eff;
+  border-radius: 999px;
+  font-family: 'Inter', Helvetica, Arial, sans-serif;
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  color: #006eff;
+}
+
+.car {
+  position: absolute;
+  right: -8px;
+  bottom: -12px;
+  width: 336px;
+  height: 224px;
+}
+</style>
+</head>
+<body>
+<div class="frame">
+  <p class="eyebrow">Foxtail Drive-In</p>
+  <h1 class="display"><span class="l1">The summer</span><span class="l2">Season</span></h1>
+  <div class="meta">
+    <p class="label">Opens</p>
+    <p class="value">June 12</p>
+    <p class="label">Nights</p>
+    <p class="value">Fri &amp; Sat</p>
+  </div>
+  <span class="pill">See the season</span>
+  <img class="car" src="../img/car.png" alt="" width="336" height="224">
+</div>
+</body>
+</html>

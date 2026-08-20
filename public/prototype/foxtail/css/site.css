@@ -1,0 +1,545 @@
+/*
+  Foxtail Drive-In: the summer season. Campaign 03 in the marketing set.
+
+  Subject   Paid media for an invented drive-in cinema on Route 9 outside
+            Hudson, New York. Seven ad units, display and paid social, all
+            selling the $45 season pass that ends on opening night, June 12.
+
+  Reader    A hiring manager screening a digital designer application,
+            judging digital creative for paid media. No build metadata in
+            this page's copy; guarantees live in the test file.
+
+  Conceit   The media plan. Units are grouped the way the buy is planned:
+            Announce, Program, Convert, with a schedule strip showing the
+            three waves converging on June 12. The stage labels carry the
+            funnel; no prose explains it. The retarget leaderboard ships
+            as a two-version test pair (price-led, date-led), documented
+            with no invented results.
+
+  Palette   Cream #fff8f1 canvas. Voltage #006eff is the only chromatic
+            voice: all type, hairline accents, pill borders. Ash #e2e8f0
+            for structural hairlines on cream. Tint #99c1f7 exists only
+            inside the car illustration, with black for its shadows.
+            Corrections from the rendered reference (thesummerdrive.com,
+            observed 2026-08-19): running text is voltage on cream, not
+            black; black belongs to the illustration alone. The inverted
+            voltage band with cream type is the signature poster move and
+            carries the Program and Convert social units.
+
+  Type      Anton for the compressed poster voice, display only. Playfair
+            Display 400 subs the reference didone: the rendered site holds
+            moderate contrast, not the hairline the extracted spec claimed.
+            Inter 300/400/500 for labels, metadata, body. Nothing under
+            16px anywhere, ads included.
+
+  Pills     999px radius, 1.5px border, transparent fill. Voltage on
+            cream, cream on voltage. One exception, documented: the story
+            last-call cue fills cream with a voltage label, the loudest
+            unit of the set.
+
+  Rules     Every rule is 1.5px. On the ads the rule voice is voltage,
+            the way the reference draws its hero rule; on this page ash
+            carries structure and voltage marks only the masthead, the
+            stage heads, the colophon, and the schedule's week axis
+            (the axis is the chart's emphasis line, its rows stay ash). Labels track at 0.14em; the
+            two poster eyebrows (social, story) at 0.2em. The September
+            row of the program table closes with a rule that stops short
+            on purpose: that month the audience picks the ending.
+
+  Layout    Anton second lines sit narrower than their first line with
+            metadata flanking them; that is the rendered reference's own
+            hero behavior, not a miss. Display ads render at true pixel
+            size in hairline frames that hug the artboard; social units
+            render scaled, stepped down again under 760px.
+
+  Artboards Every ad pins body to its exact export size with its own
+            clipping; html scrolls (overflow: auto) so a small viewport
+            can reach the whole artboard.
+
+  Bans      No em dashes. No periods on headings or display text. Straight
+            quotes. No gradients, no shadows, no radius off the pill. No
+            engagement numbers: nothing ran, so the page claims nothing.
+*/
+
+@font-face {
+  font-family: 'Anton';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('/prototype/foxtail/fonts/anton-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: block;
+  src: url('/prototype/foxtail/fonts/playfair-display-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300 600;
+  font-display: block;
+  src: url('/prototype/foxtail/fonts/inter-latin.woff2') format('woff2');
+}
+
+:root {
+  --cream: #fff8f1;
+  --voltage: #006eff;
+  --ash: #e2e8f0;
+  --tint: #99c1f7;
+  --serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --grotesk: 'Inter', Helvetica, Arial, sans-serif;
+  --poster: 'Anton', 'Arial Narrow', 'Franklin Gothic Medium', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--cream);
+}
+
+body {
+  background: var(--cream);
+  color: var(--voltage);
+  font-family: var(--grotesk);
+  font-weight: 300;
+  font-size: 18px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  padding: 12px 24px;
+  background: var(--voltage);
+  color: var(--cream);
+}
+
+.skip:focus {
+  left: 24px;
+  top: 24px;
+  z-index: 10;
+  outline: 2px solid var(--voltage);
+  outline-offset: 2px;
+}
+
+a {
+  color: var(--voltage);
+}
+
+a:focus-visible {
+  outline: 2px solid var(--voltage);
+  outline-offset: 3px;
+}
+
+.sheet {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px 96px;
+}
+
+.masthead {
+  padding: 96px 0 72px;
+  border-bottom: 1.5px solid var(--voltage);
+  text-align: center;
+}
+
+.kicker {
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.3;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.masthead h1 {
+  margin-top: 28px;
+  font-family: var(--poster);
+  font-weight: 400;
+  font-size: clamp(72px, 12vw, 150px);
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
+.brief {
+  padding: 64px 0;
+  border-bottom: 1.5px solid var(--ash);
+}
+
+.brief dl {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 28px 40px;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.brief dt {
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding-top: 3px;
+}
+
+.brief dd {
+  font-weight: 300;
+  font-size: 21px;
+  line-height: 1.45;
+}
+
+.system {
+  padding: 80px 0;
+  border-bottom: 1.5px solid var(--ash);
+}
+
+.system-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 56px;
+  margin-top: 48px;
+}
+
+.chips {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.chip .swatch {
+  display: block;
+  height: 88px;
+  border: 1.5px solid var(--ash);
+}
+
+.chip p {
+  margin-top: 10px;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.specimen p + p {
+  margin-top: 20px;
+}
+
+.spec-poster {
+  font-family: var(--poster);
+  font-size: 62px;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.spec-serif {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 44px;
+  line-height: 1.05;
+}
+
+.spec-label {
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.spec-note {
+  font-weight: 300;
+  font-size: 18px;
+  max-width: 44ch;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 32px;
+  border: 1.5px solid var(--voltage);
+  border-radius: 999px;
+  font-weight: 300;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.stage {
+  padding: 96px 0 0;
+}
+
+.stage-head {
+  display: flex;
+  align-items: baseline;
+  gap: 32px;
+  padding-bottom: 20px;
+  border-bottom: 1.5px solid var(--voltage);
+}
+
+.stage-head .no {
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: 0.14em;
+}
+
+.stage-head h2,
+.system h2,
+.sched h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 62px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+.unit {
+  margin-top: 64px;
+}
+
+.unit-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.placement .spec-label {
+  display: block;
+}
+
+.placement .name {
+  margin-top: 4px;
+  font-weight: 300;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+}
+
+.unit-head a {
+  font-weight: 400;
+  font-size: 16px;
+  text-underline-offset: 4px;
+}
+
+.unit-links {
+  display: inline-flex;
+  gap: 24px;
+}
+
+.slot {
+  overflow-x: auto;
+}
+
+.slot-inner {
+  width: fit-content;
+  margin: 0 auto;
+  border: 1.5px solid var(--ash);
+}
+
+.slot-tag {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.slot + .slot-tag {
+  margin-top: 28px;
+}
+
+.slot iframe {
+  display: block;
+  border: 0;
+}
+
+.scaled {
+  overflow: hidden;
+}
+
+.scaled iframe {
+  transform-origin: top left;
+}
+
+.scaled-square {
+  width: 560px;
+  height: 560px;
+}
+
+.scaled-square iframe {
+  transform: scale(0.5185);
+}
+
+.scaled-story {
+  width: 480px;
+  height: 853px;
+}
+
+.scaled-story iframe {
+  transform: scale(0.4444);
+}
+
+.duo {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.duo .unit {
+  flex: 0 1 auto;
+  width: min-content;
+  min-width: 400px;
+  max-width: 100%;
+}
+
+.duo .caption {
+  max-width: 100%;
+}
+
+.caption {
+  margin-top: 18px;
+  font-weight: 300;
+  font-size: 18px;
+  max-width: 62ch;
+}
+
+.colophon {
+  margin-top: 120px;
+  padding-top: 28px;
+  border-top: 1.5px solid var(--voltage);
+  max-width: 68ch;
+}
+
+.colophon p {
+  font-weight: 300;
+  font-size: 16px;
+}
+
+.sched {
+  padding: 80px 0 0;
+}
+
+.sched-scroll {
+  margin-top: 40px;
+  overflow-x: auto;
+}
+
+.sched-grid {
+  display: grid;
+  grid-template-columns: 150px repeat(6, minmax(88px, 1fr)) 110px;
+  min-width: 760px;
+  border-bottom: 1.5px solid var(--ash);
+}
+
+.sched-grid > * {
+  padding: 14px 12px 14px 0;
+}
+
+.sched-head {
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border-bottom: 1.5px solid var(--voltage);
+}
+
+.sched-head.terminal {
+  text-align: right;
+}
+
+.sched-row-label {
+  font-weight: 300;
+  font-size: 18px;
+  border-top: 1.5px solid var(--ash);
+}
+
+.sched-cell {
+  position: relative;
+  border-top: 1.5px solid var(--ash);
+}
+
+.sched-cell .bar {
+  position: absolute;
+  left: 0;
+  right: 12px;
+  top: 50%;
+  height: 12px;
+  transform: translateY(-50%);
+  background: var(--voltage);
+}
+
+.sched-cell.bar-end .bar {
+  right: 0;
+}
+
+@media (max-width: 1023px) {
+  .system-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 759px) {
+  .sheet {
+    padding: 0 20px 72px;
+  }
+
+  .masthead {
+    padding: 64px 0 48px;
+  }
+
+  .brief dl {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .brief dt {
+    margin-top: 24px;
+  }
+
+  .brief dt:first-child {
+    margin-top: 0;
+  }
+
+  .stage-head h2,
+  .system h2,
+  .sched h2 {
+    font-size: 44px;
+  }
+
+  .duo .unit {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .scaled-square {
+    width: 320px;
+    height: 320px;
+  }
+
+  .scaled-square iframe {
+    transform: scale(0.2963);
+  }
+
+  .scaled-story {
+    width: 300px;
+    height: 533px;
+  }
+
+  .scaled-story iframe {
+    transform: scale(0.2778);
+  }
+
+  .colophon {
+    margin-top: 80px;
+  }
+}

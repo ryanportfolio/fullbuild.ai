@@ -39,12 +39,11 @@ test("the shipped emails hold the program's guarantees, and the page shows none 
   );
 });
 
-test("the plan lists only real campaigns: live rows link, planned rows do not", () => {
+test("the plan lists only real campaigns: live rows link, and the set stands complete", () => {
   const live = [...page.matchAll(/<a class="campaign-row" data-status="live" href="([^"]+)"/g)];
-  assert.deepEqual(live.map((m) => m[1]), ["/prototype/foredge", "/prototype/foxglove"]);
-  const planned = [...page.matchAll(/<div class="campaign-row" data-status="planned"/g)];
-  assert.ok(planned.length >= 1, "the plan should show what comes next");
-  assert.ok(!/data-status="planned"[^>]*href/.test(page), "a planned campaign must not link anywhere");
+  assert.deepEqual(live.map((m) => m[1]), ["/prototype/foredge", "/prototype/foxglove", "/prototype/foxtail"]);
+  const planned = [...page.matchAll(/data-status="planned"/g)];
+  assert.equal(planned.length, 0, "email, social, and paid media are all shipped; no ghost rows remain");
 });
 
 test("the strip opens each mailing and the page holds the type and character contract", async () => {
@@ -53,7 +52,7 @@ test("the strip opens each mailing and the page holds the type and character con
   assert.deepEqual([...new Set(linked)], files);
 
   for (const [name, text] of [["index.html", page], ["site.css", css]]) {
-    assert.ok(!/[—–…‘’“”]/.test(text), `${name} carries a banned character`);
+    assert.ok(!/[\u2014\u2013\u2026\u2018\u2019\u201C\u201D\u00A0\u200B]/.test(text), `${name} carries a banned character`);
   }
   const cssSizes = [...css.matchAll(/font-size:\s*(\d+)px/g)].map((m) => Number(m[1]));
   assert.equal(cssSizes.filter((s) => s < 16).length, 0, "the page itself sets type under the 16px floor");
@@ -63,9 +62,10 @@ test("the strip opens each mailing and the page holds the type and character con
     assert.ok(f.size > 10000, `${font} missing or truncated`);
   }
 
-  const previews = [...page.matchAll(/src="\/prototype\/marketing\/img\/((?:send|tile)-[a-z0-9-]+\.jpg)"/g)].map((m) => m[1]);
+  const previews = [...page.matchAll(/src="\/prototype\/marketing\/img\/((?:send|tile|ad)-[a-z0-9-]+\.jpg)"/g)].map((m) => m[1]);
   assert.equal(previews.filter((p) => p.startsWith("send-")).length, 4, "the email plate shows a render of each send");
-  assert.equal(previews.filter((p) => p.startsWith("tile-")).length, 4, "the campaign plate shows four tile renders");
+  assert.equal(previews.filter((p) => p.startsWith("tile-")).length, 4, "the social plate shows four tile renders");
+  assert.equal(previews.filter((p) => p.startsWith("ad-")).length, 4, "the paid-media plate shows four unit renders");
   for (const p of previews) {
     const f = await stat(new URL(`../public/prototype/marketing/img/${p}`, import.meta.url));
     assert.ok(f.size > 10000, `${p} missing or truncated`);
@@ -75,5 +75,11 @@ test("the strip opens each mailing and the page holds the type and character con
   const tileFiles = (await readdir(new URL("../public/prototype/foxglove/tiles/", import.meta.url))).filter((f) => f.endsWith(".html"));
   for (const t of new Set(tileLinks)) {
     assert.ok(tileFiles.includes(t), `plate links ${t} but the file does not exist`);
+  }
+
+  const adLinks = [...page.matchAll(/href="\/prototype\/foxtail\/ads\/([a-z0-9-]+\.html)"/g)].map((m) => m[1]);
+  const adFiles = (await readdir(new URL("../public/prototype/foxtail/ads/", import.meta.url))).filter((f) => f.endsWith(".html"));
+  for (const a of new Set(adLinks)) {
+    assert.ok(adFiles.includes(a), `plate links ${a} but the file does not exist`);
   }
 });

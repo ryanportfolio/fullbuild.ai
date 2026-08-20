@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Foxtail Drive-In, medium rectangle</title>
+<style>
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: block;
+  src: url('../fonts/playfair-display-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300 600;
+  font-display: block;
+  src: url('../fonts/inter-latin.woff2') format('woff2');
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  overflow: auto;
+  background: #fff8f1;
+}
+
+body {
+  width: 300px;
+  height: 250px;
+  margin: 0;
+  overflow: hidden;
+  background: #fff8f1;
+}
+
+.frame {
+  position: relative;
+  width: 300px;
+  height: 250px;
+  padding: 24px;
+  overflow: hidden;
+  background: #fff8f1;
+  color: #006eff;
+}
+
+.eyebrow {
+  font-family: 'Inter', Helvetica, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.display {
+  margin-top: 16px;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  font-size: 38px;
+  line-height: 1.04;
+  letter-spacing: -0.01em;
+}
+
+.date {
+  margin-top: 14px;
+  font-family: 'Inter', Helvetica, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.pill {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 11px 26px;
+  border: 1.5px solid #006eff;
+  border-radius: 999px;
+  font-family: 'Inter', Helvetica, Arial, sans-serif;
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  color: #006eff;
+}
+</style>
+</head>
+<body>
+<div class="frame">
+  <p class="eyebrow">Foxtail Drive-In</p>
+  <h1 class="display">Movies under the open sky</h1>
+  <p class="date">Opens June 12</p>
+  <span class="pill">See the season</span>
+</div>
+</body>
+</html>
