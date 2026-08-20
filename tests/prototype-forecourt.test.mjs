@@ -94,7 +94,7 @@ test("the case page links every unit, uses root-absolute paths, and holds the co
   const refs = [...page.matchAll(/(?:href|src)="([^"]+)"/g)].map((m) => m[1]);
   for (const ref of refs) {
     assert.ok(
-      ref.startsWith("/prototype") || ref.startsWith("#"),
+      ref.startsWith("/prototype") || ref.startsWith("#") || ref === "/",
       `${ref} must be root-absolute: the rewrite serves /prototype/forecourt without a trailing slash`
     );
   }

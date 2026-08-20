@@ -21,7 +21,7 @@ test("the campaigns page ships zero JavaScript and no relative asset paths", () 
   const refs = [...page.matchAll(/(?:href|src)="([^"]+)"/g)].map((m) => m[1]);
   for (const ref of refs) {
     assert.ok(
-      ref.startsWith("/prototype") || ref.startsWith("#"),
+      ref.startsWith("/prototype") || ref.startsWith("#") || ref === "/",
       `${ref} must be root-absolute: the rewrite serves /prototype/marketing without a trailing slash, so relative paths 404`
     );
   }
