@@ -425,6 +425,13 @@ section {
   color: var(--ink);
 }
 
+/* The system section hands off to the brand page that specifies it. */
+.systemlink {
+  margin-top: 44px;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
 .post {
   display: grid;
   grid-template-columns: calc(var(--tile-w) * 1px) minmax(0, 1fr);

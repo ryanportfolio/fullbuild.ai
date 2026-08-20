@@ -1,0 +1,573 @@
+/*
+  Foxglove Paper: the brand system page
+
+  Contract
+  --------
+  Subject   The rules the ten launch tiles were drawn by, written down.
+            Loaded after site.css, which supplies the fonts, the tokens
+            and every shared element this page reuses: .sheet, .masthead,
+            .section-head, .label, .chips, .inks, .specimen, .pill.
+  Reader    A hiring manager who has seen the campaign and wants to know
+            whether the decisions behind it were decisions or accidents.
+  Job       State each rule, draw the specimen that proves it, and name
+            the case where the rule flips.
+
+  Conceit   The contract, rendered. Every specimen on this page is live
+            markup drawn by the same tokens the tiles use. Nothing here
+            is a screenshot, so the page cannot describe a system the
+            campaign does not ship.
+
+  Scale     Specimens that quote a tile are drawn at true export values
+            inside a 1080px board and scaled down by transform, the same
+            arithmetic .frame uses on the case page: --plate-w is a plain
+            number, the board scales by --plate-w / 1080. A 30px eyebrow
+            on this page is the same 30px eyebrow the story exports.
+
+  Verdicts  Do and do not cards carry no new colour. A do card takes the
+            4px coral rule the tiles open with. A do not card takes a
+            dashed peach edge, the same dashed peach that marks the safe
+            area diagrams, because both mean a line that is drawn for
+            guidance and never printed.
+
+  Bans      Everything site.css bans, unchanged: colour outside the
+            palette, gradients, shadows, black, em dashes, en dashes,
+            curly quotes, a period at the end of any heading or display
+            line, type below 16px, and any claim that the campaign ran.
+*/
+
+:root {
+  --plate-w: 640;
+}
+
+.rules {
+  border-top: 1px solid var(--peach);
+}
+
+/* Rules that pick up where a specimen block left off: the specimen already
+   drew the hairline, so a second one plus a gap reads as an empty row. */
+.rules-continued {
+  border-top: 0;
+}
+
+.rules > div {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 24px;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--peach);
+}
+
+.rules .value {
+  max-width: 62ch;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.rules .value b {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.stage {
+  position: relative;
+  width: calc(var(--plate-w) * 1px);
+  max-width: 100%;
+  overflow: hidden;
+  background: var(--blush);
+  outline: 1px solid var(--peach);
+  outline-offset: -1px;
+}
+
+.stage-coral {
+  background: var(--coral);
+}
+
+.stage-lockup {
+  aspect-ratio: 1080 / 264;
+}
+
+.board {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1080px;
+  transform-origin: top left;
+  transform: scale(calc(var(--plate-w) / 1080));
+}
+
+.board-lockup {
+  height: 264px;
+  padding: 96px 88px;
+}
+
+.board .eyebrow {
+  font-family: var(--sans);
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.2em;
+}
+
+.board .rule {
+  display: block;
+  width: 88px;
+  height: 4px;
+  margin-top: 32px;
+  background: var(--coral);
+}
+
+.stage-coral .rule {
+  background: var(--ink);
+}
+
+.stage-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  margin-bottom: 20px;
+}
+
+.stage-row .stage {
+  --plate-w: 460;
+}
+
+.stage-note {
+  display: block;
+  margin-top: 14px;
+  font-size: 16px;
+  line-height: 1.5;
+  max-width: calc(var(--plate-w) * 1px);
+}
+
+.pairs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 40px;
+}
+
+.pair {
+  padding: 26px 28px 30px;
+  background: var(--white);
+  border: 1px solid var(--peach);
+}
+
+.pair-no {
+  background: var(--blush);
+  border: 1px dashed var(--peach);
+}
+
+.pair .verdict {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  line-height: 1.4;
+}
+
+.pair-yes .verdict::before {
+  content: "";
+  display: block;
+  width: 88px;
+  height: 4px;
+  margin-bottom: 18px;
+  background: var(--coral);
+}
+
+.pair-no .verdict::before {
+  content: "";
+  display: block;
+  width: 88px;
+  height: 4px;
+  margin-bottom: 18px;
+  background: transparent;
+  border-top: 4px dashed var(--peach);
+}
+
+.pair .why {
+  margin-top: 16px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.demo {
+  display: flex;
+  align-items: center;
+  min-height: 96px;
+  margin-top: 22px;
+  padding: 20px 0 0;
+  border-top: 1px solid var(--peach);
+}
+
+.demo-title {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 40px;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+
+.demo-title-wrong {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 34px;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+}
+
+.demo-title-heavy {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 40px;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+
+.demo-coral-type {
+  color: var(--coral);
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 40px;
+  line-height: 1.1;
+}
+
+.demo-tight {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+}
+
+.demo-loose {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.ratios {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 40px;
+  font-size: 16px;
+  letter-spacing: 0.03em;
+}
+
+.ratios caption {
+  text-align: left;
+  padding-bottom: 18px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+}
+
+.ratios th,
+.ratios td {
+  padding: 16px 24px 16px 0;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--peach);
+}
+
+.ratios th {
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.ratios tbody th {
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* Every specimen in the Drawn column carries the same peach hairline, so the
+   two that sit on blush read as swatches rather than as loose type. */
+.ratios .pairswatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 84px;
+  height: 44px;
+  outline: 1px solid var(--peach);
+  outline-offset: -1px;
+  font-size: 17px;
+  letter-spacing: 0.03em;
+}
+
+.ratios .num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ratios .use {
+  max-width: 40ch;
+}
+
+.pill-poll {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  border: 2px solid var(--peach);
+  border-radius: 999px;
+  background: var(--white);
+  padding: 15px 34px;
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+}
+
+.pill-poll .dot {
+  display: block;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 40px;
+  margin-top: 36px;
+  padding-bottom: 44px;
+  border-bottom: 1px solid var(--peach);
+}
+
+.control {
+  max-width: 34ch;
+}
+
+.control .label {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.control .why {
+  margin-top: 14px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.boards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 56px;
+  margin-top: 40px;
+}
+
+.canvas {
+  position: relative;
+  width: 320px;
+  background: var(--white);
+  outline: 1px solid var(--peach);
+  outline-offset: -1px;
+}
+
+.canvas-feed {
+  aspect-ratio: 1080 / 1350;
+}
+
+.canvas-story {
+  aspect-ratio: 1080 / 1920;
+}
+
+.safe {
+  position: absolute;
+  border: 1px dashed var(--peach);
+}
+
+.safe-feed {
+  top: 7.111%;
+  right: 8.148%;
+  bottom: 7.111%;
+  left: 8.148%;
+}
+
+/* The story guide is not symmetric: copy starts 200px down, and the lowest
+   type in any story ends at 1364px, so the foot band is the remaining 556px. */
+.safe-story {
+  top: 10.417%;
+  right: 8.889%;
+  bottom: 28.958%;
+  left: 8.889%;
+}
+
+.boards figcaption {
+  margin-top: 18px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.boards .framelabel {
+  display: block;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  margin-bottom: 8px;
+}
+
+.canvas-note {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  text-align: center;
+  font-size: 16px;
+  line-height: 1.5;
+  padding: 0 12px;
+}
+
+.bans {
+  list-style: none;
+  margin-top: 40px;
+  border-top: 1px solid var(--peach);
+}
+
+.bans li {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--peach);
+  font-size: 18px;
+  line-height: 1.6;
+  max-width: 68ch;
+}
+
+.bans li b {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.backlink {
+  margin-top: 56px;
+  font-size: 18px;
+}
+
+@media (max-width: 1199px) {
+  :root {
+    --plate-w: 560;
+  }
+
+  .stage-row .stage {
+    --plate-w: 400;
+  }
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --plate-w: 600;
+  }
+
+  .stage-row .stage {
+    --plate-w: 420;
+  }
+
+  /* Three control columns squeeze the CTA label onto two lines here, and a
+     wrapped pill is not the shape the campaign ships. */
+  .controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 759px) {
+  :root {
+    --plate-w: 560;
+  }
+
+  .stage-row .stage {
+    --plate-w: 560;
+  }
+
+  .rules > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .pairs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .controls {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 36px;
+  }
+
+  .boards {
+    gap: 40px;
+  }
+
+  /* The narrow table stacks instead of dropping a column: the sentence that
+     says where a pairing is allowed is the rule, so it cannot be the part
+     that falls off a phone. */
+  .ratios thead {
+    position: absolute;
+    left: -9999px;
+  }
+
+  .ratios tr {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 14px 20px;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--peach);
+  }
+
+  .ratios th,
+  .ratios td {
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  .ratios tbody th {
+    grid-column: 1 / -1;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+  }
+
+  .ratios .use {
+    grid-column: 1 / -1;
+    max-width: none;
+  }
+}
+
+@media (max-width: 639px) {
+  :root {
+    --plate-w: 480;
+  }
+
+  .stage-row .stage {
+    --plate-w: 480;
+  }
+}
+
+@media (max-width: 519px) {
+  :root {
+    --plate-w: 400;
+  }
+
+  .stage-row .stage {
+    --plate-w: 400;
+  }
+}
+
+@media (max-width: 429px) {
+  :root {
+    --plate-w: 330;
+  }
+
+  .stage-row .stage {
+    --plate-w: 330;
+  }
+
+  .canvas {
+    width: 260px;
+  }
+}
+
+@media (max-width: 374px) {
+  :root {
+    --plate-w: 280;
+  }
+
+  .stage-row .stage {
+    --plate-w: 280;
+  }
+}

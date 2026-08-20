@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Foxglove Paper, the brand system</title>
+  <meta name="description" content="The Foxglove Paper brand system: palette with measured contrast, type scale, the pill system, safe areas, and the bans.">
+  <link rel="stylesheet" href="/prototype/foxglove/css/site.css">
+  <link rel="stylesheet" href="/prototype/foxglove/css/brand.css">
+</head>
+<body>
+  <a class="skip" href="#signature">Skip to the system</a>
+
+  <div class="page">
+    <img class="bleed bleed-a" src="/prototype/foxglove/img/corner-a.png" alt="" width="1024" height="1024">
+    <img class="bleed bleed-b" src="/prototype/foxglove/img/corner-b.png" alt="" width="1024" height="1024">
+
+    <div class="sheet">
+
+      <header class="masthead">
+        <p class="kicker">FOXGLOVE PAPER · BRAND SYSTEM</p>
+        <h1 class="wordmark">How it is drawn</h1>
+      </header>
+
+      <section id="signature" aria-labelledby="signature-h">
+        <div class="section-head">
+          <p class="kicker">01</p>
+          <h2 id="signature-h">The signature</h2>
+        </div>
+
+        <div class="rules">
+          <div>
+            <span class="label">LOCKUP</span>
+            <p class="value">A line of Inter caps, then a rule. All ten tiles open this way, so the shape reads as Foxglove before a word is read. The eyebrow sets in <b>Inter 500 at 0.2em</b>, the rule sits <b>32px</b> under it and measures <b>88 by 4</b>.</p>
+          </div>
+          <div>
+            <span class="label">CLEAR SPACE</span>
+            <p class="value">One rule width, <b>88px</b>, from any edge of the canvas. Story tiles push the top inset to 200px so the platform chrome cannot land on it.</p>
+          </div>
+          <div>
+            <span class="label">GROUND</span>
+            <p class="value">The rule is coral on blush. When the whole frame turns coral, the rule turns <b>ink</b> instead, because coral on coral is a rule nobody can see.</p>
+          </div>
+          <div>
+            <span class="label">THE NAME</span>
+            <p class="value">The studio name is always Inter caps in the eyebrow slot. Cormorant carries what the post says, never who is saying it.</p>
+          </div>
+        </div>
+
+        <div class="stage-row">
+          <div>
+            <div class="stage stage-lockup">
+              <div class="board board-lockup">
+                <p class="eyebrow">FOXGLOVE PAPER</p>
+                <span class="rule"></span>
+              </div>
+            </div>
+            <span class="stage-note">On blush, the rule is coral</span>
+          </div>
+          <div>
+            <div class="stage stage-lockup stage-coral">
+              <div class="board board-lockup">
+                <p class="eyebrow">LAST CALL FOR JUNE</p>
+                <span class="rule"></span>
+              </div>
+            </div>
+            <span class="stage-note">On coral, the rule turns ink, exactly as the last call story draws it</span>
+          </div>
+        </div>
+
+        <div class="pairs">
+          <div class="pair pair-yes">
+            <span class="verdict">DO</span>
+            <div class="demo"><span class="demo-tight">FOXGLOVE PAPER</span></div>
+            <p class="why">Inter 600 tracked 0.2em. The tracking is what makes a short name hold a wide line.</p>
+          </div>
+          <div class="pair pair-no">
+            <span class="verdict">DO NOT</span>
+            <div class="demo"><span class="demo-loose">FOXGLOVE PAPER</span></div>
+            <p class="why">Untracked, the name reads as a caption, and it stops matching the nine other tiles.</p>
+          </div>
+          <div class="pair pair-yes">
+            <span class="verdict">DO</span>
+            <div class="demo"><span class="demo-title">Paper for a garden wedding</span></div>
+            <p class="why">Cormorant Garamond 300 carries the message.</p>
+          </div>
+          <div class="pair pair-no">
+            <span class="verdict">DO NOT</span>
+            <div class="demo"><span class="demo-title-wrong">Foxglove Paper</span></div>
+            <p class="why">The studio name set as a display line. Foxglove has no drawn logo on purpose: the lockup is the signature, so a name at poster scale competes with the only thing a tile has to say.</p>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="palette-h">
+        <div class="section-head">
+          <p class="kicker">02</p>
+          <h2 id="palette-h">The palette</h2>
+        </div>
+
+        <div class="chips">
+          <figure class="chip">
+            <div class="swatch" style="background:#fef1ec"></div>
+            <figcaption><strong>Blush fef1ec</strong> <span>the canvas, on every tile</span></figcaption>
+          </figure>
+          <figure class="chip">
+            <div class="swatch" style="background:#11223f"></div>
+            <figcaption><strong>Ink navy 11223f</strong> <span>all type, never black</span></figcaption>
+          </figure>
+          <figure class="chip">
+            <div class="swatch" style="background:#ff5734"></div>
+            <figcaption><strong>Coral ff5734</strong> <span>pills, rules, underlines, the last call</span></figcaption>
+          </figure>
+          <figure class="chip">
+            <div class="swatch" style="background:#ffffff"></div>
+            <figcaption><strong>White ffffff</strong> <span>card surfaces only</span></figcaption>
+          </figure>
+          <figure class="chip">
+            <div class="swatch" style="background:#f6bba4"></div>
+            <figcaption><strong>Dusty peach f6bba4</strong> <span>soft tints and hairlines</span></figcaption>
+          </figure>
+        </div>
+
+        <table class="ratios">
+          <caption>MEASURED PAIRINGS</caption>
+          <thead>
+            <tr>
+              <th scope="col">Pairing</th>
+              <th scope="col">Drawn</th>
+              <th scope="col">Ratio</th>
+              <th scope="col" class="use">Where it is allowed</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Ink on blush</th>
+              <td><span class="pairswatch" style="background:#fef1ec;color:#11223f">Aa</span></td>
+              <td class="num">14.35 to 1</td>
+              <td class="use">Every line of type on every tile</td>
+            </tr>
+            <tr>
+              <th scope="row">Ink on white</th>
+              <td><span class="pairswatch" style="background:#ffffff;color:#11223f">Aa</span></td>
+              <td class="num">15.86 to 1</td>
+              <td class="use">Type on a card surface, such as a poll option</td>
+            </tr>
+            <tr>
+              <th scope="row">Ink on coral</th>
+              <td><span class="pairswatch" style="background:#ff5734;color:#11223f">Aa</span></td>
+              <td class="num">5.03 to 1</td>
+              <td class="use">Type on the last call ground</td>
+            </tr>
+            <tr>
+              <th scope="row">Ink on peach</th>
+              <td><span class="pairswatch" style="background:#f6bba4;color:#11223f">Aa</span></td>
+              <td class="num">9.49 to 1</td>
+              <td class="use">Type inside a peach tint</td>
+            </tr>
+            <tr>
+              <th scope="row">Coral on blush</th>
+              <td><span class="pairswatch" style="background:#fef1ec;color:#ff5734">Aa</span></td>
+              <td class="num">2.85 to 1</td>
+              <td class="use">Never type. Pills, rules and underlines only</td>
+            </tr>
+            <tr>
+              <th scope="row">Blush on coral</th>
+              <td><span class="pairswatch" style="background:#ff5734;color:#fef1ec">Aa</span></td>
+              <td class="num">2.85 to 1</td>
+              <td class="use">Never type. Blush is the pill fill on coral, and the label stays ink</td>
+            </tr>
+            <tr>
+              <th scope="row">Peach on blush</th>
+              <td><span class="pairswatch" style="background:#fef1ec;color:#f6bba4">Aa</span></td>
+              <td class="num">1.51 to 1</td>
+              <td class="use">Never type. Hairlines, frame edges and guides only</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="pairs">
+          <div class="pair pair-yes">
+            <span class="verdict">DO</span>
+            <div class="demo"><span class="rule" style="display:block;width:88px;height:4px;background:#ff5734"></span></div>
+            <p class="why">Coral is a shape: the 4px rule, a 2px pill border, a 2px underline, one filled frame.</p>
+          </div>
+          <div class="pair pair-no">
+            <span class="verdict">DO NOT</span>
+            <div class="demo"><span class="demo-coral-type">Order by April 3</span></div>
+            <p class="why">Coral as type measures 2.85 to 1 on blush and fails the 4.5 to 1 bar. The last call gets its urgency from a coral ground under ink type, not from coral letters.</p>
+          </div>
+        </div>
+
+        <div class="inkset">
+          <p class="label">ILLUSTRATION PALETTE</p>
+          <ul class="inks">
+            <li><span class="ink-dot" style="background:#193c35"></span>Pine 193c35</li>
+            <li><span class="ink-dot" style="background:#7e813c"></span>Olive 7e813c</li>
+            <li><span class="ink-dot" style="background:#e5ba2b"></span>Marigold e5ba2b</li>
+            <li><span class="ink-dot" style="background:#ec4f22"></span>Poppy ec4f22</li>
+            <li><span class="ink-dot" style="background:#c6d7d0"></span>Sage c6d7d0</li>
+            <li><span class="ink-dot" style="background:#f6bba4"></span>Peach f6bba4</li>
+            <li><span class="ink-dot" style="background:#092a49"></span>Line 092a49</li>
+          </ul>
+          <p class="value" style="max-width:62ch;font-size:16px;line-height:1.6">A locked set, separate from the brand palette and used only inside the drawings. Poppy sits beside coral and is never swapped for it.</p>
+        </div>
+      </section>
+
+      <section aria-labelledby="type-h">
+        <div class="section-head">
+          <p class="kicker">03</p>
+          <h2 id="type-h">The type</h2>
+        </div>
+
+        <div class="specimen">
+          <div>
+            <span class="label">DISPLAY</span>
+            <span class="sample-display">Paper for a<br>garden wedding</span>
+          </div>
+          <div>
+            <span class="label">NAMES</span>
+            <span class="sample-names">Iris <span class="amp">&amp;</span> Theo</span>
+          </div>
+          <div>
+            <span class="label">LABELS</span>
+            <span class="sample-label">THE INVITATION · THE RSVP CARD · THE DETAILS</span>
+          </div>
+          <div>
+            <span class="label">BODY</span>
+            <span class="sample-body">Cormorant Garamond holds weight 300 at poster scale. Inter carries the labels and the dates.</span>
+          </div>
+        </div>
+
+        <div class="rules rules-continued">
+          <div>
+            <span class="label">TWO FACES</span>
+            <p class="value">Cormorant Garamond for display and headings, italic for couple names. Inter for labels, dates, body and every control. Nothing else is added.</p>
+          </div>
+          <div>
+            <span class="label">ONE WEIGHT</span>
+            <p class="value">Cormorant is drawn at <b>300</b> only. The face was picked for the thin cut; at 500 it fills in and stops looking engraved.</p>
+          </div>
+          <div>
+            <span class="label">TRACKING</span>
+            <p class="value">Labels <b>0.2em</b>, body <b>0.03em</b>, display <b>-0.01em</b> on the tiles. The label tracking is the loudest tell in the system, so it never varies.</p>
+          </div>
+          <div>
+            <span class="label">EXPORT SCALE</span>
+            <p class="value">On the 1080px board: eyebrow <b>30px</b>, support copy <b>32px to 46px</b>, display <b>144px to 250px</b>. The display size is set by how few words the tile carries, not by how important it is.</p>
+          </div>
+          <div>
+            <span class="label">FLOOR</span>
+            <p class="value">Nothing renders below <b>16px</b>, on a tile or on the web.</p>
+          </div>
+        </div>
+
+        <div class="pairs">
+          <div class="pair pair-yes">
+            <span class="verdict">DO</span>
+            <div class="demo"><span class="demo-title">Which liner</span></div>
+            <p class="why">Cormorant 300, the weight every tile uses.</p>
+          </div>
+          <div class="pair pair-no">
+            <span class="verdict">DO NOT</span>
+            <div class="demo"><span class="demo-title-heavy">Which liner</span></div>
+            <p class="why">The same line at 500. The strokes thicken, the counters close, and it reads like a different studio.</p>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="controls-h">
+        <div class="section-head">
+          <p class="kicker">04</p>
+          <h2 id="controls-h">The controls</h2>
+        </div>
+
+        <div class="controls">
+          <div class="control">
+            <span class="label">CTA</span>
+            <span class="pill pill-outline">Shop the collection</span>
+            <p class="why">999px, a 2px coral border, an ink label in sentence case, no fill. One shape, every tile.</p>
+          </div>
+          <div class="control">
+            <span class="label">CTA ON CORAL</span>
+            <span class="pill-ground"><span class="pill pill-blush">Book your date</span></span>
+            <p class="why">When the frame is coral the pill inverts: blush fill, ink label. It is the only fill the CTA ever takes.</p>
+          </div>
+          <div class="control">
+            <span class="label">POLL OPTION</span>
+            <span class="pill-poll"><span class="dot" style="background:#7e813c"></span>Meadow</span>
+            <p class="why">White, a 2px peach border, a liner swatch, and a noun for a label. Deliberately not a button: it belongs to the poll sticker, so it never takes a verb.</p>
+          </div>
+        </div>
+
+        <div class="pairs">
+          <div class="pair pair-yes">
+            <span class="verdict">DO</span>
+            <div class="demo"><span class="pill pill-outline">Order a sample</span></div>
+            <p class="why">Sentence case, a verb, and the coral outline that marks every click in the campaign.</p>
+          </div>
+          <div class="pair pair-no">
+            <span class="verdict">DO NOT</span>
+            <div class="demo"><span class="pill" style="background:#ff5734;color:#fef1ec;border:2px solid #ff5734">Order a sample</span></div>
+            <p class="why">A coral fill forces a blush label at 2.85 to 1. The outline is the CTA on blush; the fill belongs to the frame.</p>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="safe-h">
+        <div class="section-head">
+          <p class="kicker">05</p>
+          <h2 id="safe-h">The canvas</h2>
+        </div>
+
+        <div class="rules">
+          <div>
+            <span class="label">FEED</span>
+            <p class="value">1080 by 1350. Type sits inside <b>88px</b> sides and <b>96px</b> top and foot.</p>
+          </div>
+          <div>
+            <span class="label">STORY</span>
+            <p class="value">1080 by 1920. Copy starts at <b>200px</b> from the top inside <b>96px</b> sides, and nothing that must read falls below <b>1364px</b>, which is where the last call pill ends. The bottom of a story belongs to the platform and to the illustration.</p>
+          </div>
+          <div>
+            <span class="label">WEB</span>
+            <p class="value">One 1200px sheet, centered, 40px gutters. Under 1024px every post stacks and the tile takes the width of the column.</p>
+          </div>
+        </div>
+
+        <div class="boards">
+          <figure>
+            <div class="canvas canvas-feed">
+              <div class="safe safe-feed"></div>
+              <p class="canvas-note">88px sides<br>96px top and foot</p>
+            </div>
+            <figcaption><span class="framelabel">FEED</span>1080 by 1350</figcaption>
+          </figure>
+          <figure>
+            <div class="canvas canvas-story">
+              <div class="safe safe-story"></div>
+              <p class="canvas-note">96px sides<br>200px top<br>type stops at 1364px</p>
+            </div>
+            <figcaption><span class="framelabel">STORY</span>1080 by 1920</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section aria-labelledby="illo-h">
+        <div class="section-head">
+          <p class="kicker">06</p>
+          <h2 id="illo-h">The illustration</h2>
+        </div>
+
+        <div class="rules">
+          <div>
+            <span class="label">FLAT</span>
+            <p class="value">Flat shapes over line work. No gradient, no shadow, no texture, on any surface in the system.</p>
+          </div>
+          <div>
+            <span class="label">BLEED</span>
+            <p class="value">A drawing enters from an edge and leaves the frame. A shape that stops short inside the canvas reads as a sticker, and the campaign has none.</p>
+          </div>
+          <div>
+            <span class="label">PLACEMENT</span>
+            <p class="value">One corner per tile, opposite the copy. Two corners only when the canvas is wide enough to keep them apart.</p>
+          </div>
+          <div>
+            <span class="label">TYPE OVER ART</span>
+            <p class="value">Type never sits on the drawing. The copy holds its own field of blush, which is why the corners are corners.</p>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="bans-h">
+        <div class="section-head">
+          <p class="kicker">07</p>
+          <h2 id="bans-h">The bans</h2>
+        </div>
+
+        <ul class="bans">
+          <li><b>No colour outside the palette</b>, and no black. Ink navy is the darkest value in the system.</li>
+          <li><b>No gradients and no shadows</b>, on a tile, on a pill, or on a card.</li>
+          <li><b>No em dashes, en dashes or curly quotes</b>, anywhere the reader can see them.</li>
+          <li><b>No period at the end of a heading or a display line</b>. The line ends because it is finished.</li>
+          <li><b>No type below 16px</b>.</li>
+          <li><b>No pixel dimensions, file names or export notes on a tile</b>. The frame is the only thing a reader sees.</li>
+        </ul>
+
+        <p class="backlink"><a href="/prototype/foxglove">Back to the launch week</a></p>
+      </section>
+
+      <div class="colophon">
+        <p>Spec work by Ryan Allen | all demo concepts</p>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

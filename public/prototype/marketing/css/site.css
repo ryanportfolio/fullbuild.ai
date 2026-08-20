@@ -443,7 +443,12 @@ a.campaign-row:hover .what {
   outline-offset: 4px;
 }
 
+/* Campaign 02 sends traffic to two places, so the row wraps rather than
+   letting a second pill butt against the first. */
 .traffic {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 20px;
   padding: 40px 0 0;
 }
 
