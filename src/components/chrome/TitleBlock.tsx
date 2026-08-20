@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { gsap } from '@/lib/gsapClient';
 import { useWorkingSet, isUp, type PipelineState } from '@/lib/store';
 import { LIVE_PROJECTS } from '@/lib/projects';
 import RailLogo from './RailLogo';
@@ -59,6 +60,63 @@ function MoonGlyph() {
 
 const STATE_NAMES = ['Idea', 'Design', 'Engineering', 'Shipped'] as const;
 const ANCHORS = ['state-01', 'state-02', 'state-03', 'state-04'] as const;
+
+/**
+ * A title-block field that fills itself in the way a drafter fills a cell:
+ * 'type' letters the value in stroke by stroke (state names), 'scramble'
+ * cycles a plotter wheel through its charset before committing (numerics).
+ * The animating span is aria-hidden with a visually hidden sibling carrying
+ * the settled value, the same audit idiom TaglineFit uses. Server render and
+ * reduced motion both show the finished value outright; the preference is
+ * read per change, so an OS toggle mid-session takes effect at the next flip.
+ */
+function PlottedValue({
+  value,
+  mode,
+  chars,
+  className,
+}: {
+  value: string;
+  mode: 'type' | 'scramble';
+  chars?: string;
+  className?: string;
+}) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const prev = useRef<string | null>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || prev.current === value) return;
+    prev.current = value;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.textContent = value;
+      return;
+    }
+    const tween =
+      mode === 'type'
+        ? gsap.fromTo(
+            el,
+            { text: '' },
+            { text: value, duration: Math.min(0.66, 0.18 + value.length * 0.045), ease: 'none' },
+          )
+        : gsap.to(el, {
+            duration: 0.55,
+            ease: 'none',
+            scrambleText: { text: value, chars: chars ?? '0123456789', speed: 0.4 },
+          });
+    return () => {
+      tween.kill();
+      el.textContent = value;
+    };
+  }, [value, mode, chars]);
+  return (
+    <>
+      <span ref={ref} aria-hidden="true" className={className}>
+        {value}
+      </span>
+      <span className={styles.vh}>{value}</span>
+    </>
+  );
+}
 
 function scrollTo(anchor: string) {
   const el = document.getElementById(anchor);
@@ -153,7 +211,7 @@ export default function TitleBlock({
       data-min={min ? 'true' : undefined}
       aria-label="Drawing set title block and navigation"
     >
-      <svg className={styles.reg} viewBox="0 0 16 16" aria-hidden="true">
+      <svg className={styles.reg} viewBox="0 0 16 16" aria-hidden="true" data-reg>
         <line x1="0" y1="8" x2="16" y2="8" stroke="currentColor" strokeWidth="1" />
         <line x1="8" y1="0" x2="8" y2="16" stroke="currentColor" strokeWidth="1" />
         <circle cx="8" cy="8" r="4.5" fill="none" stroke="currentColor" strokeWidth="1" />
@@ -276,9 +334,11 @@ export default function TitleBlock({
           <span>
             <span className={styles.sheetLabel}>Sheet</span>
             <br />
-            <span className={styles.sheetNo}>{nn} / 04</span>
+            <PlottedValue value={`${nn} / 04`} mode="scramble" className={styles.sheetNo} />
           </span>
-          <span className={styles.stateName}>{STATE_NAMES[state - 1]}</span>
+          <span className={styles.stateName}>
+            <PlottedValue value={STATE_NAMES[state - 1]} mode="type" />
+          </span>
         </div>
 
         <nav className={styles.nav}>
@@ -328,7 +388,10 @@ export default function TitleBlock({
 
         <div className={styles.rev}>
           <span>REV {rev}</span>
-          <span>{sha}</span>
+          <span>
+            {/* the plotter wheel settles the commit id once, at first paint */}
+            <PlottedValue value={sha} mode="scramble" chars="0123456789abcdef" />
+          </span>
         </div>
       </div>
     </aside>

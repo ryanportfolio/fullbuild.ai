@@ -427,3 +427,16 @@
     flex-basis: 100%;
   }
 }
+
+/* Visually hidden truth beside the scrambling number: the animated span is
+   aria-hidden (the envelope is aria-live, so churn must stay out of the
+   tree); this sibling carries the settled value for assistive tech. */
+.vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}

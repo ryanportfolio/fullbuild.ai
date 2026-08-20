@@ -22,7 +22,7 @@
    ========================================================================= */
 
 import { useEffect, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent } from 'react';
-import gsap from 'gsap';
+import { gsap } from '@/lib/gsapClient';
 import { penBus } from '@/lib/penBus';
 import { Line, Path } from '../drafting/Marks';
 import s from './transmittal.module.css';
@@ -74,6 +74,12 @@ export default function SheetTransmittal() {
   const envRef = useRef<HTMLDivElement>(null);
   const stampRef = useRef<HTMLDivElement>(null);
   const receiptRef = useRef<HTMLParagraphElement>(null);
+  // The three places the issued number lands; each is an aria-hidden leaf the
+  // scramble may churn, with a visually hidden sibling carrying the settled
+  // value (the envelope is aria-live, so the churn must stay out of the tree).
+  const headNoRef = useRef<HTMLSpanElement>(null);
+  const stampNoRef = useRef<HTMLSpanElement>(null);
+  const rcptNoRef = useRef<HTMLSpanElement>(null);
   const sgnRef = useRef<SVGSVGElement>(null);
   const livePolyRef = useRef<SVGPolylineElement>(null);
   const t0 = useRef(0);
@@ -308,7 +314,8 @@ export default function SheetTransmittal() {
       setRfi(data.rfi);
       setSentOn(new Date().toISOString().slice(0, 10));
       setStatus({ text: '', fault: false });
-      fold();
+      // Passed by value: fold's closure still holds this render's null rfi.
+      fold(data.rfi);
     } catch {
       setBusy(false);
       setStatus({ text: 'send failed: the line is down, try mailto:hi@fullbuild.ai', fault: true });
@@ -317,7 +324,7 @@ export default function SheetTransmittal() {
 
   /* FOLD — the sheet becomes its own envelope, the stamp lands, the pen
      docks, and the rail site log gains the correspondence panel. */
-  const fold = () => {
+  const fold = (rfiText: string) => {
     setHand(false);
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     setPhase('sending');
@@ -399,6 +406,24 @@ export default function SheetTransmittal() {
         );
       }
       if (receiptRef.current) tl.to(receiptRef.current, { autoAlpha: 1, duration: 0.5 }, '-=0.05');
+      // THE NUMBER IS ISSUED, NOT SHOWN — the plotter's wheel cycles digits
+      // before committing each one, everywhere the number lands at once:
+      // sheet header, stamp, receipt. Leaf nodes only, and all three are
+      // aria-hidden with settled siblings, so the churn never reaches AT.
+      const wheels = [headNoRef.current, stampNoRef.current, rcptNoRef.current].filter(
+        (n): n is HTMLSpanElement => n !== null,
+      );
+      if (wheels.length) {
+        tl.to(
+          wheels,
+          {
+            duration: 1.1,
+            ease: 'none',
+            scrambleText: { text: rfiText, chars: '0123456789·', speed: 0.6, revealDelay: 0.15 },
+          },
+          '-=0.35',
+        );
+      }
       tl.call(() => {
         // The dock geometry belongs to the full-height rail; on the collapsed
         // (bottom-overlay) rail the instrument parks off-stage instead.
@@ -411,16 +436,20 @@ export default function SheetTransmittal() {
 
   const revealRailPost = (instant: boolean) => {
     const post = document.getElementById('ws-rail-post');
-    const ctx = motionCtx.current;
-    if (!post || !ctx) return;
+    if (!post) return;
     post.dataset.posted = 'true';
     if (instant) return;
     const strokes = Array.from(post.querySelectorAll<SVGElement>('.ws-post')).sort(
       (a, b) => Number(a.getAttribute('data-o') ?? 0) - Number(b.getAttribute('data-o') ?? 0),
     );
     gsap.set(strokes, { attr: { 'stroke-dasharray': '1 1', 'stroke-dashoffset': 1 } });
-    // In the context so unmount kills the stroke tweens with the timeline.
-    const tl = ctx.add(() => gsap.timeline());
+    // Deliberately NOT owned by motionCtx: the rail post outlives this sheet
+    // (the rail is persistent chrome), and killing this timeline on unmount
+    // strands half-drawn strokes wearing their animation dash, which Firefox
+    // mis-renders on multi-subpath paths (pitfalls: a finished stroke carries
+    // no dash). Left alone it runs to completion and its onComplete strips
+    // the attrs, which is the correct end state for an element we don't own.
+    const tl = gsap.timeline();
     strokes.forEach((el, i) => {
       tl.to(
         el,
@@ -452,7 +481,10 @@ export default function SheetTransmittal() {
         <header className={s.head}>
           <span className={`${s.stateNo} u-mono`}>T-01</span>
           <span className={`${s.stateName} u-label`}>Dispatch</span>
-          <span className={`${s.sheetNo} u-mono`}>{rfi ?? 'RFI ····'}</span>
+          <span className={`${s.sheetNo} u-mono`}>
+            <span ref={headNoRef} aria-hidden="true">{rfi ?? 'RFI ····'}</span>
+            <span className={s.vh}>{rfi ?? 'RFI ····'}</span>
+          </span>
         </header>
 
         <h2 className={s.heading}>Plan</h2>
@@ -610,11 +642,18 @@ export default function SheetTransmittal() {
               </svg>
               <div ref={stampRef} className={s.stamp}>
                 <span className={s.stampTitle}>Sent</span>
-                <span className={s.stampNo}>{rfi ?? ''}</span>
+                <span className={s.stampNo}>
+                  <span ref={stampNoRef} aria-hidden="true">{rfi ?? ''}</span>
+                  <span className={s.vh}>{rfi ?? ''}</span>
+                </span>
               </div>
             </div>
             <p ref={receiptRef} className={s.receipt}>
-              <b>{rfi ?? ''}</b> · lodged {sentOn ?? ''}
+              <b>
+                <span ref={rcptNoRef} aria-hidden="true">{rfi ?? ''}</span>
+                <span className={s.vh}>{rfi ?? ''}</span>
+              </b>{' '}
+              · lodged {sentOn ?? ''}
               <br />
               the response will issue from hi@fullbuild.ai
             </p>

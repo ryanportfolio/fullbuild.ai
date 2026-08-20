@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useRef, type ReactNode } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { gsap, ScrollTrigger } from '@/lib/gsapClient';
 import Lenis from 'lenis';
 import { useWorkingSet, type PipelineState } from '@/lib/store';
 import { penBus, type PenInk } from '@/lib/penBus';
@@ -192,7 +191,9 @@ export default function DrawingSet({
       if (s.dataset.act === undefined) flatIO.observe(s);
     });
 
-    gsap.registerPlugin(ScrollTrigger);
+    // The mobile address bar collapsing is not a layout change worth a full
+    // remeasure; real resizes still refresh through the observer below.
+    ScrollTrigger.config({ ignoreMobileResize: true });
 
     const lenis = new Lenis({ lerp: 0.09, wheelMultiplier: 1 });
     (window as unknown as { __lenis?: Lenis }).__lenis = lenis;
@@ -337,9 +338,20 @@ export default function DrawingSet({
           // The courier sheet waits until it holds half the stage: at 'top 78%'
           // the pen drew the form while the sheet was a sliver at the fold, and
           // a reader parked there saw the carriage darting at the viewport edge.
+          // fastScrollEnd: a flick past a sheet used to leave its strokes
+          // mid-flight below the fold; past 2000px/s the plot completes
+          // outright. preventOverlaps encodes the physical truth of the
+          // instrument: one pen, so a sheet still inking when the next
+          // sheet's trigger arrives finishes its pass first.
           scrollTrigger: crewed
             ? undefined
-            : { trigger: sec, start: courier ? 'top 50%' : 'top 78%', once: true },
+            : {
+                trigger: sec,
+                start: courier ? 'top 50%' : 'top 78%',
+                once: true,
+                fastScrollEnd: 2000,
+                preventOverlaps: 'ws-sheet',
+              },
           onComplete: () => {
             if (courier) {
               window.dispatchEvent(new Event('ws:t01-drawn'));
@@ -470,7 +482,10 @@ export default function DrawingSet({
         let leader = -1;
         const tl = gsap.timeline({
           // Lazy by arrival: nothing plots until the sheet holds real glass.
-          scrollTrigger: { trigger: sec, start: 'top 60%', once: true },
+          // fastScrollEnd only, no overlap group: the act is a performance on
+          // its own clock, and the next sheet's arrival must never slam it to
+          // completion while it still holds the stage.
+          scrollTrigger: { trigger: sec, start: 'top 60%', once: true, fastScrollEnd: 2000 },
           onUpdate: () => sec.style.setProperty('--act', tl.progress().toFixed(4)),
           onComplete: () => {
             // Performance over — the instrument leaves the sheet. Only if the
@@ -650,11 +665,70 @@ export default function DrawingSet({
         });
       };
 
+      // SEAT — a plan set is read sheet by sheet, and a sheet that stops a
+      // hand's width shy of register gets nudged home. When the reader parks
+      // NEAR a sheet boundary (within ~a fifth of the glass) the set clicks
+      // into register; parked mid-sheet, nothing moves. Directionless and
+      // short on purpose: it must read as a detent, never as scroll-jacking,
+      // and any new input yields instantly. Skipped wholesale on touch, where
+      // the platform's own momentum is the contract.
+      const seatPoints: number[] = [];
+      // The escapement: each seat advances the rail's registration mark one
+      // quarter turn, like a plotter's detent wheel. Authority writes the
+      // angle; CSS owns the (one-shot) transition.
+      const reg = document.querySelector<HTMLElement>('[data-rail] [data-reg]');
+      let seatTurns = 0;
+      let seatMoved = false;
+
       // Overall progress (feeds the 3D camera + the rail sketch).
       ScrollTrigger.create({
         trigger: root,
         start: 'top top',
         end: 'bottom bottom',
+        // Boundaries re-measure on every refresh (fonts landing, TaglineFit,
+        // the appended transmittal sheet), never per tick. Reads only.
+        onRefresh: () => {
+          seatPoints.length = 0;
+          const range = ScrollTrigger.maxScroll(window);
+          if (range <= 0) return;
+          sections.forEach((sec) => {
+            const p = (sec.getBoundingClientRect().top + window.scrollY) / range;
+            if (p > 0.001 && p < 0.999) seatPoints.push(p);
+          });
+          seatPoints.push(1);
+        },
+        snap:
+          ScrollTrigger.isTouch === 1
+            ? undefined
+            : {
+                snapTo: (value: number) => {
+                  const range = ScrollTrigger.maxScroll(window);
+                  if (range <= 0 || !seatPoints.length) return value;
+                  const prox = (window.innerHeight * 0.18) / range;
+                  let best = value;
+                  let bestD = Infinity;
+                  seatPoints.forEach((p) => {
+                    const d = Math.abs(p - value);
+                    if (d < bestD) {
+                      bestD = d;
+                      best = p;
+                    }
+                  });
+                  // The escapement ticks only on a real nudge, not on every
+                  // scroll-end (a zero-travel snap still completes).
+                  seatMoved = bestD <= prox && bestD * range > 2;
+                  return bestD <= prox ? best : value;
+                },
+                duration: { min: 0.2, max: 0.6 },
+                delay: 0.08,
+                ease: 'power3',
+                onComplete: () => {
+                  if (!seatMoved || !reg) return;
+                  seatMoved = false;
+                  seatTurns += 1;
+                  reg.style.transform = `rotate(${seatTurns * 90}deg)`;
+                },
+              },
         onUpdate: (self) => {
           setProgress(self.progress);
           applySketch(self.progress);
@@ -762,6 +836,21 @@ export default function DrawingSet({
       }
     }, root);
 
+    // REMEASURE ON REAL CHANGE — trigger geometry is cached at creation, and
+    // three things move the document under it after mount: the self-hosted
+    // faces landing, the two heading fitters, and the intro handing the page
+    // back. Window resizes are auto-handled by ScrollTrigger; this observer
+    // catches the content-driven changes, debounced so a drag-resize or a
+    // font cascade costs one remeasure, not a storm.
+    let refreshT = 0;
+    const scheduleRefresh = () => {
+      window.clearTimeout(refreshT);
+      refreshT = window.setTimeout(() => ScrollTrigger.refresh(), 220);
+    };
+    const bodyRO = new ResizeObserver(scheduleRefresh);
+    bodyRO.observe(document.body);
+    document.fonts?.ready.then(scheduleRefresh).catch(() => {});
+
     // The pen's beat sheet, cued by the state tracker: crewed on the cover,
     // parked through the middle sheets, back on for the pour (handled above).
     // Returning to the cover un-parks it onto the rail dock.
@@ -776,6 +865,11 @@ export default function DrawingSet({
       unsubPen();
       io.disconnect();
       flatIO.disconnect();
+      window.clearTimeout(refreshT);
+      bodyRO.disconnect();
+      // The escapement's angle is a direct write, so ctx.revert() does not own it.
+      const regEl = document.querySelector<HTMLElement>('[data-rail] [data-reg]');
+      regEl?.style.removeProperty('transform');
       ctx.revert();
       // HINGE sets inline transforms directly (not via gsap), so clear them
       // here; the rail sketch writes the stroke-dashoffset ATTRIBUTE directly

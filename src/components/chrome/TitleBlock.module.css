@@ -31,6 +31,22 @@
   width: 1.1rem;
   height: 1.1rem;
   flex: none;
+  /* The escapement: DrawingSet advances this a quarter turn each time a sheet
+     seats. One-shot transition off an authority-written angle, never a
+     self-timed keyframe. */
+  transition: transform 0.5s var(--ease-draw);
+}
+
+/* Visually hidden truth beside an animating field: the typed/scrambled span is
+   aria-hidden, this sibling carries the settled value for assistive tech. */
+.vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
 
 /* upper reach — the mark beside the vertical set lettering */
