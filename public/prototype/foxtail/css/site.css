@@ -37,6 +37,16 @@
             last-call cue fills cream with a voltage label, the loudest
             unit of the set.
 
+  Scroll    The scrollbar is the schedule's week bar: a 12px cream channel
+            railed with the same 1.5px ash rule the schedule rows take,
+            carrying a square voltage bar 6px wide, which is the bar the
+            .sched-cell draws at 12px tall. Square, not a pill, because a
+            filled voltage pill is not a shape this campaign draws: its
+            pills are 1.5px outlines with no fill. WebKit and Blink take
+            the drawn version, Firefox takes scrollbar-color. Cost,
+            stated: on macOS a styled bar replaces the overlay scrollbar
+            with a classic one that is always visible.
+
   Rules     Every rule is 1.5px. On the ads the rule voice is voltage,
             the way the reference draws its hero rule; on this page ash
             carries structure and voltage marks only the masthead, the
@@ -541,5 +551,45 @@ a:focus-visible {
 
   .colophon {
     margin-top: 80px;
+  }
+}
+
+/* The voltage rail. See the Scroll note in the contract above. */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--cream);
+}
+
+::-webkit-scrollbar-track:vertical {
+  border-left: 1.5px solid var(--ash);
+}
+
+::-webkit-scrollbar-track:horizontal {
+  border-top: 1.5px solid var(--ash);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--voltage);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  border-width: 2px;
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--cream);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-color: var(--voltage) var(--cream);
+    scrollbar-width: thin;
   }
 }

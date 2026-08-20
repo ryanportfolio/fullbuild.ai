@@ -40,6 +40,17 @@
             first row. On the phone the chip drops under the job it
             labels and the rail is left-aligned.
 
+  Scroll    The scrollbar is the index's own pill: a 14px paper channel
+            edged with the 1px ash rule the plan rows are drawn with,
+            carrying an 8px ink bar at 999px, the shape of every traffic
+            pill on the page. Foredge shares this palette, so the two are
+            told apart by shape and width: 8px pill in a 14px channel
+            here, 4px bar at a 6px corner in a 12px channel there. WebKit
+            and Blink take the drawn version, Firefox takes
+            scrollbar-color, which carries the colours and drops the
+            geometry. Cost, stated: on macOS a styled bar replaces the
+            overlay scrollbar with a classic one that is always visible.
+
   Motion    None. Zero JavaScript.
 
   Bans      Accent color the page invents for itself. Gradients.
@@ -399,7 +410,7 @@ a.campaign-row:hover .what {
 
 .sends {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 24px;
 }
 
@@ -548,7 +559,57 @@ a.campaign-row:hover .what {
   }
 
   .sends {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 20px;
+  }
+}
+
+/* Below this the two preview columns fall under 126px, which is what
+   "THE ANNOUNCEMENT" measures at the 16px floor, and the captions pushed the
+   page sideways. One column instead: the floor holds, the caption fits, and
+   a preview this small was unreadable at two up anyway. */
+@media (max-width: 374px) {
+  .sends {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The pill in the margin. See the Scroll note in the contract above. */
+::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--paper);
+}
+
+::-webkit-scrollbar-track:vertical {
+  border-left: 1px solid var(--ash);
+}
+
+::-webkit-scrollbar-track:horizontal {
+  border-top: 1px solid var(--ash);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ink);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  border-width: 2px;
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--paper);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-color: var(--ink) var(--paper);
+    scrollbar-width: thin;
   }
 }

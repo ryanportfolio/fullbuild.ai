@@ -16,6 +16,16 @@
              shadows, no gradients. Surface contrast separates the layers;
              hairlines appear only as the translation table's rules and the
              1px frames around live artboards and swatches.
+   Scroll    The scrollbar is a hedge pill in the margin: a 12px oat
+             channel edged with the 1px rye hairline, carrying a 6px hedge
+             bar at 999px, the radius every pill here takes. Marigold was
+             tried and rejected: it is the bridge color and one filled
+             marigold object per view is the rule, so a marigold thumb
+             would either break that count or sit at 1.6 to 1 on oat and
+             be hard to find. WebKit and Blink take the drawn version,
+             Firefox takes scrollbar-color. Cost, stated: on macOS a
+             styled bar replaces the overlay scrollbar with a classic one
+             that is always visible.
    Motion    None. Zero JavaScript. The units are the subject.
    Bans      Decor colors in UI. Two marigold pills in one viewport.
              Shadows. A second serif. Type below 16px. */
@@ -566,5 +576,45 @@ h3 {
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--fieldstone);
+  }
+}
+
+/* The hedge band in the margin. See the Scroll note in the contract above. */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--oat);
+}
+
+::-webkit-scrollbar-track:vertical {
+  border-left: 1px solid var(--rye);
+}
+
+::-webkit-scrollbar-track:horizontal {
+  border-top: 1px solid var(--rye);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--hedge);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  border-width: 2px;
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--oat);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-color: var(--hedge) var(--oat);
+    scrollbar-width: thin;
   }
 }
