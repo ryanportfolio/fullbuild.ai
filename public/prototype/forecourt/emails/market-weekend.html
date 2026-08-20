@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+  <meta name="format-detection" content="telephone=no,date=no,address=no,email=no">
+  <meta name="x-apple-disable-message-reformatting">
+  <title>One yard, forty makers</title>
+
+  <!--[if mso]>
+  <xml>
+    <o:OfficeDocumentSettings>
+      <o:AllowPNG/>
+      <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+  </xml>
+  <![endif]-->
+
+  <!--[if !mso]><!-->
+  <style>
+    @font-face {
+      font-family: 'Lora';
+      font-style: normal;
+      font-weight: 400 600;
+      src: url('https://fullbuild.ai/prototype/forecourt/fonts/lora-latin.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'Inter';
+      font-style: normal;
+      font-weight: 400 600;
+      src: url('https://fullbuild.ai/prototype/forecourt/fonts/inter-latin.woff2') format('woff2');
+    }
+  </style>
+  <!--<![endif]-->
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100% !important;
+      background-color: #f5f0e4;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+    table {
+      border-collapse: collapse;
+      mso-table-lspace: 0pt;
+      mso-table-rspace: 0pt;
+    }
+    #outlook a { padding: 0; }
+    .ExternalClass { width: 100%; }
+    .ExternalClass,
+    .ExternalClass p,
+    .ExternalClass span,
+    .ExternalClass td,
+    .ExternalClass div { line-height: 100%; }
+    .link-mut:hover { color: #1e2a1e !important; }
+    a[x-apple-data-detectors] {
+      color: inherit !important;
+      text-decoration: none !important;
+    }
+
+    /* Dark mode: the same file, second palette. The marigold band, the pills,
+       and the beads hold their colors; the grounds and the text swap. */
+    @media (prefers-color-scheme: dark) {
+      .canvas { background-color: #191f17 !important; }
+      .card { background-color: #242b21 !important; }
+      .plate { background-color: #2b3327 !important; }
+      .txt-ink { color: #f5f0e4 !important; }
+      .txt-mut { color: #b5b19d !important; }
+      .rule { border-top-color: #b5b19d !important; }
+      .link-mut:hover { color: #f5f0e4 !important; }
+      .bead-hedge { background-color: #f5f0e4 !important; }
+    }
+    /* Outlook.com and the Outlook apps rewrite colors themselves; these hooks
+       hand their rewriter the same second palette and pin what must not move. */
+    [data-ogsc] .txt-ink { color: #f5f0e4 !important; }
+    [data-ogsc] .txt-mut { color: #b5b19d !important; }
+    [data-ogsc] .txt-band { color: #1e2a1e !important; }
+    [data-ogsc] .txt-go { color: #1e2a1e !important; }
+    [data-ogsc] .txt-oat { color: #f5f0e4 !important; }
+    [data-ogsc] .txt-flip { color: #1e2a1e !important; }
+    [data-ogsc] .rule { border-top-color: #b5b19d !important; }
+    [data-ogsc] .link-mut:hover { color: #f5f0e4 !important; }
+    /* Outlook for Android has shipped the color hook without the background
+       hook, so every background pin is declared under both attributes */
+    [data-ogsc] .band { background-color: #f6b83c !important; }
+    [data-ogsc] .pill-go { background-color: #f6b83c !important; }
+    [data-ogsc] .pill-flip { background-color: #f5f0e4 !important; }
+    [data-ogsc] .bead-radish { background-color: #c8502f !important; }
+    [data-ogsc] .bead-marigold { background-color: #f6b83c !important; }
+    [data-ogsc] .bead-leaf { background-color: #6a9e57 !important; }
+    [data-ogsc] .bead-cornflower { background-color: #5b7fae !important; }
+    [data-ogsc] .bead-hedge { background-color: #f5f0e4 !important; }
+    [data-ogsb] .canvas { background-color: #191f17 !important; }
+    [data-ogsb] .card { background-color: #242b21 !important; }
+    [data-ogsb] .plate { background-color: #2b3327 !important; }
+    [data-ogsb] .band { background-color: #f6b83c !important; }
+    [data-ogsb] .pill-go { background-color: #f6b83c !important; }
+    [data-ogsb] .pill-flip { background-color: #f5f0e4 !important; }
+    [data-ogsb] .bead-radish { background-color: #c8502f !important; }
+    [data-ogsb] .bead-marigold { background-color: #f6b83c !important; }
+    [data-ogsb] .bead-leaf { background-color: #6a9e57 !important; }
+    [data-ogsb] .bead-cornflower { background-color: #5b7fae !important; }
+    [data-ogsb] .bead-hedge { background-color: #f5f0e4 !important; }
+
+    @media only screen and (max-width: 480px) {
+      .gutter {
+        padding-left: 24px !important;
+        padding-right: 24px !important;
+      }
+      .h1 {
+        font-size: 40px !important;
+        line-height: 46px !important;
+        letter-spacing: -0.5px !important;
+      }
+      .h1-pad { padding-top: 40px !important; padding-bottom: 28px !important; }
+    }
+  </style>
+</head>
+<body class="canvas" style="margin:0; padding:0; background-color:#f5f0e4;">
+
+  <div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#f5f0e4;">
+    Forty makers, three neighbors, and a projector night, October 3 and 4 in the yard
+    &#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;
+  </div>
+
+  <!-- Announcement band: the action color shows up here before it becomes the button -->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="band" style="background-color:#f6b83c;">
+    <tr>
+      <td align="center" bgcolor="#f6b83c" class="band" style="padding:14px 24px;">
+        <p class="txt-band" style="margin:0; font-family:'Inter', Helvetica, Arial, sans-serif; font-size:16px; line-height:22px; font-weight:600; color:#1e2a1e;">October 3 and 4 &middot; A market in the yard at Foundry Works</p>
+      </td>
+    </tr>
+  </table>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="canvas" style="background-color:#f5f0e4;">
+    <tr>
+      <td align="center" bgcolor="#f5f0e4" class="canvas">
+
+        <!--[if mso]>
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center" style="width:600px;"><tr><td>
+        <![endif]-->
+        <div style="max-width:600px; margin:0 auto;">
+
+          <!-- Header -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td class="gutter" style="padding:28px 32px 0 32px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td align="left" class="txt-ink" style="font-family:'Inter', Helvetica, Arial, sans-serif; font-size:18px; line-height:22px; font-weight:600; letter-spacing:0.06em; color:#1e2a1e;">FORECOURT</td>
+                    <td align="right" class="txt-mut" style="font-family:'Inter', Helvetica, Arial, sans-serif; font-size:16px; line-height:22px; color:#5d5b4c;">Hudson NY</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+
+          <!-- Display block, centered like the case page and every other unit -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td class="gutter h1-pad" align="center" style="padding:52px 32px 32px 32px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td role="heading" aria-level="1" align="center" class="h1 txt-ink" style="font-family:'Lora', Georgia, 'Times New Roman', serif; font-size:52px; line-height:60px; mso-line-height-rule:exactly; font-weight:400; letter-spacing:-0.5px; color:#1e2a1e;">One yard,<br>forty makers</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" class="gutter" style="padding:0 32px 28px 32px;">
+                <p class="txt-ink" style="margin:0; font-family:'Inter', Helvetica, Arial, sans-serif; font-size:17px; line-height:26px; color:#1e2a1e;">On the first weekend of October the yard at Foundry Works becomes a market. The forty studios open their doors and set up tables between the halls, and three neighbors come along: the bookshop, the paper studio, and the drive-in.</p>
+              </td>
+            </tr>
+            <!-- Bead strip: the decor colors, and the only place they live -->
+            <tr>
+              <td align="center" style="padding:0 32px 44px 32px;">
+                <table role="presentation" aria-hidden="true" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td width="20" height="20" class="bead-radish" style="width:20px; height:20px; border-radius:999px; background-color:#c8502f; font-size:1px; line-height:1px;">&nbsp;</td>
+                    <td width="12" style="width:12px; font-size:1px; line-height:1px;">&nbsp;</td>
+                    <td width="20" height="20" class="bead-cornflower" style="width:20px; height:20px; border-radius:999px; background-color:#5b7fae; font-size:1px; line-height:1px;">&nbsp;</td>
+                    <td width="12" style="width:12px; font-size:1px; line-height:1px;">&nbsp;</td>
+                    <td width="20" height="20" class="bead-marigold" style="width:20px; height:20px; border-radius:999px; background-color:#f6b83c; font-size:1px; line-height:1px;">&nbsp;</td>
+                    <td width="12" style="width:12px; font-size:1px; line-height:1px;">&nbsp;</td>
+                    <td width="20" height="20" class="bead-leaf" style="width:20px; height:20px; border-radius:999px; background-color:#6a9e57; font-size:1px; line-height:1px;">&nbsp;</td>
+                    <td width="12" style="width:12px; font-size:1px; line-height:1px;">&nbsp;</td>
+                    <td width="20" height="20" class="bead-hedge" style="width:20px; height:20px; border-radius:999px; background-color:#1e2a1e; font-size:1px; line-height:1px;">&nbsp;</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+
+          <!-- Details card -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td class="gutter" style="padding:0 32px 20px 32px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td class="card" bgcolor="#eae2cd" style="background-color:#eae2cd; border-radius:24px; padding:28px 28px 30px 28px;">
+                      <p class="txt-ink" style="margin:0 0 10px 0; font-family:'Inter', Helvetica, Arial, sans-serif; font-size:17px; line-height:24px; color:#1e2a1e;"><span style="font-weight:600;">Dates&nbsp;&nbsp;</span>Saturday October 3 and Sunday October 4</p>
+                      <p class="txt-ink" style="margin:0 0 10px 0; font-family:'Inter', Helvetica, Arial, sans-serif; font-size:17px; line-height:24px; color:#1e2a1e;"><span style="font-weight:600;">Hours&nbsp;&nbsp;</span>Ten to five, both days, free to walk in</p>
+                      <p class="txt-ink" style="margin:0; font-family:'Inter', Helvetica, Arial, sans-serif; font-size:17px; line-height:24px; color:#1e2a1e;"><span style="font-weight:600;">Where&nbsp;&nbsp;</span>The yard at Foundry Works, 12 Water Street, Hudson</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+
+          <!-- The neighbors -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td class="gutter" align="center" style="padding:36px 32px 20px 32px;">
+                <p role="heading" aria-level="2" class="txt-ink" style="margin:0; font-family:'Lora', Georgia, 'Times New Roman', serif; font-size:30px; line-height:36px; mso-line-height-rule:exactly; letter-spacing:-0.3px; color:#1e2a1e;">The neighbors are coming</p>
+              </td>
+            </tr>
+            <tr>
+              <td class="gutter" style="padding:0 32px 12px 32px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td class="card" bgcolor="#eae2cd" style="background-color:#eae2cd; border-radius:24px; padding:24px 28px 26px 28px;">
+                      <p class="txt-ink" style="margin:0 0 4px 0; font-family:'Lora', Georgia, 'Times New Roman', serif; font-size:22px; line-height:28px; mso-line-height-rule:exactly; color:#1e2a1e;">Foredge Books</p>
+                      <p class="txt-ink" style="margin:0; font-family:'Inter', Helvetica, Arial, sans-serif; font-size:17px; line-height:24px; color:#1e2a1e;">Two tables of backlist and the press's new list, signed where they could manage it.</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td class="gutter" style="padding:0 32px 12px 32px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td class="card" bgcolor="#eae2cd" style="background-color:#eae2cd; border-radius:24px; padding:24px 28px 26px 28px;">
+                      <p class="txt-ink" style="margin:0 0 4px 0; font-family:'Lora', Georgia, 'Times New Roman', serif; font-size:22px; line-height:28px; mso-line-height-rule:exactly; color:#1e2a1e;">Foxglove Paper</p>
+                      <p class="txt-ink" style="margin:0; font-family:'Inter', Helvetica, Arial, sans-serif; font-size:17px; line-height:24px; color:#1e2a1e;">Letterpress cards and a short run of market prints, pulled for this weekend only.</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td class="gutter" style="padding:0 32px 36px 32px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td class="card" bgcolor="#eae2cd" style="background-color:#eae2cd; border-radius:24px; padding:24px 28px 26px 28px;">
+                      <p class="txt-ink" style="margin:0 0 4px 0; font-family:'Lora', Georgia, 'Times New Roman', serif; font-size:22px; line-height:28px; mso-line-height-rule:exactly; color:#1e2a1e;">Foxtail Drive-In</p>
+                      <p class="txt-ink" style="margin:0; font-family:'Inter', Helvetica, Arial, sans-serif; font-size:17px; line-height:24px; color:#1e2a1e;">Popcorn by day, and the projector after dark; details below.</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+
+          <!-- CTA: the one marigold pill in the send -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td align="center" class="gutter" style="padding:0 32px 52px 32px;">
+                <!--[if mso]>
+                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://forecourt.example/plan" style="height:52px; width:216px; v-text-anchor:middle;" arcsize="50%" stroke="f" fillcolor="#f6b83c">
+                  <w:anchorlock/>
+                  <center style="color:#1e2a1e; font-family:Helvetica, Arial, sans-serif; font-size:17px; font-weight:600;">Plan your Saturday</center>
+                </v:roundrect>
+                <![endif]-->
+                <!--[if !mso]><!-->
+                <a href="https://forecourt.example/plan" class="pill-go" style="display:inline-block; padding:15px 32px; border-radius:999px; background-color:#f6b83c; font-family:'Inter', Helvetica, Arial, sans-serif; font-size:17px; font-weight:600; line-height:22px; mso-line-height-rule:exactly; color:#1e2a1e; text-decoration:none;"><span class="txt-go" style="color:#1e2a1e;">Plan your Saturday</span></a>
+                <!--<![endif]-->
+              </td>
+            </tr>
+          </table>
+
+          <!-- Night plate -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td class="gutter" style="padding:0 32px 52px 32px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td class="plate" bgcolor="#1e2a1e" style="background-color:#1e2a1e; border-radius:24px; padding:36px 32px 40px 32px;">
+                      <p role="heading" aria-level="2" class="txt-oat" style="margin:0 0 8px 0; font-family:'Lora', Georgia, 'Times New Roman', serif; font-size:30px; line-height:36px; mso-line-height-rule:exactly; letter-spacing:-0.3px; color:#f5f0e4;">When the sun drops</p>
+                      <p class="txt-oat" style="margin:0 0 26px 0; font-family:'Inter', Helvetica, Arial, sans-serif; font-size:17px; line-height:24px; color:#f5f0e4;">Foxtail runs a projector night in the yard on Saturday, no cars this time. The screen goes up at six and the picture starts when the sky lets it.</p>
+                      <!--[if mso]>
+                      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://forecourt.example/projector-night" style="height:52px; width:184px; v-text-anchor:middle;" arcsize="50%" stroke="f" fillcolor="#f5f0e4">
+                        <w:anchorlock/>
+                        <center style="color:#1e2a1e; font-family:Helvetica, Arial, sans-serif; font-size:17px; font-weight:600;">See what plays</center>
+                      </v:roundrect>
+                      <![endif]-->
+                      <!--[if !mso]><!-->
+                      <a href="https://forecourt.example/projector-night" class="pill-flip" style="display:inline-block; padding:15px 32px; border-radius:999px; background-color:#f5f0e4; font-family:'Inter', Helvetica, Arial, sans-serif; font-size:17px; font-weight:600; line-height:22px; mso-line-height-rule:exactly; color:#1e2a1e; text-decoration:none;"><span class="txt-flip" style="color:#1e2a1e;">See what plays</span></a>
+                      <!--<![endif]-->
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+
+          <!-- Footer -->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td class="gutter rule" style="padding:36px 32px 12px 32px; border-top:1px solid #5d5b4c;">
+                <p class="txt-mut" style="margin:0 0 10px 0; font-family:'Inter', Helvetica, Arial, sans-serif; font-size:16px; line-height:24px; color:#5d5b4c;">Forecourt Market, care of Foundry Works, 12 Water Street, Hudson, NY 12534</p>
+                <p class="txt-mut" style="margin:0 0 10px 0; font-family:'Inter', Helvetica, Arial, sans-serif; font-size:16px; line-height:24px; color:#5d5b4c;">You are getting this because you signed up for market news at Foundry Works or at one of the neighbors' counters.</p>
+                <p style="margin:0 0 36px 0; font-family:'Inter', Helvetica, Arial, sans-serif; font-size:16px; line-height:24px;">
+                  <a href="https://forecourt.example/unsubscribe" class="txt-mut link-mut" style="display:inline-block; padding:12px 0; color:#5d5b4c; text-decoration:underline;">Unsubscribe</a>
+                  <span class="txt-mut" style="color:#5d5b4c;">&nbsp;&middot;&nbsp;</span>
+                  <a href="https://forecourt.example/preferences" class="txt-mut link-mut" style="display:inline-block; padding:12px 0; color:#5d5b4c; text-decoration:underline;">Change how often we write</a>
+                </p>
+              </td>
+            </tr>
+          </table>
+
+        </div>
+        <!--[if mso]>
+        </td></tr></table>
+        <![endif]-->
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

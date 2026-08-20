@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Forecourt Market: the announcement</title>
+<style>
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: block;
+  src: url('../fonts/lora-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: block;
+  src: url('../fonts/inter-latin.woff2') format('woff2');
+}
+
+:root {
+  --oat: #f5f0e4;
+  --rye: #eae2cd;
+  --hedge: #1e2a1e;
+  --marigold: #f6b83c;
+  --radish: #c8502f;
+  --cornflower: #5b7fae;
+  --leaf: #6a9e57;
+  --serif: 'Lora', Georgia, 'Times New Roman', serif;
+  --sans: 'Inter', Helvetica, Arial, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { overflow: auto; background: var(--oat); }
+
+body {
+  width: 1080px;
+  height: 1350px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--oat);
+  color: var(--hedge);
+  -webkit-font-smoothing: antialiased;
+}
+
+.tile {
+  position: relative;
+  width: 1080px;
+  height: 1350px;
+  overflow: hidden;
+  text-align: center;
+}
+
+.band {
+  padding: 30px 60px;
+  background: var(--marigold);
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 32px;
+  line-height: 1.25;
+}
+
+.stack { padding: 96px 80px 0; }
+
+.eyebrow {
+  margin: 0;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.display {
+  margin: 56px 0 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 148px;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+}
+
+.support {
+  margin: 52px auto 0;
+  max-width: 780px;
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1.45;
+}
+
+.beads {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 64px;
+}
+
+.bead { width: 36px; height: 36px; border-radius: 999px; }
+.bead-radish { background: var(--radish); }
+.bead-cornflower { background: var(--cornflower); }
+.bead-marigold { background: var(--marigold); }
+.bead-leaf { background: var(--leaf); }
+.bead-hedge { background: var(--hedge); }
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 72px;
+  padding: 34px 72px;
+  border-radius: 999px;
+  background: var(--marigold);
+  color: var(--hedge);
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 38px;
+  line-height: 1.2;
+}
+
+.where {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 72px;
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.3;
+}
+</style>
+</head>
+<body>
+<div class="tile">
+  <p class="band">A market in the yard at Foundry Works</p>
+  <div class="stack">
+    <p class="eyebrow">Forecourt Market</p>
+    <h1 class="display">One yard,<br>forty makers</h1>
+    <p class="support">The studios open their doors and the neighbors set up tables, October 3 and 4</p>
+    <div class="beads" aria-hidden="true">
+      <span class="bead bead-radish"></span>
+      <span class="bead bead-cornflower"></span>
+      <span class="bead bead-marigold"></span>
+      <span class="bead bead-leaf"></span>
+      <span class="bead bead-hedge"></span>
+    </div>
+    <p class="cta">Plan your Saturday</p>
+  </div>
+  <p class="where">Ten to five &middot; 12 Water Street, Hudson &middot; free to walk in</p>
+</div>
+</body>
+</html>

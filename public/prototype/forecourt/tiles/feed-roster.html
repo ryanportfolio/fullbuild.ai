@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Forecourt Market: the neighbors</title>
+<style>
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: block;
+  src: url('../fonts/lora-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: block;
+  src: url('../fonts/inter-latin.woff2') format('woff2');
+}
+
+:root {
+  --oat: #f5f0e4;
+  --rye: #eae2cd;
+  --hedge: #1e2a1e;
+  --marigold: #f6b83c;
+  --serif: 'Lora', Georgia, 'Times New Roman', serif;
+  --sans: 'Inter', Helvetica, Arial, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { overflow: auto; background: var(--rye); }
+
+body {
+  width: 1080px;
+  height: 1350px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--rye);
+  color: var(--hedge);
+  -webkit-font-smoothing: antialiased;
+}
+
+.tile {
+  position: relative;
+  width: 1080px;
+  height: 1350px;
+  overflow: hidden;
+  padding: 96px 80px;
+  text-align: center;
+}
+
+.eyebrow {
+  margin: 0;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.display {
+  margin: 48px 0 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 120px;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+}
+
+.cards {
+  display: grid;
+  gap: 28px;
+  margin-top: 72px;
+}
+
+.card {
+  padding: 44px 48px 48px;
+  border-radius: 48px;
+  background: var(--oat);
+  text-align: center;
+}
+
+.card .name {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 54px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.card .what {
+  margin: 14px 0 0;
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.35;
+}
+
+.also {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 72px;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 30px;
+  line-height: 1.3;
+}
+</style>
+</head>
+<body>
+<div class="tile">
+  <p class="eyebrow">Forecourt Market &middot; October 3 and 4</p>
+  <h1 class="display">The neighbors</h1>
+  <div class="cards">
+    <div class="card">
+      <p class="name">Foredge Books</p>
+      <p class="what">Two tables of backlist and the press's new list</p>
+    </div>
+    <div class="card">
+      <p class="name">Foxglove Paper</p>
+      <p class="what">Letterpress cards and a short run of market prints</p>
+    </div>
+    <div class="card">
+      <p class="name">Foxtail Drive-In</p>
+      <p class="what">Popcorn by day, the projector after dark</p>
+    </div>
+  </div>
+  <p class="also">And all forty Foundry studios, doors open</p>
+</div>
+</body>
+</html>

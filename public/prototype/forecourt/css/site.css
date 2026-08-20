@@ -1,0 +1,570 @@
+/* Forecourt Market, campaign 05 case page.
+
+   Contract
+   Color     oat        #f5f0e4  page ground and email canvas
+             rye        #eae2cd  cards and wells, the only elevation
+             hedge      #1e2a1e  ink: text, dark pills, the night plate
+             fieldstone #5d5b4c  muted text (6.02:1 on oat)
+             marigold   #f6b83c  the bridge color: decor bead AND the only
+                                 filled action, ink text on it, one per view
+             beads      #c8502f radish, #5b7fae cornflower, #6a9e57 leaf,
+                                 decoration only, never a button or a label
+   Type      Lora 400 for every heading, leading 1.1 to 1.2, tracking
+             -0.01em, centered. Inter 400 to 600 for everything else.
+             Floor: nothing below 16px on this page.
+   Shape     Pills at 999px, cards at 24 to 48px, no other radius. No
+             shadows, no gradients. Surface contrast separates the layers;
+             hairlines appear only as the translation table's rules and the
+             1px frames around live artboards and swatches.
+   Motion    None. Zero JavaScript. The units are the subject.
+   Bans      Decor colors in UI. Two marigold pills in one viewport.
+             Shadows. A second serif. Type below 16px. */
+
+:root {
+  --oat: #f5f0e4;
+  --rye: #eae2cd;
+  --hedge: #1e2a1e;
+  --fieldstone: #5d5b4c;
+  --marigold: #f6b83c;
+  --radish: #c8502f;
+  --cornflower: #5b7fae;
+  --leaf: #6a9e57;
+  --serif: 'Lora', Georgia, 'Times New Roman', serif;
+  --sans: 'Inter', Helvetica, Arial, sans-serif;
+}
+
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400 600;
+  src: url('/prototype/forecourt/fonts/lora-latin.woff2') format('woff2');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 600;
+  src: url('/prototype/forecourt/fonts/inter-latin.woff2') format('woff2');
+  font-display: swap;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--oat);
+  color: var(--hedge);
+  font-family: var(--sans);
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--hedge);
+  color: var(--oat);
+  padding: 12px 20px;
+  font-size: 16px;
+}
+.skip:focus { left: 16px; top: 16px; z-index: 10; }
+
+/* Announcement band: the action color shows up here before it becomes the button */
+
+.band {
+  background: var(--marigold);
+  text-align: center;
+  padding: 14px 24px;
+}
+
+.band p {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.band .band-pill {
+  display: inline-block;
+  background: var(--hedge);
+  color: var(--oat);
+  border-radius: 999px;
+  padding: 4px 14px;
+  margin-right: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sheet {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px;
+}
+
+a { color: var(--hedge); }
+
+/* Masthead: centered, the way the reference centers everything */
+
+.masthead {
+  padding: 40px 0 88px;
+  text-align: center;
+}
+
+.masthead .wordmark {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 0 0 96px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.masthead .wordmark span:last-child {
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--fieldstone);
+}
+
+h1 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(48px, 7vw, 88px);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  margin: 0 auto 32px;
+  max-width: 900px;
+}
+
+.standfirst {
+  max-width: 680px;
+  margin: 0 auto;
+  font-size: 20px;
+  line-height: 1.55;
+}
+
+.beads {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin: 48px 0 0;
+}
+
+.bead { width: 26px; height: 26px; border-radius: 999px; }
+.bead-radish { background: var(--radish); }
+.bead-cornflower { background: var(--cornflower); }
+.bead-marigold { background: var(--marigold); }
+.bead-leaf { background: var(--leaf); }
+.bead-hedge { background: var(--hedge); }
+
+/* Sections: centered heads, surface contrast instead of hairlines */
+
+section { padding: 48px 0 96px; }
+
+.section-head {
+  text-align: center;
+  margin-bottom: 56px;
+}
+
+.kicker {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fieldstone);
+  margin: 0 0 16px;
+}
+
+h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(36px, 4.5vw, 56px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+h3 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin: 0 0 12px;
+}
+
+/* 01 The brief: three rye cards */
+
+.brief-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.brief-cards .card {
+  background: var(--rye);
+  border-radius: 24px;
+  padding: 36px 36px 40px;
+}
+
+.brief-cards .label {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fieldstone);
+  margin-bottom: 14px;
+}
+
+.brief-cards p { margin: 0; }
+
+/* 02 The system */
+
+.chips {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-bottom: 72px;
+}
+
+.chip {
+  margin: 0;
+  background: var(--rye);
+  border-radius: 24px;
+  padding: 28px;
+  text-align: center;
+}
+
+.chip .swatch {
+  width: 72px;
+  height: 72px;
+  border-radius: 999px;
+  margin: 0 auto 16px;
+}
+
+.chip figcaption { font-size: 16px; line-height: 1.4; }
+.chip figcaption strong { display: block; font-weight: 600; }
+.chip figcaption span { color: var(--fieldstone); }
+
+.specimen {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px 64px;
+  align-items: start;
+}
+
+.specimen .label {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fieldstone);
+  margin-bottom: 16px;
+}
+
+.sample-display {
+  font-family: var(--serif);
+  font-size: clamp(44px, 5.5vw, 72px);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  display: block;
+}
+
+.sample-body { display: block; max-width: 480px; }
+
+.sample-controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 999px;
+  padding: 14px 30px;
+  font-size: 17px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pill-go { background: var(--marigold); color: var(--hedge); }
+.pill-ink { background: var(--hedge); color: var(--oat); }
+
+/* 03 The send */
+
+.envelope {
+  display: grid;
+  gap: 12px;
+  max-width: 640px;
+  margin: 0 auto 48px;
+}
+
+.envelope > div {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 24px;
+}
+
+.envelope .label {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fieldstone);
+  padding-top: 2px;
+}
+
+/* 640 + 415 + the 24px gap = 1079, one pixel inside the sheet's 1080 of
+   track space, so neither well scrolls at full width */
+.viewports {
+  display: grid;
+  grid-template-columns: minmax(0, 640px) minmax(0, 415px);
+  gap: 24px;
+  align-items: start;
+  justify-content: center;
+}
+
+.viewport {
+  background: var(--rye);
+  border-radius: 24px;
+  padding: 20px;
+}
+
+.viewport .vp-label {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin: 0 0 20px;
+}
+
+.viewport iframe {
+  display: block;
+  width: 100%;
+  height: 960px;
+  border: 1px solid var(--fieldstone);
+  background: var(--oat);
+}
+
+/* The desktop well never lies: below 600px of well the iframe keeps its
+   true width and the well scrolls sideways instead */
+.viewport-desktop { overflow-x: auto; }
+.viewport-desktop iframe { min-width: 600px; }
+
+.viewport-mobile iframe {
+  width: 375px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.send-notes { max-width: 720px; margin: 48px auto 0; }
+.send-notes p { margin: 0 0 20px; }
+.send-notes p:last-child { margin-bottom: 0; }
+
+/* 04 The feed and 05 the placements: units at true size in rye wells */
+
+.unit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  align-items: start;
+}
+
+.unit {
+  background: var(--rye);
+  border-radius: 24px;
+  padding: 32px;
+  min-width: 0;
+}
+
+.unit .unit-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.unit .unit-name {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.unit .unit-head a { font-size: 16px; color: var(--hedge); }
+
+.unit .slot { overflow-x: auto; }
+
+/* The artboards pin their body to an exact export size, so the iframe's
+   attribute width must stay the content box: border-box would shave the
+   border off the viewport and summon scrollbars */
+.unit iframe {
+  display: block;
+  margin: 0 auto;
+  box-sizing: content-box;
+  border: 1px solid var(--fieldstone);
+  background: var(--oat);
+}
+
+/* 1080-wide units render in a fixed scaled box so the page shows them whole;
+   the box steps down under 820px instead of stretching */
+.scaled-feed,
+.scaled-story {
+  overflow: hidden;
+  position: relative;
+  margin: 0 auto;
+}
+
+.scaled-feed iframe,
+.scaled-story iframe {
+  transform-origin: top left;
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+}
+
+.scaled-feed { width: 434px; height: 542px; }
+.scaled-feed iframe { transform: scale(0.4); }
+
+.scaled-story { width: 380px; height: 674px; }
+.scaled-story iframe { transform: scale(0.35); }
+
+.unit .caption {
+  margin: 20px 0 0;
+  font-size: 16px;
+  color: var(--fieldstone);
+}
+
+.unit-wide { grid-column: 1 / -1; }
+.unit-wide iframe { min-width: 970px; }
+
+/* 04 renders of the send, both palettes */
+
+.renders {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 980px;
+  margin: 48px auto 0;
+}
+
+.render {
+  margin: 0;
+  background: var(--rye);
+  border-radius: 24px;
+  padding: 20px;
+}
+
+.render img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--fieldstone);
+}
+
+.render figcaption {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+/* 06 The translation: a real table, headers and all */
+
+.translation {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.translation th,
+.translation td {
+  vertical-align: top;
+  padding: 24px 24px 24px 0;
+}
+
+.translation td:last-child,
+.translation thead th:last-child { padding-right: 0; }
+
+.translation thead th {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding-top: 0;
+  padding-bottom: 16px;
+}
+
+.translation thead th:first-child { color: var(--fieldstone); }
+
+.translation tbody tr { border-top: 1px solid var(--rye); }
+.translation tbody tr:last-child { border-bottom: 1px solid var(--rye); }
+
+.translation tbody th {
+  width: 176px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fieldstone);
+}
+
+.translation td { font-size: 17px; line-height: 1.5; }
+
+.traffic { margin-top: 56px; text-align: center; }
+
+.colophon {
+  padding: 56px 0 64px;
+  color: var(--fieldstone);
+  font-size: 16px;
+  text-align: center;
+}
+
+.colophon p { margin: 0 0 8px; }
+
+@media (max-width: 1100px) {
+  .viewports { grid-template-columns: minmax(0, 1fr); }
+  .chips { grid-template-columns: repeat(2, 1fr); }
+  .brief-cards { grid-template-columns: minmax(0, 1fr); }
+  .unit-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 820px) {
+  .sheet { padding: 0 24px; }
+  .masthead { padding-bottom: 64px; }
+  .masthead .wordmark { margin-bottom: 64px; flex-direction: column; align-items: center; gap: 8px; }
+  .specimen { grid-template-columns: 1fr; }
+  .chips { grid-template-columns: 1fr; }
+  .envelope > div { grid-template-columns: 1fr; gap: 4px; }
+  .viewport { padding: 16px; }
+  .unit { padding: 16px; }
+  .scaled-feed { width: 297px; height: 372px; }
+  .scaled-feed iframe { transform: scale(0.275); }
+  .scaled-story { width: 270px; height: 480px; }
+  .scaled-story iframe { transform: scale(0.25); }
+  .renders { grid-template-columns: 1fr; }
+  .render { padding: 16px; }
+  .translation thead { display: none; }
+  .translation tbody tr, .translation tbody th, .translation td { display: block; width: auto; }
+  .translation tbody th { padding: 20px 0 4px; }
+  .translation td { padding: 8px 0 16px; }
+  .translation td::before {
+    content: attr(data-ch);
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--fieldstone);
+  }
+}
