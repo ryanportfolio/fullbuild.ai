@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, type ReactNode } from 'react';
-import { gsap, ScrollTrigger } from '@/lib/gsapClient';
+import { gsap, ScrollTrigger, SplitText } from '@/lib/gsapClient';
 import Lenis from 'lenis';
 import { useWorkingSet, type PipelineState } from '@/lib/store';
 import { penBus, type PenInk } from '@/lib/penBus';
@@ -261,6 +261,12 @@ export default function DrawingSet({
     // Set by the crewed cover's plot gate below; called on teardown so a late
     // settle event can't poke a reverted timeline.
     let disarmCoverGate: (() => void) | null = null;
+
+    // Owned outside the context: the rise block below splits lazily (after
+    // fonts land), and teardown must both bar late splits and revert any
+    // still mid-rise.
+    let riseAlive = true;
+    const riseSplits: SplitText[] = [];
 
     const ctx = gsap.context(() => {
       // DRAW — reveal strokes per sheet in authored order, the pen leading the
@@ -598,6 +604,77 @@ export default function DrawingSet({
         });
       });
 
+      // DEPTH IN THE STACK — a plate sits a layer deeper on the table than the
+      // lettering annotating it, so it lags the scroll a touch. Read from
+      // data-parallax (< 1 lags, > 1 leads), travel capped at 36px total so a
+      // plate never wanders toward a rule it must not cross (Margin Law), and
+      // transform-only. Skipped where the figure carries a sticky dwell (the
+      // act sheet): an ancestor transform would re-anchor the sticky box.
+      gsap.utils
+        .toArray<HTMLElement>(root.querySelectorAll('[data-parallax]'))
+        .forEach((el) => {
+          const speed = Number(el.dataset.parallax) || 1;
+          if (speed === 1 || el.closest('[data-act]')) return;
+          const sec = (el.closest('[data-state]') as HTMLElement | null) ?? el;
+          const shift = () => {
+            const vh = window.innerHeight || 1;
+            const travel = vh + sec.offsetHeight;
+            return Math.min(Math.abs(1 - speed) * travel, 36) * Math.sign(1 - speed);
+          };
+          gsap.fromTo(
+            el,
+            { y: () => -shift() / 2 },
+            {
+              y: () => shift() / 2,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: sec,
+                start: 'top bottom',
+                end: 'bottom top',
+                scrub: true,
+                invalidateOnRefresh: true,
+              },
+            },
+          );
+        });
+
+      // NOTES RISE FROM BEHIND THEIR RULE — eyebrow and lede lines lift out of
+      // an overflow-clipped mask as the sheet arrives, ink appearing at a rule
+      // rather than fading (the set has no fades). Split waits for the faces
+      // (a pre-font split mis-measures lines), and each element reverts to its
+      // untouched server markup the moment its rise completes, so the split's
+      // DOM only exists for the seconds it is earning: after that, resize,
+      // selection and assistive tech read the original paragraph.
+      const riseEls = gsap.utils.toArray<HTMLElement>(root.querySelectorAll('[data-rise]'));
+      if (riseEls.length) {
+        document.fonts.ready.then(() => {
+          if (!riseAlive) return;
+          ctx.add(() => {
+            riseEls.forEach((el) => {
+              const split = SplitText.create(el, { type: 'lines', mask: 'lines' });
+              riseSplits.push(split);
+              gsap.set(split.lines, { yPercent: 110 });
+              gsap.to(split.lines, {
+                yPercent: 0,
+                duration: 0.7,
+                ease: 'power3.out',
+                stagger: 0.09,
+                scrollTrigger: {
+                  trigger: el.closest('[data-state]') ?? el,
+                  start: 'top 82%',
+                  once: true,
+                },
+                onComplete: () => {
+                  split.revert();
+                  const i = riseSplits.indexOf(split);
+                  if (i >= 0) riseSplits.splice(i, 1);
+                },
+              });
+            });
+          });
+        });
+      }
+
       // RAIL SKETCH — the site log. One long pencil record in the margin,
       // scrubbed by overall set progress: survey → footings → bents → roof →
       // AS BUILT, finishing as the set runs out. Monotonic by design — the
@@ -861,6 +938,9 @@ export default function DrawingSet({
     });
 
     return () => {
+      riseAlive = false;
+      // Splits still mid-rise restore their untouched server markup.
+      riseSplits.splice(0).forEach((s) => s.revert());
       disarmCoverGate?.();
       unsubPen();
       io.disconnect();

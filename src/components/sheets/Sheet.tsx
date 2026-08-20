@@ -60,7 +60,11 @@ export default function Sheet({
               a real list of links to every shipped project, and each plate's
               root <svg> already carries role="img" + a described aria-label.
               Hiding the figure stranded those links — tabbable, unannounced. */}
-          <figure className={styles.drawing}>{drawing}</figure>
+          {/* data-parallax: the plate sits a layer deeper in the drafting stack
+              than its lettering, so it lags the scroll a touch (DrawingSet's
+              reader; capped travel, transform only, skipped on the act sheet
+              whose figure holds a sticky dwell). */}
+          <figure className={styles.drawing} data-parallax="0.955">{drawing}</figure>
           <div className={styles.copy}>{children}</div>
         </div>
       </div>

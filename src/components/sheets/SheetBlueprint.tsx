@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import Sheet from './Sheet';
+import InstrumentsOverlay from './InstrumentsOverlay';
 import { Line, Path, Dim } from '../drafting/Marks';
 import { IgnitionGlyph } from './SheetGlyphs';
 import FitHeading from './FitHeading';
@@ -35,9 +36,9 @@ export default function SheetBlueprint() {
         </>
       }
     >
-      <p className={copy.eyebrow}>Sheet S-02 · design intent</p>
+      <p className={copy.eyebrow} data-rise="">Sheet S-02 · design intent</p>
       <FitHeading className={`${copy.heading} ${copy.headingFit}`} lines={['Solving', 'Bottlenecks']} />
-      <p className={`${copy.lede} ${copy.ledeLarge}`}>
+      <p className={`${copy.lede} ${copy.ledeLarge}`} data-rise="">
         Imagination machine <IgnitionGlyph />
       </p>
       <dl className={copy.spec} style={{ '--n': 5 } as CSSProperties}>
@@ -167,6 +168,9 @@ function Plan() {
           rules pass through the print, and a projection passes through its
           own annotations. */}
       <AxonRise />
+
+      {/* the drafter's tools land on the sheet last, and they really move */}
+      <InstrumentsOverlay />
     </svg>
   );
 }

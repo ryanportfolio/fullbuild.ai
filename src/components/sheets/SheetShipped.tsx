@@ -92,7 +92,10 @@ export default function SheetShipped() {
               </p>
             </div>
 
-            <div className={s.schedule} data-schedule ref={scheduleRef} style={{ '--n': n } as React.CSSProperties}>
+            {/* data-parallax: the schedule plate lags a touch (DrawingSet's
+                reader); the pour pen re-reads the live rect per tick, so the
+                nib stays on the translated waterline */}
+            <div className={s.schedule} data-schedule data-parallax="0.96" ref={scheduleRef} style={{ '--n': n } as React.CSSProperties}>
               {/* the waterline — same store value as the 3D section plane */}
               <div className={s.waterline} data-waterline aria-hidden="true">
                 <span className={s.waterTag}>POUR</span>

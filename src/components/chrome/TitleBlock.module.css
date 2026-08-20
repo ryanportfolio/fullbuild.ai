@@ -154,6 +154,18 @@
   }
 }
 
+/* the margin's one discipline symbol, morphed per state */
+.marginSymbolRow {
+  display: flex;
+  justify-content: flex-start;
+  padding: 0.25rem 0 0.35rem;
+}
+.marginSymbol {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--ink-witness);
+}
+
 /* carriage telemetry — the instrument's live readout */
 .telemetry {
   margin-top: auto;
