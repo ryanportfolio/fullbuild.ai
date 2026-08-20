@@ -37,6 +37,13 @@ test("dark mode is declared both ways, and the pinned pieces are pinned", () => 
   }
 });
 
+test("both pills land on live pages; only the list-management links stay placeholders", () => {
+  assert.equal((email.match(/href="https:\/\/fullbuild\.ai\/prototype\/forecourt"/g) ?? []).length, 2, "the market pill must point at the live campaign page in both the VML and the anchor");
+  assert.equal((email.match(/href="https:\/\/fullbuild\.ai\/prototype\/foxtail"/g) ?? []).length, 2, "the projector-night pill must point at the live Foxtail page in both the VML and the anchor");
+  const placeholders = [...email.matchAll(/https:\/\/forecourt\.example\/([a-z-]+)/g)].map((m) => m[1]);
+  assert.deepEqual([...new Set(placeholders)].sort(), ["preferences", "unsubscribe"], "only unsubscribe and preferences may stay on the placeholder domain; every button a reader clicks must resolve");
+});
+
 test("the send stays under Gmail's clip point and holds the type and character contract", async () => {
   const f = await stat(new URL("emails/market-weekend.html", base));
   assert.ok(f.size < 102400, `the email is ${f.size} bytes; Gmail clips messages over 102400`);
