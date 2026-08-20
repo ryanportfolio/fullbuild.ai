@@ -804,6 +804,10 @@ export default function DrawingSet({
       lenis.destroy();
       delete (window as unknown as { __lenis?: Lenis }).__lenis;
       delete (window as unknown as { __capture?: unknown }).__capture;
+      // If a capture run froze the ticker and never thawed, the handle above is
+      // gone; wake here or the ticker sleeps for the life of the page and the
+      // next mount's Lenis never steps.
+      gsap.ticker.wake();
     };
   }, []);
 
