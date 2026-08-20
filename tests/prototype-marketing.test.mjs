@@ -58,27 +58,69 @@ test("the plan lists only real campaigns: live rows link, and the set stands com
   assert.ok(!/class="plan-head"|class="shipped"/.test(page), "the header row and the shipped column are gone; their markup must go with them");
 });
 
-test("each status chip is one campaign's own button, quoted whole", async () => {
+test("each status chip speaks in its own campaign's voice, and every value is that campaign's", async () => {
   // fill "transparent" means the chip sits on the page's paper, like the ghost
-  // and outline buttons these three campaigns ship
+  // and outline buttons those campaigns ship
   const chips = {
-    foredge: { fill: "transparent", text: "#1a1a17", edge: "#1a1a17", stroke: "1px" },
-    foxglove: { fill: "transparent", text: "#11223f", edge: "#ff5734", stroke: "2px" },
-    foxtail: { fill: "transparent", text: "#006eff", edge: "#006eff", stroke: "1.5px" },
-    foundry: { fill: "#23231f", text: "#f4f2ee", stroke: "0" },
-    forecourt: { fill: "#f6b83c", text: "#1e2a1e", stroke: "0" },
+    foredge: { fill: "transparent", text: "#1a1a17", edge: "#5f5f5d", stroke: "1px", radius: "6px", track: "0.01em", weight: 300, face: "Fraunces", pairing: "--ash" },
+    foxglove: { fill: "#fef1ec", text: "#11223f", edge: "#f6bba4", stroke: "1px", radius: "0", track: "0.01em", weight: 300, face: "Cormorant Garamond", pairing: "--peach" },
+    foxtail: { fill: "transparent", text: "#006eff", edge: "#006eff", stroke: "1.5px", radius: "999px", track: "-0.01em", weight: 400, face: "Anton", pairing: "--voltage" },
+    foundry: { fill: "#23231f", text: "#f4f2ee", stroke: "0", radius: "0", track: "-0.02em", weight: 400, face: "Inter Tight", pairing: "--ink" },
+    forecourt: { fill: "#f6b83c", text: "#1e2a1e", stroke: "0", radius: "999px", track: "-0.01em", weight: 400, face: "Lora", pairing: "--marigold" },
   };
 
   for (const [brand, chip] of Object.entries(chips)) {
     assert.ok(page.includes(`status-pill demo-${brand}`), `row ${brand} lost its branded chip`);
     const rule = css.match(new RegExp(`\\.demo-${brand} \\{[^}]+\\}`))?.[0];
     assert.ok(rule, `.demo-${brand} has no rule`);
-    assert.ok(rule.includes(`border-width: ${chip.stroke}`), `.demo-${brand} must draw its own ${chip.stroke} stroke; stroke weight is what separates these five button systems`);
 
     const source = await readFile(new URL(`../public/prototype/${brand}/css/site.css`, import.meta.url), "utf8");
+
+    assert.ok(rule.includes(`border-width: ${chip.stroke}`), `.demo-${brand} must draw its own ${chip.stroke} stroke`);
+    assert.ok(rule.includes(`border-radius: ${chip.radius}`), `.demo-${brand} must take its own ${chip.radius} corner`);
+    if (chip.radius === "0") {
+      // a square corner is the absence of a radius, so prove the campaign draws
+      // panels that way rather than letting the check pass by default
+      const panels = [...source.matchAll(/\.(chip|render|well|plate|frame)[^{]*\{[^}]+\}/g)].map((m) => m[0]);
+      const square = panels.filter((p) => /background|border/.test(p) && !/border-radius/.test(p));
+      assert.ok(square.length > 0, `${brand} declares no square-cornered panel, so a 0 radius is not its vocabulary`);
+    } else {
+      assert.ok(source.includes(`border-radius: ${chip.radius}`), `${chip.radius} is not a ${brand} corner`);
+    }
+
+    assert.ok(rule.includes(`--track: ${chip.track}`), `.demo-${brand} must carry its own ${chip.track} tracking`);
+    assert.ok(source.includes(`letter-spacing: ${chip.track}`), `${chip.track} is not a ${brand} tracking value`);
+
+    assert.ok(rule.includes(`font-weight: ${chip.weight}`), `.demo-${brand} must be set at ${chip.weight}`);
+    assert.ok(source.includes(`font-weight: ${chip.weight}`), `${brand} never sets ${chip.weight}; a chip may not invent a weight for a face its campaign ships`);
+
+    // values checked one at a time let an invented pairing through: Forecourt
+    // ships marigold and it ships 24px cards, but never a marigold 24px card.
+    // The surface a chip borrows has to exist as one object in the campaign.
+    if (chip.fill !== "transparent") {
+      const blocks = [...source.matchAll(/\{[^}]+\}/g)].map((m) => m[0]);
+      const named = blocks.filter((b) => b.includes(`var(${chip.pairing})`) || b.toLowerCase().includes(chip.fill));
+      const together = named.some((b) => {
+        if (chip.radius === "0") return !/border-radius/.test(b);
+        if (b.includes(`border-radius: ${chip.radius}`)) return true;
+        // a fill rule that rides a shape rule, like .pill-go on .pill
+        const selector = source.slice(0, source.indexOf(b)).match(/([.#][\w-]+)[^{]*$/)?.[1];
+        return Boolean(selector && new RegExp(`\\${selector.slice(0, 5)}[\\w-]*[^{]*\\{[^}]*border-radius: ${chip.radius}`).test(source));
+      });
+      assert.ok(together, `${brand} never puts ${chip.fill} on a ${chip.radius} surface; the chip is borrowing a pairing its campaign does not draw`);
+    }
+
+    assert.ok(rule.includes(`'${chip.face}'`), `.demo-${brand} must be set in ${chip.face}, the face its campaign displays in`);
+    assert.ok(source.includes(`'${chip.face}'`), `${chip.face} is not a ${brand} face`);
+    const faceRule = css.match(new RegExp(`@font-face \\{[^}]*'${chip.face}'[^}]+\\}`))?.[0] ?? "";
+    if (chip.face !== "Fraunces") {
+      assert.ok(faceRule.includes(`/prototype/${brand}/fonts/`), `${chip.face} must be served from ${brand}'s own font directory`);
+    }
+    assert.ok(/font-display: swap/.test(faceRule), `${chip.face} must load with font-display: swap`);
+
     for (const hex of [chip.text, chip.edge, chip.fill].filter((v) => v && v.startsWith("#"))) {
       assert.ok(rule.includes(hex), `.demo-${brand} does not use ${hex}`);
-      assert.ok(source.toLowerCase().includes(hex), `${hex} is not a ${brand} color; a chip may only quote hexes that campaign already ships`);
+      assert.ok(source.toLowerCase().includes(hex), `${hex} is not a ${brand} color; a chip may only quote values that campaign already ships`);
     }
 
     const ground = chip.fill === "transparent" ? "#ffffff" : chip.fill;
@@ -89,9 +131,18 @@ test("each status chip is one campaign's own button, quoted whole", async () => 
     }
   }
 
-  const geometry = css.match(/\.status-pill \{[^}]+\}/)[0];
-  assert.ok(/font-size: 20px/.test(geometry) && /font-weight: 700/.test(geometry), "Foxtail's 4.49:1 only clears WCAG as large text, which needs 20px at a real 700");
-  assert.ok(/font-weight: 400 700/.test(css), "the Inter face must declare 700 or the chips render as faux bold");
+  const foxtailSize = Number(chips.foxtail && css.match(/\.demo-foxtail \{[^}]*font-size: (\d+)px/)[1]);
+  assert.ok(foxtailSize >= 24, `Foxtail is ${foxtailSize}px; at 4.49:1 it only clears WCAG as large text, which is 24px at Anton's single weight of 400`);
+
+  let borrowed = 0;
+  for (const [file, brand] of [["cormorant-garamond-latin.woff2", "foxglove"], ["anton-latin.woff2", "foxtail"], ["inter-tight-latin.woff2", "foundry"], ["lora-latin.woff2", "forecourt"]]) {
+    const f = await stat(new URL(`../public/prototype/${brand}/fonts/${file}`, import.meta.url));
+    assert.ok(f.size > 10000, `${file} is missing or truncated`);
+    borrowed += f.size;
+  }
+  assert.ok(borrowed < 130000, `the four borrowed faces total ${borrowed} bytes; the page's stated budget for them is 130000`);
+  assert.ok(css.includes(`${Math.round(borrowed / 1024)}KB`), `the stylesheet states a payload that is not ${Math.round(borrowed / 1024)}KB`);
+
   assert.ok(!/\.status-live|\.status-ghost|status-demo/.test(css + page), "the retired status classes must be gone");
 });
 
