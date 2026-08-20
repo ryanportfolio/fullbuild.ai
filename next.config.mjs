@@ -50,6 +50,8 @@ const nextConfig = {
       { source: '/prototype/foredge', destination: '/prototype/foredge/index.html' },
       { source: '/prototype/marketing', destination: '/prototype/marketing/index.html' },
       { source: '/prototype/foxglove', destination: '/prototype/foxglove/index.html' },
+      // Foxglove carries a second page, the brand system behind the campaign.
+      { source: '/prototype/foxglove/brand', destination: '/prototype/foxglove/brand.html' },
       { source: '/prototype/foxtail', destination: '/prototype/foxtail/index.html' },
       // Harborline is a static export of a Statamic CMS build. It has a service
       // detail page per entry, so the clean URLs are matched by pattern rather
