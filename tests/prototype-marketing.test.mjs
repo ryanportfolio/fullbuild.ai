@@ -40,10 +40,12 @@ test("the shipped emails hold the program's guarantees, and the page shows none 
 });
 
 test("the plan lists only real campaigns: live rows link, and the set stands complete", () => {
-  const live = [...page.matchAll(/<a class="campaign-row" data-status="live" href="([^"]+)"/g)];
-  assert.deepEqual(live.map((m) => m[1]), ["/prototype/foredge", "/prototype/foxglove", "/prototype/foxtail", "/prototype/foundry", "/prototype/forecourt"]);
+  const demo = [...page.matchAll(/<a class="campaign-row" data-status="demo" href="([^"]+)"/g)];
+  assert.deepEqual(demo.map((m) => m[1]), ["/prototype/foredge", "/prototype/foxglove", "/prototype/foxtail", "/prototype/foundry", "/prototype/forecourt"]);
   const planned = [...page.matchAll(/data-status="planned"/g)];
-  assert.equal(planned.length, 0, "all five campaigns are shipped; no ghost rows remain");
+  assert.equal(planned.length, 0, "all five campaigns are built; no ghost rows remain");
+  assert.equal((page.match(/>Demo Example</g) ?? []).length, 5, "every row must label itself a demo; nothing here ran for a client");
+  assert.ok(!/class="plan-head"|class="shipped"/.test(page), "the header row and the shipped column are gone; their markup must go with them");
 });
 
 test("the strip opens each mailing and the page holds the type and character contract", async () => {
