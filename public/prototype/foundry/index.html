@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Foundry Works, one send for every inbox</title>
+  <meta name="description" content="One responsive HTML marketing email for Foundry Works, a fictional maker campus, shown in light and dark and mapped against the four major mail clients. A portfolio piece.">
+  <link rel="stylesheet" href="/prototype/foundry/css/site.css">
+</head>
+<body>
+  <a class="skip" href="#send">Skip to the send</a>
+
+  <div class="sheet">
+
+    <header class="masthead">
+      <p class="wordmark"><span>FOUNDRY WORKS</span> <span>Campaign 04 · One send, every inbox</span></p>
+      <h1>
+        <span class="line">One send</span>
+        <span class="line line-right">every inbox</span>
+      </h1>
+      <p class="standfirst">Foundry Works is a fictional maker campus in a former iron foundry, invented for this piece. Below is one of its marketing emails, built as a real responsive HTML file, then followed around: how it renders in light and dark, and what each major mail client actually receives. Open the file and read the source.</p>
+    </header>
+
+    <section aria-labelledby="brief-h">
+      <div class="section-head">
+        <p class="kicker">01</p>
+        <h2 id="brief-h">The brief</h2>
+      </div>
+      <div class="brief-rows">
+        <div class="label">Client</div>
+        <div class="value">A former foundry on the Hudson riverfront leasing studios to makers. One send announces fall leasing across its four halls and books tours.</div>
+        <div class="label">System</div>
+        <div class="value">Painted concrete. Near-black ink on a concrete canvas, four hall colors used only as full-bleed slabs, and one grotesque at architectural scale with crushed leading. Flat everywhere: no shadows, no gradients, no rounded corners except pills and the numbered dots.</div>
+        <div class="label">Constraint</div>
+        <div class="value">One file serves every inbox. It carries a light and a dark palette, degrades deliberately from Apple Mail down to Outlook, keeps every string as live text, and sets nothing below 16 pixels.</div>
+      </div>
+    </section>
+
+    <section aria-labelledby="system-h">
+      <div class="section-head">
+        <p class="kicker">02</p>
+        <h2 id="system-h">The system</h2>
+      </div>
+
+      <div class="chips">
+        <figure class="chip">
+          <div class="swatch" style="background:#d6d4d0;border:1px solid #5b5a56"></div>
+          <figcaption><strong>Concrete d6d4d0</strong> <span>the canvas, light mode</span></figcaption>
+        </figure>
+        <figure class="chip">
+          <div class="swatch" style="background:#23231f"></div>
+          <figcaption><strong>Ink 23231f</strong> <span>text, plates, filled pills</span></figcaption>
+        </figure>
+        <figure class="chip">
+          <div class="swatch" style="background:#b03a24"></div>
+          <figcaption><strong>Furnace b03a24</strong> <span>the Casting Hall</span></figcaption>
+        </figure>
+        <figure class="chip">
+          <div class="swatch" style="background:#d99b2b"></div>
+          <figcaption><strong>Brass d99b2b</strong> <span>the Pattern Shop</span></figcaption>
+        </figure>
+        <figure class="chip">
+          <div class="swatch" style="background:#3f5f8a"></div>
+          <figcaption><strong>Steel 3f5f8a</strong> <span>the Boiler House</span></figcaption>
+        </figure>
+        <figure class="chip">
+          <div class="swatch" style="background:#2f6b4f"></div>
+          <figcaption><strong>Patina 2f6b4f</strong> <span>the Machine Shop</span></figcaption>
+        </figure>
+      </div>
+
+      <div class="specimen">
+        <div>
+          <span class="label">Display</span>
+          <span class="sample-display">Four halls<br>open for fall</span>
+        </div>
+        <div>
+          <span class="label">Text</span>
+          <span class="sample-body">Inter Tight at weight 400 carries every headline, crushed to a leading of 0.82 in the send so the lines stack like courses of brick. Inter carries everything else. The hall colors stay paint: the only letters they touch are the numerals inside the dots.</span>
+        </div>
+        <div>
+          <span class="label">Controls</span>
+          <span class="sample-controls">
+            <span class="pill pill-filled">Book a tour</span>
+            <span class="pill pill-paper">Reserve a Saturday</span>
+          </span>
+        </div>
+        <div>
+          <span class="label">Wayfinding</span>
+          <span class="sample-controls badges">
+            <span class="badge badge-furnace">1</span>
+            <span class="badge badge-brass">2</span>
+            <span class="badge badge-steel">3</span>
+            <span class="badge badge-patina">4</span>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <section id="send" aria-labelledby="send-h">
+      <div class="section-head">
+        <p class="kicker">03</p>
+        <h2 id="send-h">The send</h2>
+      </div>
+
+      <div class="envelope">
+        <div><span class="label">Subject</span><span>Four halls open for fall</span></div>
+        <div><span class="label">Preheader</span><span>Studios from 250 square feet, tours every Saturday in September</span></div>
+        <div><span class="label">File</span><span><a href="/prototype/foundry/emails/fall-leasing.html">emails/fall-leasing.html</a></span></div>
+      </div>
+
+      <div class="viewports">
+        <div class="viewport viewport-desktop">
+          <p class="vp-label">Desktop · 600px</p>
+          <iframe src="/prototype/foundry/emails/fall-leasing.html" title="The fall leasing email at desktop width" loading="lazy"></iframe>
+        </div>
+        <div class="viewport viewport-mobile">
+          <p class="vp-label">Mobile · 375px</p>
+          <iframe src="/prototype/foundry/emails/fall-leasing.html" title="The fall leasing email at mobile width" loading="lazy"></iframe>
+        </div>
+      </div>
+
+      <div class="send-notes">
+        <p>The four hall slabs are the merchandising: each one is a full-bleed color block carrying the hall's name, its numbered dot, one line of availability, and a link. Under 480 pixels the display type drops from 76 to 44 pixels and the gutters tighten; the slabs already span the full width, so they simply keep doing it.</p>
+      </div>
+    </section>
+
+    <section id="dark" aria-labelledby="dark-h">
+      <div class="section-head">
+        <p class="kicker">04</p>
+        <h2 id="dark-h">Dark mode</h2>
+      </div>
+
+      <div class="renders">
+        <figure class="render">
+          <figcaption>Light · prefers-color-scheme light</figcaption>
+          <img src="/prototype/foundry/img/render-light.jpg" width="600" height="1898" alt="The full fall leasing email rendered in light mode: ink text on a concrete canvas above four colored hall slabs" loading="lazy">
+        </figure>
+        <figure class="render">
+          <figcaption>Dark · prefers-color-scheme dark</figcaption>
+          <img src="/prototype/foundry/img/render-dark.jpg" width="600" height="1898" alt="The same email rendered in dark mode: the canvas turns near-black, the text turns paper white, and the four hall slabs hold their colors" loading="lazy">
+        </figure>
+      </div>
+
+      <div class="dark-notes">
+        <p>Both columns are the same file, rendered in a browser with the color scheme flipped. The canvas and the text swap; the four hall slabs do not move, because each one was chosen to clear WCAG AA against its own text color rather than against either canvas.</p>
+        <p>The file carries dark mode three ways. Clients that honor the standard get a prefers-color-scheme media query. Outlook.com and the Outlook apps rewrite colors themselves, so the same second palette is repeated under their data-ogsc and data-ogsb hooks, with the slabs, badges, and plate text pinned to the values they already pass. Classic Outlook for Windows reads neither; its Word engine runs an inversion no sender can target, so the light design is written as the source that inversion starts from.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="clients-h">
+      <div class="section-head">
+        <p class="kicker">05</p>
+        <h2 id="clients-h">The client plan</h2>
+      </div>
+
+      <div class="clients">
+        <div class="client client-patina">
+          <h3>Apple Mail and iOS</h3>
+          <ul>
+            <li>Loads the self-hosted Inter Tight and Inter over the fallback stacks</li>
+            <li>Honors the prefers-color-scheme query, so it gets both palettes</li>
+            <li>Runs the 480 pixel query: full-size display type on the desktop app, 44 pixel display on a phone</li>
+          </ul>
+        </div>
+        <div class="client client-brass">
+          <h3>Gmail</h3>
+          <ul>
+            <li>Reads the embedded style block and the 480 pixel query, so the responsive layout survives</li>
+            <li>Never loads webfonts: the full Helvetica and Arial stacks are inline on every declaration</li>
+            <li>Ignores prefers-color-scheme and recolors on its own, so every color also sits inline, giving its rewrite known values to start from</li>
+            <li>The whole send is one file with no images, far under the size at which Gmail clips a message</li>
+          </ul>
+        </div>
+        <div class="client client-steel">
+          <h3>Classic Outlook for Windows</h3>
+          <ul>
+            <li>Renders in the Word engine: it gets a fixed 600 pixel table held by a conditional wrapper, and a Word-only style block relaxes the crushed display leading so nothing clips</li>
+            <li>Every pill is drawn twice: a VML roundrect for Word, the real anchor for everyone else</li>
+            <li>Skips the media queries and webfonts by design; the light palette in Arial is the source its own untargetable dark-mode inversion starts from</li>
+          </ul>
+        </div>
+        <div class="client client-furnace">
+          <h3>Outlook.com and the apps</h3>
+          <ul>
+            <li>Rewrites colors in dark mode instead of reading the media query</li>
+            <li>The data-ogsc and data-ogsb attribute hooks hand its rewriter the same second palette the query declares, and pin the slabs, badges, and plate text</li>
+            <li>Everything else follows the Gmail path: embedded styles, inline colors, fallback fonts</li>
+            <li>The new WebView2 Outlook for Windows follows this path too, not the Word engine</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="engineering" aria-labelledby="engineering-h">
+      <div class="section-head">
+        <p class="kicker">06</p>
+        <h2 id="engineering-h">The engineering</h2>
+      </div>
+      <ul>
+        <li><strong>Layout</strong><span>Nested tables with role="presentation" throughout, a hybrid 600 pixel container with an mso conditional wrapper, no flexbox or grid in the structure.</span></li>
+        <li><strong>Dark mode</strong><span>One palette swap, declared twice: a prefers-color-scheme media query for standards clients and data-ogsc plus data-ogsb rules for the Outlook rewriter, both flipping the same classes. Classic Outlook inverts on its own and cannot be addressed.</span></li>
+        <li><strong>Structure</strong><span>One level-1 heading and five level-2s carried on role attributes, so the send keeps an outline for a screen reader while every layout table stays presentational.</span></li>
+        <li><strong>Contrast</strong><span>Every text pair clears WCAG AA in both palettes by the WCAG 2.1 relative luminance formula. The tightest pair on a slab is paper on furnace red at 5.40:1; secondary text sits at 4.66:1 on the light canvas and 6.63:1 on the dark one.</span></li>
+        <li><strong>No images</strong><span>The send contains no image at all. The slabs, dots, and pills are colored table cells, so blocking remote content changes nothing and there is nothing to alt-text away.</span></li>
+        <li><strong>Type floor</strong><span>Nothing below 16 pixels anywhere, including the footer and the unsubscribe line. Body runs 17 to 18, display runs 76 on desktop and 44 under 480 pixels.</span></li>
+        <li><strong>Preview text</strong><span>A hidden preheader div sets the inbox preview line and pads it so the first body string does not leak in after it.</span></li>
+        <li><strong>Touch</strong><span>Both calls to action pad past a 44 pixel target, and each hall link carries 12 pixels of padding above and below to clear one too.</span></li>
+        <li><strong>Fonts</strong><span>Self-hosted Inter Tight and Inter behind an mso guard with the full fallback stacks inline on every declaration, so Word never touches a webfont.</span></li>
+      </ul>
+      <div class="traffic">
+        <a class="pill pill-filled" href="/prototype/marketing">Back to the campaigns</a>
+      </div>
+    </section>
+
+    <div class="colophon">
+      <p>Spec work by Ryan Allen | all demo concepts</p>
+      <p>Part of <a href="/prototype">the fullbuild.ai gallery</a>.</p>
+    </div>
+
+  </div>
+</body>
+</html>
