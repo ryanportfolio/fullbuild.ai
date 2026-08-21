@@ -11,13 +11,14 @@ const hex = (n) => "0x" + n.toString(16).toUpperCase().padStart(5, "0");
 test("facts.json is internally consistent (recomputed, not trusted)", async () => {
   const facts = JSON.parse(await read("public/harness-firmware/facts.json"));
 
-  assert.equal(facts.templateCommit, "d9cd99f5d6126d58918e117b584369dd610f4f59");
+  assert.equal(facts.templateCommit, "2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc");
   assert.equal(facts.templateRev, facts.templateCommit.slice(0, 8));
-  assert.equal(facts.claudeRulesBlobHash, "6203497f5324573564d78286088901fb75a6e3a3");
+  assert.equal(facts.claudeRulesBlobHash, "2339b2234a1a282d88828ffac71a0722ea1d2308");
   assert.equal(facts.codexRulesBlobHash, "17e15e0e76b0c76722d92ebaf6350a617d3d6777");
-  assert.equal(facts.codexSkillsTreeHash, "a137de9f761ea77b62b1c0aadbbcc4358a037f54");
+  assert.equal(facts.skillsTreeHash, "7d68e369b735a40fe4ee5878abbe488d59728289");
+  assert.equal(facts.codexSkillsTreeHash, "5a6240931aec813dd4c751d98cb299eff790e0d1");
   assert.equal(facts.skills.length, facts.skillCount);
-  assert.equal(facts.skillCount, 23);
+  assert.equal(facts.skillCount, 30);
   assert.deepEqual(facts.runtimes, ["Claude Code", "Codex"]);
   assert.equal(facts.runtimeCount, facts.runtimes.length);
 
@@ -43,7 +44,7 @@ test("facts.json is internally consistent (recomputed, not trusted)", async () =
   const tally = { core: 0, discipline: 0, extras: 0 };
   for (const s of facts.skills) tally[s.tier] += 1;
   assert.deepEqual(tally, facts.tierCounts);
-  assert.deepEqual(facts.tierCounts, { core: 7, discipline: 5, extras: 11 });
+  assert.deepEqual(facts.tierCounts, { core: 8, discipline: 8, extras: 14 });
 
   assert.equal(facts.blockBytes, 1024);
   let offset = 0;
@@ -71,7 +72,7 @@ test("facts.json is internally consistent (recomputed, not trusted)", async () =
   assert.equal(facts.canonicalSkillDirectoryBytes, facts.onDemandBytes + facts.canonicalSkillSupportBytes);
   assert.equal(facts.skillTreeBytes, facts.canonicalSkillDirectoryBytes + facts.skillProvenanceBytes);
   assert.equal(facts.combinedCanonicalAndAdapterEntryBytes, facts.onDemandBytes + facts.codexAdapterSkillEntryBytes);
-  assert.match(facts.onDemandScope, /23 canonical \.claude\/skills\/\*\/SKILL\.md git blobs/);
+  assert.match(facts.onDemandScope, /30 canonical \.claude\/skills\/\*\/SKILL\.md git blobs/);
   assert.match(facts.skillsTreeHash, /^[0-9a-f]{40}$/);
   assert.equal(facts.residentEndHex, hex(facts.residentBytes));
   assert.equal(facts.codexResidentEndHex, hex(facts.codexResidentBytes));
@@ -165,7 +166,7 @@ test("every figure rendered on the page matches facts.json", async () => {
   assert.ok(html.includes("token figures use an approximate four-character conversion"), "token estimates are disclosed");
   assert.ok(!html.includes("context difference"), "byte ratio is not presented as measured context");
   assert.ok(!html.includes("every figure here is measured from the repo, not estimated"), "footer does not overstate estimated figures");
-  assert.ok(html.includes("23 main SKILL.md files"), "main-file scope is explicit");
+  assert.ok(html.includes("30 main SKILL.md files"), "main-file scope is explicit");
   assert.ok(html.includes("support files are separate"), "support-file separation is disclosed");
   assert.ok(!html.includes("full on-demand skill payload"), "entry-file sum is not called the full payload");
   assert.ok(!html.includes("space each takes on disk"), "entry-file sizes are not called full on-disk sizes");
@@ -179,6 +180,20 @@ test("every figure rendered on the page matches facts.json", async () => {
     /<a class="hero-reference mono" href="#context-architecture"><strong>REFERENCES<\/strong> &middot; repo facts read when needed &rarr;<\/a>/,
     "hero explains references in one linked line",
   );
+  const newSkills = ["arena", "automate-me", "babysit-ci", "bro", "codex-review", "unslop", "verify-this"];
+  assert.match(html, /<h2 class="reveal">Seven new workflows, ready on demand<\/h2>/);
+  for (const skill of newSkills) {
+    assert.ok(
+      html.includes(`/.claude/skills/${skill}/SKILL.md`),
+      `new workflow links to canonical source: ${skill}`,
+    );
+  }
+  assert.match(
+    html,
+    /<a class="chrome-home" href="\/" aria-label="fullbuild\.ai home">\s*<svg class="chrome-home-mark"/,
+    "house mark is the accessible fullbuild.ai home link",
+  );
+  assert.doesNotMatch(html, /<a class="chrome-home"[^>]*>\s*fullbuild\.ai\s*<\/a>/);
 
   assert.ok(html.includes("ILLUSTRATIVE MEMORY FLOW"), "hypothetical replay is labelled illustrative");
   assert.ok(
@@ -367,7 +382,7 @@ test("constraint contract holds in the stylesheet", async () => {
   assert.ok(!/@import|fonts\.googleapis/.test(css), "fonts self-hosted only");
   assert.ok(css.includes('url("/harness-firmware/fonts/Unbounded'), "Unbounded self-hosted");
   assert.ok(css.includes("prefers-reduced-motion"), "reduced motion honored");
-  assert.ok(css.includes("2.339s"), "the pulse is a measurement (2,339 tok / 1000)");
+  assert.ok(css.includes("3.146s"), "the pulse is a measurement (3,146 tok / 1000)");
 
   // one easing curve
   assert.equal((css.match(/cubic-bezier/g) ?? []).length, 1, "single easing definition");

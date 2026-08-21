@@ -109,7 +109,14 @@ function skillOption(skill) {
   slug.textContent = skill.name;
   const state = document.createElement('span');
   state.textContent = skill.required ? 'Required later' : 'Optional';
-  meta.append(slug, state);
+  meta.append(slug);
+  if (skill.recent) {
+    const recent = document.createElement('span');
+    recent.className = 'skill-option-new';
+    recent.textContent = 'New';
+    meta.append(recent);
+  }
+  meta.append(state);
 
   option.append(input, copy, meta);
   return option;

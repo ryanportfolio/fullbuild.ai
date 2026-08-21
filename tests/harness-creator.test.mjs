@@ -73,7 +73,7 @@ test('creator exposes an accessible skill selector with honest omission copy', a
     read('public/harness-firmware/facts.json').then(JSON.parse),
   ]);
 
-  assert.equal(catalog.HARNESS_SKILL_CATALOG.length, 23);
+  assert.equal(catalog.HARNESS_SKILL_CATALOG.length, 30);
   assert.deepEqual(
     catalog.HARNESS_SKILL_CATALOG.map((skill) => skill.name).toSorted(),
     facts.skills.map((skill) => skill.name).toSorted(),
@@ -82,6 +82,12 @@ test('creator exposes an accessible skill selector with honest omission copy', a
     catalog.HARNESS_SKILL_CATALOG.filter((skill) => skill.required).map((skill) => skill.name),
     ['init-project'],
   );
+  assert.deepEqual(
+    catalog.HARNESS_SKILL_CATALOG.filter((skill) => skill.recent).map((skill) => skill.name).toSorted(),
+    ['arena', 'automate-me', 'babysit-ci', 'bro', 'codex-review', 'unslop', 'verify-this'],
+  );
+  assert.match(html, /30 on-demand skills/);
+  assert.match(html, /Customize skills, 30 enabled/);
   assert.match(html, /<button[^>]+id="skill-trigger"[^>]+aria-controls="skill-picker"[^>]+aria-expanded="false"/);
   assert.match(html, /<dialog[^>]+id="skill-picker"[^>]+aria-labelledby="skill-picker-title"/);
   assert.match(html, /<output[^>]+id="skill-count"[^>]+aria-live="polite"/);
@@ -92,10 +98,13 @@ test('creator exposes an accessible skill selector with honest omission copy', a
   assert.match(js, /showModal\(\)/);
   assert.match(js, /event\.key !== 'Escape'/);
   assert.match(js, /disabledSkills/);
+  assert.match(js, /skill\.recent/);
+  assert.match(js, /skill-option-new/);
   assert.match(html, /Deselected skills are omitted from the generated repository/);
   assert.doesNotMatch(html, /Disabled skills stay in the repository/);
   assert.match(css, /#skill-trigger:focus-visible/);
   assert.match(css, /\.skill-option:focus-within/);
+  assert.match(css, /\.skill-option-new\s*\{[^}]*border:\s*1px solid var\(--green\)/s);
   for (const match of css.matchAll(/border-radius\s*:\s*([^;]+)/g)) {
     assert.equal(match[1].trim(), '0');
   }
