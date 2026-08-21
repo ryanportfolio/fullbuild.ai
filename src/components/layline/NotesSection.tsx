@@ -103,6 +103,16 @@ export function NotesSection({ race }: { race: RaceData }) {
           </tbody>
         </table>
       </div>
+
+      <h2 className={styles.notesHeading}>Where this build stands</h2>
+      <p className={styles.notesLead}>
+        About half of the planned build is on the page. Running now: the replay engine itself, a
+        seeded six boat race recorded at four fixes a second and rebuilt by the interpolator, the
+        raw fixes lens, the four instrument docks, the water and the sky, and the chart the page
+        falls back to without WebGL. Still in work: the boats themselves, wake and spray, steadier
+        course graphics (the laylines currently follow the raw wind feed and swing with it; a
+        damped display wind is coming), and the broadcast camera rigs.
+      </p>
     </section>
   );
 }
