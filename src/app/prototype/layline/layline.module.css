@@ -155,6 +155,31 @@
   color: var(--ink);
 }
 
+/* ---- build status banner ---- */
+
+/* Loud on purpose: the owner demos this page mid-build, so the state of the
+   build is stated where nobody can miss it, not whispered in the bar. */
+.statusBanner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--hud-ground);
+  color: var(--ink-dim);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.statusBanner strong {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
 /* ---- console ---- */
 
 .main {
@@ -163,7 +188,10 @@
 
 .console {
   display: flex;
-  height: calc(100vh - 33px);
+  /* Bar 33px plus the single-line status banner 45px. The banner wraps on
+     narrow viewports, but those run the stacked mobile layout where this
+     height rule no longer governs. */
+  height: calc(100vh - 78px);
   min-height: 520px;
   padding: 8px;
 }
@@ -892,6 +920,47 @@
   overflow: auto;
   background: var(--page-ground);
   padding: 56px 16px 16px;
+}
+
+/* The chart is real content, not a spinner, but on the desktop overlay a
+   machine that boots the renderer inside the grace window should never see it
+   paint: it holds hidden for 1.2s (visibility, so it neither shows nor
+   hit-tests; pure CSS, so the no-WebGL and no-JS paths still get it, a beat
+   later) and only then reveals. When the renderer lands first the layer
+   unmounts while still hidden and there is nothing to flash. Mobile stacks
+   the chart in flow instead of overlaying it, so the grace is desktop-only
+   and the stacked layout keeps its immediate chart. */
+@media (min-width: 901px) {
+  .fallbackLayer {
+    visibility: hidden;
+    animation: fallbackReveal 0s linear 1.2s forwards;
+  }
+
+  /* The renderer took over after the chart had already revealed: fade, then
+     the app unmounts it. */
+  .fallbackOut {
+    animation: none;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 350ms var(--ease),
+      visibility 0s linear 350ms;
+  }
+
+  .canvasLayer {
+    opacity: 0;
+    transition: opacity 300ms var(--ease);
+  }
+
+  .canvasLive {
+    opacity: 1;
+  }
+}
+
+@keyframes fallbackReveal {
+  to {
+    visibility: visible;
+  }
 }
 
 .fallback {

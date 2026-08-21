@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import styles from "@/app/prototype/layline/layline.module.css";
 import { CaptureBridge } from "./CaptureBridge";
 import { Instruments } from "./hud/Instruments";
@@ -23,6 +23,26 @@ export function LaylineApp({ children }: { children: ReactNode }) {
   const race = useMemo(() => raceData(), []);
   const live = useReplay((state) => state.webglOk);
 
+  /* On desktop the chart lives 350ms past the renderer's first frame so it
+   * can fade out instead of cutting; boot inside its own 1.2s reveal delay
+   * and it unmounts while still hidden, so it never flashes. Mobile lays the
+   * chart out in flow and keys layout off its presence, so there it unmounts
+   * the moment the renderer is live. */
+  const [chartGone, setChartGone] = useState(false);
+  useEffect(() => {
+    if (!live) {
+      setChartGone(false);
+      return;
+    }
+    const overlay = window.matchMedia("(min-width: 901px)").matches;
+    if (!overlay) {
+      setChartGone(true);
+      return;
+    }
+    const timer = window.setTimeout(() => setChartGone(true), 420);
+    return () => window.clearTimeout(timer);
+  }, [live]);
+
   /* Read once at mount. A visitor who has asked for less motion gets the
    * replay paused at a mid-beat moment with everything reachable by hand,
    * never a still frame of an empty start line and never an autoplay. */
@@ -38,7 +58,7 @@ export function LaylineApp({ children }: { children: ReactNode }) {
 
   return (
     <div className={styles.stage}>
-      <div className={styles.canvasLayer}>
+      <div className={live ? `${styles.canvasLayer} ${styles.canvasLive}` : styles.canvasLayer}>
         <SceneIsland race={race} />
       </div>
 
@@ -61,7 +81,11 @@ export function LaylineApp({ children }: { children: ReactNode }) {
         ) : null}
       </div>
 
-      {live ? null : <div className={styles.fallbackLayer}>{children}</div>}
+      {chartGone ? null : (
+        <div className={live ? `${styles.fallbackLayer} ${styles.fallbackOut}` : styles.fallbackLayer}>
+          {children}
+        </div>
+      )}
 
       <CaptureBridge />
     </div>
