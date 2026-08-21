@@ -61,6 +61,13 @@ export const HARNESS_SKILL_CATALOG = Object.freeze([
     description: 'Explicit session mode for commit, push, pull request, and merge automation',
   },
   {
+    name: 'automate-me',
+    label: 'Personal automation mode',
+    group: 'core',
+    recent: true,
+    description: 'Turn your project history and working preferences into a reusable personal mode',
+  },
+  {
     name: 'brainstorming',
     label: 'Brainstorming',
     group: 'discipline',
@@ -91,6 +98,27 @@ export const HARNESS_SKILL_CATALOG = Object.freeze([
     description: 'Run work too large for one context window in verified rounds',
   },
   {
+    name: 'babysit-ci',
+    label: 'Babysit CI',
+    group: 'discipline',
+    recent: true,
+    description: 'Watch pull request checks, fix failures, and repeat until every check is green',
+  },
+  {
+    name: 'codex-review',
+    label: 'Codex review',
+    group: 'discipline',
+    recent: true,
+    description: 'Run a fresh Codex CLI review, then verify each finding before reporting it',
+  },
+  {
+    name: 'verify-this',
+    label: 'Verify this',
+    group: 'discipline',
+    recent: true,
+    description: 'Test a specific claim with baseline, treatment, comparison, and a clear verdict',
+  },
+  {
     name: 'fable-mode',
     label: 'Fable mode',
     group: 'specialist',
@@ -101,6 +129,13 @@ export const HARNESS_SKILL_CATALOG = Object.freeze([
     label: 'Wow loop',
     group: 'specialist',
     description: 'Run a multi-agent critique loop for high-polish deliverables',
+  },
+  {
+    name: 'arena',
+    label: 'Arena',
+    group: 'specialist',
+    recent: true,
+    description: 'Compare parallel candidate solutions, choose the strongest base, and combine the best parts',
   },
   {
     name: 'lab',
@@ -155,5 +190,19 @@ export const HARNESS_SKILL_CATALOG = Object.freeze([
     label: 'Caveman prose',
     group: 'specialist',
     description: 'Compress agent replies while preserving technical accuracy',
+  },
+  {
+    name: 'bro',
+    label: 'Plain English',
+    group: 'specialist',
+    recent: true,
+    description: 'Restate the last answer in plain language without dropping facts or caveats',
+  },
+  {
+    name: 'unslop',
+    label: 'Unslop',
+    group: 'specialist',
+    recent: true,
+    description: 'Strip predictable AI writing patterns from human-facing text at write time',
   },
 ]);

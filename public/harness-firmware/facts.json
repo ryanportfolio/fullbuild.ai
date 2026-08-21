@@ -1,12 +1,12 @@
 {
-  "measuredOn": "2026-08-11",
-  "templateRev": "d9cd99f5",
-  "templateCommit": "d9cd99f5d6126d58918e117b584369dd610f4f59",
-  "measurement": "git objects at commit d9cd99f5d6126d58918e117b584369dd610f4f59; each runtime description index is the UTF-8 byte sum of 23 skill names plus YAML-resolved description values; token counts use an approximate 4-character conversion",
+  "measuredOn": "2026-08-21",
+  "templateRev": "2094fa7b",
+  "templateCommit": "2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc",
+  "measurement": "git objects at commit 2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc; each runtime description index is the UTF-8 byte sum of 30 skill names plus YAML-resolved description values; token counts use an approximate 4-character conversion",
   "tokenEstimateCharactersPerToken": 4,
-  "skillsTreeHash": "503356de94911a3472f3071d5b51212df5cdcd2f",
-  "codexSkillsTreeHash": "a137de9f761ea77b62b1c0aadbbcc4358a037f54",
-  "claudeRulesBlobHash": "6203497f5324573564d78286088901fb75a6e3a3",
+  "skillsTreeHash": "7d68e369b735a40fe4ee5878abbe488d59728289",
+  "codexSkillsTreeHash": "5a6240931aec813dd4c751d98cb299eff790e0d1",
+  "claudeRulesBlobHash": "2339b2234a1a282d88828ffac71a0722ea1d2308",
   "codexRulesBlobHash": "17e15e0e76b0c76722d92ebaf6350a617d3d6777",
   "repo": "https://github.com/ryanportfolio/Harness-Firmware",
   "repoIsTemplate": true,
@@ -14,59 +14,59 @@
   "runtimes": ["Claude Code", "Codex"],
   "runtimeCount": 2,
   "blockBytes": 1024,
-  "kernelBytes": 5401,
-  "kernelTokens": 1350,
-  "descIndexBytes": 3954,
-  "descIndexTokens": 989,
-  "skillNameIndexBytes": 245,
-  "descriptionValueBytes": 3709,
-  "coreDisciplineDescIndexBytes": 2096,
-  "extrasDescIndexBytes": 1858,
-  "residentBytes": 9355,
-  "residentKiB": 9.1,
-  "residentTokens": 2339,
+  "kernelBytes": 7060,
+  "kernelTokens": 1765,
+  "descIndexBytes": 5522,
+  "descIndexTokens": 1381,
+  "skillNameIndexBytes": 303,
+  "descriptionValueBytes": 5219,
+  "coreDisciplineDescIndexBytes": 3024,
+  "extrasDescIndexBytes": 2498,
+  "residentBytes": 12582,
+  "residentKiB": 12.3,
+  "residentTokens": 3146,
   "residentRuntime": "Claude Code (maximum measured)",
-  "residentScope": "CLAUDE.md plus the names and description values of 23 canonical skills",
-  "residentEndHex": "0x0248B",
-  "kernelEndHex": "0x01519",
+  "residentScope": "CLAUDE.md plus the names and description values of 30 canonical skills",
+  "residentEndHex": "0x03126",
+  "kernelEndHex": "0x01B94",
   "codexKernelBytes": 3252,
   "codexKernelTokens": 813,
-  "codexDescIndexBytes": 3954,
-  "codexDescIndexTokens": 989,
-  "codexResidentBytes": 7206,
-  "codexResidentKiB": 7.0,
-  "codexResidentTokens": 1802,
-  "codexResidentEndHex": "0x01C26",
+  "codexDescIndexBytes": 5522,
+  "codexDescIndexTokens": 1381,
+  "codexResidentBytes": 8774,
+  "codexResidentKiB": 8.6,
+  "codexResidentTokens": 2194,
+  "codexResidentEndHex": "0x02246",
   "codexKernelEndHex": "0x00CB4",
-  "onDemandBytes": 188216,
-  "onDemandKiB": 184,
-  "onDemandEndHex": "0x2DF38",
-  "onDemandScope": "sum of 23 canonical .claude/skills/*/SKILL.md git blobs; per-skill support files and generated Codex adapters excluded",
-  "canonicalSkillDirectoryBytes": 350397,
-  "canonicalSkillSupportBytes": 162181,
-  "skillTreeBytes": 352679,
+  "onDemandBytes": 228757,
+  "onDemandKiB": 223,
+  "onDemandEndHex": "0x37D95",
+  "onDemandScope": "sum of 30 canonical .claude/skills/*/SKILL.md git blobs; per-skill support files and generated Codex adapters excluded",
+  "canonicalSkillDirectoryBytes": 395821,
+  "canonicalSkillSupportBytes": 167064,
+  "skillTreeBytes": 398103,
   "skillProvenanceBytes": 2282,
-  "codexAdapterSkillEntryBytes": 31801,
-  "combinedCanonicalAndAdapterEntryBytes": 220017,
-  "lazyRatio": 20.1,
+  "codexAdapterSkillEntryBytes": 41840,
+  "combinedCanonicalAndAdapterEntryBytes": 270597,
+  "lazyRatio": 18.2,
   "lazyRatioBasis": "canonical skill entry bytes / maximum resident bytes",
-  "residentPctOfOnDemand": 5,
-  "skillCount": 23,
+  "residentPctOfOnDemand": 5.5,
+  "skillCount": 30,
   "tierCounts": {
-    "core": 7,
-    "discipline": 5,
-    "extras": 11
+    "core": 8,
+    "discipline": 8,
+    "extras": 14
   },
-  "extrasBytes": 78857,
-  "allocatedBlocks": 197,
+  "extrasBytes": 97435,
+  "allocatedBlocks": 239,
   "referenceFileCount": 6,
   "referenceFiles": [
-    "secrets",
     "architecture",
-    "pitfalls",
     "commands",
-    "tech-stack",
-    "deployment"
+    "deployment",
+    "pitfalls",
+    "secrets",
+    "tech-stack"
   ],
   "pitfallExampleDate": "2026-07-18",
   "pitfallEntry": {
@@ -76,19 +76,19 @@
   "skills": [
     {
       "name": "writing-skills",
-      "bytes": 26286,
+      "bytes": 27159,
       "tier": "discipline",
-      "blocks": 26,
-      "padFillPct": 67,
+      "blocks": 27,
+      "padFillPct": 52.2,
       "hexOffset": "0x00000"
     },
     {
       "name": "impartial-review",
-      "bytes": 20933,
+      "bytes": 21995,
       "tier": "discipline",
-      "blocks": 21,
-      "padFillPct": 44.2,
-      "hexOffset": "0x066AE"
+      "blocks": 22,
+      "padFillPct": 47.9,
+      "hexOffset": "0x06A17"
     },
     {
       "name": "init-project",
@@ -96,7 +96,7 @@
       "tier": "core",
       "blocks": 14,
       "padFillPct": 8.6,
-      "hexOffset": "0x0B873"
+      "hexOffset": "0x0C002"
     },
     {
       "name": "enhance-prompt",
@@ -104,7 +104,7 @@
       "tier": "extras",
       "blocks": 11,
       "padFillPct": 9.3,
-      "hexOffset": "0x0ECCB"
+      "hexOffset": "0x0F45A"
     },
     {
       "name": "why",
@@ -112,7 +112,15 @@
       "tier": "extras",
       "blocks": 9,
       "padFillPct": 90.7,
-      "hexOffset": "0x1152A"
+      "hexOffset": "0x11CB9"
+    },
+    {
+      "name": "fable-mode",
+      "bytes": 8938,
+      "tier": "extras",
+      "blocks": 9,
+      "padFillPct": 72.9,
+      "hexOffset": "0x1405A"
     },
     {
       "name": "merge",
@@ -120,7 +128,7 @@
       "tier": "core",
       "blocks": 9,
       "padFillPct": 38.9,
-      "hexOffset": "0x138CB"
+      "hexOffset": "0x16344"
     },
     {
       "name": "advocate",
@@ -128,15 +136,15 @@
       "tier": "extras",
       "blocks": 8,
       "padFillPct": 65.3,
-      "hexOffset": "0x15A59"
+      "hexOffset": "0x184D2"
     },
     {
-      "name": "fable-mode",
-      "bytes": 7770,
+      "name": "wow-loop",
+      "bytes": 7749,
       "tier": "extras",
       "blocks": 8,
-      "padFillPct": 58.8,
-      "hexOffset": "0x178F6"
+      "padFillPct": 56.7,
+      "hexOffset": "0x1A36F"
     },
     {
       "name": "lab",
@@ -144,15 +152,15 @@
       "tier": "extras",
       "blocks": 8,
       "padFillPct": 51.3,
-      "hexOffset": "0x19750"
+      "hexOffset": "0x1C1B4"
     },
     {
-      "name": "humanizer",
-      "bytes": 7483,
-      "tier": "extras",
+      "name": "automate-me",
+      "bytes": 7480,
+      "tier": "core",
       "blocks": 8,
-      "padFillPct": 30.8,
-      "hexOffset": "0x1B55D"
+      "padFillPct": 30.5,
+      "hexOffset": "0x1DFC1"
     },
     {
       "name": "handoff-audit",
@@ -160,7 +168,31 @@
       "tier": "extras",
       "blocks": 8,
       "padFillPct": 1.4,
-      "hexOffset": "0x1D298"
+      "hexOffset": "0x1FCF9"
+    },
+    {
+      "name": "unslop",
+      "bytes": 7055,
+      "tier": "extras",
+      "blocks": 7,
+      "padFillPct": 89,
+      "hexOffset": "0x21907"
+    },
+    {
+      "name": "humanizer",
+      "bytes": 6953,
+      "tier": "extras",
+      "blocks": 7,
+      "padFillPct": 79,
+      "hexOffset": "0x23496"
+    },
+    {
+      "name": "codex-review",
+      "bytes": 6684,
+      "tier": "discipline",
+      "blocks": 7,
+      "padFillPct": 52.7,
+      "hexOffset": "0x24FBF"
     },
     {
       "name": "purposeful-writing",
@@ -168,7 +200,7 @@
       "tier": "extras",
       "blocks": 7,
       "padFillPct": 23.3,
-      "hexOffset": "0x1EEA6"
+      "hexOffset": "0x269DB"
     },
     {
       "name": "forge-repo-ui-skill",
@@ -176,7 +208,7 @@
       "tier": "extras",
       "blocks": 7,
       "padFillPct": 18.1,
-      "hexOffset": "0x20795"
+      "hexOffset": "0x282CA"
     },
     {
       "name": "optimize-context",
@@ -184,7 +216,15 @@
       "tier": "core",
       "blocks": 7,
       "padFillPct": 10.6,
-      "hexOffset": "0x2204E"
+      "hexOffset": "0x29B83"
+    },
+    {
+      "name": "arena",
+      "bytes": 6070,
+      "tier": "extras",
+      "blocks": 6,
+      "padFillPct": 92.8,
+      "hexOffset": "0x2B3F0"
     },
     {
       "name": "writing-plans",
@@ -192,7 +232,7 @@
       "tier": "discipline",
       "blocks": 6,
       "padFillPct": 67.6,
-      "hexOffset": "0x238BB"
+      "hexOffset": "0x2CBA6"
     },
     {
       "name": "addskill",
@@ -200,7 +240,7 @@
       "tier": "core",
       "blocks": 6,
       "padFillPct": 64.8,
-      "hexOffset": "0x24F6F"
+      "hexOffset": "0x2E25A"
     },
     {
       "name": "brainstorming",
@@ -208,15 +248,15 @@
       "tier": "discipline",
       "blocks": 6,
       "padFillPct": 62,
-      "hexOffset": "0x26607"
+      "hexOffset": "0x2F8F2"
     },
     {
-      "name": "wow-loop",
-      "bytes": 5613,
+      "name": "caveman",
+      "bytes": 5150,
       "tier": "extras",
       "blocks": 6,
-      "padFillPct": 48.1,
-      "hexOffset": "0x27C82"
+      "padFillPct": 2.9,
+      "hexOffset": "0x30F6D"
     },
     {
       "name": "sync-starter",
@@ -224,7 +264,7 @@
       "tier": "core",
       "blocks": 5,
       "padFillPct": 96.2,
-      "hexOffset": "0x2926F"
+      "hexOffset": "0x3238B"
     },
     {
       "name": "recall",
@@ -232,31 +272,47 @@
       "tier": "core",
       "blocks": 5,
       "padFillPct": 48,
-      "hexOffset": "0x2A648"
-    },
-    {
-      "name": "long-horizon",
-      "bytes": 3508,
-      "tier": "discipline",
-      "blocks": 4,
-      "padFillPct": 42.6,
-      "hexOffset": "0x2B834"
+      "hexOffset": "0x33764"
     },
     {
       "name": "refine",
-      "bytes": 3369,
+      "bytes": 4011,
       "tier": "core",
       "blocks": 4,
-      "padFillPct": 29,
-      "hexOffset": "0x2C5E8"
+      "padFillPct": 91.7,
+      "hexOffset": "0x34950"
     },
     {
-      "name": "caveman",
-      "bytes": 3111,
-      "tier": "extras",
+      "name": "long-horizon",
+      "bytes": 3510,
+      "tier": "discipline",
       "blocks": 4,
-      "padFillPct": 3.8,
-      "hexOffset": "0x2D311"
+      "padFillPct": 42.8,
+      "hexOffset": "0x358FB"
+    },
+    {
+      "name": "verify-this",
+      "bytes": 3122,
+      "tier": "discipline",
+      "blocks": 4,
+      "padFillPct": 4.9,
+      "hexOffset": "0x366B1"
+    },
+    {
+      "name": "babysit-ci",
+      "bytes": 2098,
+      "tier": "discipline",
+      "blocks": 3,
+      "padFillPct": 4.9,
+      "hexOffset": "0x372E3"
+    },
+    {
+      "name": "bro",
+      "bytes": 640,
+      "tier": "extras",
+      "blocks": 1,
+      "padFillPct": 62.5,
+      "hexOffset": "0x37B15"
     }
   ]
 }

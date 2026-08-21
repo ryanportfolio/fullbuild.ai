@@ -374,6 +374,7 @@ noscript { color: var(--muted); font-size: .85rem; }
 .skill-option-copy small { color: var(--muted); font-size: .72rem; line-height: 1.35; letter-spacing: 0; text-transform: none; }
 .skill-option-meta { display: grid; gap: 5px; justify-items: end; color: var(--muted); font: .58rem var(--mono); letter-spacing: .06em; text-transform: uppercase; }
 .skill-option-meta code { color: var(--blue); font: inherit; text-transform: none; }
+.skill-option-new { padding: 2px 4px; border: 1px solid var(--green); color: var(--green); }
 .skill-option:not(.is-enabled) .skill-option-copy strong { color: var(--muted); }
 .skill-option.is-required { cursor: not-allowed; }
 .skill-picker-foot {

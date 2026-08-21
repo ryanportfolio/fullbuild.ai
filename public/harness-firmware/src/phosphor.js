@@ -17,7 +17,7 @@ let heroController = null;
 let spectrumController = null;
 const replayControllers = [];
 const revealTimers = new Set();
-const skillSourceBase = 'https://github.com/ryanportfolio/Harness-Firmware/blob/d9cd99f5d6126d58918e117b584369dd610f4f59/.claude/skills';
+const skillSourceBase = 'https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/skills';
 
 // ---------- reveal: ordered once, with a complete static floor ----------
 const reveals = [...document.querySelectorAll('.reveal')];

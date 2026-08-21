@@ -1,7 +1,7 @@
 // PHOSPHOR dither engine: shared by the browser runtime (phosphor.js) and
 // the build-time baker (scripts/bake-phosphor.mjs via src/bake.html).
 // Everything here is deterministic: the blue-noise seed is the template's
-// measured git revision (0xd9cd99f5) read as hex. Same inputs, same dots.
+// measured git revision (0x2094fa7b) read as hex. Same inputs, same dots.
 //
 // Pixel states are strictly 4-valued: the P7 phosphor law:
 //   OFF     unpowered glass
@@ -20,7 +20,7 @@ export const PALETTE = {
   [BLUE]: [95, 217, 255], // #5FD9FF
 };
 
-export const SEED = 0xd9cd99f5; // template rev: even the grain is versioned
+export const SEED = 0x2094fa7b; // template rev: even the grain is versioned
 
 export function mulberry32(seed) {
   let a = seed >>> 0;
@@ -216,7 +216,7 @@ function stampDot(field, w, h, cx, cy, r, state) {
 }
 
 // Core + halo: a small green core (the maximum measured Claude resident,
-// 9,355 B) inside a vast residue halo (188,216 B across the 23 canonical
+// 12,582 B) inside a vast residue halo (228,757 B across the 30 canonical
 // SKILL.md entry files; support files and generated adapters excluded).
 // The green amplitude is binary-searched
 // until lit-green / lit-residue matches the real byte ratio within 0.2%.

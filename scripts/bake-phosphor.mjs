@@ -8,12 +8,7 @@
 // Then:
 //   node scripts/bake-phosphor.mjs
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
-
-const require = createRequire(
-  'file:///C:/Users/Home/CoreWise/fullbuild.ai/.claude/worktrees/audit-shipped-layout-shift-b8bba1/node_modules/'
-);
-const { chromium } = require('playwright');
+import { chromium } from 'playwright';
 
 const base = process.env.HF_BASE || 'http://localhost:4823';
 const outDir = new URL('../public/harness-firmware/fallback/', import.meta.url);

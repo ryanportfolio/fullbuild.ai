@@ -117,11 +117,13 @@ summary:focus-visible,
   border-bottom: 1px solid var(--rule);
 }
 .chrome-home {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
   text-decoration: none;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
 }
+.chrome-home-mark { display: block; width: 40px; height: 40px; }
 .chrome-product { display: none; }
 .product-short { display: none; }
 .firmware-index {
@@ -289,7 +291,7 @@ summary:focus-visible,
   height: 7px;
   margin-right: 10px;
   background: var(--green);
-  animation: tickpulse 2.339s var(--ease) infinite; /* 2,339 tok / 1,000 */
+  animation: tickpulse 3.146s var(--ease) infinite; /* 3,146 tok / 1,000 */
 }
 @keyframes tickpulse {
   0%, 88% { background-color: var(--green); }
@@ -725,6 +727,37 @@ h2.excited { color: var(--blue); transition: none; } /* the beam passes */
 .skill-list b { font-weight: 400; color: var(--green); }
 .skill-list span { color: color-mix(in srgb, var(--bone) 62%, transparent); }
 
+.new-skill-list {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  margin: 30px 0 34px;
+  padding: 0;
+  border-top: 1px solid var(--rule-ink);
+  border-left: 1px solid var(--rule-ink);
+  list-style: none;
+}
+.new-skill-list li {
+  grid-column: span 3;
+  min-width: 0;
+  min-height: 150px;
+  padding: 18px;
+  border-right: 1px solid var(--rule-ink);
+  border-bottom: 1px solid var(--rule-ink);
+}
+.new-skill-list li:nth-last-child(-n + 3) { grid-column: span 4; }
+.new-skill-list li::before {
+  content: "NEW / " attr(data-signal);
+  display: block;
+  margin-bottom: 26px;
+  color: var(--ink-kept);
+  font-size: 11px;
+  letter-spacing: .14em;
+}
+.new-skill-list b,
+.new-skill-list span { display: block; }
+.new-skill-list b { margin-bottom: 8px; color: var(--ink-kept); font-weight: 700; }
+.new-skill-list span { color: color-mix(in srgb, var(--glass) 66%, transparent); line-height: 1.45; }
+
 /* ---------- 04 practices ---------- */
 .practices {
   list-style: none;
@@ -1056,6 +1089,9 @@ h2.excited { color: var(--blue); transition: none; } /* the beam passes */
   #kernel .metrology { margin-top: 14px; }
 
   .skill-list { grid-template-columns: 1fr; }
+  .new-skill-list li,
+  .new-skill-list li:nth-last-child(-n + 3) { grid-column: span 6; }
+  .new-skill-list li:last-child { grid-column: 1 / -1; }
   .practices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .practices li { grid-column: auto; }
 }
@@ -1995,6 +2031,10 @@ body { background: var(--glass); }
   .sequence-visual { margin-bottom: 20px; }
   #action .console { margin-top: 34px; }
   #skills .spectrum-stage { padding: 12px; }
+  .new-skill-list li,
+  .new-skill-list li:nth-last-child(-n + 3),
+  .new-skill-list li:last-child { grid-column: 1 / -1; min-height: 0; }
+  .new-skill-list li::before { margin-bottom: 14px; }
   #skills .skill-list { grid-template-columns: 1fr; }
   #skills .skill-list li:nth-child(-n + 4) { min-height: 0; }
 }
