@@ -33,6 +33,11 @@ export default function LaylinePage() {
         <Link href="/">fullbuild.ai ↗</Link>
       </div>
 
+      <div className={styles.statusBanner} role="status">
+        <strong>Build in progress · about half done</strong>
+        <span>still landing: the boats themselves, wake and spray, steadier laylines, broadcast camera rigs</span>
+      </div>
+
       <main className={styles.main}>
         <section
           id="replay-console"
