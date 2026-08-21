@@ -29,7 +29,7 @@ export default function LaylinePage() {
 
       <div className={styles.prototypeBar}>
         <strong>Race replay prototype</strong>
-        <span>Fictional event // seeded telemetry</span>
+        <span>Fictional event // seeded telemetry // build in progress</span>
         <Link href="/">fullbuild.ai ↗</Link>
       </div>
 
