@@ -23,13 +23,20 @@ export function LaylineApp({ children }: { children: ReactNode }) {
   const race = useMemo(() => raceData(), []);
   const live = useReplay((state) => state.webglOk);
 
-  /* The chart lives 350ms past the renderer's first frame so it can fade out
-   * instead of cutting; on a machine that boots inside the chart's own 1.2s
-   * reveal delay it unmounts while still invisible and never flashes. */
+  /* On desktop the chart lives 350ms past the renderer's first frame so it
+   * can fade out instead of cutting; boot inside its own 1.2s reveal delay
+   * and it unmounts while still hidden, so it never flashes. Mobile lays the
+   * chart out in flow and keys layout off its presence, so there it unmounts
+   * the moment the renderer is live. */
   const [chartGone, setChartGone] = useState(false);
   useEffect(() => {
     if (!live) {
       setChartGone(false);
+      return;
+    }
+    const overlay = window.matchMedia("(min-width: 901px)").matches;
+    if (!overlay) {
+      setChartGone(true);
       return;
     }
     const timer = window.setTimeout(() => setChartGone(true), 420);
