@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import styles from "@/app/prototype/layline/layline.module.css";
 import { CaptureBridge } from "./CaptureBridge";
 import { Instruments } from "./hud/Instruments";
@@ -60,9 +60,32 @@ export function LaylineApp({ children }: { children: ReactNode }) {
     replay.play();
   }, []);
 
+  /* The water is the biggest play/pause target on the page, video-player
+   * style. A press only counts as a click if the pointer barely moved; a drag
+   * or a touch scroll travels past the threshold (or ends in pointercancel)
+   * and leaves playback alone. The docks and top bar sit above this layer, so
+   * their controls never fall through to it. */
+  const press = useRef<{ x: number; y: number; id: number } | null>(null);
+
   return (
     <div className={styles.stage}>
-      <div className={live ? `${styles.canvasLayer} ${styles.canvasLive}` : styles.canvasLayer}>
+      <div
+        className={live ? `${styles.canvasLayer} ${styles.canvasLive}` : styles.canvasLayer}
+        onPointerDown={(event) => {
+          if (!live || event.button !== 0) return;
+          press.current = { x: event.clientX, y: event.clientY, id: event.pointerId };
+        }}
+        onPointerUp={(event) => {
+          const start = press.current;
+          press.current = null;
+          if (!start || start.id !== event.pointerId) return;
+          if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 8) return;
+          useReplay.getState().toggle();
+        }}
+        onPointerCancel={() => {
+          press.current = null;
+        }}
+      >
         {/* 2D mode hides the renderer, it does not unmount it: the replay clock
             runs inside the render loop, and the boat plates the scene owns hang
             off the same element. Hidden, both stop being seen and neither stops

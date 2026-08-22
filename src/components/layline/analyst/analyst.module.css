@@ -322,7 +322,7 @@
   color: var(--ink);
   font-family: var(--font-archivo), sans-serif;
   text-align: left;
-  cursor: pointer;
+  cursor: var(--house-cursor);
   transition:
     background-color 160ms var(--ease),
     border-color 160ms var(--ease),
@@ -549,13 +549,17 @@
 }
 
 /* The standings followed-row grammar: ink wash, 2px ink left edge, inside a
-   1px rule box at control radius. Your question is the followed row here. */
+   1px rule box at control radius. Your question is the followed row here.
+   The plate sits over the course backdrop, so it frosts what is behind it:
+   a mostly opaque ground plus blur, or hot track lines run through the text. */
 .userTurn {
   align-self: flex-end;
   max-width: 85%;
   padding: 10px 12px;
-  background: rgba(236, 245, 249, 0.08);
-  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  background: rgba(19, 27, 34, 0.88);
+  background: color-mix(in srgb, var(--ink) 10%, color-mix(in srgb, var(--page-ground) 86%, transparent));
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   border: 1px solid var(--rule);
   border-left: 2px solid var(--ink);
   border-radius: 2px;
@@ -696,7 +700,7 @@
   border-color: color-mix(in srgb, var(--chip-hue) 45%, var(--rule));
   border-radius: 999px;
   color: var(--ink);
-  cursor: pointer;
+  cursor: var(--house-cursor);
   transition:
     background-color 120ms var(--ease),
     border-color 120ms var(--ease),
@@ -898,7 +902,7 @@
   font-family: var(--font-archivo), sans-serif;
   font-size: 13px;
   line-height: 18px;
-  cursor: pointer;
+  cursor: var(--house-cursor);
   transition:
     background-color 120ms var(--ease),
     transform 80ms var(--ease);
@@ -1123,7 +1127,7 @@
   letter-spacing: 0.08em;
   line-height: 18px;
   text-transform: uppercase;
-  cursor: pointer;
+  cursor: var(--house-cursor);
   transition:
     background-color 120ms var(--ease),
     transform 80ms var(--ease);
