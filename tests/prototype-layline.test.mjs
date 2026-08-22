@@ -230,10 +230,11 @@ test('the rail keeps the bow and the frame budget honest', async () => {
 });
 
 test('every page section the rail marks is a section the page actually renders', async () => {
-  const [page, analyst, notes] = await Promise.all([
+  const [page, analyst, notes, engineRoom] = await Promise.all([
     read('src/app/prototype/layline/page.tsx'),
     read('src/components/layline/analyst/AnalystSection.tsx'),
     read('src/components/layline/NotesSection.tsx'),
+    read('src/components/layline/engine/EngineRoom.tsx'),
   ]);
 
   assert.match(page, /data-leg="Replay console"/);
@@ -241,9 +242,9 @@ test('every page section the rail marks is a section the page actually renders',
   assert.match(notes, /data-leg="How the replay works"/);
 
   /* The mark's name is the section's own heading, not a label invented for the
-     margin. */
+     margin. The notes section's heading renders inside the engine room. */
   assert.match(analyst, /id="debrief-heading"[\s\S]{0,80}Debrief/);
-  assert.match(notes, /id="notes-heading"[\s\S]{0,120}How the replay works/);
+  assert.match(engineRoom, /id="notes-heading"[\s\S]{0,120}How the replay works/);
 
   /* The colophon carries no mark: it sits below the last viewport centre, so a
      mark there could never be rounded. The finish line at the foot of the rail
