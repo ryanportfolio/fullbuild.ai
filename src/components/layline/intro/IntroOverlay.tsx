@@ -89,6 +89,7 @@ export function IntroOverlay() {
   const edges = useRef(new Map<string, SVGPathElement | null>());
   const hulls = useRef(new Map<string, SVGGElement | null>());
   const clockRef = useRef<HTMLParagraphElement | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const plotRef = useRef<SVGSVGElement | null>(null);
   const pose = useRef<Pose>({ x: 0, y: 0, hdg: 0, heel: 0, twa: 0, sog: 0, cog: 0, kite: 0 });
 
@@ -107,7 +108,18 @@ export function IntroOverlay() {
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const off = new URLSearchParams(window.location.search).get("intro") === "off";
-    if (reduced || off) {
+    /* An intro is a page load, not a route event: a client-side return to this
+     * route keeps the document and the store, introDone is still true, and
+     * playing the cover again over a replay that is already running would
+     * burn the prestart where nobody can see it. */
+    const replayed = useReplay.getState().introDone;
+    /* Hydration can also land after the no-JS expiry has already hidden the
+     * cover. Bringing it back over a page someone has started reading is
+     * worse than never having played, and the computed style is the one
+     * witness of whether the expiry fired. */
+    const expired =
+      rootRef.current !== null && getComputedStyle(rootRef.current).visibility === "hidden";
+    if (reduced || off || replayed || expired) {
       useReplay.getState().setIntroDone(true);
       setGone(true);
       return;
@@ -178,6 +190,7 @@ export function IntroOverlay() {
 
     let frameId = 0;
     let started = 0;
+    let last = 0; // the previous frame's timestamp, for the freeze hold
     let leftAt = 0; // when the morph or the plain fade began
     /* Gun to finish. The feed opens ten seconds before the gun and those ten
      * seconds are boats milling behind a line, which is the whole of the
@@ -187,6 +200,17 @@ export function IntroOverlay() {
     const tick = (now: number) => {
       frameId = requestAnimationFrame(tick);
       if (started === 0) started = now;
+      if (last === 0) last = now;
+      const step = now - last;
+      last = now;
+      /* The capture hold freezes the replay's clock, and this loop is a clock
+       * too: a screenshot taken during the intro has to be of a stated frame.
+       * The start slides forward by exactly the held time, so the sequence
+       * resumes where it froze rather than having quietly run on. */
+      if (useReplay.getState().frozen) {
+        started += step;
+        return;
+      }
       const ms = now - started;
 
       draw(GUN + through(ms) * span);
@@ -252,9 +276,26 @@ export function IntroOverlay() {
     };
     window.addEventListener("keydown", onKey);
 
+    /* A fixed overlay does not stop the document scrolling under it: a wheel
+     * during the intro would leave the viewport halfway down the notes when
+     * the cover lifts, with the replay opening unseen. The document holds
+     * still while the cover is up, and the scroll gesture itself is read as
+     * what it is, a viewer reaching for the content, so it skips. */
+    const doc = document.documentElement;
+    const heldOverflow = doc.style.overflow;
+    doc.style.overflow = "hidden";
+    const onReach = () => {
+      skipRef.current = true;
+    };
+    window.addEventListener("wheel", onReach, { passive: true });
+    window.addEventListener("touchmove", onReach, { passive: true });
+
     return () => {
       cancelAnimationFrame(frameId);
       window.removeEventListener("keydown", onKey);
+      window.removeEventListener("wheel", onReach);
+      window.removeEventListener("touchmove", onReach);
+      doc.style.overflow = heldOverflow;
     };
   }, [live, gone, frame, race, end]);
 
@@ -271,6 +312,7 @@ export function IntroOverlay() {
 
   return (
     <div
+      ref={rootRef}
       className={styles.overlay}
       data-state={beat}
       data-live={live ? "true" : undefined}
