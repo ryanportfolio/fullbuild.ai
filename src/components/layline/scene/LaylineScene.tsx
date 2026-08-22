@@ -46,11 +46,23 @@ function QualityGovernor() {
   const setDpr = useThree((state) => state.setDpr);
   const gl = useThree((state) => state.gl);
   const rungs = useRef<number[] | null>(null);
+  const tier = useRef<number | null>(null);
   const ema = useRef(1000 / 60);
   const settle = useRef(SETTLE_FRAMES);
   useFrame((state, delta) => {
     if (rungs.current === null) rungs.current = DPR_LADDER.filter((v) => v < gl.getPixelRatio());
-    if (rungs.current.length === 0 || useReplay.getState().frozen) return;
+    if (useReplay.getState().frozen) return;
+    /* Any Canvas re-render (freeze and thaw toggle the frameloop prop) re-runs
+     * the reconfigure pass, which reapplies the dpr prop and lifts the ratio
+     * back to the device value. The governor holds its tier and reasserts it
+     * instead of spending settle windows earning the shed a second time. A
+     * capture taken while frozen still gets the full-resolution frame. */
+    if (tier.current !== null && gl.getPixelRatio() > tier.current) {
+      setDpr(tier.current);
+      settle.current = SETTLE_FRAMES;
+      return;
+    }
+    if (rungs.current.length === 0) return;
     const ms = delta * 1000;
     /* A background tab reports its whole absence as one delta; that is not a
      * slow frame, and the EMA restarts clean when the page comes back. */
@@ -64,7 +76,8 @@ function QualityGovernor() {
     }
     ema.current += (ms - ema.current) * EMA_GAIN;
     if (ema.current > MISS_MS) {
-      setDpr(rungs.current.shift() as number);
+      tier.current = rungs.current.shift() as number;
+      setDpr(tier.current);
       ema.current = 1000 / 60;
       settle.current = SETTLE_FRAMES;
     }
