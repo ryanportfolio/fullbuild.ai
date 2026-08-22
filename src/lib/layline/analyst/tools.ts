@@ -268,8 +268,12 @@ export function detectManeuvers(race: RaceData, boatId?: string): ManeuverOut[] 
           const width = (Math.abs(fixes[prevIndex].twa) + Math.abs(fixes[i].twa)) / 2;
           const window = fixes.filter((fix) => fix.t >= tFlip - 4 && fix.t <= tFlip + 4);
           const minSog = Math.min(...window.map((fix) => fix.sog));
-          const entry = fixNear(fixes, tFlip - 4);
-          const exit = fixNear(fixes, tFlip + 4);
+          /* Entry and exit are the ends of that same window. Reading them with
+           * fixNear instead could land on the fix just outside it, one that was
+           * never in the minimum, and a turn out of a lull then reported a
+           * negative speed loss. */
+          const entry = window[0];
+          const exit = window[window.length - 1];
           out.push({
             boatId: boat.id,
             sail: boat.sail,

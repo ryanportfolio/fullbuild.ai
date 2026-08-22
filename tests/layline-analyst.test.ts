@@ -75,6 +75,15 @@ test("maneuver detection is identical across two runs", () => {
   assert.ok(JSON.parse(first).length > 0, "expected at least one tack or gybe in the race");
 });
 
+test("a maneuver never reports negative speed loss", () => {
+  for (const move of detectManeuvers(generateRace(RACE_SEED))) {
+    assert.ok(
+      Number(move.speedLossKnots) >= 0,
+      `${move.sail} ${move.kind} at ${move.raceClock} lost ${move.speedLossKnots} knots`,
+    );
+  }
+});
+
 /* ------------------------------------------------------------------ */
 /* Chip grammar                                                        */
 
