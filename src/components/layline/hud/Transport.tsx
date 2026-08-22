@@ -12,6 +12,24 @@ const RIGS: { name: RigName; label: string }[] = [
   { name: "tactical", label: "Tactical" },
 ];
 
+function StepIcon({ forward }: { forward: boolean }) {
+  return (
+    <svg viewBox="0 0 16 16" className={styles.playIcon} aria-hidden="true">
+      {forward ? (
+        <g>
+          <polygon points="3,3 10,8 3,13" />
+          <rect x="11" y="3" width="2" height="10" />
+        </g>
+      ) : (
+        <g>
+          <rect x="3" y="3" width="2" height="10" />
+          <polygon points="13,3 6,8 13,13" />
+        </g>
+      )}
+    </svg>
+  );
+}
+
 function PlayIcon({ playing }: { playing: boolean }) {
   return (
     <svg viewBox="0 0 16 16" className={styles.playIcon} aria-hidden="true">
@@ -33,6 +51,7 @@ export function Transport() {
   const mode = useReplay((state) => state.mode);
   const rig = useReplay((state) => state.rig);
   const toggle = useReplay((state) => state.toggle);
+  const step = useReplay((state) => state.step);
   const setRate = useReplay((state) => state.setRate);
   const setMode = useReplay((state) => state.setMode);
   const setRig = useReplay((state) => state.setRig);
@@ -40,6 +59,18 @@ export function Transport() {
 
   return (
     <div className={styles.transportRow}>
+      {/* One fix either way: the smallest unit of truth in the feed, and the
+          step the raw lens is built to inspect. */}
+      <button
+        type="button"
+        className={styles.playButton}
+        aria-label="Step back one fix"
+        data-control="step-back"
+        onClick={() => step(-1)}
+      >
+        <StepIcon forward={false} />
+      </button>
+
       <button
         type="button"
         className={styles.playButton}
@@ -48,6 +79,16 @@ export function Transport() {
         onClick={() => toggle()}
       >
         <PlayIcon playing={playing} />
+      </button>
+
+      <button
+        type="button"
+        className={styles.playButton}
+        aria-label="Step forward one fix"
+        data-control="step-forward"
+        onClick={() => step(1)}
+      >
+        <StepIcon forward />
       </button>
 
       <div className={styles.segGroup} role="group" aria-label="Playback rate">

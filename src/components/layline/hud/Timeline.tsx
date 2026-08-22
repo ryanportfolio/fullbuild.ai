@@ -168,6 +168,8 @@ export function Timeline({ race }: { race: RaceData }) {
             store.seek(store.t - step);
           else if (event.key === "Home") store.seek(race.tMin);
           else if (event.key === "End") store.seek(race.tMax);
+          else if (event.key === ",") store.step(-1);
+          else if (event.key === ".") store.step(1);
           else return;
           event.preventDefault();
         }}
