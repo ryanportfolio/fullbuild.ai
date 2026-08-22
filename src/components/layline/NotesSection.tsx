@@ -110,8 +110,11 @@ export function NotesSection({ race }: { race: RaceData }) {
         so one gusty reading cannot swing them. The replay steps fix by fix, one reading at a
         time. Debrief answers questions about the race through tools that read this same feed:
         the start boat by boat, every tack and gybe with the speed it cost, two boats compared
-        over any window. Still in work: heel and trim on the instrument dock, and an opening
-        shot that frames the fleet before the gun.
+        over any window. The wide shot now opens on the fleet before the
+        gun, camera hand-overs and the pull-in run on the race clock so a scrubbed replay
+        reproduces them exactly, and the chase lens holds its distance from every hull in the
+        fleet. Still in work: heel and trim on the instrument dock, and VMG and maneuver
+        analysis on the timeline.
       </p>
     </section>
   );
