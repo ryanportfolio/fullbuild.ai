@@ -1220,9 +1220,10 @@
 
 .lapHost {
   position: absolute;
-  /* Outside the registration box, so the white border stays unbroken and each
-     hue reads against the panel ground instead of against white. */
-  inset: -7px;
+  /* On the box, not off it: the six hues ride the registration border nose to
+     tail so they read as one band travelling the perimeter rather than six
+     separate lights orbiting outside it. */
+  inset: 0;
   pointer-events: none;
   animation: lapIn 240ms var(--ease);
 }

@@ -114,8 +114,8 @@ function FleetLap({ fleet }: { fleet: BoatMeta[] }) {
               height={box.h - 2}
               rx={1.25}
               style={{ color: boat.hue, "--perimeter": `${perimeter}px` } as CSSProperties}
-              strokeDasharray={`${(perimeter * 0.03).toFixed(2)} ${(perimeter * 0.97).toFixed(2)}`}
-              strokeDashoffset={(-index * perimeter * 0.145).toFixed(2)}
+              strokeDasharray={`${(perimeter * 0.07).toFixed(2)} ${(perimeter * 0.93).toFixed(2)}`}
+              strokeDashoffset={(-index * perimeter * 0.045).toFixed(2)}
 
             />
           ))}
