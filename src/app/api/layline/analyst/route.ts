@@ -216,18 +216,18 @@ function mockDownwind(race: RaceData): MockStep[] {
   const from = Math.ceil(runFrom);
   const to = Math.floor(firstFinish);
 
-  const entries: { boatId: string; sail: string; vmgKnots: string }[] = [];
+  const entries: { boatId: string; sail: string; toMarkKnots: string }[] = [];
   for (let i = 0; i + 1 < race.boats.length; i += 2) {
     const a = race.boats[i];
     const b = race.boats[i + 1];
     steps.push(statusStep(race, "compare_boats", { a: a.id, b: b.id }));
     const cmp = asCompare(compareBoats(race, a.id, b.id, from, to));
-    entries.push({ boatId: cmp.a.boatId, sail: cmp.a.sail, vmgKnots: cmp.a.avgVmgKnots });
-    entries.push({ boatId: cmp.b.boatId, sail: cmp.b.sail, vmgKnots: cmp.b.avgVmgKnots });
+    entries.push({ boatId: cmp.a.boatId, sail: cmp.a.sail, toMarkKnots: cmp.a.avgToMarkKnots });
+    entries.push({ boatId: cmp.b.boatId, sail: cmp.b.sail, toMarkKnots: cmp.b.avgToMarkKnots });
   }
   entries.sort(
     (a, b) =>
-      Number(b.vmgKnots) - Number(a.vmgKnots) || (a.boatId < b.boatId ? -1 : 1),
+      Number(b.toMarkKnots) - Number(a.toMarkKnots) || (a.boatId < b.boatId ? -1 : 1),
   );
   const [top, next] = entries;
 
@@ -242,8 +242,8 @@ function mockDownwind(race: RaceData): MockStep[] {
   steps.push({
     kind: "text",
     value:
-      `${top.sail} was the fastest boat downwind, averaging ${top.vmgKnots} knots of VMG between ${clock(from)} and ${clock(to)}, ` +
-      `when the whole fleet was on the run ${serializeChip(mid, top.boatId)}. ${next.sail} was next at ${next.vmgKnots}. ${finish}`,
+      `${top.sail} was the fastest boat downwind, averaging ${top.toMarkKnots} knots toward the mark between ${clock(from)} and ${clock(to)}, ` +
+      `when the whole fleet was on the run ${serializeChip(mid, top.boatId)}. ${next.sail} was next at ${next.toMarkKnots}. ${finish}`,
   });
   return steps;
 }

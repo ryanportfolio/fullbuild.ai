@@ -5,11 +5,16 @@
  * anything the HUD shows in display units crosses format.ts on the way out,
  * the same edge every on-screen number crosses.
  */
+import { maneuversOf } from "@/lib/layline/analytics";
 import { clock, deg, knots } from "@/lib/layline/format";
 import type { BoatMeta, Fix, LegName, RaceData } from "@/lib/layline/types";
 import { lookupTerms } from "./knowledge";
 
 const DEG = Math.PI / 180;
+
+/* The window analytics.ts measures a turn over, mirrored so the entry and exit
+ * speeds this tool reports bracket the loss that detector computed. */
+const LOSS_WINDOW = 4;
 
 /* ------------------------------------------------------------------ */
 /* Shared lookups                                                      */
@@ -48,10 +53,25 @@ function progressAt(race: RaceData, boatId: string, t: number): RaceData["progre
   return found;
 }
 
-/** Along-course speed, signed toward the active mark. */
-function vmgOf(fix: Fix, leg: LegName): number {
+/**
+ * Speed made good toward the mark the boat is sailing for: along-course speed,
+ * signed so positive always points at that mark. The same quantity the strip
+ * beside the dock prints as "To mark".
+ */
+function toMarkOf(fix: Fix, leg: LegName): number {
   const along = fix.sog * Math.cos(fix.cog * DEG);
   return leg === "run" || leg === "finished" ? -along : along;
+}
+
+/**
+ * VMG the way the instrument dock means it: speed resolved onto the wind axis.
+ * Positive climbing to windward, negative running away from the wind, which is
+ * why it is a different number from the one above whenever the wind sits off
+ * the course axis. The analyst gets both so it can quote either surface
+ * without either of them being wrong.
+ */
+function vmgOf(fix: Fix): number {
+  return fix.sog * Math.cos(fix.twa * DEG);
 }
 
 function mean(values: number[]): number {
@@ -142,6 +162,9 @@ export interface BoatStateOut {
   heelDeg: string;
   twaDeg: string;
   kite: number;
+  /* Both readings the page shows, under the names the page shows them by:
+   * "To mark" on the strip, "VMG" on the dock. */
+  toMarkKnots: string;
   vmgKnots: string;
 }
 
@@ -164,7 +187,8 @@ export function boatState(race: RaceData, boatId: string, tRaw: number): BoatSta
     heelDeg: deg(fix.heel),
     twaDeg: deg(fix.twa),
     kite: round2(fix.kite),
-    vmgKnots: knots(vmgOf(fix, leg)),
+    toMarkKnots: knots(toMarkOf(fix, leg)),
+    vmgKnots: knots(vmgOf(fix)),
   };
 }
 
@@ -172,6 +196,7 @@ export interface CompareSideOut {
   boatId: string;
   sail: string;
   avgSogKnots: string;
+  avgToMarkKnots: string;
   avgVmgKnots: string;
   distanceSailedMeters: number;
 }
@@ -187,7 +212,7 @@ export interface CompareOut {
 
 function compareSide(race: RaceData, boat: BoatMeta, t0: number, t1: number): CompareSideOut {
   const fixes = race.fixes[boat.id].filter((fix) => fix.t >= t0 && fix.t <= t1);
-  const vmgs = fixes.map((fix) => vmgOf(fix, progressAt(race, boat.id, fix.t).leg));
+  const toMarks = fixes.map((fix) => toMarkOf(fix, progressAt(race, boat.id, fix.t).leg));
   let distance = 0;
   for (let i = 1; i < fixes.length; i++) {
     distance += Math.hypot(fixes[i].x - fixes[i - 1].x, fixes[i].y - fixes[i - 1].y);
@@ -196,7 +221,8 @@ function compareSide(race: RaceData, boat: BoatMeta, t0: number, t1: number): Co
     boatId: boat.id,
     sail: boat.sail,
     avgSogKnots: knots(mean(fixes.map((fix) => fix.sog))),
-    avgVmgKnots: knots(mean(vmgs)),
+    avgToMarkKnots: knots(mean(toMarks)),
+    avgVmgKnots: knots(mean(fixes.map(vmgOf))),
     distanceSailedMeters: Math.round(distance),
   };
 }
@@ -241,11 +267,16 @@ export interface ManeuverOut {
 }
 
 /**
- * Tacks and gybes from the raw wind-angle sign. A tack flips twa sign while
- * the boat is close-hauled, under 90 degrees off the wind; a gybe flips it
- * at 90 or wider. Flips within 3 seconds of the previous one are the same
- * maneuver settling and merge into it. Speed loss is the entry sog minus the
- * slowest sog within 4 seconds either side of the flip.
+ * Tacks and gybes, read from the same detector the timeline markers use
+ * ([`analytics.maneuversOf`]). The two used to be separate loops kept in step
+ * by hand, and they drifted the moment either side improved: the markers
+ * measured the drawdown off the speed carried into the turn while the tool
+ * still took the slowest reading against the first fix of its window, so on
+ * this fleet every gybe read 0.0 to a viewer and 0.5 to 1.0 on the tooltip
+ * beside it. One detector, one number, no way to disagree.
+ *
+ * Entry is the reading the loss is measured from, the fastest in the four
+ * seconds up to the flip; exit is the last reading four seconds past it.
  */
 export function detectManeuvers(race: RaceData, boatId?: string): ManeuverOut[] {
   const boats =
@@ -253,41 +284,25 @@ export function detectManeuvers(race: RaceData, boatId?: string): ManeuverOut[] 
   const out: ManeuverOut[] = [];
   for (const boat of boats) {
     const fixes = race.fixes[boat.id];
-    let prevSign = 0;
-    let prevIndex = -1;
-    let lastFlipT = -Infinity;
-    for (let i = 0; i < fixes.length; i++) {
-      const sign = Math.sign(fixes[i].twa);
-      if (sign === 0) continue;
-      if (prevSign !== 0 && sign !== prevSign) {
-        const tFlip = (fixes[prevIndex].t + fixes[i].t) / 2;
-        if (tFlip - lastFlipT < 3) {
-          lastFlipT = tFlip;
-        } else {
-          lastFlipT = tFlip;
-          const width = (Math.abs(fixes[prevIndex].twa) + Math.abs(fixes[i].twa)) / 2;
-          const window = fixes.filter((fix) => fix.t >= tFlip - 4 && fix.t <= tFlip + 4);
-          const minSog = Math.min(...window.map((fix) => fix.sog));
-          /* Entry and exit are the ends of that same window. Reading them with
-           * fixNear instead could land on the fix just outside it, one that was
-           * never in the minimum, and a turn out of a lull then reported a
-           * negative speed loss. */
-          const entry = window[0];
-          const exit = window[window.length - 1];
-          out.push({
-            boatId: boat.id,
-            sail: boat.sail,
-            kind: width < 90 ? "tack" : "gybe",
-            t: round2(tFlip),
-            raceClock: clock(tFlip),
-            entrySogKnots: knots(entry.sog),
-            exitSogKnots: knots(exit.sog),
-            speedLossKnots: knots(entry.sog - minSog),
-          });
-        }
+    for (const move of maneuversOf(race, boat.id)) {
+      let entry = -Infinity;
+      let exit = fixes[0];
+      for (const fix of fixes) {
+        if (fix.t < move.t - LOSS_WINDOW) continue;
+        if (fix.t > move.t + LOSS_WINDOW) break;
+        if (fix.t <= move.t && fix.sog > entry) entry = fix.sog;
+        exit = fix;
       }
-      prevSign = sign;
-      prevIndex = i;
+      out.push({
+        boatId: boat.id,
+        sail: boat.sail,
+        kind: move.kind,
+        t: move.t,
+        raceClock: clock(move.t),
+        entrySogKnots: knots(entry),
+        exitSogKnots: knots(exit.sog),
+        speedLossKnots: move.lossKnots,
+      });
     }
   }
   out.sort((a, b) => a.t - b.t || (a.boatId < b.boatId ? -1 : 1));
@@ -386,8 +401,11 @@ export interface AnalystTool {
   };
 }
 
-const VMG_NOTE =
-  "VMG is along-course speed: sog times the cosine of cog in radians, taken toward +y on the beat and toward -y on the run, so positive always points at the active mark.";
+/* Two speeds made good, and the page prints both under these names. Saying
+ * which is which in every description that returns them is what keeps an
+ * answer from calling the strip's number by the dock's name. */
+const SPEED_NOTE =
+  "Two made-good readings come back and they are different numbers. toMark is speed along the course axis, sog times the cosine of cog, signed toward whichever mark the boat is sailing for, so it is positive whenever the boat is gaining; the strip beside the instrument dock prints it as \"To mark\". vmg is speed along the wind axis, sog times the cosine of the true wind angle, positive climbing to windward and negative running away from the wind; that is the number the dock's VMG tile shows. They differ whenever the wind sits off the course axis, and they differ in sign on the run.";
 
 const T_NOTE = "Race time in seconds relative to the gun; negative is the prestart.";
 
@@ -407,7 +425,7 @@ export const ANALYST_TOOLS: AnalystTool[] = [
   {
     name: "boat_state",
     description:
-      `One boat's telemetry at a race time: position in course meters, speed over ground in knots, course over ground, heading, heel and wind angle in degrees, gennaker hoist state 0 to 1, and VMG in knots. ${VMG_NOTE}`,
+      `One boat's telemetry at a race time: position in course meters, speed over ground in knots, course over ground, heading, heel and wind angle in degrees, gennaker hoist state 0 to 1, and both made-good speeds in knots. ${SPEED_NOTE}`,
     strict: true,
     input_schema: {
       type: "object",
@@ -422,7 +440,7 @@ export const ANALYST_TOOLS: AnalystTool[] = [
   {
     name: "compare_boats",
     description:
-      `Compare two boats over a time window: average sog and average VMG in knots, distance sailed in meters, and the along-course gap between them at the start and end of the window, positive when boat a is ahead. ${VMG_NOTE}`,
+      `Compare two boats over a time window: average sog, average speed to the mark and average VMG in knots, distance sailed in meters, and the along-course gap between them at the start and end of the window, positive when boat a is ahead. ${SPEED_NOTE}`,
     strict: true,
     input_schema: {
       type: "object",
@@ -439,7 +457,7 @@ export const ANALYST_TOOLS: AnalystTool[] = [
   {
     name: "maneuvers",
     description:
-      "Every tack and gybe, for one boat or the whole fleet: when it happened, entry and exit speed in knots, and speed lost through the turn. A tack is a wind-angle sign flip under 90 degrees off the wind, a gybe at 90 or wider.",
+      "Every tack and gybe, for one boat or the whole fleet: when it happened, entry and exit speed in knots, and speed lost through the turn. A tack is a wind-angle sign flip under 90 degrees off the wind, a gybe at 90 or wider. Speed lost is the drawdown off the speed carried in: the fastest reading in the four seconds up to the turn minus the slowest between that peak and four seconds past it, the same figure the timeline marker shows.",
     strict: true,
     input_schema: {
       type: "object",
