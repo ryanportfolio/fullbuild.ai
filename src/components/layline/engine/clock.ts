@@ -17,6 +17,11 @@ export interface LabClock {
   mounted: boolean;
   running: boolean;
   time(): number;
+  /** The engine's one wall-adjacent reading: the last animation-frame
+   *  timestamp the loop saw. Interaction eases (the compass needle coming
+   *  home) measure against this instead of asking the platform clock, so the
+   *  lab keeps a single source of frame time. */
+  frameNow(): number;
   subscribe(listener: (t: number) => void): () => void;
   /** SNAP onto the fix grid and hold, the way useReplay.step does. */
   seek(t: number): void;

@@ -66,6 +66,7 @@ export function EngineRoom() {
   const runRef = useRef(false);
   const holdRef = useRef(0);
   const heldByHandRef = useRef(false);
+  const frameNowRef = useRef(0);
   const listeners = useRef(new Set<(t: number) => void>());
   const figuresRef = useRef<HTMLDivElement | null>(null);
   const [running, setRunningState] = useState(false);
@@ -153,6 +154,7 @@ export function EngineRoom() {
     let previous = 0;
     const tick = (now: number) => {
       frame = requestAnimationFrame(tick);
+      frameNowRef.current = now;
       const dt = previous === 0 ? 0 : Math.min(0.1, (now - previous) / 1000);
       previous = now;
       if (runRef.current) {
@@ -193,6 +195,7 @@ export function EngineRoom() {
       mounted,
       running,
       time: () => timeRef.current,
+      frameNow: () => frameNowRef.current,
       subscribe,
       seek,
       setRunning,

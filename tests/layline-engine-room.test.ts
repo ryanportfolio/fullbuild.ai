@@ -41,11 +41,16 @@ test("the bench window is the beat's second tack, six seconds either side", () =
   for (const fix of window.fixes) {
     assert.ok(Number.isInteger(Math.round((fix.t - window.from) * FIX_HZ)));
   }
-  /* The tack and USA 4's windward rounding are both inside the window. */
+  /* The tack sits inside the window. The rounding no longer does: the sim now
+     takes a hull's mark time at its closest approach measured through the run
+     leg as well as the arc, which moved USA 4's rounding from 32.85 to 33.70,
+     seven tenths past the window's end. The transport draws its rounding
+     marker only when the event is inside the window, so on this seed the
+     marker stays undrawn and the scrub rail carries the tack tick alone. */
   assert.ok(window.tack > window.from && window.tack < window.to);
   const rounding = roundingTime(race, BENCH_BOAT);
-  assert.equal(rounding, 32.85);
-  assert.ok(rounding !== null && rounding > window.from && rounding < window.to);
+  assert.equal(rounding, 33.7);
+  assert.ok(rounding !== null && rounding > window.to);
 });
 
 test("dot spacing over the window is the range the chips print", () => {

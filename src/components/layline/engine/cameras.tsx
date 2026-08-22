@@ -625,7 +625,7 @@ export function CameraThree() {
       if (drag !== null) {
         heading = drag;
       } else if (homeRef.current !== null) {
-        const u = Math.min(1, (performance.now() - homeRef.current.start) / HOME_MS);
+        const u = Math.min(1, (clock.frameNow() - homeRef.current.start) / HOME_MS);
         /* A smoothstep standing in for var(--ease): the release always comes
          * home the short way, which is wrapSigned felt in the hand. */
         const eased = u * u * (3 - 2 * u);
@@ -829,7 +829,7 @@ export function CameraThree() {
                     writeNeedle(clockHdgRef.current);
                     writeReading("HDG", clockHdgRef.current);
                   } else {
-                    homeRef.current = { from: dragRef.current, start: performance.now() };
+                    homeRef.current = { from: dragRef.current, start: clock.frameNow() };
                   }
                   dragRef.current = null;
                 }}
