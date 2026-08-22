@@ -35,7 +35,7 @@ export default function LaylinePage() {
 
       <div className={styles.statusBanner} role="status">
         <strong>Build in progress · replay running, analysis next</strong>
-        <span>still landing: start line, maneuver and fleet analytics, stepping fix by fix</span>
+        <span>still landing: start line, maneuver and fleet analytics</span>
       </div>
 
       <main className={styles.main}>

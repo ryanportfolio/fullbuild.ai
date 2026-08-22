@@ -107,9 +107,9 @@ export function NotesSection({ race }: { race: RaceData }) {
         boat race at four fixes a second, the boat models with wake and spray, three broadcast
         camera rigs, the raw fixes lens, the instrument and standings docks, water, sky, and the
         chart the page falls back to without WebGL. The laylines and marks draw on a damped
-        display wind, so one gusty reading cannot swing them. Still in work: the analysis layer.
-        Start line timing, maneuver detection, boat against fleet comparison, and stepping the
-        replay fix by fix.
+        display wind, so one gusty reading cannot swing them. The replay steps fix by fix, one
+        reading at a time. Still in work: the analysis layer. Start line timing, maneuver
+        detection, boat against fleet comparison.
       </p>
     </section>
   );
