@@ -24,7 +24,11 @@ export function NotesSection({ race }: { race: RaceData }) {
   const order = finishGaps(race);
   const board = buildBoard(race);
   return (
-    <section className={styles.notes} aria-labelledby="notes-heading">
+    <section
+      className={styles.notes}
+      aria-labelledby="notes-heading"
+      data-leg="How the replay works"
+    >
       <EngineRoom />
 
       <div className={engine.stands}>

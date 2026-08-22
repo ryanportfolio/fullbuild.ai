@@ -440,7 +440,7 @@ export function AnalystSection() {
   }, []);
 
   return (
-    <section className={styles.debrief} aria-labelledby="debrief-heading">
+    <section className={styles.debrief} aria-labelledby="debrief-heading" data-leg="Debrief">
       <div className={styles.head}>
         <div className={styles.headText}>
           <p className={styles.kicker}>Race analyst</p>
