@@ -184,7 +184,7 @@ export function HermiteDiagram({ race }: { race: RaceData }) {
       </svg>
       <figcaption className={styles.diagramCaption}>
         The same dots with the cubic Hermite through them. Each amber arrow is half a second of
-        the speed and course that fix reported: the tangents the curve leaves on. Neighbour
+        the speed and course that fix reported: the tangents the curve leaves on. Neighbor
         differences would round the corner off the tack
       </figcaption>
     </figure>

@@ -104,11 +104,13 @@ export function NotesSection({ race }: { race: RaceData }) {
 
       <h2 className={styles.notesHeading}>Where this build stands</h2>
       <p className={styles.notesLead}>
-        About half the planned build is on the page. Running now: the replay engine, a seeded six
-        boat race at four fixes a second, the raw fixes lens, four instrument docks, water, sky,
-        and the chart the page falls back to without WebGL. Still in work: the boat models, wake
-        and spray, steadier course graphics (the laylines follow the raw wind feed and swing with
-        it; a damped display wind is coming), and the broadcast camera rigs.
+        The replay half of the build is on the page. Running now: the replay engine, a seeded six
+        boat race at four fixes a second, the boat models with wake and spray, three broadcast
+        camera rigs, the raw fixes lens, the instrument and standings docks, water, sky, and the
+        chart the page falls back to without WebGL. The laylines and marks draw on a damped
+        display wind, so one gusty reading cannot swing them. Still in work: the analysis layer.
+        Start line timing, maneuver detection, boat against fleet comparison, and stepping the
+        replay fix by fix.
       </p>
     </section>
   );
