@@ -11,7 +11,7 @@ import styles from "./layline.module.css";
 export const metadata: Metadata = {
   title: "Layline · Race Replay",
   description:
-    "A browser race replay engine for a fictional Long Beach fleet race, rebuilding continuous 3D motion from four fixes a second of boat telemetry.",
+    "Browser race replay engine for a fictional Long Beach fleet race: continuous 3D motion rebuilt from four fixes a second of boat telemetry.",
 };
 
 export default function LaylinePage() {
@@ -35,7 +35,7 @@ export default function LaylinePage() {
 
       <div className={styles.statusBanner} role="status">
         <strong>Build in progress · about half done</strong>
-        <span>still landing: the boats themselves, wake and spray, steadier laylines, broadcast camera rigs</span>
+        <span>still landing: boat models, wake and spray, steadier laylines, broadcast camera rigs</span>
       </div>
 
       <main className={styles.main}>
@@ -50,8 +50,7 @@ export default function LaylinePage() {
               <figure className={styles.chartFigure}>
                 <TrackChart race={race} />
                 <figcaption className={styles.caption}>
-                  Every track on the course, sampled once a second through the same evaluator the
-                  replay reads
+                  Every track, sampled once a second through the same evaluator the replay reads
                 </figcaption>
               </figure>
 

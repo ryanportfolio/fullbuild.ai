@@ -25,15 +25,14 @@ export function NotesSection({ race }: { race: RaceData }) {
         <div>
           <h3 className={styles.noteHeading}>Four fixes a second</h3>
           <p className={styles.noteBody}>
-            Each boat reports {FIX_HZ} times a second: where it is, how fast it is going over the
-            ground, which way it is pointing, how far it is heeled, what angle it is holding to the
-            wind. That is one reading every {(1000 / FIX_HZ).toFixed(0)} milliseconds, which sounds
+            Each boat reports {FIX_HZ} times a second: position, speed over the ground, heading,
+            heel, wind angle. One reading every {(1000 / FIX_HZ).toFixed(0)} milliseconds. Sounds
             like a lot until you draw it.
           </p>
           <p className={styles.noteBody}>
-            At a screen refreshing sixty times a second, a replay that only drew the fixes would
-            hold each one for fifteen frames and then jump. The boat would arrive at the mark in
-            the right place at the right time and look wrong the whole way there.
+            A screen refreshes sixty times a second. Draw only the fixes and each one holds for
+            fifteen frames, then jumps. The boat reaches the mark in the right place at the right
+            time and looks wrong the whole way there.
           </p>
         </div>
         <FixRateDiagram race={race} />
@@ -43,16 +42,15 @@ export function NotesSection({ race }: { race: RaceData }) {
         <div>
           <h3 className={styles.noteHeading}>Between the fixes</h3>
           <p className={styles.noteBody}>
-            The gaps get filled with a cubic curve, one segment per pair of fixes. The part that
-            matters is where the curve gets its direction. A tangent taken from the fix before and
-            the fix after is a guess about the middle of a turn, and it cuts the corner off every
-            tack.
+            A cubic curve fills each gap, one segment per pair of fixes. What matters is where the
+            curve gets its direction. A tangent guessed from the fixes either side cuts the corner
+            off every tack.
           </p>
           <p className={styles.noteBody}>
-            Every fix already carries a speed and a course, measured at that instant. Using those
-            as the tangents means the curve leaves each fix on the heading the boat reported and
-            arrives at the next one on the heading that one reported, so the turn keeps its shape
-            and the speed through it stays honest.
+            Each fix already carries a speed and a course, measured at that instant. Use those as
+            the tangents and the curve leaves every fix on the heading that fix reported, and
+            arrives at the next one the same way. The turn keeps its shape. The speed through it
+            stays honest.
           </p>
         </div>
         <HermiteDiagram race={race} />
@@ -63,13 +61,13 @@ export function NotesSection({ race }: { race: RaceData }) {
           <h3 className={styles.noteHeading}>Heading is a circle</h3>
           <p className={styles.noteBody}>
             Position, speed and heel are plain numbers and interpolate like plain numbers. Heading
-            is not. It lives on a circle, where the value after 359 is 0, and a boat crossing the
-            top of that circle produces two readings that look far apart and are not.
+            is not. It lives on a circle where 359 sits next to 0, so a boat crossing the top of
+            the circle produces two readings that look far apart and are not.
           </p>
           <p className={styles.noteBody}>
-            Every angle in the engine, heading, course over ground, wind direction and wind angle,
-            is interpolated the short way round with its rate of turn capped at a figure no hull
-            can beat. One bad reading bends the curve; it never spins the boat.
+            Every angle in the engine interpolates the short way round: heading, course over
+            ground, wind direction, wind angle. Turn rate is capped at a figure no hull can beat,
+            so one bad reading bends the curve and never spins the boat.
           </p>
         </div>
         <ShortArcDiagram race={race} />
@@ -79,7 +77,7 @@ export function NotesSection({ race }: { race: RaceData }) {
         <table className={styles.excerptTable}>
           <caption>
             {EXCERPT_ROWS} consecutive fixes from {sail}, a second and a quarter of the feed, in
-            the units the engine stores. Everything on this page is read from rows like these
+            the units the engine stores. Everything on this page reads from rows like these
           </caption>
           <thead>
             <tr>
@@ -106,12 +104,11 @@ export function NotesSection({ race }: { race: RaceData }) {
 
       <h2 className={styles.notesHeading}>Where this build stands</h2>
       <p className={styles.notesLead}>
-        About half of the planned build is on the page. Running now: the replay engine itself, a
-        seeded six boat race recorded at four fixes a second and rebuilt by the interpolator, the
-        raw fixes lens, the four instrument docks, the water and the sky, and the chart the page
-        falls back to without WebGL. Still in work: the boats themselves, wake and spray, steadier
-        course graphics (the laylines currently follow the raw wind feed and swing with it; a
-        damped display wind is coming), and the broadcast camera rigs.
+        About half the planned build is on the page. Running now: the replay engine, a seeded six
+        boat race at four fixes a second, the raw fixes lens, four instrument docks, water, sky,
+        and the chart the page falls back to without WebGL. Still in work: the boat models, wake
+        and spray, steadier course graphics (the laylines follow the raw wind feed and swing with
+        it; a damped display wind is coming), and the broadcast camera rigs.
       </p>
     </section>
   );

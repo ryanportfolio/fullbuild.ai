@@ -116,9 +116,9 @@ export function FixRateDiagram({ race }: { race: RaceData }) {
         })}
       </svg>
       <figcaption className={styles.diagramCaption}>
-        {frame.fixes.length} fixes, {SEG_TO - SEG_FROM} seconds, nothing drawn in between them.
-        The dots crowd to {gaps.min.toFixed(1)} m apart where the boat slows through the tack and
-        open to {gaps.max.toFixed(1)} m where it is back up to speed
+        {frame.fixes.length} fixes, {SEG_TO - SEG_FROM} seconds, nothing drawn between them. The
+        dots crowd to {gaps.min.toFixed(1)} m apart where the boat slows through the tack and
+        open to {gaps.max.toFixed(1)} m back at speed
       </figcaption>
     </figure>
   );
@@ -183,9 +183,9 @@ export function HermiteDiagram({ race }: { race: RaceData }) {
         })}
       </svg>
       <figcaption className={styles.diagramCaption}>
-        The curve is a cubic Hermite through the same dots. Each amber arrow is half a second of
-        the speed and course that fix actually reported, and those are the tangents the curve
-        leaves on. Neighbour differences would have rounded the corner off the tack
+        The same dots with the cubic Hermite through them. Each amber arrow is half a second of
+        the speed and course that fix reported: the tangents the curve leaves on. Neighbour
+        differences would round the corner off the tack
       </figcaption>
     </figure>
   );
@@ -326,9 +326,9 @@ export function ShortArcDiagram({ race }: { race: RaceData }) {
       </svg>
       <figcaption className={styles.diagramCaption}>
         One second of NZL 7 through the top of the circle: {deg(a.hdg)} degrees, then{" "}
-        {deg(b.hdg)}. Treated as plain numbers those are {deg(long)} degrees apart and the boat
-        spins the wrong way through south. Taken round the circle they are {deg(Math.abs(short))},
-        which is the turn that happened
+        {deg(b.hdg)}. As plain numbers those are {deg(long)} degrees apart and the boat spins the
+        wrong way through south. Round the circle they are {deg(Math.abs(short))}, the turn that
+        happened
       </figcaption>
     </figure>
   );
