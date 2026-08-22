@@ -57,10 +57,20 @@ function progressAt(race: RaceData, boatId: string, t: number): RaceData["progre
  * Speed made good toward the mark the boat is sailing for: along-course speed,
  * signed so positive always points at that mark. The same quantity the strip
  * beside the dock prints as "To mark".
+ *
+ * Only the beat and the run have a mark to make good toward. Before the gun a
+ * boat is working the line, and after it finishes there is nothing left to
+ * sail for, so the strip prints nothing on those legs and this returns null
+ * rather than a number about a mark that is not there.
  */
-function toMarkOf(fix: Fix, leg: LegName): number {
+function racingLeg(leg: LegName): boolean {
+  return leg === "beat" || leg === "run";
+}
+
+function toMarkOf(fix: Fix, leg: LegName): number | null {
+  if (!racingLeg(leg)) return null;
   const along = fix.sog * Math.cos(fix.cog * DEG);
-  return leg === "run" || leg === "finished" ? -along : along;
+  return leg === "run" ? -along : along;
 }
 
 /**
@@ -163,8 +173,9 @@ export interface BoatStateOut {
   twaDeg: string;
   kite: number;
   /* Both readings the page shows, under the names the page shows them by:
-   * "To mark" on the strip, "VMG" on the dock. */
-  toMarkKnots: string;
+   * "To mark" on the strip, "VMG" on the dock. To mark is null off the racing
+   * legs, the same place the strip prints nothing. */
+  toMarkKnots: string | null;
   vmgKnots: string;
 }
 
@@ -174,6 +185,7 @@ export function boatState(race: RaceData, boatId: string, tRaw: number): BoatSta
   const t = clampT(race, tRaw);
   const fix = fixNear(race.fixes[boat.id], t);
   const leg = progressAt(race, boat.id, fix.t).leg;
+  const toMark = toMarkOf(fix, leg);
   return {
     boatId: boat.id,
     sail: boat.sail,
@@ -187,7 +199,7 @@ export function boatState(race: RaceData, boatId: string, tRaw: number): BoatSta
     heelDeg: deg(fix.heel),
     twaDeg: deg(fix.twa),
     kite: round2(fix.kite),
-    toMarkKnots: knots(toMarkOf(fix, leg)),
+    toMarkKnots: toMark === null ? null : knots(toMark),
     vmgKnots: knots(vmgOf(fix)),
   };
 }
@@ -196,7 +208,7 @@ export interface CompareSideOut {
   boatId: string;
   sail: string;
   avgSogKnots: string;
-  avgToMarkKnots: string;
+  avgToMarkKnots: string | null;
   avgVmgKnots: string;
   distanceSailedMeters: number;
 }
@@ -212,7 +224,11 @@ export interface CompareOut {
 
 function compareSide(race: RaceData, boat: BoatMeta, t0: number, t1: number): CompareSideOut {
   const fixes = race.fixes[boat.id].filter((fix) => fix.t >= t0 && fix.t <= t1);
-  const toMarks = fixes.map((fix) => toMarkOf(fix, progressAt(race, boat.id, fix.t).leg));
+  /* Only the fixes with a mark to make good toward feed this average; a
+   * window that is all prestart or all post-finish has nothing to report. */
+  const toMarks = fixes
+    .map((fix) => toMarkOf(fix, progressAt(race, boat.id, fix.t).leg))
+    .filter((value): value is number => value !== null);
   let distance = 0;
   for (let i = 1; i < fixes.length; i++) {
     distance += Math.hypot(fixes[i].x - fixes[i - 1].x, fixes[i].y - fixes[i - 1].y);
@@ -221,7 +237,7 @@ function compareSide(race: RaceData, boat: BoatMeta, t0: number, t1: number): Co
     boatId: boat.id,
     sail: boat.sail,
     avgSogKnots: knots(mean(fixes.map((fix) => fix.sog))),
-    avgToMarkKnots: knots(mean(toMarks)),
+    avgToMarkKnots: toMarks.length === 0 ? null : knots(mean(toMarks)),
     avgVmgKnots: knots(mean(fixes.map(vmgOf))),
     distanceSailedMeters: Math.round(distance),
   };
@@ -405,7 +421,7 @@ export interface AnalystTool {
  * which is which in every description that returns them is what keeps an
  * answer from calling the strip's number by the dock's name. */
 const SPEED_NOTE =
-  "Two made-good readings come back and they are different numbers. toMark is speed along the course axis, sog times the cosine of cog, signed toward whichever mark the boat is sailing for, so it is positive whenever the boat is gaining; the strip beside the instrument dock prints it as \"To mark\". vmg is speed along the wind axis, sog times the cosine of the true wind angle, positive climbing to windward and negative running away from the wind; that is the number the dock's VMG tile shows. They differ whenever the wind sits off the course axis, and they differ in sign on the run.";
+  "Two made-good readings come back and they are different numbers. toMark is speed along the course axis, sog times the cosine of cog, signed toward whichever mark the boat is sailing for, so it is positive whenever the boat is gaining; the strip beside the instrument dock prints it as \"To mark\". vmg is speed along the wind axis, sog times the cosine of the true wind angle, positive climbing to windward and negative running away from the wind; that is the number the dock's VMG tile shows. They differ whenever the wind sits off the course axis, and they differ in sign on the run. toMark is null before the gun and after a boat finishes, when there is no mark to make good toward and the strip prints nothing; the strip also floors its display at zero, so a small negative reading here shows on screen as 0.0.";
 
 const T_NOTE = "Race time in seconds relative to the gun; negative is the prestart.";
 

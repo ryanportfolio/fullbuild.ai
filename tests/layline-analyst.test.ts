@@ -105,13 +105,21 @@ test("boat_state reports the dock's VMG and the strip's speed to the mark", () =
   const race = generateRace(RACE_SEED);
   const pose: Pose = { x: 0, y: 0, hdg: 0, heel: 0, twa: 0, sog: 0, cog: 0, kite: 0 };
   let sawRun = false;
-  for (let t = 0; t <= 50; t += 0.25) {
+  for (let t = race.tMin; t <= race.tMax; t += 0.25) {
     const state = boatState(race, "usa", t);
     assert.ok(!("error" in state));
 
     /* The tile's number, computed by the dock's own function on the same fix. */
     poseAt(race, "usa", t, "raw", pose);
     assert.equal(state.vmgKnots, knots(dockVmg(pose)), `VMG disagrees with the dock at t=${t}`);
+
+    if (state.leg === "beat" || state.leg === "run") {
+      assert.notEqual(state.toMarkKnots, null, `no speed to the mark on the ${state.leg} at t=${t}`);
+    } else {
+      /* Off the racing legs there is no mark to make good toward, and the
+       * strip prints nothing; the tool must not invent a number either. */
+      assert.equal(state.toMarkKnots, null, `${state.leg} at t=${t} reported ${state.toMarkKnots}`);
+    }
 
     if (state.leg === "run") {
       sawRun = true;

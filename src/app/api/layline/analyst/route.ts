@@ -216,14 +216,21 @@ function mockDownwind(race: RaceData): MockStep[] {
   const from = Math.ceil(runFrom);
   const to = Math.floor(firstFinish);
 
+  /* The window is the run, so every boat has a mark to make good toward and
+   * the tool returns a figure for all of them. A side with none is dropped
+   * rather than sorted as a NaN. */
   const entries: { boatId: string; sail: string; toMarkKnots: string }[] = [];
+  const takeSide = (side: CompareOut["a"]): void => {
+    if (side.avgToMarkKnots === null) return;
+    entries.push({ boatId: side.boatId, sail: side.sail, toMarkKnots: side.avgToMarkKnots });
+  };
   for (let i = 0; i + 1 < race.boats.length; i += 2) {
     const a = race.boats[i];
     const b = race.boats[i + 1];
     steps.push(statusStep(race, "compare_boats", { a: a.id, b: b.id }));
     const cmp = asCompare(compareBoats(race, a.id, b.id, from, to));
-    entries.push({ boatId: cmp.a.boatId, sail: cmp.a.sail, toMarkKnots: cmp.a.avgToMarkKnots });
-    entries.push({ boatId: cmp.b.boatId, sail: cmp.b.sail, toMarkKnots: cmp.b.avgToMarkKnots });
+    takeSide(cmp.a);
+    takeSide(cmp.b);
   }
   entries.sort(
     (a, b) =>
