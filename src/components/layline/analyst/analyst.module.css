@@ -1,0 +1,622 @@
+/* ============================================================================
+   DEBRIEF. The race analyst section under the replay console.
+
+   No palette of its own: every colour here resolves against the :root tokens
+   layline.module.css declares. Boat hues arrive inline from BoatMeta so a chip
+   can only disagree with the fleet if the data does. Registers follow the
+   page: archivo for prose and display, martian for anything with a numeral,
+   2px radii on controls, the HUD panel ground for the working surface.
+   Amber is the working colour of this section: the kicker, the status dot,
+   and everything live while an answer streams.
+   ========================================================================= */
+
+.debrief {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 64px 16px 0;
+  color: var(--ink);
+  font-family: var(--font-archivo), sans-serif;
+}
+
+.kicker {
+  margin: 0 0 4px;
+  color: var(--wind);
+  font-family: var(--font-martian), monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
+.heading {
+  margin: 0 0 8px;
+  font-size: clamp(28px, 4vw, 40px);
+  font-variation-settings: "wdth" 108, "wght" 640;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+}
+
+.explainer {
+  margin: 0 0 24px;
+  max-width: 62ch;
+  color: var(--ink-dim);
+  font-size: 16px;
+  line-height: 26px;
+}
+
+/* ---- the working panel ---- */
+
+.panel {
+  display: grid;
+  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+  gap: 24px 32px;
+  padding: 24px;
+  background: var(--hud-ground);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+}
+
+/* ---- left rail ---- */
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.railLabel {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
+.suggestionList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.suggestion {
+  --card-hue: var(--wind);
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  color: var(--ink);
+  font-family: var(--font-archivo), sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 120ms var(--ease),
+    border-color 120ms var(--ease),
+    transform 120ms var(--ease);
+}
+
+/* Hue map assumes the current SUGGESTED_QUESTIONS order in protocol.ts:
+   card 1 asks about the start (the line before the gun is amber by the page
+   palette contract), card 2 names USA 4 in its own text, card 3's answer boat
+   is JPN 18, the fastest downwind boat by VMG in this race's data. A boat is
+   the same colour everywhere it appears. */
+.suggestionList li:nth-child(1) .suggestion {
+  --card-hue: var(--wind);
+}
+
+.suggestionList li:nth-child(2) .suggestion {
+  --card-hue: var(--hue-usa);
+}
+
+.suggestionList li:nth-child(3) .suggestion {
+  --card-hue: var(--hue-jpn);
+}
+
+/* The fleet chip, reused: 8px at 2px radius is the exact geometry of the
+   standings and label chips on the console. */
+.suggestion::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 2px;
+  background: var(--card-hue);
+  transition: transform 120ms var(--ease);
+}
+
+/* The 3px slide is toward the conversation column, the direction the
+   question is about to travel. Plain token first, color-mix second. */
+.suggestion:hover,
+.suggestion:focus-visible {
+  background: rgba(236, 245, 249, 0.08);
+  border-color: var(--ink-dim);
+  border-color: color-mix(in srgb, var(--card-hue) 60%, var(--rule));
+  transform: translateX(3px);
+}
+
+.suggestion:hover::before,
+.suggestion:focus-visible::before {
+  transform: scale(1.25);
+}
+
+.suggestion:active {
+  background: rgba(236, 245, 249, 0.14);
+}
+
+.railNote {
+  margin: 4px 0 0;
+  color: var(--ink-dim);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+/* ---- conversation ---- */
+
+.conversation {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 260px;
+}
+
+/* The rail and the conversation are two instruments in one panel, separated
+   by hairline the way the console docks are. */
+@media (min-width: 901px) {
+  .conversation {
+    border-left: 1px solid var(--rule);
+    padding-left: 32px;
+  }
+}
+
+.empty {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 15px;
+  line-height: 24px;
+}
+
+.thread {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0;
+  padding: 0 4px 0 0;
+  max-height: 420px;
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule) transparent;
+}
+
+.userTurn,
+.analystTurn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* The standings followed-row grammar: 0.08 wash, 2px ink left edge, inside a
+   1px rule box at control radius. Your question is the followed row here. */
+.userTurn {
+  align-self: flex-end;
+  max-width: 85%;
+  padding: 10px 12px;
+  background: rgba(236, 245, 249, 0.08);
+  border: 1px solid var(--rule);
+  border-left: 2px solid var(--ink);
+  border-radius: 2px;
+}
+
+.analystTurn {
+  max-width: 62ch;
+  padding-left: 12px;
+  border-left: 2px solid var(--rule);
+  transition: border-color 240ms var(--ease);
+}
+
+/* On air. The live state hangs entirely off the aria-live attribute the
+   component sets while streaming; when the stream finishes the attribute is
+   removed and both colours ease back: the booth goes off air. */
+.analystTurn[aria-live="polite"] {
+  border-left-color: var(--wind);
+}
+
+.analystTurn[aria-live="polite"] .turnLabel {
+  color: var(--wind);
+}
+
+/* Entrances only for viewers who have not asked for less motion. Streaming
+   text itself is content, not an animation, and runs for everyone. User
+   turns slide in from the right edge they sit on; analyst turns rise. */
+@media (prefers-reduced-motion: no-preference) {
+  .userTurn {
+    animation: turnInUser 200ms var(--ease);
+  }
+
+  .analystTurn {
+    animation: turnInAnalyst 220ms var(--ease);
+  }
+}
+
+@keyframes turnInUser {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes turnInAnalyst {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.turnLabel {
+  color: var(--ink-dim);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 16px;
+  text-transform: uppercase;
+  transition: color 240ms var(--ease);
+}
+
+.turnText {
+  margin: 0;
+  font-size: 15px;
+  line-height: 24px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Streaming caret: exists only while the turn is live, a working-state
+   indicator like the status dot, not decoration. The base style is ungated
+   so reduced-motion viewers get a steady caret; only the blink is gated. */
+.analystTurn[aria-live="polite"] .turnText::after {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 14px;
+  margin-left: 3px;
+  vertical-align: -2px;
+  background: var(--wind);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .analystTurn[aria-live="polite"] .turnText::after {
+    animation: caretBlink 1s step-end infinite;
+  }
+}
+
+@keyframes caretBlink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ---- moment chips ---- */
+
+/* The pill is a deliberate exception to control radius: nothing else on the
+   page is a pill, so pill = a tappable moment that drives the replay. One
+   shape, one meaning. The 0.03 quiet-band wash lifts chips off the prose.
+   --chip-hue arrives inline from the chip button; the var(--wind) default
+   means nothing breaks if that attribute were absent. */
+.chip {
+  --chip-hue: var(--wind);
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 2px;
+  padding: 2px 10px;
+  vertical-align: 1px;
+  background: rgba(236, 245, 249, 0.03);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    background-color 120ms var(--ease),
+    border-color 120ms var(--ease),
+    transform 120ms var(--ease);
+}
+
+/* React reuses chip DOM nodes across deltas (stable keys), so the pop runs
+   once per chip, when the closed chip first lands. Overshoot lives in the
+   keyframes; the easing stays the house curve. Backwards fill, never both:
+   a forwards fill would hold the 100% frame's transform and override the
+   hover hop for the life of the chip. */
+@media (prefers-reduced-motion: no-preference) {
+  .chip {
+    animation: chipIn 240ms var(--ease) backwards;
+  }
+}
+
+@keyframes chipIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+
+  70% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* The chip becomes its boat's tinted fill and tinted border and hops 1px;
+   press sets it back down. Mixing over ink-dim keeps a visible border shift
+   even for the near-black hues. Plain token first, color-mix second. */
+.chip:hover,
+.chip:focus-visible {
+  background: rgba(236, 245, 249, 0.1);
+  background: color-mix(in srgb, var(--chip-hue) 12%, rgba(236, 245, 249, 0.06));
+  border-color: var(--ink-dim);
+  border-color: color-mix(in srgb, var(--chip-hue) 70%, var(--ink-dim));
+  transform: translateY(-1px);
+}
+
+.chip:active {
+  transform: none;
+}
+
+.chipSwatch {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 2px;
+}
+
+/* A near-black or near-white hue has nothing to hold against the panel
+   ground, so it gets a rule around it, same as the standings chips. */
+.chipSwatchOutlined {
+  border: 1px solid var(--ink-dim);
+}
+
+.chipTime {
+  font-family: var(--font-martian), monospace;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  line-height: 18px;
+}
+
+.chipSail {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+/* ---- status, error, input ---- */
+
+/* The amber working chip: tinted fill, tinted 1px border, radius 2, caps
+   mono. A functional live-region indicator (role=status with a text label),
+   not a decorative status light. Uppercase is applied here in CSS; the DOM
+   text is unchanged for screen readers. Plain token first, color-mix
+   second. */
+.statusLine {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 5px 10px;
+  background: rgba(236, 245, 249, 0.06);
+  background: color-mix(in srgb, var(--wind) 10%, transparent);
+  border: 1px solid var(--rule);
+  border: 1px solid color-mix(in srgb, var(--wind) 45%, transparent);
+  border-radius: 2px;
+  color: var(--wind);
+  font-family: var(--font-martian), monospace;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .statusLine {
+    animation: statusIn 150ms var(--ease);
+  }
+}
+
+@keyframes statusIn {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  background: var(--wind);
+  border-radius: 50%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .statusDot {
+    animation: statusPulse 1.2s ease-in-out infinite;
+  }
+}
+
+@keyframes statusPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.errorRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.errorText {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.retryButton {
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  color: var(--ink);
+  font-family: var(--font-archivo), sans-serif;
+  font-size: 13px;
+  line-height: 18px;
+  cursor: pointer;
+  transition:
+    background-color 120ms var(--ease),
+    transform 80ms var(--ease);
+}
+
+.retryButton:hover {
+  background: rgba(236, 245, 249, 0.08);
+}
+
+.inputRow {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  background: var(--page-ground);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  color: var(--ink);
+  caret-color: var(--wind);
+  font-family: var(--font-archivo), sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.input::placeholder {
+  color: var(--ink-dim);
+}
+
+/* Inputs sit outside the shell's a/button/[tabindex] focus rule, so the same
+   registration box is restated here: 2px, offset, square. */
+.input:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: 0;
+}
+
+.sendButton {
+  flex: none;
+  padding: 10px 18px;
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  color: var(--ink);
+  font-family: var(--font-archivo), sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 18px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background-color 120ms var(--ease),
+    transform 80ms var(--ease);
+}
+
+.sendButton:hover {
+  background: rgba(236, 245, 249, 0.08);
+}
+
+/* Press snap: down 1px onto the top of the wash ladder. */
+.sendButton:active,
+.retryButton:active {
+  background: rgba(236, 245, 249, 0.14);
+  transform: translateY(1px);
+}
+
+/* ---- stacked layout under 901px ---- */
+
+@media (max-width: 900px) {
+  .debrief {
+    padding-top: 48px;
+  }
+
+  .panel {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    padding: 16px;
+  }
+
+  /* The divider turns horizontal when the panel stacks. The desktop
+     border-left lives in the min-width block, so no reset is needed. */
+  .conversation {
+    border-top: 1px solid var(--rule);
+    padding-top: 20px;
+  }
+
+  /* Full finger targets. */
+  .suggestion {
+    padding: 12px;
+    min-height: 44px;
+  }
+
+  .chip {
+    padding: 4px 12px;
+  }
+
+  .thread {
+    max-height: 360px;
+  }
+
+  .userTurn {
+    max-width: 100%;
+  }
+}
