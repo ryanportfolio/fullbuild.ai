@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import styles from "./CourseRail.module.css";
+import { useReplay } from "./store";
 
 /**
  * THE COURSE RAIL - the page read the way this console reads a race.
@@ -139,6 +140,8 @@ export function CourseRail() {
   const reducedRef = useRef(false);
   const finishedRef = useRef(false);
   const runTextRef = useRef("");
+  /** The page's capture authority, mirrored for the paint loop. */
+  const frozenRef = useRef(false);
   /** Callout height, measured when it opens: it is the one layout read this
    *  component makes outside a measure pass, and it must not happen per frame. */
   const calloutHRef = useRef(0);
@@ -153,6 +156,21 @@ export function CourseRail() {
     /* Stamped here, at mount, so the suppression cannot outlive the thing
      * replacing it. */
     html.dataset.laylineRail = "";
+
+    /* ONE CAPTURE AUTHORITY PER PAGE. window.__layline.freeze() holds the
+     * replay clock, and this rail carries the only other rAF loop on the
+     * route, so it answers to the same switch. Position, marks and laylines
+     * are pure functions of scroll and stay exact while frozen; the wake is
+     * the one reading here derived from time, so freezing strikes it and
+     * stops the loop. Before this, a shot taken after freeze() still caught
+     * the foam mid-decay and two runs of the same capture disagreed.
+     *
+     * Read once now, then tracked, so a rail that mounts into an already
+     * frozen page does not start painting foam. */
+    frozenRef.current = useReplay.getState().frozen;
+    const unwatch = useReplay.subscribe((state) => {
+      frozenRef.current = state.frozen;
+    });
 
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     reducedRef.current = motion.matches;
@@ -180,8 +198,18 @@ export function CourseRail() {
       const raw = dt > 0 ? (Math.abs(dy) / dt) * 1000 : 0;
       const speed = dt > 0 ? last.speed + (raw - last.speed) * 0.3 : raw;
 
-      /* The bow answers sustained travel, not the last frame's sign. */
-      last.run = dy === 0 || Math.sign(dy) !== Math.sign(last.run) ? dy : last.run + dy;
+      /* The bow answers sustained travel, not the last frame's sign, so the run
+       * accumulates and only a real reversal clears it.
+       *
+       * A frame that moved nothing is NOT a reversal, and reading it as one was
+       * a bug worth the extra line: this loop runs on idle frames too, while
+       * the wake decays, so a reader crawling upward in deltas under the
+       * deadband had the accumulator wiped between every input. Six hundred
+       * pixels of unbroken travel up the page, ten pixels at a time, and the
+       * hull still pointed down the whole way. */
+      if (dy !== 0) {
+        last.run = Math.sign(dy) === Math.sign(last.run) ? last.run + dy : dy;
+      }
       const bowUp =
         last.run < -FLIP_DEADBAND ? true : last.run > FLIP_DEADBAND ? false : last.bowUp;
 
@@ -199,7 +227,7 @@ export function CourseRail() {
 
       /* Below this the page has effectively stopped, the wake is struck, and
        * the loop lets go of the frame budget. */
-      const making = speed > 4 && !reducedRef.current;
+      const making = speed > 4 && !reducedRef.current && !frozenRef.current;
 
       const wake = wakeRef.current;
       if (wake !== null) {
@@ -437,6 +465,7 @@ export function CourseRail() {
 
     return () => {
       if (raf !== 0) cancelAnimationFrame(raf);
+      unwatch();
       observer.disconnect();
       motion.removeEventListener("change", onMotion);
       window.removeEventListener("scroll", schedule);

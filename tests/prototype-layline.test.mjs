@@ -157,12 +157,29 @@ test('the rail replaces the platform bar without ever leaving the page barless',
 
   /* Both halves of the gate: the attribute AND the width the rail draws at.
      Either one alone strands a visitor with no scrollbar of any kind. */
-  const suppression = bar.match(
-    /@media \(min-width: 901px\) \{([\s\S]*?)\n\}/,
-  );
+  const suppression = bar.match(/@media \(min-width: 901px\) \{([\s\S]*?)\n\}/);
   assert.ok(suppression, "the suppression is not width-gated");
-  assert.match(suppression[1], /html\[data-layline-rail\] \{\s*scrollbar-width: none;/);
-  assert.match(suppression[1], /html\[data-layline-rail\]::-webkit-scrollbar \{/);
+  assert.match(
+    suppression[1],
+    /html\[data-layline-rail\]:has\(\[data-layline-page\]\) \{\s*scrollbar-width: none;/,
+  );
+  assert.match(
+    suppression[1],
+    /html\[data-layline-rail\]:has\(\[data-layline-page\]\)::-webkit-scrollbar \{/,
+  );
+
+  /* THE TIE. :has() contributes its most specific argument, so a bare
+     html[data-layline-rail] and html:has([data-layline-page]) are both 0-1-1
+     and source order alone decides. Written the other way round, the painted
+     bar won every tie and a mounted rail got a native scrollbar beside it
+     (measured: ::-webkit-scrollbar resolved to 10px at 1440px with the rail
+     up). Two things keep that from coming back, and both are asserted: the
+     suppression carries :has() itself, taking it to 0-2-1, and it is written
+     last anyway. */
+  assert.ok(
+    bar.indexOf("@media (min-width: 901px)") > bar.lastIndexOf("@supports not selector"),
+    "the suppression is written before the painted bar it has to beat",
+  );
 
   /* Where the bar is left in place it is painted in the page's own values.
      The literals are unavoidable (html sits outside .shell) so they are pinned
@@ -187,6 +204,29 @@ test('the rail replaces the platform bar without ever leaving the page barless',
     "scrollbar-color outside the guard overrides the drawn bar in Chrome",
   );
   assert.match(bar.slice(guard), /scrollbar-color: #a4bccb #070f16/);
+});
+
+test('the rail keeps the bow and the frame budget honest', async () => {
+  const source = await read('src/components/layline/CourseRail.tsx');
+
+  /* A frame that moved nothing is not a direction change. This loop runs on
+     idle frames while the wake decays, so clearing the run on dy === 0 wiped
+     the accumulator between inputs and a reader crawling upward under the
+     deadband never got the bow round. */
+  assert.match(
+    source,
+    /if \(dy !== 0\) \{\s*last\.run = Math\.sign\(dy\) === Math\.sign\(last\.run\) \? last\.run \+ dy : dy;/,
+  );
+  assert.doesNotMatch(source, /dy === 0 \|\| Math\.sign/);
+
+  /* One capture authority per page: the rail's own rAF loop answers to the
+     same freeze the replay clock does, or a shot taken after freeze() catches
+     the foam mid-decay and two runs of one capture disagree. */
+  assert.match(source, /frozenRef\.current = useReplay\.getState\(\)\.frozen/);
+  assert.match(source, /useReplay\.subscribe\(\(state\) => \{\s*frozenRef\.current = state\.frozen;/);
+  assert.match(source, /const making = speed > 4 && !reducedRef\.current && !frozenRef\.current/);
+  /* And it lets go of the store on teardown, like every other handle here. */
+  assert.match(source, /unwatch\(\);/);
 });
 
 test('every page section the rail marks is a section the page actually renders', async () => {
