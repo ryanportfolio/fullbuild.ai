@@ -26,8 +26,7 @@ export function NotesSection({ race }: { race: RaceData }) {
           <h3 className={styles.noteHeading}>Four fixes a second</h3>
           <p className={styles.noteBody}>
             Each boat reports {FIX_HZ} times a second: position, speed over the ground, heading,
-            heel, wind angle. One reading every {(1000 / FIX_HZ).toFixed(0)} milliseconds. Sounds
-            like a lot until you draw it.
+            heel, wind angle. One reading every {(1000 / FIX_HZ).toFixed(0)} milliseconds.
           </p>
           <p className={styles.noteBody}>
             A screen refreshes sixty times a second. Draw only the fixes and each one holds for
