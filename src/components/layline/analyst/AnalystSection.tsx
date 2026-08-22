@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { clock } from "@/lib/layline/format";
-import type { BoatMeta } from "@/lib/layline/types";
+import { FIX_HZ, type BoatMeta } from "@/lib/layline/types";
 import {
   MAX_MESSAGE_CHARS,
   MAX_TURNS,
@@ -15,7 +15,10 @@ import {
   parseChips,
   type AnalystMessage,
 } from "@/lib/layline/analyst/protocol";
-import { raceData, useReplay } from "../store";
+import { endOfReplay, raceData, useReplay } from "../store";
+import { CourseBackdrop } from "./CourseBackdrop";
+import { MomentStrip, type StripBuoy } from "./MomentStrip";
+import { TrackGlyph } from "./TrackGlyph";
 import styles from "./analyst.module.css";
 
 /* The route caps a message at MAX_MESSAGE_CHARS and a request at MAX_TURNS,
@@ -130,6 +133,9 @@ export function AnalystSection() {
   const [status, setStatus] = useState<string | null>(null);
   const [errorLine, setErrorLine] = useState<string | null>(null);
   const [streaming, setStreaming] = useState(false);
+  /* Latches on the first ask and never resets: the backdrop's after-the-gun
+   * tracks wipe in once and stay, whatever later answers hold. */
+  const [raced, setRaced] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const threadRef = useRef<HTMLOListElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -141,6 +147,58 @@ export function AnalystSection() {
     () => new Map<string, BoatMeta>(raceData().boats.map((boat) => [boat.id, boat])),
     [],
   );
+
+  /* The event times the card glyphs draw between: USA 4's beat runs from the
+   * gun to its rounding, JPN 18's run from its rounding to its finish. Read
+   * from the seeded events so a data change redraws the cards by itself. */
+  const eventMarks = useMemo(() => {
+    const events = raceData().events;
+    return {
+      usaRounding: events.find((event) => event.kind === "rounding" && event.boatId === "usa"),
+      jpnRounding: events.find((event) => event.kind === "rounding" && event.boatId === "jpn"),
+      jpnFinish: events.find((event) => event.kind === "finish" && event.boatId === "jpn"),
+    };
+  }, []);
+
+  /* The slate's instrument readings, all from the loaded race itself. */
+  const slate = useMemo(() => {
+    const race = raceData();
+    return {
+      boats: race.boats.length,
+      fixes: Object.values(race.fixes).reduce((n, series) => n + series.length, 0),
+      finishOrder: [...race.results]
+        .sort((a, b) => a.rank - b.rank)
+        .map((result) => fleet.get(result.boatId))
+        .filter((boat): boat is BoatMeta => boat !== undefined),
+    };
+  }, [fleet]);
+
+  /* What the latest finished answer cites: hot boats brighten their backdrop
+   * tracks, every chip drops a lit buoy on the moment strip. Runs only when
+   * the stream is idle, so a half-open chip can never feed it. */
+  const { hot, buoys } = useMemo(() => {
+    const result = { hot: new Set<string>(), buoys: [] as StripBuoy[] };
+    if (streaming) return result;
+    for (let index = turns.length - 1; index >= 0; index -= 1) {
+      const turn = turns[index];
+      if (turn.role !== "analyst") continue;
+      for (const part of parseChips(turn.text)) {
+        if (part.kind !== "chip") continue;
+        const boat =
+          part.boatId === undefined
+            ? undefined
+            : (fleet.get(part.boatId) ?? fleet.get(part.boatId.toLowerCase()));
+        if (boat !== undefined) result.hot.add(boat.id);
+        result.buoys.push({
+          t: part.t,
+          hue: boat === undefined ? "var(--wind)" : boat.hue,
+          dark: boat?.dark === true,
+        });
+      }
+      break;
+    }
+    return result;
+  }, [turns, streaming, fleet]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -251,6 +309,7 @@ export function AnalystSection() {
       if (text === "" || streaming) return;
       setInput("");
       inputRef.current?.focus();
+      setRaced(true);
       void stream([...turns, { role: "user", text }]);
     },
     [streaming, stream, turns],
@@ -278,104 +337,204 @@ export function AnalystSection() {
 
   return (
     <section className={styles.debrief} aria-labelledby="debrief-heading">
-      <p className={styles.kicker}>Race analyst</p>
-      <h2 id="debrief-heading" className={styles.heading}>
-        Debrief
-      </h2>
-      <p className={styles.explainer}>
-        Ask about the start, a shift, a rounding, any boat. Every number in an answer comes from
-        the same race data the replay plays.
-      </p>
-
-      <div className={styles.panel}>
-        <div className={styles.rail}>
-          <h3 className={styles.railLabel}>Suggested questions</h3>
-          <ul className={styles.suggestionList}>
-            {SUGGESTED_QUESTIONS.map((question) => (
-              <li key={question}>
-                <button
-                  type="button"
-                  className={styles.suggestion}
-                  onClick={() => ask(question)}
-                >
-                  {question}
-                </button>
-              </li>
-            ))}
-          </ul>
-          <p className={styles.railNote}>
-            The analyst reads the same seeded telemetry as the replay and answers only from it.
+      <div className={styles.head}>
+        <div className={styles.headText}>
+          <p className={styles.kicker}>Race analyst</p>
+          <h2 id="debrief-heading" className={styles.heading}>
+            Debrief
+          </h2>
+          <p className={styles.explainer}>
+            Ask about the start, a shift, a rounding, any boat. Every number in an answer comes
+            from the same race data the replay plays.
           </p>
         </div>
-
-        <div className={styles.conversation}>
-          {turns.length === 0 ? (
-            <p className={styles.empty}>The whole race is loaded. Tap a question or ask your own.</p>
-          ) : (
-            <ol className={styles.thread} ref={threadRef} aria-label="Conversation">
-              {turns.map((turn, index) => {
-                const live = streaming && turn.role === "analyst" && index === turns.length - 1;
-                return (
-                  <li
-                    key={index}
-                    className={turn.role === "user" ? styles.userTurn : styles.analystTurn}
-                    aria-live={live ? "polite" : undefined}
-                  >
-                    <span className={styles.turnLabel}>
-                      {turn.role === "user" ? "You" : "Analyst"}
-                    </span>
-                    {turn.role === "user" ? (
-                      <p className={styles.turnText}>{turn.text}</p>
-                    ) : (
-                      <AnalystBody text={turn.text} live={live} fleet={fleet} onChip={jumpTo} />
-                    )}
-                  </li>
-                );
-              })}
-            </ol>
-          )}
-
-          {status !== null ? (
-            <p className={styles.statusLine} role="status">
-              <span className={styles.statusDot} aria-hidden="true" />
-              {status}
-            </p>
-          ) : null}
-
-          {errorLine !== null ? (
-            <div className={styles.errorRow}>
-              <p className={styles.errorText}>{errorLine}</p>
-              <button type="button" className={styles.retryButton} onClick={retry}>
-                Retry
-              </button>
+        {/* The broadcast ident: event line, full race clock, fleet in entry
+            order. Pure repetition of what the console already says, so it is
+            hidden from the tree. */}
+        <div className={styles.raceIdent} aria-hidden="true">
+          <p className={styles.identLine}>Fleet race · Long Beach</p>
+          <div className={styles.identRow}>
+            <p className={styles.identClock}>{clock(raceData().tMax)}</p>
+            <div className={styles.fleetBar}>
+              {raceData().boats.map((boat) => (
+                <span
+                  key={boat.id}
+                  className={clsx(
+                    styles.fleetBlock,
+                    boat.dark === true && styles.fleetBlockOutlined,
+                  )}
+                  style={{ background: boat.hue }}
+                />
+              ))}
             </div>
-          ) : null}
+          </div>
+        </div>
+      </div>
 
-          <form
-            className={styles.inputRow}
-            onSubmit={(event) => {
-              event.preventDefault();
-              ask(input);
-            }}
-          >
-            <input
-              ref={inputRef}
-              className={styles.input}
-              type="text"
-              value={input}
-              maxLength={MAX_MESSAGE_CHARS}
-              placeholder="Ask about any moment"
-              aria-label="Ask the analyst"
-              autoComplete="off"
-              onChange={(event) => setInput(event.target.value.slice(0, MAX_MESSAGE_CHARS))}
-            />
-            {/* Never `disabled`: a disabled button drops out of the tab order,
-                and keyboard position on this page is never ambiguous. Empty or
-                mid-stream sends are no-ops in ask() instead. */}
-            <button type="submit" className={styles.sendButton}>
-              Send
-            </button>
-          </form>
+      <div
+        className={styles.panel}
+        data-state={turns.length === 0 ? "empty" : streaming ? "streaming" : "answered"}
+        data-raced={raced ? "true" : undefined}
+      >
+        <CourseBackdrop hot={hot} />
+        <div className={styles.panelGrid}>
+          <div className={styles.rail}>
+            <h3 className={styles.railLabel}>Suggested questions</h3>
+            <ul className={styles.suggestionList}>
+              {SUGGESTED_QUESTIONS.map((question, index) => (
+                <li key={question}>
+                  <button
+                    type="button"
+                    className={styles.suggestion}
+                    onClick={() => ask(question)}
+                  >
+                    <span className={styles.cardGlyph} aria-hidden="true">
+                      {index === 0 ? (
+                        <TrackGlyph boatId={null} from={0} to={0} hue="var(--wind)" />
+                      ) : index === 1 ? (
+                        <TrackGlyph
+                          boatId="usa"
+                          from={0}
+                          to={eventMarks.usaRounding?.t ?? 0}
+                          hue={fleet.get("usa")?.hue ?? "var(--wind)"}
+                        />
+                      ) : (
+                        <TrackGlyph
+                          boatId="jpn"
+                          from={eventMarks.jpnRounding?.t ?? 0}
+                          to={eventMarks.jpnFinish?.t ?? 0}
+                          hue={fleet.get("jpn")?.hue ?? "var(--wind)"}
+                          strokeWidth={2.5}
+                        />
+                      )}
+                    </span>
+                    <span className={styles.cardBody}>
+                      <span className={styles.cardEyebrow} aria-hidden="true">
+                        {index === 0
+                          ? `Prestart · Gun ${clock(0)}`
+                          : index === 1
+                            ? `${fleet.get("usa")?.sail ?? ""} · The beat`
+                            : `${fleet.get("jpn")?.sail ?? ""} · The run`}
+                      </span>
+                      <span className={styles.cardQuestion}>{question}</span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <p className={styles.railNote}>
+              The analyst reads the same seeded telemetry as the replay and answers only from it.
+            </p>
+          </div>
+
+          <div className={styles.conversation}>
+            {turns.length === 0 ? (
+              <div className={styles.slate}>
+                {/* The loaded-race slate. Numbers repeat what the console and
+                    the notes already publish, so the board is decorative; the
+                    one sentence that instructs stays in the tree. */}
+                <div className={styles.slateBoard} aria-hidden="true">
+                  <p className={styles.slateEyebrow}>Race loaded</p>
+                  <p className={styles.slateClock}>{clock(endOfReplay())}</p>
+                  <div className={styles.slateStats}>
+                    <div className={styles.slateStat}>
+                      <span className={styles.slateStatLabel}>Boats</span>
+                      <span className={styles.slateStatValue}>{slate.boats}</span>
+                    </div>
+                    <div className={styles.slateStat}>
+                      <span className={styles.slateStatLabel}>Fix rate Hz</span>
+                      <span className={styles.slateStatValue}>{FIX_HZ}</span>
+                    </div>
+                    <div className={styles.slateStat}>
+                      <span className={styles.slateStatLabel}>Fixes</span>
+                      <span className={styles.slateStatValue}>{slate.fixes}</span>
+                    </div>
+                  </div>
+                  <div className={styles.fleetBar}>
+                    {slate.finishOrder.map((boat) => (
+                      <span
+                        key={boat.id}
+                        className={clsx(
+                          styles.fleetBlock,
+                          boat.dark === true && styles.fleetBlockOutlined,
+                        )}
+                        style={{ background: boat.hue }}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <p className={styles.emptyLine}>
+                  The whole race is loaded. Tap a question or ask your own.
+                </p>
+              </div>
+            ) : (
+              <ol className={styles.thread} ref={threadRef} aria-label="Conversation">
+                {turns.map((turn, index) => {
+                  const live = streaming && turn.role === "analyst" && index === turns.length - 1;
+                  return (
+                    <li
+                      key={index}
+                      className={turn.role === "user" ? styles.userTurn : styles.analystTurn}
+                      aria-live={live ? "polite" : undefined}
+                    >
+                      <span className={styles.turnLabel}>
+                        {turn.role === "user" ? "You" : "Analyst"}
+                      </span>
+                      {turn.role === "user" ? (
+                        <p className={styles.turnText}>{turn.text}</p>
+                      ) : (
+                        <AnalystBody text={turn.text} live={live} fleet={fleet} onChip={jumpTo} />
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+
+            {status !== null ? (
+              <p className={styles.statusLine} role="status">
+                <span className={styles.statusDot} aria-hidden="true" />
+                {status}
+              </p>
+            ) : null}
+
+            {errorLine !== null ? (
+              <div className={styles.errorRow}>
+                <p className={styles.errorText}>{errorLine}</p>
+                <button type="button" className={styles.retryButton} onClick={retry}>
+                  Retry
+                </button>
+              </div>
+            ) : null}
+
+            <MomentStrip buoys={buoys} />
+
+            <form
+              className={styles.inputRow}
+              onSubmit={(event) => {
+                event.preventDefault();
+                ask(input);
+              }}
+            >
+              <input
+                ref={inputRef}
+                className={styles.input}
+                type="text"
+                value={input}
+                maxLength={MAX_MESSAGE_CHARS}
+                placeholder="Ask about any moment"
+                aria-label="Ask the analyst"
+                autoComplete="off"
+                onChange={(event) => setInput(event.target.value.slice(0, MAX_MESSAGE_CHARS))}
+              />
+              {/* Never `disabled`: a disabled button drops out of the tab order,
+                  and keyboard position on this page is never ambiguous. Empty or
+                  mid-stream sends are no-ops in ask() instead. */}
+              <button type="submit" className={styles.sendButton}>
+                Send
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </section>
