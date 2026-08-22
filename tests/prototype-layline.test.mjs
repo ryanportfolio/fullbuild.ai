@@ -74,3 +74,139 @@ test('Layline stylesheet keeps the house rules', async () => {
   assert.doesNotMatch(styles, /cursor:\s*pointer/);
   assert.doesNotMatch(styles, /linear-gradient|radial-gradient|backdrop-filter/);
 });
+
+/*
+  THE COURSE RAIL. The page draws its own scrollbar as a course diagram, and
+  these read the values back out of the source rather than restating them, so a
+  token rename or a retuned constant fails here instead of drifting.
+*/
+
+test('the course rail draws in the console palette and nothing else', async () => {
+  const [rail, shell] = await Promise.all([
+    read('src/components/layline/CourseRail.module.css'),
+    read('src/app/prototype/layline/layline.module.css'),
+  ]);
+
+  /* Every colour on the rail is a token the page already declares, with the
+     meaning it already carries. A raw hex here would be a seventh ink. */
+  const inks = [...rail.matchAll(/var\((--[a-z-]+)/g)].map((m) => m[1]);
+  const declared = new Set([
+    ...[...shell.matchAll(/^\s{2}(--[a-z-]+):/gm)].map((m) => m[1]),
+    "--house-cursor",
+    "--house-cursor-frost",
+    "--font-archivo",
+    "--font-martian",
+  ]);
+  for (const ink of new Set(inks)) {
+    assert.ok(declared.has(ink), `the rail uses ${ink}, which the page never declares`);
+  }
+  assert.doesNotMatch(
+    rail.slice(rail.indexOf("*/")),
+    /#[0-9a-f]{3,8}\b/i,
+    "the rail paints a raw hex instead of an ink with a meaning",
+  );
+
+  /* Amber is the wind on this page. The laylines are the only thing on the rail
+     entitled to it, because a layline is a wind fact. */
+  const amber = [...rail.matchAll(/([^\s{}]+)\s*\{[^}]*var\(--wind\)/g)].map((m) => m[1]);
+  assert.deepEqual(amber, ["line"], "something other than the laylines is spending the wind amber");
+
+  /* The console's own ban list reaches the rail. */
+  assert.doesNotMatch(rail, /linear-gradient|radial-gradient|backdrop-filter|box-shadow|filter:\s*blur/);
+  assert.doesNotMatch(rail, /cursor:\s*pointer/);
+  assert.match(rail, /cursor: var\(--house-cursor\)/);
+  assert.match(rail, /@media \(max-width: 900px\)/);
+  assert.match(rail, /@media \(prefers-reduced-motion: reduce\)/);
+
+  /* The contract is written down, including what it costs. */
+  const header = rail.slice(0, rail.indexOf("*/"));
+  assert.match(header, /THE COST, stated/);
+  assert.match(header, /macOS/);
+});
+
+test('the rail is measured, not divided into pleasing parts', async () => {
+  const source = await read('src/components/layline/CourseRail.tsx');
+
+  /* Marks come from the document, at their real share of it. */
+  assert.match(source, /querySelectorAll<HTMLElement>\("\[data-leg\]"\)/);
+  assert.match(source, /docTop\(el\) \/ docH/);
+  /* The thumb is the viewport's real share, and the track is the real range. */
+  assert.match(source, /\(viewH \/ docH\) \* trackH/);
+  assert.match(source, /const range = docH - viewH/);
+  /* Any range at all, not the half-viewport floor the site log uses: the
+     platform bar is already down by the time this decides. */
+  assert.match(source, /const scrollable = range > 1/);
+
+  /* Speed comes off the rAF stamp. The whole layline tree is barred from
+     wall-clock time, and the sources test above enforces it; this states why
+     the paint loop is allowed to know how fast the page is moving at all. */
+  assert.match(source, /const paint = \(ts: number\)/);
+  assert.match(source, /ts - last\.ts/);
+});
+
+test('the rail replaces the platform bar without ever leaving the page barless', async () => {
+  const [source, bar, page] = await Promise.all([
+    read('src/components/layline/CourseRail.tsx'),
+    read('src/app/prototype/layline/scrollbar.css'),
+    read('src/app/prototype/layline/page.tsx'),
+  ]);
+
+  /* Stamped at mount and removed on teardown, never written statically. */
+  assert.match(source, /html\.dataset\.laylineRail = ""/);
+  assert.match(source, /delete html\.dataset\.laylineRail/);
+
+  /* Both halves of the gate: the attribute AND the width the rail draws at.
+     Either one alone strands a visitor with no scrollbar of any kind. */
+  const suppression = bar.match(
+    /@media \(min-width: 901px\) \{([\s\S]*?)\n\}/,
+  );
+  assert.ok(suppression, "the suppression is not width-gated");
+  assert.match(suppression[1], /html\[data-layline-rail\] \{\s*scrollbar-width: none;/);
+  assert.match(suppression[1], /html\[data-layline-rail\]::-webkit-scrollbar \{/);
+
+  /* Where the bar is left in place it is painted in the page's own values.
+     The literals are unavoidable (html sits outside .shell) so they are pinned
+     to the tokens here instead. */
+  const shell = await read('src/app/prototype/layline/layline.module.css');
+  const token = (name) => shell.match(new RegExp(`${name}:\\s*([^;]+);`))[1].trim();
+  assert.equal(token("--page-ground"), "#070f16");
+  assert.equal(token("--ink-dim"), "#a4bccb");
+  assert.equal(token("--rule"), "rgba(164, 188, 203, 0.28)");
+  assert.match(bar, /html:has\(\[data-layline-page\]\)::-webkit-scrollbar-track \{\s*background: #070f16;/);
+  assert.match(bar, /html:has\(\[data-layline-page\]\)::-webkit-scrollbar-thumb \{\s*background: #a4bccb;/);
+  assert.match(bar, /border-left: 1px solid rgba\(164, 188, 203, 0\.28\)/);
+  assert.match(page, /data-layline-page/);
+
+  /* Blink honours scrollbar-color and drops the drawn geometry when it sees it,
+     so the standard properties may only appear behind the @supports guard. */
+  const guard = bar.indexOf("@supports not selector(::-webkit-scrollbar)");
+  assert.ok(guard > 0, "no @supports fallback, so Firefox gets a default bar");
+  assert.equal(
+    bar.slice(0, guard).includes("scrollbar-color:"),
+    false,
+    "scrollbar-color outside the guard overrides the drawn bar in Chrome",
+  );
+  assert.match(bar.slice(guard), /scrollbar-color: #a4bccb #070f16/);
+});
+
+test('every page section the rail marks is a section the page actually renders', async () => {
+  const [page, analyst, notes] = await Promise.all([
+    read('src/app/prototype/layline/page.tsx'),
+    read('src/components/layline/analyst/AnalystSection.tsx'),
+    read('src/components/layline/NotesSection.tsx'),
+  ]);
+
+  assert.match(page, /data-leg="Replay console"/);
+  assert.match(analyst, /data-leg="Debrief"/);
+  assert.match(notes, /data-leg="How the replay works"/);
+
+  /* The mark's name is the section's own heading, not a label invented for the
+     margin. */
+  assert.match(analyst, /id="debrief-heading"[\s\S]{0,80}Debrief/);
+  assert.match(notes, /id="notes-heading"[\s\S]{0,120}How the replay works/);
+
+  /* The colophon carries no mark: it sits below the last viewport centre, so a
+     mark there could never be rounded. The finish line at the foot of the rail
+     is what says the document has ended. */
+  assert.doesNotMatch(page, /colophon} data-leg/);
+});

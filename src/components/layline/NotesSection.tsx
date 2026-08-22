@@ -17,7 +17,7 @@ export function NotesSection({ race }: { race: RaceData }) {
   const sail = boat === undefined ? EXCERPT_BOAT.toUpperCase() : boat.sail;
 
   return (
-    <section className={styles.notes} aria-labelledby="notes-heading">
+    <section className={styles.notes} aria-labelledby="notes-heading" data-leg="How the replay works">
       <h2 id="notes-heading" className={styles.notesHeading}>
         How the replay works
       </h2>

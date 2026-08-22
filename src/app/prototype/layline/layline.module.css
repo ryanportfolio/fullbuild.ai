@@ -131,6 +131,21 @@
   transform: translateY(0);
 }
 
+/* ---- the margin the course rail takes ----
+
+   The rail draws in a fixed 24px strip on the right, so the shell gives up
+   exactly that much and nothing crosses it. Gated on the attribute CourseRail
+   stamps at mount AND on the width where the rail actually draws, so a visitor
+   with no JS, and every viewport below 901px, keeps the full measure and the
+   platform bar. The bar rules themselves live in scrollbar.css: they hang off
+   <html>, and a CSS module refuses a selector with no local class in it. */
+
+@media (min-width: 901px) {
+  html[data-layline-rail] .shell {
+    padding-right: 24px;
+  }
+}
+
 /* ---- prototype bar (site convention, system register in mono) ---- */
 
 .prototypeBar {
