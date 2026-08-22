@@ -277,7 +277,13 @@ export function legAt(race: RaceData, boatId: string, t: number): LegName {
   return p === null ? "prestart" : p.leg;
 }
 
+/* Finished boats first, in crossing order; the rest by their held rank. The
+ * boats across the line by time t always hold result ranks 1..k, so a held
+ * rank can collide with a fresh finisher only from below, and ordering the
+ * finishers first is what makes the positional rewrite in standingsAt give
+ * every row a unique place. */
 function byRank(a: StandingsRow, b: StandingsRow): number {
+  if (a.finished !== b.finished) return a.finished ? -1 : 1;
   if (a.rank !== b.rank) return a.rank - b.rank;
   return a.boatId < b.boatId ? -1 : a.boatId > b.boatId ? 1 : 0;
 }
@@ -335,5 +341,11 @@ export function standingsAt(race: RaceData, t: number): StandingsRow[] {
     }
   }
   rows.sort(byRank);
+  /* Positions are the sort order, not the raw ranks: a boat that crosses
+   * between progress samples takes its result rank while a rival still holds
+   * the same number from the last sample, and two rows must never show one
+   * place. Finished rows keep their result rank (they sort 1..k), held rows
+   * take the places after the finishers. */
+  for (let k = 0; k < rows.length; k++) rows[k].rank = k + 1;
   return rows;
 }
