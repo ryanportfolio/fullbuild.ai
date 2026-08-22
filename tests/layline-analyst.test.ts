@@ -132,6 +132,19 @@ test("route rejects empty messages and garbage bodies without a 5xx", async () =
   assert.equal(garbage.status, 400);
 });
 
+test("mock mode says so when a question is outside its script", async () => {
+  process.env.LAYLINE_ANALYST_MOCK = "1";
+  const res = await post({ messages: [{ role: "user", content: "When did NZL 7 tack?" }] });
+  assert.equal(res.status, 200);
+  const answer = (await res.text())
+    .split("\n")
+    .filter((line) => line.startsWith("data: ") && line.includes('"text"'))
+    .map((line) => (JSON.parse(line.slice(6)) as { text: string }).text)
+    .join("");
+  assert.match(answer, /stand-in/, `expected the stand-in disclosure in: ${answer}`);
+  assert.match(answer, /OPENROUTER_API_KEY/);
+});
+
 test("mock mode streams status and deltas and ends with done", async () => {
   process.env.LAYLINE_ANALYST_MOCK = "1";
   const res = await post({ messages: [{ role: "user", content: SUGGESTED_QUESTIONS[0] }] });
