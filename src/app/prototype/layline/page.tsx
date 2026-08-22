@@ -5,6 +5,7 @@ import { generateRace } from "@/lib/layline/sim";
 import { RACE_SEED } from "@/lib/layline/types";
 import { AnalystSection } from "@/components/layline/analyst/AnalystSection";
 import { CourseRail } from "@/components/layline/CourseRail";
+import { IntroOverlay } from "@/components/layline/intro/IntroOverlay";
 import { LaylineApp } from "@/components/layline/LaylineApp";
 import { NotesSection } from "@/components/layline/NotesSection";
 import { TrackChart } from "@/components/layline/svg/TrackChart";
@@ -29,6 +30,11 @@ export default function LaylinePage() {
       <a className={styles.skip} href="#replay-console">
         Skip to the replay console
       </a>
+
+      {/* Inside the shell so it reads the page's tokens, over everything the
+          shell paints so the wait belongs to one picture. Rendered after the
+          skip link, which stays the first thing a keyboard reaches. */}
+      <IntroOverlay />
 
       <div className={styles.prototypeBar}>
         <strong>Race replay prototype</strong>
