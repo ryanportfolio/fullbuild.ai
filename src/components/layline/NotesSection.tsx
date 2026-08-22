@@ -1,6 +1,7 @@
 import { RACE_SEED } from "@/lib/layline/types";
 import type { RaceData } from "@/lib/layline/types";
 import { finishGap45, finishGaps } from "./engine/benchData";
+import { buildBoard } from "./engine/boardData";
 import { EngineRoom, FinishStrip } from "./engine/EngineRoom";
 import engine from "./engine/engine.module.css";
 import styles from "@/app/prototype/layline/layline.module.css";
@@ -14,9 +15,14 @@ import styles from "@/app/prototype/layline/layline.module.css";
  * a finish time is a sub-tick crossing at the far end of the sim, and Node and
  * the browser land up to fifteen milliseconds apart on it. Six numbers built
  * on the server travel down as props, so the page prints the times the test
- * pins instead of whichever engine drew them last. */
+ * pins instead of whichever engine drew them last.
+ *
+ * The build board reads the same server race. It is static markup with no
+ * clock behind it, so it costs nothing on the client and cannot disagree with
+ * the finish strip about which race this is. */
 export function NotesSection({ race }: { race: RaceData }) {
   const order = finishGaps(race);
+  const board = buildBoard(race);
   return (
     <section className={styles.notes} aria-labelledby="notes-heading">
       <EngineRoom />
@@ -25,32 +31,81 @@ export function NotesSection({ race }: { race: RaceData }) {
         <p className={engine.kicker}>Build status</p>
         <h2 className={engine.standsHeading}>Where this build stands</h2>
       </div>
-      <div className={`${engine.panel} ${engine.standsPanel}`}>
-        <p className={engine.standsText}>
-          Both halves are on the page. Running now: the replay engine, a seeded six boat race at
-          four fixes a second, the boat models with wake and spray, three broadcast camera rigs,
-          the raw fixes lens, the instrument and standings docks, water, sky, and the chart the
-          page falls back to without WebGL. The laylines and marks draw on a damped display wind,
-          so one gusty reading cannot swing them. The replay steps fix by fix, one reading at a
-          time. Debrief answers questions about the race through tools that read this same feed:
-          the start boat by boat, every tack and gybe with the speed it cost, two boats compared
-          over any window. The wide shot now opens on the fleet before the
-          gun, camera hand-overs and the pull-in run on the race clock so a scrubbed replay
-          reproduces them exactly, and the chase lens holds its distance from every hull in the
-          fleet. The console reads the race now as well as replaying it: a start line readout
-          counts the followed boat down to the gun, and says so if it would reach the line
-          before the gun fires. Every tack and gybe that boat made is marked on its own rail
-          under the scrub track so a turn is one click away, and a strip of speed made good to
-          the next mark fills in against the best anyone in the fleet was making at the same
-          instant. The chart is a mode of its own rather than only the no-WebGL stand-in:
-          one button swaps the rendered scene for the course from above on the same clock, with
-          each track drawing itself as its boat sails it. Still in work: heel and trim on the
-          instrument dock.
-        </p>
-        <div className={engine.ident} aria-hidden="true">
-          <p className={engine.identLine}>One seed · every number</p>
-          <p className={engine.standsIdentValue}>{RACE_SEED}</p>
-          <p className={engine.identSub}>Race seed</p>
+      <div className={`${engine.panel} ${engine.boardPanel}`}>
+        <div className={engine.boardHead}>
+          <div>
+            <p className={engine.railLabel}>Three lanes · one seeded race</p>
+            <ul className={engine.boardKey}>
+              <li className={engine.boardKeyItem}>
+                <span className={engine.dot} aria-hidden="true" />
+                Running on this page
+              </li>
+              <li className={engine.boardKeyItem}>
+                <span className={`${engine.dot} ${engine.dotLanding}`} aria-hidden="true" />
+                Still landing
+              </li>
+            </ul>
+          </div>
+          {/* The count is read off the rows below, so the headline figure and
+              the dots beside it can only ever say the same thing. */}
+          <div className={engine.ident}>
+            <p className={engine.identLine}>Rows on this board</p>
+            <p className={engine.tallyValue}>
+              {board.running}
+              <span className={engine.tallySlash}>/</span>
+              {board.rows}
+            </p>
+            <p className={engine.tallySub}>Running</p>
+          </div>
+        </div>
+
+        <div className={engine.board}>
+          {board.lanes.map((lane) => (
+            <div key={lane.name} className={engine.lane}>
+              <h3 className={engine.laneName}>{lane.name}</h3>
+              <ul className={engine.laneRows}>
+                {lane.rows.map((row) => (
+                  <li
+                    key={row.label}
+                    className={row.state === "landing" ? `${engine.row} ${engine.rowLanding}` : engine.row}
+                  >
+                    <span
+                      className={row.state === "landing" ? `${engine.dot} ${engine.dotLanding}` : engine.dot}
+                      aria-hidden="true"
+                    />
+                    <span className={engine.rowLabel}>
+                      {row.label}
+                      <span className={engine.srOnly}>
+                        {row.state === "landing" ? " (still landing)" : " (running)"}
+                      </span>
+                    </span>
+                    {row.value === undefined ? (
+                      <span className={engine.rowBlank} aria-hidden="true" />
+                    ) : (
+                      <span className={engine.rowValue}>
+                        {row.value}
+                        {row.unit === undefined ? null : (
+                          <span className={engine.rowUnit}>{row.unit}</span>
+                        )}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        <div className={engine.boardFoot}>
+          <p className={engine.boardNote}>
+            Every figure on this board is counted out of the race the replay above is running, so
+            the board follows the seed rather than describing it
+          </p>
+          <div className={engine.ident} aria-hidden="true">
+            <p className={engine.identLine}>One seed · every number</p>
+            <p className={engine.standsIdentValue}>{RACE_SEED}</p>
+            <p className={engine.identSub}>Race seed</p>
+          </div>
         </div>
       </div>
 

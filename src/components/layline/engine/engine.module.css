@@ -805,22 +805,197 @@
   line-height: 1;
 }
 
-/* The closing card carries the seed beside the status, so the panel that
-   states what is running also states the one number everything came from. */
-.standsPanel {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 24px 32px;
-  align-items: start;
+/* The build board. This closing card used to be a twenty line paragraph
+   listing what runs, which is the one block on the page with no figure in it
+   and the one nobody read. Same facts, laid out the way the rest of the
+   section reads: three lanes, a row per claim, a mono numeral wherever the
+   race carries one, and a dot for the only state a build has. No bar and no
+   percentage: there is no honest denominator for "how done" a lane is, so
+   nothing here draws one.
+
+   Every colour and register is already in this file. The dots are the state
+   language: ink for running, --wind for still landing, which is the amber the
+   transport, the gun tick and the live feed row already use for the thing
+   that is working. */
+.boardPanel {
   margin: 0;
 }
 
-.standsText {
+/* The key and the tally, over a rule tinted the panel's own amber. */
+.boardHead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px 32px;
+  align-items: end;
+  margin: 0 0 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid color-mix(in srgb, var(--wind) 16%, var(--rule));
+}
+
+.boardKey {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.boardKeyItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-dim);
+  font-family: var(--font-martian), monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  line-height: 14px;
+  text-transform: uppercase;
+}
+
+.dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.dotLanding {
+  background: var(--wind);
+}
+
+/* The tally is the ident slot: same column, same right edge as the seed
+   below it, set at the header ident's own display size. */
+.tallyValue {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-martian), monospace;
+  font-size: 40px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.tallySlash {
+  margin: 0 2px;
+  color: var(--ink-dim);
+}
+
+.tallySub {
+  margin: 0;
+  color: var(--wind);
+  font-family: var(--font-martian), monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  line-height: 14px;
+  text-transform: uppercase;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px 32px;
+}
+
+.lane {
+  min-width: 0;
+}
+
+.laneName {
+  margin: 0 0 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--rule);
+  color: var(--ink);
+  font-family: var(--font-martian), monospace;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
+.laneRows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Dot, claim, numeral. The dot column is fixed so the three lanes share one
+   left edge, and the numeral is pushed to the lane's right edge so a column
+   of figures reads down the lane rather than trailing its label. */
+.row {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.row .dot {
+  margin-top: 6px;
+}
+
+.rowLabel {
+  color: var(--ink-dim);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+/* The one row that is not finished says so twice: the dot and the words. */
+.rowLanding .rowLabel {
+  color: var(--wind);
+}
+
+.rowValue {
+  color: var(--ink);
+  font-family: var(--font-martian), monospace;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.rowUnit {
+  margin-left: 4px;
+  color: var(--ink-dim);
+  font-family: var(--font-martian), monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.rowBlank {
+  display: block;
+}
+
+.boardFoot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px 32px;
+  align-items: end;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+}
+
+.boardNote {
   margin: 0;
   max-width: 62ch;
   color: var(--ink-dim);
-  font-size: 15px;
-  line-height: 24px;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+/* State for a reader who cannot see a dot. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* ---- finish order, the section's full stop ---- */
@@ -978,9 +1153,26 @@
     padding: 16px;
   }
 
-  .panelBody,
-  .standsPanel {
+  .panelBody {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* The board stacks: three lanes across a phone would put every claim on
+     four lines. The head and foot stack with it, so the tally and the seed
+     sit under their own text rather than squeezing it. */
+  .board,
+  .boardHead,
+  .boardFoot {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .board {
+    gap: 28px;
+  }
+
+  .tallyValue {
+    font-size: 32px;
   }
 
   .chipValue {

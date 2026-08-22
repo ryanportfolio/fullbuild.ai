@@ -8,9 +8,18 @@
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { VMG_STEP, maneuversOf } from "../src/lib/layline/analytics";
+import {
+  MAX_MESSAGE_CHARS,
+  MAX_TURNS,
+  SUGGESTED_QUESTIONS,
+} from "../src/lib/layline/analyst/protocol";
+import { ANALYST_TOOLS } from "../src/lib/layline/analyst/tools";
 import { poseAt } from "../src/lib/layline/interpolate";
 import { generateRace } from "../src/lib/layline/sim";
 import { FIX_HZ, RACE_SEED } from "../src/lib/layline/types";
+import { useReplay } from "../src/components/layline/store";
+import { CONSOLE_BOAT, buildBoard, type BoardRow } from "../src/components/layline/engine/boardData";
 import {
   BENCH_BOAT,
   benchWindow,
@@ -140,9 +149,115 @@ test("the finish strip prints the results the race already holds", () => {
   );
 });
 
-/* The engine ident counts the bench window, not the fleet, so this number is
-   no longer on the page. It stays pinned because it is the seed's own total
-   and the Debrief panel above prints it. */
+/* The engine ident counts the bench window, not the fleet. The fleet total is
+   back on the page in the build board's "Fixes the sim wrote" row, and the
+   Debrief panel above prints it too. */
 test("the seed writes 1711 fixes across the fleet", () => {
   assert.equal(totalFixes(race), 1711);
+});
+
+/* ------------------------------------------------------------------ */
+/* The build board                                                     */
+
+/**
+ * The closing panel is a factual claim per row, so the rows are pinned
+ * verbatim: label, numeral, unit and state, lane by lane, exactly as they
+ * render. A row that starts claiming something this build does not do has to
+ * fail here first.
+ */
+const boardKey = (row: BoardRow) =>
+  [row.label, row.value ?? "", row.unit ?? "", row.state].join("|");
+
+test("the build board renders these rows, in this order, in these states", () => {
+  const board = buildBoard(race);
+  assert.deepEqual(
+    board.lanes.map((lane) => lane.name),
+    ["Replay engine", "Console", "Debrief"],
+  );
+  assert.deepEqual(
+    board.lanes.map((lane) => lane.rows.map(boardKey)),
+    [
+      [
+        "Boats in the seeded fleet|6||running",
+        "Fixes the sim wrote|1711||running",
+        "Wind readings under the laylines|75||running",
+        "Gun, roundings and finishes|13||running",
+        "Hulls, wake, spray, water and sky|||running",
+        "Chart stand-in without WebGL|||running",
+      ],
+      [
+        "Race clock the transport scrubs|73.25|s|running",
+        "Start line counts down from|10.00|s|running",
+        "Turns marked under the scrub track|3||running",
+        "Speed made good, one reading every|0.50|s|running",
+        "Chart mode on the same clock|||running",
+        "Heel and trim on the instrument dock|||landing",
+      ],
+      [
+        "Tools the analyst can call|7||running",
+        "Questions on the opening cards|3||running",
+        "Turns one thread runs to|8||running",
+        "Characters a question can carry|400||running",
+        "Moment chips put the replay on the answer|||running",
+      ],
+    ],
+  );
+});
+
+test("the tally in the ident slot is counted off the rows it sits over", () => {
+  const board = buildBoard(race);
+  const rows = board.lanes.flatMap((lane) => lane.rows);
+  assert.equal(board.rows, rows.length);
+  assert.equal(board.rows, 17);
+  assert.equal(board.running, rows.filter((row) => row.state === "running").length);
+  assert.equal(board.running, 16);
+  /* One amber row, and it is the one the page's own status banner names. */
+  const landing = rows.filter((row) => row.state === "landing");
+  assert.deepEqual(
+    landing.map((row) => row.label),
+    ["Heel and trim on the instrument dock"],
+  );
+  /* No row invents a numeral: a value carries a unit or it carries none, and
+     a row with no honest number prints a label and a dot alone. */
+  for (const row of rows) {
+    if (row.value === undefined) assert.equal(row.unit, undefined, row.label);
+    else assert.match(row.value, /^\d+(\.\d\d)?$/, row.label);
+  }
+});
+
+test("every board numeral is its source's own count", () => {
+  const board = buildBoard(race);
+  const rows = new Map(board.lanes.flatMap((lane) => lane.rows).map((row) => [row.label, row]));
+  const value = (label: string) => {
+    const row = rows.get(label);
+    assert.ok(row !== undefined, `no board row labelled ${label}`);
+    return row.value;
+  };
+
+  assert.equal(value("Boats in the seeded fleet"), String(race.boats.length));
+  assert.equal(value("Fixes the sim wrote"), String(totalFixes(race)));
+  assert.equal(value("Wind readings under the laylines"), String(race.wind.length));
+  assert.equal(value("Gun, roundings and finishes"), String(race.events.length));
+  /* Gun, six roundings, six finishes: the whole event list, nothing else. */
+  assert.deepEqual(
+    race.events.reduce<Record<string, number>>((counts, event) => {
+      counts[event.kind] = (counts[event.kind] ?? 0) + 1;
+      return counts;
+    }, {}),
+    { gun: 1, rounding: 6, finish: 6 },
+  );
+
+  assert.equal(value("Race clock the transport scrubs"), (race.tMax - race.tMin).toFixed(2));
+  assert.equal(value("Start line counts down from"), (-race.tMin).toFixed(2));
+  assert.equal(value("Turns marked under the scrub track"), String(maneuversOf(race, CONSOLE_BOAT).length));
+  assert.equal(value("Speed made good, one reading every"), VMG_STEP.toFixed(2));
+  /* The turns row counts the boat the console is already following when the
+     page opens. If the store's opening pick moves, the row is about a
+     different boat and the label stops being true. */
+  assert.equal(useReplay.getState().followId, CONSOLE_BOAT);
+
+  assert.equal(value("Tools the analyst can call"), String(ANALYST_TOOLS.length));
+  assert.equal(value("Questions on the opening cards"), String(SUGGESTED_QUESTIONS.length));
+  assert.equal(value("Turns one thread runs to"), String(MAX_TURNS));
+  assert.equal(value("Characters a question can carry"), String(MAX_MESSAGE_CHARS));
 });
