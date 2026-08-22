@@ -18,7 +18,9 @@ import {
 import { raceData, useReplay } from "../store";
 import { CourseBackdrop } from "./CourseBackdrop";
 import { MomentStrip, type StripBuoy } from "./MomentStrip";
+import { SlateReplay } from "./SlateReplay";
 import { TrackGlyph } from "./TrackGlyph";
+import { useMounted } from "./useMounted";
 import styles from "./analyst.module.css";
 
 /* The route caps a message at MAX_MESSAGE_CHARS and a request at MAX_TURNS,
@@ -28,6 +30,100 @@ import styles from "./analyst.module.css";
  * by the route. Suggestion cards render SUGGESTED_QUESTIONS verbatim so the
  * mock route's prefix match always lands. */
 const DROPPED_LINE = "The analyst dropped the connection. Ask again.";
+
+/* ---- the composer's two states ------------------------------------------
+ *
+ * A text field on a dark panel with a rule-coloured border reads as a caption,
+ * not a control, so the box carries a visible edge at rest and the empty field
+ * types one of the suggested questions into itself: the same three strings the
+ * cards beside it use, already checked against the seeded race.
+ *
+ * Idle, the fleet leaves the line across the field every few seconds. Focused,
+ * the six hues run the perimeter, one lap every 4.4 seconds. The lap is drawn
+ * from the field's measured pixel size rather than a stretched viewBox, so the
+ * dashes hold their length and speed on every edge and through every corner.
+ * Neither runs for a viewer who asked for less motion. */
+const TYPE_MS = 52; // per character, about 19 a second
+const ERASE_MS = 22;
+const HOLD_MS = 2200; // the finished line sits long enough to read
+const GAP_MS = 340;
+
+function useTypedQuestion(active: boolean): string {
+  const [text, setText] = useState("");
+  const cursor = useRef({ line: 0, char: 0, erasing: false });
+  useEffect(() => {
+    if (!active) {
+      setText("");
+      return;
+    }
+    let timer = 0;
+    const step = () => {
+      const at = cursor.current;
+      const target = SUGGESTED_QUESTIONS[at.line];
+      if (!at.erasing) {
+        at.char += 1;
+        setText(target.slice(0, at.char));
+        timer = window.setTimeout(step, at.char >= target.length ? HOLD_MS : TYPE_MS);
+        if (at.char >= target.length) at.erasing = true;
+        return;
+      }
+      at.char -= 1;
+      setText(target.slice(0, Math.max(at.char, 0)));
+      if (at.char <= 0) {
+        at.erasing = false;
+        at.line = (at.line + 1) % SUGGESTED_QUESTIONS.length;
+        timer = window.setTimeout(step, GAP_MS);
+        return;
+      }
+      timer = window.setTimeout(step, ERASE_MS);
+    };
+    timer = window.setTimeout(step, 700);
+    return () => window.clearTimeout(timer);
+  }, [active]);
+  return text;
+}
+
+/* The lap needs the field's real pixel box: a rect drawn into a viewBox that
+ * stretches to fit would run long dashes along the wide edges and short ones
+ * down the tall sides, and the baton would visibly speed up at the corners. */
+function FleetLap({ fleet }: { fleet: BoatMeta[] }) {
+  const host = useRef<HTMLDivElement | null>(null);
+  const [box, setBox] = useState({ w: 0, h: 0 });
+  useEffect(() => {
+    const node = host.current;
+    if (node === null) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const rect = entry.contentRect;
+      setBox({ w: Math.round(rect.width), h: Math.round(rect.height) });
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+  const perimeter = 2 * (box.w + box.h);
+  return (
+    <div ref={host} className={styles.lapHost} aria-hidden="true">
+      {box.w > 0 ? (
+        <svg className={styles.lapSvg} viewBox={`0 0 ${box.w} ${box.h}`} width={box.w} height={box.h}>
+          {fleet.map((boat, index) => (
+            <rect
+              key={boat.id}
+              className={styles.lapDash}
+              x={1}
+              y={1}
+              width={box.w - 2}
+              height={box.h - 2}
+              rx={1.25}
+              style={{ color: boat.hue, "--perimeter": `${perimeter}px` } as CSSProperties}
+              strokeDasharray={`${(perimeter * 0.03).toFixed(2)} ${(perimeter * 0.97).toFixed(2)}`}
+              strokeDashoffset={(-index * perimeter * 0.145).toFixed(2)}
+
+            />
+          ))}
+        </svg>
+      ) : null}
+    </div>
+  );
+}
 
 interface Turn {
   role: "user" | "analyst";
@@ -136,6 +232,7 @@ export function AnalystSection() {
   /* Latches on the first ask and never resets: the backdrop's after-the-gun
    * tracks wipe in once and stay, whatever later answers hold. */
   const [raced, setRaced] = useState(false);
+  const [composerFocused, setComposerFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const threadRef = useRef<HTMLOListElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -147,6 +244,25 @@ export function AnalystSection() {
     () => new Map<string, BoatMeta>(raceData().boats.map((boat) => [boat.id, boat])),
     [],
   );
+
+  /* The composer's two idle layers. Both are client-only: the typed line and
+   * the measured lap would not survive a hydration diff, and neither has
+   * anything to say to a viewer who asked for less motion. */
+  const mounted = useMounted();
+  const reducedMotion = useReplay((state) => state.reducedMotion);
+  const restingComposer = mounted && !reducedMotion && !composerFocused && input === "";
+  const typed = useTypedQuestion(restingComposer && !streaming);
+  const idleComposer = restingComposer;
+  const fleetLap = useMemo(() => raceData().boats, []);
+  /* Three lanes, the podium in finish order, so the sweep is the front of the
+   * fleet crossing the field rather than a decorative gradient. */
+  const lanes = useMemo(() => {
+    const race = raceData();
+    const byRank = [...race.results].sort((a, b) => a.rank - b.rank).slice(0, 3);
+    return byRank
+      .map((result) => race.boats.find((boat) => boat.id === result.boatId))
+      .filter((boat): boat is BoatMeta => boat !== undefined);
+  }, []);
 
   /* The event times the card glyphs draw between: USA 4's beat runs from the
    * gun to its rounding, JPN 18's run from its rounding to its finish. Read
@@ -438,34 +554,44 @@ export function AnalystSection() {
                 {/* The loaded-race slate. Numbers repeat what the console and
                     the notes already publish, so the board is decorative; the
                     one sentence that instructs stays in the tree. */}
+                {/* The race sailing itself, from above, beside the readings it
+                    is drawn from. The course is about as tall as it is wide, so
+                    the drawing takes the square half and the numbers stack in
+                    the column next to it. */}
                 <div className={styles.slateBoard} aria-hidden="true">
-                  <p className={styles.slateEyebrow}>Race loaded</p>
-                  <p className={styles.slateClock}>{clock(slate.end)}</p>
-                  <div className={styles.slateStats}>
-                    <div className={styles.slateStat}>
-                      <span className={styles.slateStatLabel}>Boats</span>
-                      <span className={styles.slateStatValue}>{slate.boats}</span>
+                  {mounted ? (
+                    <SlateReplay reduced={reducedMotion} />
+                  ) : (
+                    <div className={styles.slateChart} />
+                  )}
+                  <div className={styles.slateReadings}>
+                    <p className={styles.slateEyebrow}>Race loaded</p>
+                    <div className={styles.slateStats}>
+                      <div className={styles.slateStat}>
+                        <span className={styles.slateStatLabel}>Boats</span>
+                        <span className={styles.slateStatValue}>{slate.boats}</span>
+                      </div>
+                      <div className={styles.slateStat}>
+                        <span className={styles.slateStatLabel}>Fix rate Hz</span>
+                        <span className={styles.slateStatValue}>{FIX_HZ}</span>
+                      </div>
+                      <div className={styles.slateStat}>
+                        <span className={styles.slateStatLabel}>Fixes</span>
+                        <span className={styles.slateStatValue}>{slate.fixes}</span>
+                      </div>
                     </div>
-                    <div className={styles.slateStat}>
-                      <span className={styles.slateStatLabel}>Fix rate Hz</span>
-                      <span className={styles.slateStatValue}>{FIX_HZ}</span>
+                    <div className={styles.fleetBar}>
+                      {slate.finishOrder.map((boat) => (
+                        <span
+                          key={boat.id}
+                          className={clsx(
+                            styles.fleetBlock,
+                            boat.dark === true && styles.fleetBlockOutlined,
+                          )}
+                          style={{ background: boat.hue }}
+                        />
+                      ))}
                     </div>
-                    <div className={styles.slateStat}>
-                      <span className={styles.slateStatLabel}>Fixes</span>
-                      <span className={styles.slateStatValue}>{slate.fixes}</span>
-                    </div>
-                  </div>
-                  <div className={styles.fleetBar}>
-                    {slate.finishOrder.map((boat) => (
-                      <span
-                        key={boat.id}
-                        className={clsx(
-                          styles.fleetBlock,
-                          boat.dark === true && styles.fleetBlockOutlined,
-                        )}
-                        style={{ background: boat.hue }}
-                      />
-                    ))}
                   </div>
                 </div>
                 <p className={styles.emptyLine}>
@@ -521,17 +647,54 @@ export function AnalystSection() {
                 ask(input);
               }}
             >
-              <input
-                ref={inputRef}
-                className={styles.input}
-                type="text"
-                value={input}
-                maxLength={MAX_MESSAGE_CHARS}
-                placeholder="Ask about any moment"
-                aria-label="Ask the analyst"
-                autoComplete="off"
-                onChange={(event) => setInput(event.target.value.slice(0, MAX_MESSAGE_CHARS))}
-              />
+              <div
+                className={styles.field}
+                data-focused={composerFocused ? "true" : "false"}
+                data-idle={idleComposer ? "true" : "false"}
+              >
+                <input
+                  ref={inputRef}
+                  className={clsx(styles.input, typed !== "" && styles.inputTyping)}
+                  type="text"
+                  value={input}
+                  maxLength={MAX_MESSAGE_CHARS}
+                  placeholder="Ask about any moment"
+                  aria-label="Ask the analyst"
+                  autoComplete="off"
+                  onChange={(event) => setInput(event.target.value.slice(0, MAX_MESSAGE_CHARS))}
+                  onFocus={() => setComposerFocused(true)}
+                  onBlur={() => setComposerFocused(false)}
+                />
+                {/* The question typing itself into the empty field. Decoration
+                    over a real placeholder that stays in the markup, so the
+                    hint survives with JavaScript off and in the tree. */}
+                {typed === "" ? null : (
+                  <p className={styles.typedLine} aria-hidden="true">
+                    {typed}
+                    <span className={styles.typedCaret} />
+                  </p>
+                )}
+                {/* The fleet leaving the line, idle; the fleet sailing a lap
+                    of your question, focused. */}
+                {idleComposer ? (
+                  <div className={styles.wakeLanes} aria-hidden="true">
+                    {lanes.map((boat, index) => (
+                      <span
+                        key={boat.id}
+                        className={styles.wakeLane}
+                        style={
+                          {
+                            top: `${12 + index * 8}px`,
+                            background: `linear-gradient(90deg, transparent, ${boat.hue})`,
+                            animationDelay: `${index * 260}ms`,
+                          } as CSSProperties
+                        }
+                      />
+                    ))}
+                  </div>
+                ) : null}
+                {composerFocused && !reducedMotion ? <FleetLap fleet={fleetLap} /> : null}
+              </div>
               {/* Never `disabled`: a disabled button drops out of the tab order,
                   and keyboard position on this page is never ambiguous. Empty or
                   mid-stream sends are no-ops in ask() instead. */}
