@@ -91,7 +91,17 @@ export function setText(node: { textContent: string | null } | null, text: strin
   if (node !== null && node.textContent !== text) node.textContent = text;
 }
 
-/** Velocity made good along the wind axis: the only definition on the page. */
+/**
+ * Velocity made good along the wind axis, signed: positive upwind, negative
+ * down. One of the two made-good readings the page carries, and this is the
+ * one the instrument dock owns, labelled VMG there.
+ *
+ * The other is vmgToMark in lib/layline/analytics, speed along the fixed
+ * course axis toward the next mark, and the strip under the transport owns
+ * that one, labelled To mark. The wind shifts through the race and the course
+ * does not, so the two readings differ in size as well as in sign and neither
+ * can be read off the other.
+ */
 export function vmgOf(p: Pose): number {
   return p.sog * Math.cos(p.twa * DEG);
 }

@@ -113,8 +113,15 @@ export function NotesSection({ race }: { race: RaceData }) {
         over any window. The wide shot now opens on the fleet before the
         gun, camera hand-overs and the pull-in run on the race clock so a scrubbed replay
         reproduces them exactly, and the chase lens holds its distance from every hull in the
-        fleet. Still in work: heel and trim on the instrument dock, and VMG and maneuver
-        analysis on the timeline.
+        fleet. The console reads the race now as well as replaying it: a start line readout
+        counts the followed boat down to the gun, and says so if it would reach the line
+        before the gun fires. Every tack and gybe that boat made is marked on its own rail
+        under the scrub track so a turn is one click away, and a strip of speed made good to
+        the next mark fills in against the best anyone in the fleet was making at the same
+        instant. The chart is a mode of its own rather than only the no-WebGL stand-in:
+        one button swaps the rendered scene for the course from above on the same clock, with
+        each track drawing itself as its boat sails it. Still in work: heel and trim on the
+        instrument dock.
       </p>
     </section>
   );
