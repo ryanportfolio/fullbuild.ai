@@ -87,7 +87,8 @@ export function buildSystemPrompt(race: RaceData): string {
     "",
     "Answer shape",
     "- 2 to 6 sentences. Lead with the answer, then the evidence.",
-    "- Include at least one chip when the answer points at a moment in the race.",
+    "- Any answer that cites a race time or a boat's performance includes at least one chip on its key moment.",
     "- No em dashes. Plain human sentences; numbers beat adjectives.",
+    "- Write only the finished answer. Never announce what you are about to check and never mention tools or their names; the spectator already sees a status line while you work.",
   ].join("\n");
 }

@@ -5,7 +5,6 @@
  * anything the HUD shows in display units crosses format.ts on the way out,
  * the same edge every on-screen number crosses.
  */
-import type Anthropic from "@anthropic-ai/sdk";
 import { clock, deg, knots } from "@/lib/layline/format";
 import type { BoatMeta, Fix, LegName, RaceData } from "@/lib/layline/types";
 import { lookupTerms } from "./knowledge";
@@ -344,14 +343,26 @@ function unknownBoat(race: RaceData, id: string): string {
 }
 
 /* ------------------------------------------------------------------ */
-/* Anthropic tool schemas                                              */
+/* Tool schemas, provider-neutral JSON Schema                          */
+
+export interface AnalystTool {
+  name: string;
+  description: string;
+  strict: true;
+  input_schema: {
+    type: "object";
+    properties: Record<string, unknown>;
+    required: string[];
+    additionalProperties: false;
+  };
+}
 
 const VMG_NOTE =
   "VMG is along-course speed: sog times the cosine of cog in radians, taken toward +y on the beat and toward -y on the run, so positive always points at the active mark.";
 
 const T_NOTE = "Race time in seconds relative to the gun; negative is the prestart.";
 
-export const ANALYST_TOOLS: Anthropic.Tool[] = [
+export const ANALYST_TOOLS: AnalystTool[] = [
   {
     name: "standings_at",
     description:

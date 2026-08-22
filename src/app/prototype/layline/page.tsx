@@ -95,7 +95,7 @@ export default function LaylinePage() {
           </LaylineApp>
         </section>
 
-        {process.env.ANTHROPIC_API_KEY || process.env.LAYLINE_ANALYST_MOCK === "1" ? (
+        {process.env.OPENROUTER_API_KEY || process.env.LAYLINE_ANALYST_MOCK === "1" ? (
           <AnalystSection />
         ) : null}
 
