@@ -100,7 +100,26 @@ export function standingsAt(race: RaceData, tRaw: number): StandingsOut {
       finished: p.leg === "finished",
     };
   });
-  rows.sort((a, b) => a.rank - b.rank);
+
+  /* Progress samples land twice a second while a finish time is exact, so for
+   * up to half a second after a boat crosses, its held sample still reads as
+   * racing. The crossing itself is the authority, the same override the HUD
+   * standings apply, so the analyst cannot say a boat is still on the run
+   * while the screen shows it finished. */
+  for (const row of rows) {
+    const result = race.results.find((entry) => entry.boatId === row.boatId);
+    if (result === undefined || result.elapsed > t) continue;
+    row.finished = true;
+    row.leg = "finished";
+    row.rank = result.rank;
+  }
+
+  rows.sort((a, b) => {
+    if (a.finished !== b.finished) return a.finished ? -1 : 1;
+    if (a.rank !== b.rank) return a.rank - b.rank;
+    return a.boatId < b.boatId ? -1 : a.boatId > b.boatId ? 1 : 0;
+  });
+  for (let i = 0; i < rows.length; i++) rows[i].rank = i + 1;
   return { raceClock: clock(t), rows };
 }
 

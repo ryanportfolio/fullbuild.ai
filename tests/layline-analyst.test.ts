@@ -13,6 +13,7 @@ import {
   SUGGESTED_QUESTIONS,
 } from "../src/lib/layline/analyst/protocol";
 import { detectManeuvers, runTool, standingsAt } from "../src/lib/layline/analyst/tools";
+import { standingsAt as hudStandings } from "../src/lib/layline/interpolate";
 import { POST } from "../src/app/api/layline/analyst/route";
 
 /* ------------------------------------------------------------------ */
@@ -39,6 +40,19 @@ test("standings_at matches the results and events of a fresh race", () => {
   assert.ok(rounder);
   assert.equal(rounder.leg, "run");
   assert.equal(rounder.rank, 1);
+});
+
+test("standings_at agrees with the on screen standings at every sample", () => {
+  const race = generateRace(RACE_SEED);
+  for (let t = race.tMin; t <= race.tMax; t += 0.05) {
+    const screen = hudStandings(race, t)
+      .map((row) => `${row.boatId}:${row.rank}${row.finished ? "F" : ""}`)
+      .join(",");
+    const tool = standingsAt(race, t)
+      .rows.map((row) => `${row.boatId}:${row.rank}${row.finished ? "F" : ""}`)
+      .join(",");
+    assert.equal(tool, screen, `standings disagree at t=${t.toFixed(2)}`);
+  }
 });
 
 test("standings_at is byte-identical across two fresh races", () => {
