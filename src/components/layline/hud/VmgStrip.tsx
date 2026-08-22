@@ -108,7 +108,7 @@ export function VmgStrip({ race }: { race: RaceData }) {
    * cannot hand the reveal and the playhead back a position from mount. */
   const sample = sampleLive(race);
   const seedX = (((sample.t - race.tMin) / span) * W).toFixed(1);
-  const seedIndex = Math.round((sample.t - series.t0) / VMG_STEP);
+  const seedIndex = Math.floor((sample.t - series.t0) / VMG_STEP);
   const seedBest =
     seedIndex >= 0 && seedIndex < series.count ? series.best[seedIndex] : Number.NaN;
 
@@ -134,8 +134,9 @@ export function VmgStrip({ race }: { race: RaceData }) {
         racing ? knots(Math.max(0, vmgToMark(live.pose.sog, live.pose.cog, live.leg))) : MISSING,
       );
       /* The fleet best comes off the same half second grid the trace is drawn
-       * from, so the number beside the strip is the number on it. */
-      const i = Math.round((live.t - series.t0) / VMG_STEP);
+       * from, floored so it reads the latest sample the reveal has reached
+       * rather than one still hidden ahead of the playhead. */
+      const i = Math.floor((live.t - series.t0) / VMG_STEP);
       const top = i >= 0 && i < series.count ? series.best[i] : Number.NaN;
       setText(best.current, Number.isNaN(top) ? MISSING : knots(Math.max(0, top)));
       setText(leg.current, LEG_LABEL[live.leg]);

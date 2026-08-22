@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import styles from "@/app/prototype/layline/layline.module.css";
 import { poseAt } from "@/lib/layline/interpolate";
-import type { Pose, RaceData } from "@/lib/layline/types";
+import { FIX_HZ, type Pose, type RaceData } from "@/lib/layline/types";
 import { useReplay } from "../store";
 import { onLive, sampleLive } from "../hud/live";
 import { chartFrame, lengthAt, toPath, type ChartTrack } from "./chartFrame";
@@ -54,7 +54,8 @@ export function ChartView({ race }: { race: RaceData }) {
    * the start of the feed. One pose object per render, never per frame. */
   const now = sampleLive(race);
   const seedPose: Pose = { x: 0, y: 0, hdg: 0, heel: 0, twa: 0, sog: 0, cog: 0, kite: 0 };
-  const seedDash = (track: ChartTrack) => `${lengthAt(track, now.t).toFixed(1)} ${GAP}`;
+  const seedT = now.mode === "raw" ? Math.floor(now.t * FIX_HZ) / FIX_HZ : now.t;
+  const seedDash = (track: ChartTrack) => `${lengthAt(track, seedT).toFixed(1)} ${GAP}`;
   const seedHull = (boatId: string) => {
     poseAt(race, boatId, now.t, now.mode, seedPose);
     return `translate(${seedPose.x.toFixed(1)} ${(-seedPose.y).toFixed(1)}) rotate(${seedPose.hdg.toFixed(1)})`;
@@ -79,9 +80,12 @@ export function ChartView({ race }: { race: RaceData }) {
     }
 
     return onLive(race, (live) => {
+      /* The raw lens holds every hull at its latest fix, so the trail head has
+       * to hold there too or it slides ahead of the boat between fixes. */
+      const tDraw = live.mode === "raw" ? Math.floor(live.t * FIX_HZ) / FIX_HZ : live.t;
       for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
-        const drawn = lengthAt(node.track, live.t);
+        const drawn = lengthAt(node.track, tDraw);
         /* Half a metre is a tenth of a hull length and well under a pixel at
          * every size this drawing is shown at. */
         if (!(Math.abs(drawn - node.drawn) < 0.5)) {
