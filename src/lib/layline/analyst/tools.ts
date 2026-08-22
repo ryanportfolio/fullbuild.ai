@@ -112,6 +112,12 @@ export function standingsAt(race: RaceData, tRaw: number): StandingsOut {
     row.finished = true;
     row.leg = "finished";
     row.rank = result.rank;
+    /* The rest of the row follows the crossing too. A boat over the line is no
+     * distance from it and no seconds behind anyone, which is what the next
+     * progress sample holds anyway; without this the row would read finished
+     * with meters still to run. */
+    row.dtfMeters = 0;
+    row.gapSeconds = 0;
   }
 
   rows.sort((a, b) => {

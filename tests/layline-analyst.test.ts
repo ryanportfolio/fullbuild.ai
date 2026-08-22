@@ -52,6 +52,13 @@ test("standings_at agrees with the on screen standings at every sample", () => {
       .rows.map((row) => `${row.boatId}:${row.rank}${row.finished ? "F" : ""}`)
       .join(",");
     assert.equal(tool, screen, `standings disagree at t=${t.toFixed(2)}`);
+
+    /* A finished row cannot still owe distance or seconds. */
+    for (const row of standingsAt(race, t).rows) {
+      if (!row.finished) continue;
+      assert.equal(row.dtfMeters, 0, `${row.boatId} finished with ${row.dtfMeters} m left at t=${t.toFixed(2)}`);
+      assert.equal(row.gapSeconds, 0, `${row.boatId} finished ${row.gapSeconds} s behind at t=${t.toFixed(2)}`);
+    }
   }
 });
 
