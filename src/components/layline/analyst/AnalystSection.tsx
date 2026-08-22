@@ -101,48 +101,6 @@ function TypedHint({ active }: { active: boolean }) {
   );
 }
 
-/* The lap needs the field's real pixel box: a rect drawn into a viewBox that
- * stretches to fit would run long dashes along the wide edges and short ones
- * down the tall sides, and the baton would visibly speed up at the corners. */
-function FleetLap({ fleet }: { fleet: BoatMeta[] }) {
-  const host = useRef<HTMLDivElement | null>(null);
-  const [box, setBox] = useState({ w: 0, h: 0 });
-  useEffect(() => {
-    const node = host.current;
-    if (node === null) return;
-    const observer = new ResizeObserver(([entry]) => {
-      const rect = entry.contentRect;
-      setBox({ w: Math.round(rect.width), h: Math.round(rect.height) });
-    });
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-  const perimeter = 2 * (box.w + box.h);
-  return (
-    <div ref={host} className={styles.lapHost} aria-hidden="true">
-      {box.w > 0 ? (
-        <svg className={styles.lapSvg} viewBox={`0 0 ${box.w} ${box.h}`} width={box.w} height={box.h}>
-          {fleet.map((boat, index) => (
-            <rect
-              key={boat.id}
-              className={styles.lapDash}
-              x={1}
-              y={1}
-              width={box.w - 2}
-              height={box.h - 2}
-              rx={1.25}
-              style={{ color: boat.hue, "--perimeter": `${perimeter}px` } as CSSProperties}
-              strokeDasharray={`${(perimeter * 0.07).toFixed(2)} ${(perimeter * 0.93).toFixed(2)}`}
-              strokeDashoffset={(-index * perimeter * 0.045).toFixed(2)}
-
-            />
-          ))}
-        </svg>
-      ) : null}
-    </div>
-  );
-}
-
 interface Turn {
   role: "user" | "analyst";
   text: string;
@@ -269,7 +227,16 @@ export function AnalystSection() {
   const mounted = useMounted();
   const reducedMotion = useReplay((state) => state.reducedMotion);
   const idleComposer = mounted && !reducedMotion && !composerFocused && input === "";
-  const fleetLap = useMemo(() => raceData().boats, []);
+  /* The relay reads the fleet's own liveries, so a livery change moves the
+     baton with it. Six stops, entry order, straight into the conic gradient
+     the stylesheet spins. */
+  const relayHues = useMemo(
+    () =>
+      Object.fromEntries(
+        raceData().boats.map((boat, index) => [`--relay-${index + 1}`, boat.hue]),
+      ) as CSSProperties,
+    [],
+  );
   /* Five lanes, the front of the fleet in finish order, so the sweep is the
      boats that led crossing the field rather than a decorative gradient. */
   const lanes = useMemo(() => {
@@ -668,6 +635,7 @@ export function AnalystSection() {
                 data-focused={composerFocused ? "true" : "false"}
                 data-idle={idleComposer ? "true" : "false"}
                 data-hint={idleComposer && !streaming ? "true" : "false"}
+                style={relayHues}
               >
                 {/* Under the text, not across it: the field's ground moved out
                     to the box so the lanes can pass behind the words the way
@@ -707,7 +675,6 @@ export function AnalystSection() {
                     hint survives with JavaScript off and in the tree. */}
                 <TypedHint active={idleComposer && !streaming} />
                 {/* The fleet sailing a lap of your question, focused. */}
-                {composerFocused && !reducedMotion ? <FleetLap fleet={fleetLap} /> : null}
               </div>
               {/* Never `disabled`: a disabled button drops out of the tab order,
                   and keyboard position on this page is never ambiguous. Empty or

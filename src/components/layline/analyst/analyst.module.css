@@ -1230,43 +1230,54 @@
 
 /* ---- focused: the fleet sails a lap of the question ---- */
 
-.lapHost {
+/* The baton: one conic gradient of the six liveries, spun by an angle the
+   browser can animate because it is registered below, and masked down to the
+   1px ring around the field so only the border carries it. The hues arrive
+   inline from the fleet. */
+@property --relay-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.field::after {
+  content: "";
   position: absolute;
-  /* On the box, not off it: the six hues ride the registration border nose to
-     tail so they read as one band travelling the perimeter rather than six
-     separate lights orbiting outside it. */
-  inset: 0;
+  inset: -1px;
+  border-radius: 2px;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--relay-angle, 0deg),
+    transparent 0deg,
+    transparent 300deg,
+    var(--relay-1) 318deg,
+    var(--relay-2) 330deg,
+    var(--relay-3) 340deg,
+    var(--relay-4) 348deg,
+    var(--relay-5) 354deg,
+    var(--relay-6) 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 200ms var(--ease);
   pointer-events: none;
-  animation: lapIn 240ms var(--ease);
 }
 
-.lapSvg {
-  position: absolute;
-  inset: 0;
-  overflow: visible;
+.field[data-focused="true"]::after {
+  opacity: 1;
+  animation: relay 4000ms linear infinite;
 }
 
-.lapDash {
-  fill: none;
-  /* A running light, not a strip of tape: two pixels of the boat's own hue
-     with a soft halo the same colour, riding the resting border. */
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  filter: drop-shadow(0 0 4px currentColor);
-  opacity: 0.9;
-  animation: fleetLap 4400ms linear infinite;
-}
-
-@keyframes lapIn {
-  from {
-    opacity: 0;
-  }
-}
-
-@keyframes fleetLap {
+@keyframes relay {
   to {
-    stroke-dashoffset: calc(-1 * var(--perimeter));
+    --relay-angle: 360deg;
   }
 }
 
@@ -1275,10 +1286,15 @@
    the caret and the lap if a media change lands mid-session. */
 @media (prefers-reduced-motion: reduce) {
   .wakeLane,
-  .typedCaret,
-  .lapDash,
-  .lapHost {
+  .typedCaret {
     animation: none;
+  }
+
+  /* Same specificity as the focused rule, or the baton keeps spinning under
+     an opacity of zero: invisible work is still work. */
+  .field[data-focused="true"]::after {
+    animation: none;
+    opacity: 0;
   }
 
   .wakeLane {
@@ -1293,9 +1309,10 @@
 .input:focus {
   outline: none;
   border-color: var(--ink);
-  box-shadow:
-    0 0 0 1px var(--ink),
-    0 0 0 4px color-mix(in srgb, var(--ink) 14%, transparent);
+  /* The second white pixel steps aside on focus: that ring is exactly where
+     the baton runs, and two rings on one pixel is a fight. The outer wash
+     keeps the focus readable for anyone who sees no animation at all. */
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ink) 14%, transparent);
 }
 
 .sendButton {
