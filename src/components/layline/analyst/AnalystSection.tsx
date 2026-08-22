@@ -43,44 +43,62 @@ const DROPPED_LINE = "The analyst dropped the connection. Ask again.";
  * from the field's measured pixel size rather than a stretched viewBox, so the
  * dashes hold their length and speed on every edge and through every corner.
  * Neither runs for a viewer who asked for less motion. */
-const TYPE_MS = 52; // per character, about 19 a second
-const ERASE_MS = 22;
-const HOLD_MS = 2200; // the finished line sits long enough to read
-const GAP_MS = 340;
+const TYPE_MS = 46; // per character, about 22 a second
+const HOLD_MS = 2600; // the finished question sits long enough to read twice
+const FADE_MS = 420; // matches the CSS transition below
+const NEXT_MS = 260; // dark between one question and the next
 
-function useTypedQuestion(active: boolean): string {
-  const [text, setText] = useState("");
-  const cursor = useRef({ line: 0, char: 0, erasing: false });
+/**
+ * The suggested questions typing themselves into the empty field.
+ *
+ * Two things keep it smooth. The line fades out and the next one types in
+ * rather than backspacing: a 30 character rewind at any speed reads as a
+ * glitch, and the fade is the same 420ms the rest of the panel eases with.
+ * And the state lives here rather than in the section, so a character costs
+ * one paragraph re-render instead of re-rendering the whole Debrief panel,
+ * the course backdrop and the slate's drawing sixty times a question.
+ */
+function TypedHint({ active }: { active: boolean }) {
+  const [line, setLine] = useState<{ text: string; out: boolean }>({ text: "", out: false });
+  const at = useRef({ question: 0, char: 0 });
+
   useEffect(() => {
     if (!active) {
-      setText("");
+      setLine({ text: "", out: false });
+      at.current = { question: 0, char: 0 };
       return;
     }
     let timer = 0;
-    const step = () => {
-      const at = cursor.current;
-      const target = SUGGESTED_QUESTIONS[at.line];
-      if (!at.erasing) {
-        at.char += 1;
-        setText(target.slice(0, at.char));
-        timer = window.setTimeout(step, at.char >= target.length ? HOLD_MS : TYPE_MS);
-        if (at.char >= target.length) at.erasing = true;
+    const type = () => {
+      const state = at.current;
+      const target = SUGGESTED_QUESTIONS[state.question];
+      state.char += 1;
+      setLine({ text: target.slice(0, state.char), out: false });
+      if (state.char < target.length) {
+        timer = window.setTimeout(type, TYPE_MS);
         return;
       }
-      at.char -= 1;
-      setText(target.slice(0, Math.max(at.char, 0)));
-      if (at.char <= 0) {
-        at.erasing = false;
-        at.line = (at.line + 1) % SUGGESTED_QUESTIONS.length;
-        timer = window.setTimeout(step, GAP_MS);
-        return;
-      }
-      timer = window.setTimeout(step, ERASE_MS);
+      timer = window.setTimeout(() => {
+        setLine((current) => ({ ...current, out: true }));
+        timer = window.setTimeout(() => {
+          state.question = (state.question + 1) % SUGGESTED_QUESTIONS.length;
+          state.char = 0;
+          setLine({ text: "", out: false });
+          timer = window.setTimeout(type, NEXT_MS);
+        }, FADE_MS);
+      }, HOLD_MS);
     };
-    timer = window.setTimeout(step, 700);
+    timer = window.setTimeout(type, 700);
     return () => window.clearTimeout(timer);
   }, [active]);
-  return text;
+
+  if (line.text === "") return null;
+  return (
+    <p className={styles.typedLine} data-out={line.out ? "true" : "false"} aria-hidden="true">
+      {line.text}
+      <span className={styles.typedCaret} />
+    </p>
+  );
 }
 
 /* The lap needs the field's real pixel box: a rect drawn into a viewBox that
@@ -250,15 +268,13 @@ export function AnalystSection() {
    * anything to say to a viewer who asked for less motion. */
   const mounted = useMounted();
   const reducedMotion = useReplay((state) => state.reducedMotion);
-  const restingComposer = mounted && !reducedMotion && !composerFocused && input === "";
-  const typed = useTypedQuestion(restingComposer && !streaming);
-  const idleComposer = restingComposer;
+  const idleComposer = mounted && !reducedMotion && !composerFocused && input === "";
   const fleetLap = useMemo(() => raceData().boats, []);
-  /* Three lanes, the podium in finish order, so the sweep is the front of the
-   * fleet crossing the field rather than a decorative gradient. */
+  /* Five lanes, the front of the fleet in finish order, so the sweep is the
+     boats that led crossing the field rather than a decorative gradient. */
   const lanes = useMemo(() => {
     const race = raceData();
-    const byRank = [...race.results].sort((a, b) => a.rank - b.rank).slice(0, 3);
+    const byRank = [...race.results].sort((a, b) => a.rank - b.rank).slice(0, 5);
     return byRank
       .map((result) => race.boats.find((boat) => boat.id === result.boatId))
       .filter((boat): boat is BoatMeta => boat !== undefined);
@@ -651,10 +667,31 @@ export function AnalystSection() {
                 className={styles.field}
                 data-focused={composerFocused ? "true" : "false"}
                 data-idle={idleComposer ? "true" : "false"}
+                data-hint={idleComposer && !streaming ? "true" : "false"}
               >
+                {/* Under the text, not across it: the field's ground moved out
+                    to the box so the lanes can pass behind the words the way
+                    water passes behind a hull. */}
+                {idleComposer ? (
+                  <div className={styles.wakeLanes} aria-hidden="true">
+                    {lanes.map((boat, index) => (
+                      <span
+                        key={boat.id}
+                        className={styles.wakeLane}
+                        style={
+                          {
+                            top: `calc(100% - ${13 - index * 3}px)`,
+                            background: `linear-gradient(90deg, transparent, ${boat.hue})`,
+                            animationDelay: `${index * 190}ms`,
+                          } as CSSProperties
+                        }
+                      />
+                    ))}
+                  </div>
+                ) : null}
                 <input
                   ref={inputRef}
-                  className={clsx(styles.input, typed !== "" && styles.inputTyping)}
+                  className={styles.input}
                   type="text"
                   value={input}
                   maxLength={MAX_MESSAGE_CHARS}
@@ -668,31 +705,8 @@ export function AnalystSection() {
                 {/* The question typing itself into the empty field. Decoration
                     over a real placeholder that stays in the markup, so the
                     hint survives with JavaScript off and in the tree. */}
-                {typed === "" ? null : (
-                  <p className={styles.typedLine} aria-hidden="true">
-                    {typed}
-                    <span className={styles.typedCaret} />
-                  </p>
-                )}
-                {/* The fleet leaving the line, idle; the fleet sailing a lap
-                    of your question, focused. */}
-                {idleComposer ? (
-                  <div className={styles.wakeLanes} aria-hidden="true">
-                    {lanes.map((boat, index) => (
-                      <span
-                        key={boat.id}
-                        className={styles.wakeLane}
-                        style={
-                          {
-                            top: `${12 + index * 8}px`,
-                            background: `linear-gradient(90deg, transparent, ${boat.hue})`,
-                            animationDelay: `${index * 260}ms`,
-                          } as CSSProperties
-                        }
-                      />
-                    ))}
-                  </div>
-                ) : null}
+                <TypedHint active={idleComposer && !streaming} />
+                {/* The fleet sailing a lap of your question, focused. */}
                 {composerFocused && !reducedMotion ? <FleetLap fleet={fleetLap} /> : null}
               </div>
               {/* Never `disabled`: a disabled button drops out of the tab order,

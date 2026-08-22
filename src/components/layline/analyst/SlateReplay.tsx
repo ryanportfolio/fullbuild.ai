@@ -25,8 +25,22 @@ import styles from "./analyst.module.css";
  * picture, then starts again from the gun.
  */
 const LOOP_S = 9; // wall seconds for the whole race
-const HOLD_MS = 1400; // the finished course holds before the next lap
+const HOLD_MS = 1600; // the finished course holds before the next lap
 const GAP = 100000; // one dash gap that outruns the longest track
+
+/* The handover between laps.
+ *
+ * A drawing that snaps back to bare water is a cut, and a cut in the corner of
+ * the eye reads as a glitch. Instead the finished plot is handed to a ghost
+ * layer: the same six tracks, complete and faint, which fades up while the
+ * live ones still hold the picture. The live layer resets to nothing behind
+ * that cover, the fleet sets off again, and the ghost fades away over the
+ * first quarter of the new lap. Nothing ever disappears on a frame boundary,
+ * and the last lap is still on the water while the next one draws over it,
+ * which is how a plot on a chart table actually accumulates.
+ */
+const GHOST_IN_MS = 520; // the finished plot handed to the ghost
+const GHOST_OUT_MS = 2600; // and let go of, over the new lap's opening
 
 interface Node {
   line: SVGPathElement;
@@ -43,6 +57,8 @@ export function SlateReplay({ reduced }: { reduced: boolean }) {
   const lines = useRef(new Map<string, SVGPathElement | null>());
   const hulls = useRef(new Map<string, SVGGElement | null>());
   const clockRef = useRef<HTMLParagraphElement | null>(null);
+  const ghostRef = useRef<SVGGElement | null>(null);
+  const liveRef = useRef<SVGGElement | null>(null);
   const hostRef = useRef<HTMLDivElement | null>(null);
   const pose = useRef<Pose>({ x: 0, y: 0, hdg: 0, heel: 0, twa: 0, sog: 0, cog: 0, kite: 0 });
   const [inView, setInView] = useState(false);
@@ -101,20 +117,48 @@ export function SlateReplay({ reduced }: { reduced: boolean }) {
 
     let frameId = 0;
     let started = 0;
-    let holdUntil = 0;
+    let handoverAt = 0;
     const span = end - race.tMin;
+    const ghost = ghostRef.current;
+    const live = liveRef.current;
+
+    const setGhost = (value: number, ms: number) => {
+      if (ghost === null) return;
+      ghost.style.transition = `opacity ${ms}ms var(--ease)`;
+      ghost.style.opacity = value.toFixed(2);
+    };
+    /* The clock is the one thing that cannot cross-fade with the drawing: it
+     * would have to read two times at once. It dips out while the ghost takes
+     * over and comes back on the new lap's first frame. */
+    const setClockLit = (lit: boolean) => {
+      if (clockRef.current === null) return;
+      clockRef.current.style.opacity = lit ? "1" : "0";
+    };
+
     const tick = (now: number) => {
       frameId = requestAnimationFrame(tick);
       if (started === 0) started = now;
-      if (holdUntil > 0) {
-        if (now < holdUntil) return;
-        holdUntil = 0;
+
+      if (handoverAt > 0) {
+        const since = now - handoverAt;
+        if (since < HOLD_MS) return;
+        /* Cover is up: the live layer can be wound back to nothing without
+         * anybody seeing it happen. */
+        if (live !== null) live.style.opacity = "1";
+        draw(race.tMin);
+        setClockLit(true);
+        setGhost(0, GHOST_OUT_MS);
+        handoverAt = 0;
         started = now;
+        return;
       }
+
       const through = (now - started) / (LOOP_S * 1000);
       if (through >= 1) {
         draw(end);
-        holdUntil = now + HOLD_MS;
+        setGhost(1, GHOST_IN_MS);
+        setClockLit(false);
+        handoverAt = now;
         return;
       }
       draw(race.tMin + through * span);
@@ -138,6 +182,19 @@ export function SlateReplay({ reduced }: { reduced: boolean }) {
       <svg className={styles.slateSvg} viewBox={turned} aria-hidden="true">
         <g transform="rotate(-90)">
         <CourseFurniture course={race.course} labelX={frame.maxX} named={false} />
+        {/* Last lap, complete and faint, holding the picture through the
+            handover while the live layer winds back to the gun. */}
+        <g ref={ghostRef} className={styles.slateGhost}>
+          {frame.tracks.map((track) => (
+            <path
+              key={track.boat.id}
+              className={styles.slateTrack}
+              style={{ color: track.boat.hue }}
+              d={toPath(track.points)}
+            />
+          ))}
+        </g>
+        <g ref={liveRef}>
         {frame.tracks.map((track) => (
           <g key={track.boat.id} style={{ color: track.boat.hue }}>
             <path
@@ -156,6 +213,7 @@ export function SlateReplay({ reduced }: { reduced: boolean }) {
             </g>
           </g>
         ))}
+        </g>
         </g>
       </svg>
       <p ref={clockRef} className={styles.slateChartClock}>

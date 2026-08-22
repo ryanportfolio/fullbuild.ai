@@ -1101,14 +1101,18 @@
   position: relative;
   flex: 1;
   min-width: 0;
+  /* The ground belongs to the box, not to the input inside it, so the idle
+     lanes can run between the water and the words instead of over them. */
+  background: var(--page-ground);
   border-radius: 2px;
 }
 
 .input {
   width: 100%;
   padding: 10px 12px;
-  /* Opaque, so the lanes running underneath never show through the glass. */
-  background: var(--page-ground);
+  /* Clear, because the field's ground is on the box now and the idle lanes
+     sweep between the two: an opaque input would bury them. */
+  background: transparent;
   /* A rule-coloured edge on a panel this dark reads as a caption, not a
      control, so the registration box that used to arrive on focus is on all
      the time. The second pixel is a shadow rather than a wider border, so
@@ -1134,12 +1138,14 @@
 }
 
 /* While a suggested question types itself in, the real placeholder stays in
-   the markup and steps out of the way. */
-.inputTyping::placeholder {
+   the markup and steps out of the way. Keyed off the box rather than the
+   typed string, so a character never re-renders the input. */
+.field[data-hint="true"] .input::placeholder {
   color: transparent;
 }
 
 .typedLine {
+  transition: opacity 420ms var(--ease);
   position: absolute;
   top: 10px;
   left: 13px;
@@ -1152,6 +1158,10 @@
   line-height: 20px;
   white-space: nowrap;
   pointer-events: none;
+}
+
+.typedLine[data-out="true"] {
+  opacity: 0;
 }
 
 .typedCaret {
@@ -1192,6 +1202,8 @@
   position: absolute;
   left: -30%;
   width: 30%;
+  /* One pixel each, stacked in the last few pixels of the field: a wake
+     under the words rather than five lines drawn through them. */
   height: 1px;
   border-radius: 1px;
   opacity: 0;
@@ -1203,13 +1215,13 @@
     transform: translateX(0);
     opacity: 0;
   }
-  4% {
-    opacity: 0.5;
+  6% {
+    opacity: 0.85;
   }
-  16% {
-    opacity: 0.5;
+  34% {
+    opacity: 0.85;
   }
-  22%,
+  46%,
   100% {
     transform: translateX(460%);
     opacity: 0;
@@ -1501,4 +1513,15 @@
     flex-direction: row;
     gap: 24px;
   }
+}
+
+/* The lap that just finished, held faint under the one being drawn. Opacity
+   is written by the loop with its own transition, so the layer starts dark
+   and never flashes on the first frame. */
+.slateGhost {
+  opacity: 0;
+}
+
+.slateChartClock {
+  transition: opacity 340ms var(--ease);
 }
