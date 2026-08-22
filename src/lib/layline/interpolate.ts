@@ -20,6 +20,7 @@ import type {
   Pose,
   ProgressSample,
   RaceData,
+  RaceResult,
   ReplayMode,
   StandingsRow,
   WindSample,
@@ -282,6 +283,7 @@ function byRank(a: StandingsRow, b: StandingsRow): number {
 }
 
 const tables = new WeakMap<RaceData, StandingsRow[]>();
+const finishTables = new WeakMap<RaceData, Map<string, RaceResult>>();
 
 /* Returns the same array every call for a given race: the dock re-renders off
  * the clock, not off array identity, and a fresh array per frame would be an
@@ -312,6 +314,25 @@ export function standingsAt(race: RaceData, t: number): StandingsRow[] {
     row.gapMeters = p.gapMeters;
     row.gapSeconds = p.gapSeconds;
     row.finished = p.leg === "finished";
+  }
+  /* A crossing lands between held samples: tFinish is sub-tick while progress
+   * arrives at PROGRESS_HZ, so a boat's finished leg can lag its own line by
+   * half a second. The results are the authority on who has crossed; a row
+   * whose finish time has passed reads finished now, at its result rank, not
+   * at the next progress sample. */
+  let crossed = finishTables.get(race);
+  if (crossed === undefined) {
+    crossed = new Map(race.results.map((result) => [result.boatId, result]));
+    finishTables.set(race, crossed);
+  }
+  for (let k = 0; k < rows.length; k++) {
+    const row = rows[k];
+    const result = crossed.get(row.boatId);
+    if (result !== undefined && result.elapsed <= t) {
+      row.finished = true;
+      row.leg = "finished";
+      row.rank = result.rank;
+    }
   }
   rows.sort(byRank);
   return rows;

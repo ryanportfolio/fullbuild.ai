@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { generateRace } from "@/lib/layline/sim";
-import { RACE_SEED } from "@/lib/layline/types";
+import { FIX_HZ, RACE_SEED } from "@/lib/layline/types";
 import type { RaceData, ReplayMode, RigName } from "@/lib/layline/types";
 
 /* One race per document. The server builds its own copy from the same seed for
@@ -29,20 +29,6 @@ export const OPEN_AT = 18;
  * to the line. */
 export const AUTOPLAY_FROM = -5;
 
-/* The replay is over when the last boat crosses. The fixes run on a few more
- * seconds so the evaluator has something to read past the line, but the clock
- * stops here and the results stand. */
-let endStamp: number | null = null;
-export function endOfReplay(): number {
-  if (endStamp === null) {
-    const race = raceData();
-    let last = race.tMin;
-    for (const result of race.results) if (result.elapsed > last) last = result.elapsed;
-    endStamp = last;
-  }
-  return endStamp;
-}
-
 export type PlayRate = 1 | 2 | 4;
 
 interface ReplayStore {
@@ -66,6 +52,7 @@ interface ReplayStore {
   pause: () => void;
   toggle: () => void;
   seek: (t: number) => void;
+  step: (direction: 1 | -1) => void;
   advance: (seconds: number) => void;
   setRate: (rate: PlayRate) => void;
   setMode: (mode: ReplayMode) => void;
@@ -101,7 +88,9 @@ export const useReplay = create<ReplayStore>((set, get) => ({
   /* Play from the end means play it again: the replay never loops on its own,
    * and the one control that restarts it is the one a viewer just pressed. */
   play: () =>
-    set(get().t >= endOfReplay() - 1e-6 ? { t: AUTOPLAY_FROM, playing: true } : { playing: true }),
+    set(
+      get().t >= raceData().tMax - 1e-6 ? { t: AUTOPLAY_FROM, playing: true } : { playing: true },
+    ),
   pause: () => set({ playing: false }),
   toggle: () => {
     if (get().playing) get().pause();
@@ -109,15 +98,27 @@ export const useReplay = create<ReplayStore>((set, get) => ({
   },
   seek: (t) => set({ t: clampTime(t) }),
 
+  /* One fix either way, landed on the 1/FIX_HZ grid the sim wrote the fixes
+   * on, so the raw lens steps reading to reading at 250 ms. Stepping while
+   * playing pauses first: a clock that jumps and runs at once shows neither. */
+  step: (direction) => {
+    const race = raceData();
+    const u = (get().t - race.tMin) * FIX_HZ;
+    const n = direction > 0 ? Math.floor(u + 1e-6) + 1 : Math.ceil(u - 1e-6) - 1;
+    set({ playing: false, t: clampTime(race.tMin + n / FIX_HZ) });
+  },
+
   /* The only thing that moves the clock on its own, and it is called from
-   * inside the render loop so a frozen or backgrounded page cannot drift. */
+   * inside the render loop so a frozen or backgrounded page cannot drift.
+   * The clock runs to the end of the feed: the last boat crosses, the fleet
+   * luffs out its way and comes to rest. The results stand either way; they
+   * come from race.results, not from where the clock stops. */
   advance: (seconds) => {
     const state = get();
     const race = raceData();
-    const end = endOfReplay();
     const next = state.t + seconds;
-    if (next >= end) {
-      set({ t: end, playing: false });
+    if (next >= race.tMax) {
+      set({ t: race.tMax, playing: false });
       return;
     }
     set({ t: next < race.tMin ? race.tMin : next });
