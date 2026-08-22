@@ -41,19 +41,31 @@ const sample: LiveSample = {
 };
 
 let sampledRace: RaceData | null = null;
-let sampledKey = "";
+let sampledT = Number.NaN;
+let sampledMode: ReplayMode | "" = "";
+let sampledFollow = "";
 
 /**
  * One evaluation per instant, shared by every reader on the page. The clock,
  * the mode and the followed boat are the whole input, so a second call inside
- * the same frame costs a string compare.
+ * the same frame costs three compares and allocates nothing: every visible
+ * reader calls this every frame, and a joined key would be a string per frame
+ * per reader for an answer that is usually already on hand.
  */
 export function sampleLive(race: RaceData): LiveSample {
   const state = useReplay.getState();
-  const key = `${state.t}|${state.mode}|${state.followId}`;
-  if (race === sampledRace && key === sampledKey) return sample;
+  if (
+    race === sampledRace &&
+    state.t === sampledT &&
+    state.mode === sampledMode &&
+    state.followId === sampledFollow
+  ) {
+    return sample;
+  }
   sampledRace = race;
-  sampledKey = key;
+  sampledT = state.t;
+  sampledMode = state.mode;
+  sampledFollow = state.followId;
   sample.t = state.t;
   sample.mode = state.mode;
   sample.followId = state.followId;
