@@ -15,7 +15,7 @@ import {
   parseChips,
   type AnalystMessage,
 } from "@/lib/layline/analyst/protocol";
-import { endOfReplay, raceData, useReplay } from "../store";
+import { raceData, useReplay } from "../store";
 import { CourseBackdrop } from "./CourseBackdrop";
 import { MomentStrip, type StripBuoy } from "./MomentStrip";
 import { TrackGlyph } from "./TrackGlyph";
@@ -160,10 +160,15 @@ export function AnalystSection() {
     };
   }, []);
 
-  /* The slate's instrument readings, all from the loaded race itself. */
+  /* The slate's instrument readings, all from the loaded race itself. The
+   * clock stops when the last boat crosses, matching the replay's own end,
+   * even though the fixes run on a few seconds past the line. */
   const slate = useMemo(() => {
     const race = raceData();
+    let end = race.tMin;
+    for (const result of race.results) if (result.elapsed > end) end = result.elapsed;
     return {
+      end,
       boats: race.boats.length,
       fixes: Object.values(race.fixes).reduce((n, series) => n + series.length, 0),
       finishOrder: [...race.results]
@@ -435,7 +440,7 @@ export function AnalystSection() {
                     one sentence that instructs stays in the tree. */}
                 <div className={styles.slateBoard} aria-hidden="true">
                   <p className={styles.slateEyebrow}>Race loaded</p>
-                  <p className={styles.slateClock}>{clock(endOfReplay())}</p>
+                  <p className={styles.slateClock}>{clock(slate.end)}</p>
                   <div className={styles.slateStats}>
                     <div className={styles.slateStat}>
                       <span className={styles.slateStatLabel}>Boats</span>

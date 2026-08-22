@@ -8,8 +8,11 @@
  * Mock mode (LAYLINE_ANALYST_MOCK=1) streams a deterministic answer computed
  * from the real tools and never touches the network, so dev and tests run
  * without a key. Live mode without a key degrades honestly to a 503.
+ *
+ * Live mode talks to OpenRouter's chat completions API over raw fetch: one
+ * prepaid key is the hard spend ceiling, and the model is an env knob
+ * (OPENROUTER_MODEL) swappable from the dashboard without a deploy.
  */
-import Anthropic from "@anthropic-ai/sdk";
 import { clock } from "@/lib/layline/format";
 import type { RaceData } from "@/lib/layline/types";
 import { raceData } from "@/lib/layline/analyst/data";
@@ -39,7 +42,8 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const MAX_TOOL_ROUNDS = 4;
-const MODEL = "claude-opus-5";
+const DEFAULT_MODEL = "deepseek/deepseek-v4-flash-vision-exp";
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 const encoder = new TextEncoder();
 
@@ -336,58 +340,190 @@ function rateLimited(req: Request, now: number): boolean {
   return entry.count > RATE_LIMIT;
 }
 
+/* OpenRouter wire shapes, chat completions format. Only the fields this
+ * route reads are typed; everything else in a chunk is ignored. */
+interface ToolCallWire {
+  id: string;
+  type: "function";
+  function: { name: string; arguments: string };
+}
+
+interface ChatMessage {
+  role: "system" | "user" | "assistant" | "tool";
+  content: string | null;
+  tool_calls?: ToolCallWire[];
+  tool_call_id?: string;
+}
+
+interface StreamChunk {
+  error?: { message?: string; code?: number | string };
+  choices?: {
+    delta?: {
+      content?: string | null;
+      tool_calls?: { index: number; id?: string; function?: { name?: string; arguments?: string } }[];
+    };
+    finish_reason?: string | null;
+  }[];
+}
+
+class UpstreamError extends Error {
+  constructor(readonly status: number) {
+    super(`upstream ${status}`);
+  }
+}
+
+/* Small models open their final answer with plan talk ("Let me check the
+ * downwind legs.") despite the prompt. Leading paragraphs that read as
+ * planning are dropped, but only while a real paragraph remains after them,
+ * so an answer can never strip to nothing. */
+const PLAN_TALK = /^(let me|i'll|i will|i am going to|i'm going to|first,? let me|now let me|okay,? let|i need to)/i;
+
+function stripPlanTalk(text: string): string {
+  const paragraphs = text.split(/\n\s*\n/);
+  while (paragraphs.length > 1 && PLAN_TALK.test(paragraphs[0].trim())) {
+    paragraphs.shift();
+  }
+  return paragraphs.join("\n\n");
+}
+
 function liveResponse(
   race: RaceData,
   history: AnalystMessage[],
   clientSignal: AbortSignal,
 ): Response {
-  const anthropic = new Anthropic();
+  const model = process.env.OPENROUTER_MODEL || DEFAULT_MODEL;
+  const tools = ANALYST_TOOLS.map((tool) => ({
+    type: "function" as const,
+    function: {
+      name: tool.name,
+      description: tool.description,
+      strict: tool.strict,
+      parameters: tool.input_schema,
+    },
+  }));
+  const messages: ChatMessage[] = [
+    { role: "system", content: buildSystemPrompt(race) },
+    ...history.map((turn): ChatMessage => ({ role: turn.role, content: turn.content })),
+  ];
+
   /* One aborter covers both ways a viewer leaves: the request signal firing
-   * and the response stream being cancelled. Without it the model keeps
-   * generating, and billing, until finalMessage settles. */
+   * and the response stream being cancelled. Without it the upstream keeps
+   * generating, and billing, until the completion finishes. */
   const aborter = new AbortController();
   if (clientSignal.aborted) aborter.abort();
   else clientSignal.addEventListener("abort", () => aborter.abort());
-  const system: Anthropic.TextBlockParam[] = [
-    {
-      type: "text",
-      text: buildSystemPrompt(race),
-      cache_control: { type: "ephemeral" },
-    },
-  ];
-  const messages: Anthropic.MessageParam[] = history.map((turn) => ({
-    role: turn.role,
-    content: turn.content,
-  }));
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const send = (event: string, data: object): void => {
         controller.enqueue(frame(event, data));
       };
+
+      /* One completion round: collect the round's content and assemble any
+       * tool-call fragments by index. Content is NOT streamed through here:
+       * models narrate their plan inside tool rounds ("I'll check the start
+       * report."), and that talk is not the answer. The caller drops a tool
+       * round's text and streams a final round's text itself. */
+      const runRound = async (): Promise<{ finish: string; calls: ToolCallWire[]; text: string }> => {
+        const res = await fetch(OPENROUTER_URL, {
+          method: "POST",
+          signal: aborter.signal,
+          headers: {
+            authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+            "content-type": "application/json",
+            "http-referer": "https://fullbuild.ai",
+            "x-title": "Layline Debrief",
+          },
+          body: JSON.stringify({
+            model,
+            max_tokens: 700,
+            temperature: 0.2,
+            stream: true,
+            /* Reasoning models burn the token budget on hidden thinking and
+             * can stream an empty answer; the analyst wants the words. Models
+             * without a reasoning mode ignore this. */
+            reasoning: { enabled: false },
+            messages,
+            tools,
+          }),
+        });
+        if (!res.ok || res.body === null) throw new UpstreamError(res.status);
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let finish = "";
+        let text = "";
+        const parts: { id: string; name: string; args: string }[] = [];
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          let newline;
+          while ((newline = buffer.indexOf("\n")) !== -1) {
+            const line = buffer.slice(0, newline).trim();
+            buffer = buffer.slice(newline + 1);
+            if (!line.startsWith("data:")) continue;
+            const data = line.slice(5).trim();
+            if (data === "" || data === "[DONE]") continue;
+            let chunk: StreamChunk;
+            try {
+              chunk = JSON.parse(data) as StreamChunk;
+            } catch {
+              continue;
+            }
+            /* A failure after the 200 header arrives as an error chunk inside
+             * the stream; swallowing it would end an empty answer with done. */
+            if (chunk.error !== undefined) {
+              const code = Number(chunk.error.code);
+              throw new UpstreamError(Number.isFinite(code) ? code : 502);
+            }
+            const choice = chunk.choices?.[0];
+            if (choice === undefined) continue;
+            if (choice.finish_reason === "error") throw new UpstreamError(502);
+            if (typeof choice.delta?.content === "string" && choice.delta.content !== "") {
+              text += choice.delta.content;
+            }
+            for (const fragment of choice.delta?.tool_calls ?? []) {
+              const slot = (parts[fragment.index] ??= { id: "", name: "", args: "" });
+              if (fragment.id !== undefined) slot.id = fragment.id;
+              if (fragment.function?.name !== undefined) slot.name = fragment.function.name;
+              if (fragment.function?.arguments !== undefined) slot.args += fragment.function.arguments;
+            }
+            if (typeof choice.finish_reason === "string") finish = choice.finish_reason;
+          }
+        }
+        const calls = parts
+          .filter((part) => part.name !== "")
+          .map((part, index) => ({
+            id: part.id === "" ? `call_${index}` : part.id,
+            type: "function" as const,
+            function: { name: part.name, arguments: part.args === "" ? "{}" : part.args },
+          }));
+        return { finish, calls, text };
+      };
+
       try {
         let toolRounds = 0;
         for (;;) {
-          const modelStream = anthropic.messages.stream(
-            {
-              model: MODEL,
-              max_tokens: 700,
-              output_config: { effort: "low" },
-              system,
-              tools: ANALYST_TOOLS,
-              messages,
-            },
-            { signal: aborter.signal },
-          );
-          modelStream.on("text", (delta) => send(SSE_DELTA, { text: delta }));
-          const message = await modelStream.finalMessage();
+          const { finish, calls, text } = await runRound();
 
-          if (message.stop_reason === "refusal") {
-            send(SSE_ERROR, { message: "The analyst passed on that one. Ask about the race." });
-            controller.close();
-            return;
-          }
-          if (message.stop_reason !== "tool_use") {
+          if (finish !== "tool_calls" || calls.length === 0) {
+            const answer = stripPlanTalk(text).trim();
+            if (answer === "") {
+              /* A model that stops without words gave no answer; done would
+               * make the UI accept the silence as one. */
+              send(SSE_ERROR, { message: "The analyst dropped the connection. Ask again." });
+              controller.close();
+              return;
+            }
+            /* The finished answer, re-chunked word by word so the reader
+             * still watches it type; a tool round's text never gets here. */
+            const words = answer.split(/(?<=\s)/);
+            for (let index = 0; index < words.length; index += 2) {
+              send(SSE_DELTA, { text: words.slice(index, index + 2).join("") });
+              await delay(12);
+            }
             send(SSE_DONE, { ok: true });
             controller.close();
             return;
@@ -399,24 +535,24 @@ function liveResponse(
           }
           toolRounds += 1;
 
-          const toolUses = message.content.filter(
-            (block): block is Anthropic.ToolUseBlock => block.type === "tool_use",
-          );
-          messages.push({ role: "assistant", content: message.content });
-          const results: Anthropic.ToolResultBlockParam[] = [];
-          for (const use of toolUses) {
-            send(SSE_STATUS, { label: toolStatusLabel(race, use.name, use.input) });
-            results.push({
-              type: "tool_result",
-              tool_use_id: use.id,
-              content: runTool(race, use.name, use.input),
+          messages.push({ role: "assistant", content: null, tool_calls: calls });
+          for (const call of calls) {
+            let input: object;
+            try {
+              input = JSON.parse(call.function.arguments) as object;
+            } catch {
+              input = {};
+            }
+            send(SSE_STATUS, { label: toolStatusLabel(race, call.function.name, input) });
+            messages.push({
+              role: "tool",
+              tool_call_id: call.id,
+              content: runTool(race, call.function.name, input),
             });
           }
-          /* Every tool_result goes back in one user message. */
-          messages.push({ role: "user", content: results });
         }
       } catch (error) {
-        if (aborter.signal.aborted || error instanceof Anthropic.APIUserAbortError) {
+        if (aborter.signal.aborted) {
           /* The viewer left; nobody is reading. Close without an error frame. */
           try {
             controller.close();
@@ -426,9 +562,9 @@ function liveResponse(
           return;
         }
         const message =
-          error instanceof Anthropic.RateLimitError
+          error instanceof UpstreamError && error.status === 429
             ? "The analyst is busy. Give it a minute."
-            : error instanceof Anthropic.AuthenticationError
+            : error instanceof UpstreamError && [401, 402, 403].includes(error.status)
               ? "The analyst is offline right now."
               : "The analyst dropped the connection. Ask again.";
         try {
@@ -471,7 +607,7 @@ export async function POST(req: Request): Promise<Response> {
     return mockResponse(race, validated[validated.length - 1].content);
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.OPENROUTER_API_KEY) {
     return jsonError(503, "analyst offline");
   }
 
