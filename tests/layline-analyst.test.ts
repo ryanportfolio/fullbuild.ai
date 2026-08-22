@@ -13,6 +13,7 @@ import {
   SUGGESTED_QUESTIONS,
 } from "../src/lib/layline/analyst/protocol";
 import { detectManeuvers, runTool, standingsAt } from "../src/lib/layline/analyst/tools";
+import { standingsAt as hudStandings } from "../src/lib/layline/interpolate";
 import { POST } from "../src/app/api/layline/analyst/route";
 
 /* ------------------------------------------------------------------ */
@@ -41,6 +42,26 @@ test("standings_at matches the results and events of a fresh race", () => {
   assert.equal(rounder.rank, 1);
 });
 
+test("standings_at agrees with the on screen standings at every sample", () => {
+  const race = generateRace(RACE_SEED);
+  for (let t = race.tMin; t <= race.tMax; t += 0.05) {
+    const screen = hudStandings(race, t)
+      .map((row) => `${row.boatId}:${row.rank}${row.finished ? "F" : ""}`)
+      .join(",");
+    const tool = standingsAt(race, t)
+      .rows.map((row) => `${row.boatId}:${row.rank}${row.finished ? "F" : ""}`)
+      .join(",");
+    assert.equal(tool, screen, `standings disagree at t=${t.toFixed(2)}`);
+
+    /* A finished row cannot still owe distance or seconds. */
+    for (const row of standingsAt(race, t).rows) {
+      if (!row.finished) continue;
+      assert.equal(row.dtfMeters, 0, `${row.boatId} finished with ${row.dtfMeters} m left at t=${t.toFixed(2)}`);
+      assert.equal(row.gapSeconds, 0, `${row.boatId} finished ${row.gapSeconds} s behind at t=${t.toFixed(2)}`);
+    }
+  }
+});
+
 test("standings_at is byte-identical across two fresh races", () => {
   const a = runTool(generateRace(RACE_SEED), "standings_at", { t: 30 });
   const b = runTool(generateRace(RACE_SEED), "standings_at", { t: 30 });
@@ -52,6 +73,15 @@ test("maneuver detection is identical across two runs", () => {
   const second = JSON.stringify(detectManeuvers(generateRace(RACE_SEED)));
   assert.equal(first, second);
   assert.ok(JSON.parse(first).length > 0, "expected at least one tack or gybe in the race");
+});
+
+test("a maneuver never reports negative speed loss", () => {
+  for (const move of detectManeuvers(generateRace(RACE_SEED))) {
+    assert.ok(
+      Number(move.speedLossKnots) >= 0,
+      `${move.sail} ${move.kind} at ${move.raceClock} lost ${move.speedLossKnots} knots`,
+    );
+  }
 });
 
 /* ------------------------------------------------------------------ */
