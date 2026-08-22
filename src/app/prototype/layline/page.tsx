@@ -3,6 +3,7 @@ import Link from "next/link";
 import { clock } from "@/lib/layline/format";
 import { generateRace } from "@/lib/layline/sim";
 import { RACE_SEED } from "@/lib/layline/types";
+import { AnalystSection } from "@/components/layline/analyst/AnalystSection";
 import { LaylineApp } from "@/components/layline/LaylineApp";
 import { NotesSection } from "@/components/layline/NotesSection";
 import { TrackChart } from "@/components/layline/svg/TrackChart";
@@ -93,6 +94,10 @@ export default function LaylinePage() {
             </div>
           </LaylineApp>
         </section>
+
+        {process.env.OPENROUTER_API_KEY || process.env.LAYLINE_ANALYST_MOCK === "1" ? (
+          <AnalystSection />
+        ) : null}
 
         <NotesSection race={race} />
       </main>
