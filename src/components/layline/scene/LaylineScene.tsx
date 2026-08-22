@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { NeutralToneMapping } from "three";
 import type { RaceData } from "@/lib/layline/types";
@@ -28,6 +28,60 @@ function Clock() {
     renderStats.triangles = render.triangles;
     if (!replay.webglOk) replay.setWebglOk(true);
   }, -100);
+  return null;
+}
+
+/* A phone gets the same water as a desktop GPU, so quality follows measured
+ * frame time instead of a device guess: a sustained miss walks the pixel ratio
+ * down one rung, waits out a settle window, and looks again. It never walks
+ * back up, because resolution that oscillates reads worse than resolution that
+ * settles low. A machine already rendering at ratio 1 has no rungs below it
+ * and the governor stands down. */
+const DPR_LADDER = [1.5, 1.25, 1];
+const MISS_MS = 22; // sustained EMA above this, ~45 fps, is a shed
+const EMA_GAIN = 0.05; // ~60-frame horizon
+const SETTLE_FRAMES = 120; // shader warm-up at mount, resize churn after a shed
+
+function QualityGovernor() {
+  const setDpr = useThree((state) => state.setDpr);
+  const gl = useThree((state) => state.gl);
+  const rungs = useRef<number[] | null>(null);
+  const tier = useRef<number | null>(null);
+  const ema = useRef(1000 / 60);
+  const settle = useRef(SETTLE_FRAMES);
+  useFrame((state, delta) => {
+    if (rungs.current === null) rungs.current = DPR_LADDER.filter((v) => v < gl.getPixelRatio());
+    if (useReplay.getState().frozen) return;
+    /* Any Canvas re-render (freeze and thaw toggle the frameloop prop) re-runs
+     * the reconfigure pass, which reapplies the dpr prop and lifts the ratio
+     * back to the device value. The governor holds its tier and reasserts it
+     * instead of spending settle windows earning the shed a second time. A
+     * capture taken while frozen still gets the full-resolution frame. */
+    if (tier.current !== null && gl.getPixelRatio() > tier.current) {
+      setDpr(tier.current);
+      settle.current = SETTLE_FRAMES;
+      return;
+    }
+    if (rungs.current.length === 0) return;
+    const ms = delta * 1000;
+    /* A background tab reports its whole absence as one delta; that is not a
+     * slow frame, and the EMA restarts clean when the page comes back. */
+    if (ms > 500) {
+      settle.current = SETTLE_FRAMES;
+      return;
+    }
+    if (settle.current > 0) {
+      settle.current -= 1;
+      return;
+    }
+    ema.current += (ms - ema.current) * EMA_GAIN;
+    if (ema.current > MISS_MS) {
+      tier.current = rungs.current.shift() as number;
+      setDpr(tier.current);
+      ema.current = 1000 / 60;
+      settle.current = SETTLE_FRAMES;
+    }
+  }, -99);
   return null;
 }
 
@@ -96,6 +150,7 @@ export function LaylineScene({ race }: { race: RaceData }) {
       <CameraRigs race={race} />
       <BoatLabels race={race} />
       <Clock />
+      <QualityGovernor />
       <DemandBridge />
     </Canvas>
   );
