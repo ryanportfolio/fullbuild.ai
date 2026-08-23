@@ -11,6 +11,7 @@ import { NotesSection } from "@/components/layline/NotesSection";
 import { PageGround } from "@/components/layline/PageGround";
 import { TrackChart } from "@/components/layline/svg/TrackChart";
 import RailLogo from "@/components/chrome/RailLogo";
+import { BindShippedRace } from "./BindShippedRace";
 import styles from "./layline.module.css";
 import "./scrollbar.css";
 
@@ -42,6 +43,12 @@ export default function LaylinePage() {
         type="font/woff2"
         crossOrigin="anonymous"
       />
+
+      {/* Draws nothing. Ahead of every client component so that all of them
+          read the shipped race, including a visit that arrived from the
+          library on another one. The page ground below reads the race while it
+          renders, so it has to come second. */}
+      <BindShippedRace />
 
       {/* Under everything the shell paints and over nothing: the race drawn
           across the whole document, with two falls of light behind it. */}

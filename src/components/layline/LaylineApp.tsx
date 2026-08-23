@@ -23,7 +23,7 @@ const SceneIsland = dynamic(() => import("./scene/LaylineScene").then((m) => m.L
   loading: () => null,
 });
 
-export function LaylineApp({ children }: { children: ReactNode }) {
+export function LaylineApp({ children, venue }: { children: ReactNode; venue?: string }) {
   const race = useMemo(() => raceData(), []);
   const live = useReplay((state) => state.webglOk);
   const chart2d = useReplay((state) => state.chart2d);
@@ -123,7 +123,7 @@ export function LaylineApp({ children }: { children: ReactNode }) {
         <BoatCursor targetRef={waterRef} />
       </div>
 
-      <TopBar race={race} />
+      <TopBar race={race} venue={venue} />
 
       {/* Instruments describe a scene. Until there is one, the docks stay out
           of the way of the chart that is standing in for it. */}

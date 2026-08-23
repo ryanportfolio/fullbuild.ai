@@ -799,8 +799,13 @@
 
 /* ---- transport ---- */
 
+/* Wrapping is ungated: the row fits on one line at every width the story page
+   gives it, so nothing here moves, and the library page hands the same console
+   a 670px centre pane where the camera rig would otherwise be cut by the edge
+   of the stage. A control that is half on screen is worse than a second row. */
 .transportRow {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 16px;
 }
@@ -1758,10 +1763,9 @@
     line-height: 22px;
   }
 
-  /* ---- transport wraps rather than clipping ---- */
+  /* ---- transport: the wrap is on everywhere, the tighter gap is not ---- */
 
   .transportRow {
-    flex-wrap: wrap;
     gap: 8px;
   }
 
