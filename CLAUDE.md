@@ -26,7 +26,7 @@ Defaults until configured:
 - Never claim visual/UI verification you didn't actually perform.
 - Can't run the authoritative check → flag the risk plainly, don't claim it passes.
 - When verification must happen elsewhere (CI, deploy, user's machine) → say so and stop.
-- Visual/UI checks: drive **Playwright** (headless, composites offscreen), never the in-app preview pane. The pane races this site's Lenis + GSAP + R3F rAF loop and returns blank or timed-out screenshots; Playwright renders and captures reliably. Thaw any `window.__capture.freeze()` first, then screenshot in Playwright.
+- Visual/UI checks: drive **Playwright** with headed Chrome (`chromium.launch({ headless: false, channel: 'chrome' })`; fall back to `headless: false` without channel, never to headless), never the in-app preview pane. Headless renders this site's WebGL through SwiftShader on the CPU and pegs the owner's machine (owner rule 2026-08-22); the preview pane races the Lenis + GSAP + R3F rAF loop and returns blank or timed-out screenshots. Headed Chrome uses the real GPU and is the only honest way to time frames or the Layline pixel-ratio governor. Thaw any `window.__capture.freeze()` first, then screenshot in Playwright. Pass this rule into every subagent prompt that does browser work.
 
 ## Core principles
 
