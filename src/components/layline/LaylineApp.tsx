@@ -175,7 +175,12 @@ export function LaylineApp({
            Only while the freeform rig is up does a finger on the water stop
            being a scroll, and the attribute goes away with the mode, so a
            phone can never be left unable to scroll past the replay. */
-        data-camera={rig === "freeform" && !chart2d ? "freeform" : undefined}
+        /* Gated on a live renderer as well as on the mode. The store outlives
+           a canvas, so a revisit or a lost context can leave the rig set to
+           freeform with no frame on screen, no pointer handlers attached and
+           no transport to change it with: the attribute alone would then hold
+           the page's scroll hostage over a picture nobody can steer. */
+        data-camera={live && rig === "freeform" && !chart2d ? "freeform" : undefined}
       >
         {/* 2D mode hides the renderer, it does not unmount it: the replay clock
             runs inside the render loop, and the boat plates the scene owns hang

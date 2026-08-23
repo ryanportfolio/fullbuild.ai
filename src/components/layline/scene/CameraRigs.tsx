@@ -1249,7 +1249,33 @@ export function CameraRigs({ race }: { race: RaceData }) {
           move.held = false;
           move.from = move.to;
           move.cut = true;
+          /* The framing ease is spent out of frame time, and a held page has
+           * none of that either: left standing it would park the camera at
+           * whatever fraction of the move the shutter happened to fall on, and
+           * two captures of the same second would differ by when the freeze
+           * landed. A hold lands the move, exactly as it lands a hand-over. */
+          freeform.left = 0;
           return;
+        }
+
+        /* Which clock the hand-over is spending has to follow the replay, not
+         * just the rig. A race-time blend stops dead when the clock does, and a
+         * frame-time blend would go on spending wall seconds once the clock is
+         * running again. Progress is linear in both, so it converts exactly and
+         * the picture does not move on the swap. */
+        if (state.playing !== previous.playing && !state.frozen && !state.reducedMotion) {
+          if (state.playing) {
+            if (move.wall > 0) {
+              move.blendT = state.t - (BLEND_SECONDS - move.wall);
+              move.wall = 0;
+            }
+          } else {
+            const done = (state.t - move.blendT) / BLEND_SECONDS;
+            if (done > 0 && done < 1) {
+              move.wall = (1 - done) * BLEND_SECONDS;
+              move.blendT = Number.NEGATIVE_INFINITY;
+            }
+          }
         }
         /* A boat change cuts the automatic rigs, which recompose around the new
          * boat. The freeform camera is not recomposed by anything: it keeps the
@@ -1392,7 +1418,7 @@ export function CameraRigs({ race }: { race: RaceData }) {
       freeform.fromY = shot.ay;
       freeform.fromZ = shot.az;
       freeform.fromDist = freeform.dist;
-      freeform.left = replay.reducedMotion ? 0 : freeform.span;
+      freeform.left = replay.reducedMotion || replay.frozen ? 0 : freeform.span;
     }
     if (framing !== null) {
       freeform.pending = null;

@@ -8,7 +8,7 @@ import type { RaceData } from "@/lib/layline/types";
 import { sampleLive, setText } from "../hud/live";
 import { useReplay } from "../store";
 import { requestSceneFrame } from "./gate";
-import { hover } from "./interaction";
+import { hoverId } from "./interaction";
 import { MAIN_CORNERS, SKIFF } from "./skiff";
 
 /* Twelve pixels of stem, which is enough to lift the plate off the boat without
@@ -758,6 +758,9 @@ export function BoatLabels({ race }: { race: RaceData }) {
     if (built === null) return;
     const { hitDock, dodgeDocks, clearFront, restack, settle, repair } = passes;
     const { followId } = useReplay.getState();
+    /* Read once a frame rather than once a plate: six plates asking the same
+     * question would get the same answer six times. */
+    const marked = hoverId();
     const live = sampleLive(race);
     const camera = state.camera;
     /* The rig set position and aim a moment ago and nothing has flushed it into
@@ -1021,7 +1024,7 @@ export function BoatLabels({ race }: { race: RaceData }) {
        * which one the focused standings row names. Written as an attribute
        * rather than as a class because it is set from two places and read by
        * one rule. */
-      const under = hover.id === race.boats[i].id;
+      const under = marked === race.boats[i].id;
       if (under !== node.hovered) {
         if (under) node.root.dataset.hover = "true";
         else delete node.root.dataset.hover;

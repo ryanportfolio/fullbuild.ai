@@ -6,17 +6,18 @@ import styles from "@/app/prototype/layline/layline.module.css";
 import { MISSING, clock, gap } from "@/lib/layline/format";
 import type { BoatMeta, RaceData, StandingsRow } from "@/lib/layline/types";
 import { requestSceneFrame } from "../scene/gate";
-import { hover } from "../scene/interaction";
+import { setFocusHover } from "../scene/interaction";
 import { useReplay } from "../store";
 import { onLive, sampleLive, setText } from "./live";
 
 /* Module state, and one frame asked for. Hover is read by the plate pass and
  * by nothing that renders, so putting it in React would re-render six rows to
- * move one border. */
+ * move one border.
+ *
+ * The dock writes the focus half of it. The water writes the pointer half, and
+ * neither can clear the other's answer. */
 function markBoat(boatId: string | null): void {
-  if (hover.id === boatId) return;
-  hover.id = boatId;
-  requestSceneFrame();
+  if (setFocusHover(boatId)) requestSceneFrame();
 }
 
 interface Placing {

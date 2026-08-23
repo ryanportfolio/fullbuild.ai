@@ -10,6 +10,7 @@
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { readFileSync } from "node:fs";
 import {
   DIST_MAX,
   DIST_MIN,
@@ -18,6 +19,8 @@ import {
   PITCH_MIN,
   distanceFor,
   freeform,
+  hover,
+  hoverId,
   metresPerPixel,
   newFreeformCamera,
   newStand,
@@ -28,9 +31,13 @@ import {
   resetFreeformCamera,
   seedFreeformFromShot,
   setBoatPicker,
+  setFocusHover,
+  setPointerHover,
   standOf,
   zoom,
 } from "../src/components/layline/scene/interaction";
+
+const source = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
 const stand = newStand();
 
@@ -203,6 +210,61 @@ test("the chart, a boot with no frame, and a second mouse button all reach nothi
     pressOutcome({ gesture: false, hitId: "nzl", live: true, chart2d: false, button: 2 }),
     "none",
   );
+});
+
+test("the pointer and the focus ring cannot clear each other", () => {
+  setPointerHover(null);
+  setFocusHover(null);
+  /* A standings row has focus, and the pointer is out over open water. */
+  assert.equal(setFocusHover("nzl"), true);
+  assert.equal(hoverId(), "nzl");
+  /* The pointer finds a boat and takes precedence, being the newer act. */
+  assert.equal(setPointerHover("usa"), true);
+  assert.equal(hoverId(), "usa");
+  /* Leaving the water gives the focused row its plate back rather than
+   * clearing the pair. */
+  assert.equal(setPointerHover(null), true);
+  assert.equal(hoverId(), "nzl");
+  /* A move over water that hits nothing is not a change worth a frame. */
+  assert.equal(setPointerHover(null), false);
+  setFocusHover(null);
+  assert.equal(hoverId(), null);
+  assert.deepEqual([hover.pointerId, hover.focusId], [null, null]);
+});
+
+/* The three rules below are enforced where they live, in the rig's frame pass
+ * and in the app shell, so they are read off the source rather than simulated
+ * with a renderer this suite has no way to build. */
+
+test("a hold lands the framing move rather than parking it half way", () => {
+  const rigs = source("src/components/layline/scene/CameraRigs.tsx");
+  const frozen = rigs.match(/if \(state\.frozen && !previous\.frozen\) \{[\s\S]*?\n {8}\}/)?.[0] ?? "";
+  assert.match(frozen, /freeform\.left = 0;/);
+  /* And a boat picked while the page is held walks nowhere: the ease it would
+   * walk on is spent from frame time, which a hold does not run. */
+  assert.match(rigs, /freeform\.left = replay\.reducedMotion \|\| replay\.frozen \? 0 : freeform\.span;/);
+});
+
+test("the hand-over changes clocks when playback does", () => {
+  const rigs = source("src/components/layline/scene/CameraRigs.tsx");
+  const swap =
+    rigs.match(/if \(state\.playing !== previous\.playing[\s\S]*?\n {8}\}/)?.[0] ?? "";
+  assert.match(swap, /move\.blendT = state\.t - \(BLEND_SECONDS - move\.wall\)/);
+  assert.match(swap, /move\.wall = \(1 - done\) \* BLEND_SECONDS/);
+});
+
+test("the touch gesture is only taken while a live renderer can give it back", () => {
+  const app = source("src/components/layline/LaylineApp.tsx");
+  assert.match(app, /data-camera=\{live && rig === "freeform" && !chart2d \? "freeform" : undefined\}/);
+});
+
+test("the space bar reads the observer with no margin", () => {
+  const pointer = source("src/components/layline/useWaterPointer.ts");
+  assert.match(pointer, /if \(!sceneGate\.inView\) return;/);
+  /* And leaves the space bar to anything that owns it, the archive disclosure
+   * on the race library included. */
+  assert.match(pointer, /summary/);
+  assert.doesNotMatch(pointer, /sceneGate\.onScreen/);
 });
 
 test("a pick with no scene under it answers nothing rather than throwing", () => {

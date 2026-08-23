@@ -239,9 +239,17 @@ function RenderGate() {
       { rootMargin: PREWARM },
     );
     observer.observe(canvas);
+    /* The same question without the margin, for the one caller that has to know
+     * whether the replay is really on screen rather than nearly on it. */
+    const inView = new IntersectionObserver((entries) => {
+      sceneGate.inView = entries[0]?.isIntersecting === true;
+    });
+    inView.observe(canvas);
     return () => {
       observer.disconnect();
+      inView.disconnect();
       sceneGate.onScreen = true;
+      sceneGate.inView = true;
     };
   }, [gl]);
 

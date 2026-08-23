@@ -306,6 +306,31 @@ export function pickBoatAt(nx: number, ny: number): string | null {
   return picker(nx, ny);
 }
 
-/* The boat under the pointer, or the one whose standings row has focus. Read
- * by the plate pass, which is the only thing that draws it. */
-export const hover = { id: null as string | null };
+/* Which boat is being pointed out, from the two places that can say so. They
+ * are held apart because they end at different times: a pointer leaving the
+ * water says nothing about a standings row that still has focus, and clearing
+ * one shared field would take the focus ring's answer away with it.
+ *
+ * The pointer wins while it has one, because it is the more recent act. */
+export const hover = {
+  pointerId: null as string | null,
+  focusId: null as string | null,
+};
+
+export function hoverId(): string | null {
+  return hover.pointerId ?? hover.focusId;
+}
+
+export function setPointerHover(boatId: string | null): boolean {
+  if (hover.pointerId === boatId) return false;
+  const before = hoverId();
+  hover.pointerId = boatId;
+  return hoverId() !== before;
+}
+
+export function setFocusHover(boatId: string | null): boolean {
+  if (hover.focusId === boatId) return false;
+  const before = hoverId();
+  hover.focusId = boatId;
+  return hoverId() !== before;
+}
