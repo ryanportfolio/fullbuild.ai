@@ -8,13 +8,19 @@ import { useMounted } from "./useMounted";
 import styles from "./analyst.module.css";
 
 /* The race as a strip of time above the input, the transport bar's echo:
- * three leg bands, the gun, a tick per rounding and per finish, and a lit
- * buoy for every moment chip in the latest answer.
+ * three leg bands, the gun, and a lit buoy for every moment chip in the
+ * latest answer.
  *
- * The furniture is decorative: bands, gun and ticks are hidden from the tree
+ * The furniture is decorative: the bands and the gun are hidden from the tree
  * and never hit-testable. The buoys are not furniture. Each one is a moment
  * the answer cited, so hovering it names the moment and clicking it seeks the
  * replay there, the same jump the chip makes.
+ *
+ * The strip used to carry a tick per rounding and per finish as well, one per
+ * boat per event. Sixteen unlabelled hairlines encoding boat by hue and event
+ * by height, none of them hoverable, read as texture rather than as data, and
+ * they crowded the marks that are worth reading. Gone; the engine room's own
+ * window strip still draws them, next to the readouts that name them.
  *
  * They are deliberately not focusable. The chip that put each buoy on the
  * strip sits a few lines above as a real button with a fuller label, so tab
@@ -61,24 +67,6 @@ export const MomentStrip = memo(function MomentStrip({
     for (const event of race.events) {
       if (event.kind === "rounding" && event.t < firstRounding) firstRounding = event.t;
     }
-    const fleet = new Map(race.boats.map((boat) => [boat.id, boat]));
-    const ticks = race.events
-      .filter((event) => event.kind !== "gun")
-      .sort((a, b) => a.t - b.t)
-      .map((event, index) => {
-        const hue = event.boatId === undefined ? "var(--wind)" : fleet.get(event.boatId)?.hue;
-        return {
-          key: `${event.kind}-${event.boatId ?? "race"}`,
-          round: event.kind === "rounding",
-          left: pos(event.t),
-          background:
-            event.kind === "rounding"
-              ? `color-mix(in srgb, ${hue ?? "var(--wind)"} 70%, transparent)`
-              : (hue ?? "var(--wind)"),
-          outlined: event.boatId === "nzl",
-          index,
-        };
-      });
     return {
       pos,
       gunLeft: pos(0),
@@ -87,7 +75,6 @@ export const MomentStrip = memo(function MomentStrip({
         { className: styles.bandBeat, label: "BEAT", left: pos(0), width: pos(firstRounding) - pos(0) },
         { className: styles.bandRun, label: "RUN", left: pos(firstRounding), width: 100 - pos(firstRounding) },
       ],
-      ticks,
     };
   }, [mounted]);
 
@@ -132,22 +119,6 @@ export const MomentStrip = memo(function MomentStrip({
           </div>
         ))}
         <span className={styles.gunTick} style={{ left: `${built.gunLeft.toFixed(3)}%` }} />
-        {built.ticks.map((tick) => (
-          <span
-            key={tick.key}
-            className={clsx(
-              tick.round ? styles.roundTick : styles.finishTick,
-              tick.outlined && styles.tickOutlined,
-            )}
-            style={
-              {
-                left: `${tick.left.toFixed(3)}%`,
-                background: tick.background,
-                "--i": tick.index,
-              } as CSSProperties
-            }
-          />
-        ))}
         <div className={styles.comet} />
         {buoys.map((buoy, index) => (
           <button

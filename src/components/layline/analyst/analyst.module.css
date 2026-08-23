@@ -1022,39 +1022,6 @@
   background: var(--wind);
 }
 
-.roundTick {
-  position: absolute;
-  bottom: 0;
-  width: 2px;
-  height: 10px;
-}
-
-.finishTick {
-  position: absolute;
-  bottom: 0;
-  width: 2px;
-  height: 14px;
-}
-
-.tickOutlined {
-  box-shadow: 0 0 0 1px var(--ink-dim);
-}
-
-/* Ticks surface one by one, left to right, once the first question lands.
-   Opacity only, so the reveal ships ungated; before it the strip tells the
-   prestart story: bands and the gun. */
-.roundTick,
-.finishTick {
-  opacity: 0;
-  transition: opacity 400ms var(--ease);
-  transition-delay: calc(var(--i) * 28ms);
-}
-
-.panel[data-raced="true"] .roundTick,
-.panel[data-raced="true"] .finishTick {
-  opacity: 1;
-}
-
 /* The comet: an amber front crossing the race while the analyst reads it. */
 .comet {
   position: absolute;
@@ -1782,14 +1749,8 @@
   line-height: 20px;
 }
 
-/* The strip's tick reveal and the streaming comet hang off the story panel's
-   own class. The rail panel repeats those hooks rather than restating what
-   they draw. */
-.dockPanel[data-raced="true"] .roundTick,
-.dockPanel[data-raced="true"] .finishTick {
-  opacity: 1;
-}
-
+/* The streaming comet hangs off the story panel's own class. The rail panel
+   repeats that hook rather than restating what it draws. */
 .dockPanel[data-state="streaming"] .comet {
   display: block;
 }
