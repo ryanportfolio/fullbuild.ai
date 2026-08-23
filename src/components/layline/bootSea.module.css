@@ -89,6 +89,11 @@
      opacity: composited contrast has to be knowable." */
   --brief-head-dim: color-mix(in srgb, var(--brief-head-ink) 78%, var(--sky-horizon));
   --brief-head-line: color-mix(in srgb, var(--water-deep) 30%, transparent);
+
+  /* Nothing is pinned over the brief at this width, so the footer sits on the
+     padding it was drawn with. The narrow branch below hands this the height
+     of the analyst's composer. */
+  --brief-foot-gap: 0px;
 }
 
 .out {
@@ -111,7 +116,7 @@
   flex-direction: column;
   gap: 1.8cqw;
   height: 100%;
-  padding: 3cqw 3.2cqw 2.2cqw;
+  padding: 3cqw 3.2cqw calc(2.2cqw + var(--brief-foot-gap));
   overflow: hidden;
   color: var(--brief-ink);
   font-family: var(--brief-sans);
@@ -670,12 +675,21 @@
     top: 0;
     max-height: calc(100svh - var(--composer-bar, 59px) - env(safe-area-inset-bottom));
   }
+
+  /* The composer's band, given back as padding so Continue is never drawn into
+     it. The cap above only holds while the brief is pinned; scrolled to where
+     the gate is simply fully in view, the gate's own bottom edge lands on the
+     viewport foot, and a footer flush with that edge lands under the composer.
+     Holding the footer this far off the edge clears it at both positions. */
+  .cover {
+    --brief-foot-gap: calc(var(--composer-bar, 59px) + env(safe-area-inset-bottom));
+  }
 }
 
 @container (max-width: 760px) {
   .brief {
     gap: 12px;
-    padding: 16px;
+    padding: 16px 16px calc(16px + var(--brief-foot-gap));
   }
 
   .briefHead {

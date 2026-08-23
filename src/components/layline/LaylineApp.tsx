@@ -222,7 +222,7 @@ export function LaylineApp({
   useSpaceToggle();
 
   return (
-    <div className={styles.stage} data-boot={boot}>
+    <div className={styles.stage} data-boot={boot} data-gate={briefed && !briefDone ? "brief" : undefined}>
       <div
         ref={waterRef}
         className={live ? `${styles.canvasLayer} ${styles.canvasLive}` : styles.canvasLayer}
