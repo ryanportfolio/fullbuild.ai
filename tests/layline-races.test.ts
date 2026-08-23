@@ -908,9 +908,23 @@ test("the sea cover briefs the race it is loading", () => {
   assert.ok(cover.includes("var(--font-pangram)"), "the race name left the display face");
   assert.ok(cover.includes("font-weight: 400"), "the race name left the display face's book weight");
   assert.ok(cover.includes("letter-spacing: -0.025em"), "the race name lost its tracking");
-  /* Every other string on the layer is the console's own mono, and every
-     numeral is tabular, so a countdown never reflows the row it sits in. */
+  /* The console divides its three faces by job, and says why: "a number set in
+     Archivo is a number nobody measured, and a button set in mono is a lie
+     about where the data is". So Martian is quarantined to measured values,
+     Archivo carries the labels and the button, and every numeral is tabular so
+     a countdown never reflows the row it sits in. */
   assert.ok(cover.includes("var(--font-martian), monospace"), "the brief left the console's mono");
+  assert.ok(cover.includes("var(--font-archivo), sans-serif"), "the brief left the console's sans");
+  const goBtn = cover.slice(cover.indexOf(".goBtn {"), cover.indexOf(".goArrow {"));
+  assert.ok(goBtn.includes("var(--brief-sans)"), "the way through went back to mono");
+  assert.ok(!goBtn.includes("var(--brief-mono)"), "the way through went back to mono");
+  for (const measured of [".twsBig {", ".biasNum {", ".fleetRow {", ".panelCount {"]) {
+    const block = cover.slice(cover.indexOf(measured));
+    assert.ok(
+      block.slice(0, block.indexOf("}")).includes("var(--brief-mono)"),
+      `${measured} stopped setting its figures in the measured face`,
+    );
+  }
   assert.ok(
     cover.includes("font-variant-numeric: tabular-nums"),
     "the brief's numerals stopped being tabular",
@@ -923,19 +937,39 @@ test("the sea cover briefs the race it is loading", () => {
      the mark stop meaning anything. The focus ring is not one of them: the
      console rings its own focusable things and this layer does not offer a
      second opinion. */
-  assert.equal(
-    (cover.match(/#ffd166/g) ?? []).length,
-    1,
-    "the accent is stated somewhere other than its one token",
+  assert.ok(
+    cover.includes("--brief-accent: var(--wind);"),
+    "the accent left the console's own wind token for a hex of this layer's own",
   );
+  assert.equal((cover.match(/#ffd166/g) ?? []).length, 0, "the invented accent hex came back");
+  /* Seven users, and every one of them is the wind: the dial's survey band,
+     its needle and its head; the arrow over the start-line drawing and the TWD
+     tag it carries; the start line itself, which the contract names as one of
+     the things amber means before the gun; and the mark over the end that line
+     favors with the seconds it is worth. The status hairline is a wait, not
+     weather, and does not take it. */
+  const accentUsers = [
+    ".dialBand",
+    ".dialNeedle",
+    ".dialHead",
+    ".favMark",
+    ".windStroke",
+    ".windFill",
+    ".favSec",
+  ];
   assert.equal(
     (cover.match(/var\(--brief-accent\)/g) ?? []).length,
-    3,
-    "the accent reaches something beyond the favored mark, its seconds and the status fill",
+    accentUsers.length,
+    "something that is not the wind took the wind's colour",
   );
-  for (const rule of [".favMark", ".favSec", ".statusFill"]) {
-    assert.ok(cover.includes(rule), `${rule} left the cover, so the accent's three users moved`);
+  for (const rule of accentUsers) {
+    assert.ok(cover.includes(rule), `${rule} left the cover, so the accent's users moved`);
   }
+  const statusFill = cover.slice(cover.indexOf(".statusFill {"));
+  assert.ok(
+    !statusFill.slice(0, statusFill.indexOf("}")).includes("--brief-accent"),
+    "the status hairline went back to borrowing the wind's colour",
+  );
 
   /* Nothing on this layer is rounded. The console's registration box states
      border-radius: 0 on whatever it rings (layline.module.css), so a rounded

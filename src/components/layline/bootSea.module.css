@@ -51,10 +51,23 @@
   --brief-faint: rgba(244, 248, 251, 0.45);
   --brief-hair: rgba(255, 255, 255, 0.16);
   --brief-panel: rgba(7, 30, 50, 0.42);
-  /* The one accent. The favored end's mark, the button's focus ring and the
-     status fill; nothing else on this layer may use it. */
-  --brief-accent: #ffd166;
+  /* The one accent, and it is the console's own wind token rather than a hex
+     of this layer's invention. The contract at the top of layline.module.css:
+     "amber is the wind. Dial needle, laylines, ladder rungs, the start line
+     before the gun. Nothing else may borrow it." Everything this layer draws
+     is before the gun, so amber gets the needle, the wind arrow, the start line
+     itself, the mark over the favored end and the seconds that end is worth.
+     The status hairline is not wind and does not take it. The token is declared
+     on .shell and no theme restates it, so it holds on all five. */
+  --brief-accent: var(--wind);
+
+  /* The three faces, and the console's own division of labour between them.
+     Pangram carries the race name. Martian is quarantined to measured values,
+     because "a number set in Archivo is a number nobody measured". Archivo
+     carries the labels and the button, because "a button set in mono is a lie
+     about where the data is". */
   --brief-mono: var(--font-martian), monospace;
+  --brief-sans: var(--font-archivo), sans-serif;
 
   /* The header sits on the gradient's top band, which is the sky-horizon token
      nearly neat, so its ink has to follow that token rather than the panels'.
@@ -90,7 +103,7 @@
   padding: 3cqw 3.2cqw 2.2cqw;
   overflow: hidden;
   color: var(--brief-ink);
-  font-family: var(--brief-mono);
+  font-family: var(--brief-sans);
   font-variant-numeric: tabular-nums;
 }
 
@@ -146,8 +159,11 @@
   flex: none;
   color: var(--brief-head-ink);
   opacity: 0.78;
-  font-size: max(1.05cqw, 9px);
+  font-family: var(--brief-sans);
+  font-size: 10px;
+  font-weight: 600;
   letter-spacing: 0.14em;
+  line-height: 16px;
   text-transform: uppercase;
 }
 
@@ -239,17 +255,24 @@
   }
 }
 
+/* The console's own dock label, to the value: Archivo 600 at 10px on 16, with
+   0.14em of tracking, uppercase. */
 .panelLabel {
   display: flex;
   justify-content: space-between;
   color: var(--brief-dim);
-  font-size: max(0.95cqw, 9px);
-  letter-spacing: 0.16em;
+  font-family: var(--brief-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 16px;
   text-transform: uppercase;
 }
 
+/* A measured value, so it leaves the label's face for the mono. */
 .panelCount {
   color: var(--brief-faint);
+  font-family: var(--brief-mono);
   letter-spacing: 0.08em;
 }
 
@@ -259,6 +282,7 @@
   display: flex;
   align-items: center;
   gap: 0.9cqw;
+  font-family: var(--brief-mono);
   padding: 0.78cqw 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   font-size: max(1.2cqw, 10px);
@@ -311,6 +335,7 @@
 .fleetFoot {
   display: flex;
   flex-wrap: wrap;
+  font-family: var(--brief-mono);
   white-space: nowrap;
   justify-content: space-between;
   gap: 0.4cqw 1cqw;
@@ -338,6 +363,40 @@
   height: auto;
 }
 
+/* The console's own dial parts, same values as hud/WindDial.tsx reads out of
+   layline.module.css, in this layer's inks where the console's would be a theme
+   token: the rim and the ticks sit on water here, not on a dock ground. */
+.dialFace {
+  fill: none;
+  stroke: var(--brief-hair-strong, rgba(255, 255, 255, 0.3));
+  stroke-width: 1;
+}
+
+/* The surveyed range, not a reading: the breeze swings plus or minus 8 degrees
+   about the course axis and the band is where that swing lives. */
+.dialBand {
+  fill: var(--brief-accent);
+  opacity: 0.24;
+}
+
+.dialTicks line {
+  stroke: var(--brief-dim);
+  stroke-width: 1;
+}
+
+.dialNeedle {
+  stroke: var(--brief-accent);
+  stroke-width: 1.6;
+}
+
+.dialHead {
+  fill: var(--brief-accent);
+}
+
+.dialHub {
+  fill: var(--brief-dim);
+}
+
 .twsRow {
   display: flex;
   flex: none;
@@ -347,6 +406,7 @@
 }
 
 .twsBig {
+  font-family: var(--brief-mono);
   font-size: max(2.7cqw, 20px);
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -354,8 +414,11 @@
 
 .twsUnit {
   color: var(--brief-dim);
-  font-size: max(0.95cqw, 8px);
-  letter-spacing: 0.16em;
+  font-family: var(--brief-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 16px;
   text-transform: uppercase;
 }
 
@@ -375,7 +438,6 @@
 }
 
 .diagramTag {
-  fill: rgba(255, 255, 255, 0.85);
   font-family: var(--brief-mono);
   font-size: 4px;
 }
@@ -396,6 +458,17 @@
   fill: var(--brief-accent);
 }
 
+/* Amber is the wind, and on this layer that is the needle, the arrow, the tag
+   it carries, the line before the gun, and the mark over the end that line
+   favors. Nothing else. */
+.windStroke {
+  stroke: var(--brief-accent);
+}
+
+.windFill {
+  fill: var(--brief-accent);
+}
+
 .biasReads {
   display: flex;
   flex: none;
@@ -404,6 +477,7 @@
 }
 
 .biasNum {
+  font-family: var(--brief-mono);
   font-size: max(2.2cqw, 16px);
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -412,8 +486,11 @@
 .biasCap {
   margin-top: 0.3cqw;
   color: var(--brief-dim);
-  font-size: max(0.85cqw, 8px);
+  font-family: var(--brief-sans);
+  font-size: 10px;
+  font-weight: 600;
   letter-spacing: 0.14em;
+  line-height: 16px;
   text-transform: uppercase;
 }
 
@@ -421,6 +498,7 @@
   flex: none;
   margin: 0;
   color: var(--brief-dim);
+  font-family: var(--brief-mono);
   font-size: max(1.15cqw, 10px);
 }
 
@@ -454,7 +532,8 @@
   flex: 1;
   margin: 0;
   color: var(--brief-dim);
-  font-size: max(1cqw, 9px);
+  font-family: var(--brief-sans);
+  font-size: 11px;
   letter-spacing: 0.06em;
 }
 
@@ -475,7 +554,7 @@
   position: absolute;
   inset: 0 auto 0 0;
   width: 0;
-  background: var(--brief-accent);
+  background: var(--brief-dim);
   animation: statusWarm 6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
@@ -498,10 +577,13 @@
   border: 1px solid var(--brief-ink);
   background: var(--brief-ink);
   color: var(--water-deep);
-  font-family: var(--brief-mono);
-  font-size: max(1.1cqw, 10px);
-  font-weight: 500;
-  letter-spacing: 0.12em;
+  /* Archivo 800, the console's own primary button. Mono here would be a lie
+     about where the data is: this is a control, not a measurement. */
+  font-family: var(--brief-sans);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  line-height: 16px;
   text-transform: uppercase;
   /* The house pointer, never the browser hand: every control on this page
      takes the mark the shell defines. */
@@ -519,9 +601,11 @@
   transition: transform 160ms var(--ease);
 }
 
+/* Inverts, the way the console's own primary button does, rather than picking
+   up a second fill colour this layer would then have to name. */
 .goBtn:hover {
-  background: #dfe9f2;
-  border-color: #dfe9f2;
+  background: transparent;
+  color: var(--brief-ink);
 }
 
 .goBtn:hover .goArrow {
