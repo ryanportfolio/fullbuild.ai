@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import RailLogo from "@/components/chrome/RailLogo";
 import { TrackChart } from "@/components/layline/svg/TrackChart";
 import { raceFor } from "@/lib/layline/analyst/data";
 import { MISSING, clock } from "@/lib/layline/format";
@@ -85,9 +86,16 @@ export default async function LaylineRacesPage({
         <Link href="/prototype/layline">
           <strong>Race story</strong>
         </Link>
-        <Link href="https://github.com/ryanportfolio/layline">
-          <strong>View source</strong>
-        </Link>
+        {/* The mark rides the right end of the bar and links home, the same
+            pairing the story page's bar carries. */}
+        <span className={layline.barRight}>
+          <Link className={layline.barHouseLink} href="/" aria-label="fullbuild.ai home">
+            <RailLogo className={layline.barHouseMark} />
+          </Link>
+          <Link href="https://github.com/ryanportfolio/layline">
+            <strong>View source</strong>
+          </Link>
+        </span>
       </div>
 
       <RaceWorkspace
