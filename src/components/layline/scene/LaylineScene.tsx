@@ -194,6 +194,7 @@ function DemandBridge() {
       useReplay.subscribe((state, previous) => {
         if (!state.frozen) return;
         if (
+          state.raceId !== previous.raceId ||
           state.t !== previous.t ||
           state.rig !== previous.rig ||
           state.mode !== previous.mode ||
@@ -284,6 +285,9 @@ function RenderGate() {
     () =>
       useReplay.subscribe((state, previous) => {
         if (
+          /* The race the picture is of. The viewer is not remounted when it
+           * changes, so nothing else here would say the boats had all moved. */
+          state.raceId !== previous.raceId ||
           state.t !== previous.t ||
           state.rig !== previous.rig ||
           state.mode !== previous.mode ||
