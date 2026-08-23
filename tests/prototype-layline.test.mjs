@@ -179,7 +179,7 @@ test('the race library rail and workspace keep their interaction contracts', asy
   assert.match(workspace, /if \(event\.key !== "Escape"\) return;/);
   assert.match(workspace, />\s*Clear\s*<\/button>/);
   assert.match(workspace, /Search hides \$\{hiddenBySearch\} races/);
-  assert.match(workspace, /stays loaded\. Search hides its row/);
+  assert.doesNotMatch(workspace, /stays loaded\. Search hides its row/);
   assert.match(workspace, /router\.replace\(`\$\{pathname\}\?race=\$\{id\}`/);
 
   /* Pin and archive are separate named buttons beside the row button. Archive
@@ -220,6 +220,10 @@ test('the race library rail and workspace keep their interaction contracts', asy
   assert.match(analyst, /railHeaderControls/);
 
   assert.match(workspace, /aria-label=\{preferences\.railCollapsed \? "Restore race list" : "Collapse race list"\}/);
+  assert.ok(
+    workspace.indexOf("className={styles.panelToggle}") < workspace.indexOf("ref={libraryRef}"),
+    "collapse control stays at the rail's top-left instead of inside a separator",
+  );
   assert.match(styles, /@media \(max-width: 1199px\)/);
   assert.match(styles, /\.separator \{[\s\S]*?display: none;/);
   assert.match(styles, /@media \(min-width: 1200px\)[\s\S]*?\.separator \{\s*display: block;/);

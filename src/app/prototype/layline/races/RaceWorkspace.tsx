@@ -396,7 +396,6 @@ export function RaceWorkspace({
   const regularRows = mainMatching.filter((row) => !pinned.has(row.id));
   const archivedRows = matchingRows.filter((row) => archived.has(row.id));
   const loadedRow = rows.find((row) => row.id === raceId);
-  const loadedHiddenBySearch = loadedRow !== undefined && !raceMatchesSearch(loadedRow, query);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setAnnouncedHidden(hiddenBySearch), 450);
@@ -641,17 +640,6 @@ export function RaceWorkspace({
         onKeyDown={(event) => resizeWithKeyboard(side, event)}
       >
         <span className={styles.separatorLine} aria-hidden="true" />
-        {pane === "rail" ? (
-          <button
-            type="button"
-            className={styles.panelToggle}
-            aria-label={preferences.railCollapsed ? "Restore race list" : "Collapse race list"}
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={toggleRail}
-          >
-            <PanelToggleIcon action={preferences.railCollapsed ? "restore" : "collapse"} />
-          </button>
-        ) : null}
       </div>
     );
   };
@@ -665,11 +653,9 @@ export function RaceWorkspace({
       : { "--analyst-width": `${preferences.analystWidth}px` }),
   } as CSSProperties;
 
-  const selectedNotice = loadedHiddenBySearch
-    ? `${loadedRow?.name ?? "The loaded race"} stays loaded. Search hides its row`
-    : archived.has(raceId)
-      ? `${loadedRow?.name ?? "The loaded race"} stays loaded in Archive`
-      : null;
+  const selectedNotice = archived.has(raceId)
+    ? `${loadedRow?.name ?? "The loaded race"} stays loaded in Archive`
+    : null;
 
   let emptyMainCopy = "No active races";
   if (query !== "") {
@@ -702,6 +688,14 @@ export function RaceWorkspace({
       <span className={styles.srOnly} aria-live="polite">
         {announcement}
       </span>
+      <button
+        type="button"
+        className={styles.panelToggle}
+        aria-label={preferences.railCollapsed ? "Restore race list" : "Collapse race list"}
+        onClick={toggleRail}
+      >
+        <PanelToggleIcon action={preferences.railCollapsed ? "restore" : "collapse"} />
+      </button>
       <section
         ref={libraryRef}
         id="race-list"
@@ -712,7 +706,7 @@ export function RaceWorkspace({
         onDrop={(event) => dropPane(sideFor("rail"), event)}
       >
         <div
-          className={styles.paneHeader}
+          className={`${styles.paneHeader} ${styles.railHeader}`}
           draggable
           data-pane-drag-handle
           onDragStart={(event) => startPaneDrag("rail", event)}

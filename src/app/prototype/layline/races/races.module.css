@@ -186,6 +186,10 @@
   min-width: 0;
 }
 
+.railHeader {
+  padding-left: 32px;
+}
+
 .movePaneButton {
   display: none;
   flex: none;
@@ -458,9 +462,10 @@
 
 .panelToggle {
   position: absolute;
-  top: 0;
-  left: 50%;
-  display: grid;
+  z-index: 9;
+  top: 16px;
+  left: 16px;
+  display: none;
   place-items: center;
   width: 24px;
   height: 24px;
@@ -469,8 +474,12 @@
   border: 1px solid var(--rule);
   border-radius: 2px;
   color: var(--ink);
-  transform: translateX(-50%);
   cursor: var(--house-cursor);
+}
+
+.workspace[data-rail-side="right"] .panelToggle {
+  right: calc(16px + var(--rail-render-width) - 24px);
+  left: auto;
 }
 
 .panelToggle:hover,
@@ -659,6 +668,10 @@
 
   .movePaneButton {
     display: block;
+  }
+
+  .panelToggle {
+    display: grid;
   }
 
   .workspace :global([data-pane-drag-handle]) {
