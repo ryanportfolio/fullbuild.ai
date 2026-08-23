@@ -13,6 +13,16 @@
 import assert from "node:assert/strict";
 import { beforeEach, test } from "node:test";
 
+import {
+  requestSceneFrame,
+  resetSceneGate,
+  sceneGate,
+  setFrozenFrameRequest,
+} from "../src/components/layline/scene/gate";
+
+/* The module reads requestAnimationFrame when it is called rather than when it
+ * is loaded, so a plain import is enough and the stubs below are in place long
+ * before the first test asks for a frame. */
 const queued = new Map<number, FrameRequestCallback>();
 let next = 1;
 globalThis.requestAnimationFrame = (callback: FrameRequestCallback): number => {
@@ -30,10 +40,6 @@ function frame(): void {
   queued.clear();
   for (const callback of run) callback(0);
 }
-
-const { requestSceneFrame, setFrozenFrameRequest, sceneGate, resetSceneGate } = await import(
-  "../src/components/layline/scene/gate"
-);
 
 beforeEach(() => {
   queued.clear();
