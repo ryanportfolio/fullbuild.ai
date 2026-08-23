@@ -1000,9 +1000,9 @@
 
 /* Drawn without an aspect ratio so it takes whatever width the dock leaves it;
    every stroke below is non-scaling, so the lines stay one pixel through the
-   stretch instead of smearing into ribbons. */
-/* Scrubbable, on the same column and the same span as the track below it, so
-   the two rows answer a click at the same x with the same race time. */
+   stretch instead of smearing into ribbons. Scrubbable, on the same column and
+   the same span as the track below it, so the two rows answer a click at the
+   same x with the same race time. */
 .vmgPlot {
   display: block;
   width: 100%;
