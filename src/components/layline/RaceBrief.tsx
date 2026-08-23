@@ -1,27 +1,53 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import {
   briefFacts,
-  prestartTrace,
+  prestartFrame,
+  prestartTracks,
+  prestartTwdSeries,
+  scaleStep,
+  twdBand,
+  twdSwing,
   windReading,
   windReadingAt,
   type BriefFacts,
+  type PrestartTrack,
   type WindReading,
 } from "@/lib/layline/brief";
-import type { RaceData } from "@/lib/layline/types";
+import { clock, knots, meters } from "@/lib/layline/format";
+import { poseAt } from "@/lib/layline/interpolate";
+import type { Pose, RaceData } from "@/lib/layline/types";
 import styles from "./bootSea.module.css";
+import { lengthAt, toPath } from "./svg/chartFrame";
 import { AUTOPLAY_FROM, OPEN_AT, useReplay } from "./store";
 
 /**
  * The race brief: what the boot cover shows while the renderer warms.
  *
- * The cover used to name the race and wait. It now spends the wait stating the
- * race: the fleet and where each hull sat on the line at the gun, the breeze
- * running live off the seed, and what the line is worth in it. Every figure
- * comes out of the same RaceData the replay is about to play, through the same
- * evaluator the instrument dock reads, so nothing here can disagree with the
- * race behind it. See lib/layline/brief.ts for where each one is read from.
+ * It is one chart. The last ten seconds before the gun, drawn once from above
+ * at true scale in metres: the line, the six approach tracks the fleet sails
+ * onto it, and the breeze lying across the course deciding which end pays. The
+ * readings sit around that drawing rather than beside it in boxes of their own,
+ * because the bias figure is computed from the wind, which is computed against
+ * the line, and a panel boundary would have claimed the three were separate
+ * subjects.
+ *
+ * Every figure comes out of the same RaceData the replay is about to play,
+ * through the same evaluators the instrument dock and the course chart read, so
+ * nothing here can disagree with the race behind it. See lib/layline/brief.ts
+ * for where each one is read from. Nothing is drawn that the feed does not
+ * hold: no flags, no gun sequence, no hull drawn to a length the feed has no
+ * opinion about, and no finish order, which would spoil the race this layer is
+ * gating.
  *
  * The brief is a gate as well as a picture. Continue, or Enter, releases it,
  * and the replay's autoplay waits on that release rather than running the
@@ -32,27 +58,50 @@ import { AUTOPLAY_FROM, OPEN_AT, useReplay } from "./store";
  * a second would cost more than it reports.
  */
 
-/* One turn of the prestart in the dial, in wall-clock ms. The prestart itself
- * is ten race seconds; nine wall seconds is slow enough that the needle reads
- * as weather rather than as a sweep. */
+/* One turn of the prestart, in wall-clock ms. The prestart itself is ten race
+ * seconds; nine wall seconds is slow enough that the fleet reads as boats
+ * rather than as a sweep. */
 const PRESTART_LOOP_MS = 9000;
 
-/* Points in the wind trace under the dial. Six a second across the prestart,
- * which draws the curve between the 1 Hz samples rather than the samples. */
-const TRACE_STEPS = 60;
+/* Seconds between samples along an approach track. Four a second is the rate
+ * the feed publishes fixes at, so the drawn curve is the fixes and not a
+ * smoothing of them. */
+const TRACK_STEP = 0.25;
 
-/* The trace's own vertical window, m/s. The sim clamps tws to 6.2 to 8.7
- * (buildWind in lib/layline/sim.ts), so the whole series fits inside it and
- * the curve never leaves the box. */
-const TRACE_LO = 6.2;
-const TRACE_HI = 8.7;
+/* Points in the direction strip. Twelve a second across the prestart, which
+ * draws the curve between the 1 Hz wind samples rather than the samples. */
+const TWD_STEPS = 120;
 
-/* m/s to knots. The one conversion, at the display edge, as format.ts has it. */
-const KNOTS = 1.94384;
+/* Metres of gain to windward between ladder rungs, and how far each one runs
+ * either side of the course axis before the drawing's own edge cuts it. Both
+ * are drawing constants: the spacing is a grid the reader counts, not a
+ * reading, which is why neither is labelled with a number. */
+const RUNG_SPACING = 10;
+const RUNG_REACH = 140;
+const RUNG_MARGIN = 20;
 
-/* The diagram's half width in viewBox units. The line's two ends land on it
- * exactly, so a boat's place on the line is its own meters scaled once. */
-const LINE_SPAN = 37;
+/* The drawing box's aspect on the wide branch, used for the frame the server
+ * renders. The layout effect measures the box before the first paint and
+ * refits, so a narrower window never shows the wide frame. */
+const PLOT_ASPECT = 3.44;
+
+/* Every symbol on the chart is drawn at a size in pixels and scaled back into
+ * metres by the measured metres per pixel, because a symbol sized in metres is
+ * a claim about how big the thing is. RaceData holds no hull length, so no
+ * hull may be drawn to one. */
+const HULL = "M 0 -3.6 L 2.3 3 L 0 1.6 L -2.3 3 Z";
+const WIND_SHAFT = { x1: 0, y1: -13, x2: 0, y2: 5 };
+const WIND_HEAD = "0,10 -3,3.4 3,3.4";
+const PIN_R = 3.4;
+const BOAT_MARK = "M 0 -3.2 L 5 -3.2 L 5 3.2 L 0 3.2 Z";
+const FAV_MARK = "0,-3 -3.2,-9 3.2,-9";
+const LABEL_PX = 9;
+
+/* The strip's own drawing height, user units. Its width is the measured pixel
+ * width of the band, so the trace is plotted one unit to the pixel and the
+ * moving dot stays a circle instead of stretching into an ellipse. */
+const STRIP_H = 20;
+const STRIP_W = 600;
 
 function signed(value: number, digits: number): string {
   const text = value.toFixed(digits);
@@ -71,37 +120,28 @@ function endLabel(favored: WindReading["favored"]): string {
   return favored === "pin" ? "pin" : favored === "boat" ? "committee boat" : "square";
 }
 
-function traceY(tws: number): number {
-  const u = (tws - TRACE_LO) / (TRACE_HI - TRACE_LO);
-  return 22 - (u < 0 ? 0 : u > 1 ? 1 : u) * 20;
+function newPose(): Pose {
+  return { x: 0, y: 0, hdg: 0, heel: 0, twa: 0, sog: 0, cog: 0, kite: 0 };
 }
 
-function boatX(gunX: number, half: number): number {
-  const u = half > 0 ? gunX / half : 0;
-  const x = 50 + (u < -1 ? -1 : u > 1 ? 1 : u) * LINE_SPAN;
-  return x < 15 ? 15 : x > 85 ? 85 : x;
-}
-
-/* The dial is the console's own, from hud/WindDial.tsx, at the same viewBox and
- * the same numbers: radius 16 on a 40 box, four cardinal ticks and no others,
- * the plus or minus 8 degree survey band the course was laid out for, and an
- * amber needle from the hub with no tail.
+/**
+ * The sliver of water the favored end has already won: the triangle between
+ * the line's favored half and the rung through the line's middle.
  *
- * The first draft of this layer drew a different instrument: twelve ticks, a
- * white needle, a counterweight below the hub. Twelve ticks and a two-ended
- * hand is a clock, and the reader read it as one. This is the same dial the
- * instrument dock puts up thirty seconds later, so the brief and the console
- * agree about what a wind dial looks like as well as about what the wind is. */
-const DIAL_R = 16;
-const DIAL_C = 20;
-const SURVEY_DEG = 8;
-
-function rim(angle: number, radius: number): string {
-  const a = (angle * Math.PI) / 180;
-  return `${(DIAL_C + radius * Math.sin(a)).toFixed(3)} ${(DIAL_C - radius * Math.cos(a)).toFixed(3)}`;
+ * The third corner is the favored end dropped onto that rung. With the end at
+ * (e, 0) and the wind at twd, its gain is `e * sin twd` and the foot of the
+ * perpendicular is `(e cos^2 twd, -e cos twd sin twd)` in course metres, which
+ * is the screen's `(e cos^2 twd, e cos twd sin twd)` once y is negated. The
+ * depth of the wedge is the bias in metres, drawn at the scale the bar states.
+ */
+function wedgePoints(endX: number, twdDeg: number): string {
+  const a = (twdDeg * Math.PI) / 180;
+  const sin = Math.sin(a);
+  const cos = Math.cos(a);
+  const fx = endX * cos * cos;
+  const fy = endX * sin * cos;
+  return `0,0 ${endX.toFixed(2)},0 ${fx.toFixed(2)},${fy.toFixed(2)}`;
 }
-
-const BAND = `M ${DIAL_C} ${DIAL_C} L ${rim(-SURVEY_DEG, DIAL_R)} A ${DIAL_R} ${DIAL_R} 0 0 1 ${rim(SURVEY_DEG, DIAL_R)} Z`;
 
 export function RaceBrief({
   race,
@@ -120,58 +160,173 @@ export function RaceBrief({
   reduced: boolean;
 }) {
   const facts: BriefFacts = useMemo(() => briefFacts(race), [race]);
-  const trace = useMemo(() => prestartTrace(race, TRACE_STEPS), [race]);
+  const tracks: PrestartTrack[] = useMemo(() => prestartTracks(race, TRACK_STEP), [race]);
+  const series = useMemo(() => prestartTwdSeries(race, TWD_STEPS), [race]);
   const reading = useRef<WindReading>(windReading());
+  const pose = useRef<Pose>(newPose());
+
+  /* The box the chart is drawn into, in pixels. The server has none to read,
+     so it renders the wide branch and the layout effect below refits before the
+     browser paints. */
+  const [plotBox, setPlotBox] = useState({ w: 750, h: 750 / PLOT_ASPECT });
+  const [stripW, setStripW] = useState(STRIP_W);
+
+  const frame = useMemo(
+    () => prestartFrame(race, tracks, plotBox.h > 0 ? plotBox.w / plotBox.h : PLOT_ASPECT),
+    [race, tracks, plotBox],
+  );
+  /* Metres per pixel, the one number every symbol on the chart is scaled by. */
+  const mpx = frame.w / Math.max(1, plotBox.w);
+  const bar = useMemo(() => scaleStep(frame.w), [frame]);
 
   /* The instant the server renders, and the instant a viewer who asked for
-   * less motion keeps: the first fix in the feed, the top of the prestart. */
+     less motion keeps: the first fix in the feed, the top of the prestart. */
   const seed = useMemo(
     () => windReadingAt(race, facts, race.tMin, windReading()),
     [race, facts],
   );
 
+  /* Pin end to boat end, which is left to right on the drawing above it. The
+     rail and the docks keep race.boats order and facts.boats does too; this is
+     the view's own reading order and it lives here. */
+  const ledger = useMemo(
+    () => [...facts.boats].sort((a, b) => a.gunX - b.gunX),
+    [facts],
+  );
+
+  /* Where the wind arrow stands: up the beat of the line, out at the boat end,
+     which is the one corner of the drawing no track reaches. */
+  const windAnchor = useMemo(
+    () => ({ x: frame.x + frame.w - 11, y: frame.y * 0.5 }),
+    [frame],
+  );
+
+  /* The rungs are drawn past both edges by the margin, because the whole group
+     turns with the breeze and a rung that stopped at the top edge would swing
+     a gap into the corner. The drawing's own viewport cuts them. */
+  const rungs = useMemo(() => {
+    const out: number[] = [];
+    const first = Math.ceil((frame.y - RUNG_MARGIN) / RUNG_SPACING) * RUNG_SPACING;
+    for (let y = first; y <= frame.y + frame.h + RUNG_MARGIN; y += RUNG_SPACING) out.push(y);
+    return out;
+  }, [frame]);
+
+  /* Degrees to the strip's own y, off the band the series fills. */
+  const stripY = useCallback(
+    (twd: number): number => {
+      const band = twdBand(series);
+      return 2 + ((band.hi - twd) / (band.hi - band.lo)) * (STRIP_H - 4);
+    },
+    [series],
+  );
+
+  const stripPoints = useMemo(
+    () =>
+      series
+        .map((point, index) => {
+          const x = (index / TWD_STEPS) * stripW;
+          return `${x.toFixed(1)},${stripY(point.twd).toFixed(2)}`;
+        })
+        .join(" "),
+    [series, stripW, stripY],
+  );
+
+  const stripAt = useCallback(
+    (t: number): { x: number; y: number } => {
+      const u = Math.min(1, Math.max(0, (t - facts.tMin) / (0 - facts.tMin)));
+      return { x: u * stripW, y: stripY(series[Math.round(u * TWD_STEPS)].twd) };
+    },
+    [series, facts, stripW, stripY],
+  );
+
   const root = useRef<HTMLDivElement>(null);
   const title = useRef<HTMLDivElement>(null);
+  const plotNode = useRef<HTMLDivElement>(null);
+  const stripNode = useRef<SVGSVGElement>(null);
   const button = useRef<HTMLButtonElement>(null);
-  const gunIn = useRef<HTMLSpanElement>(null);
-  const needle = useRef<SVGGElement>(null);
-  const twsBig = useRef<HTMLSpanElement>(null);
-  const traceDot = useRef<SVGCircleElement>(null);
-  const biasDeg = useRef<HTMLDivElement>(null);
-  const biasSec = useRef<HTMLDivElement>(null);
+  const rungGroup = useRef<SVGGElement>(null);
+  const wedge = useRef<SVGPolygonElement>(null);
+  const windArrow = useRef<SVGGElement>(null);
+  const windTag = useRef<SVGTSpanElement>(null);
+  const favPin = useRef<SVGPolygonElement>(null);
+  const favBoat = useRef<SVGPolygonElement>(null);
+  const hulls = useRef<(SVGGElement | null)[]>([]);
+  const trails = useRef<(SVGGElement | null)[]>([]);
+  const stripDot = useRef<SVGCircleElement>(null);
+  const toGun = useRef<HTMLDivElement>(null);
+  const twsValue = useRef<HTMLDivElement>(null);
+  const biasValue = useRef<HTMLDivElement>(null);
   const favEnd = useRef<HTMLElement>(null);
   const favBy = useRef<HTMLSpanElement>(null);
   const favSec = useRef<HTMLSpanElement>(null);
-  const favPin = useRef<SVGPolygonElement>(null);
-  const favBoat = useRef<SVGPolygonElement>(null);
-  const windArrow = useRef<SVGGElement>(null);
-  const windTag = useRef<SVGTextElement>(null);
-  const twdTag = useRef<HTMLSpanElement>(null);
+
+  /* What the loop needs from the last render and must not re-enter React to
+     read. Written in a layout effect so a resize is picked up before the
+     browser paints and never through a changed paint identity, which would
+     restart the loop and re-seek the clock under the reader. */
+  const view = useRef({ mpx, anchor: windAnchor, tracks, stripAt });
+  useLayoutEffect(() => {
+    view.current = { mpx, anchor: windAnchor, tracks, stripAt };
+  }, [mpx, windAnchor, tracks, stripAt]);
 
   const paint = useCallback(
     (t: number) => {
       const read = windReadingAt(race, facts, t, reading.current);
-      setAttr(needle.current, "transform", `rotate(${read.twd.toFixed(2)} 20 20)`);
-      setText(twsBig.current, (read.tws * KNOTS).toFixed(1));
-      const u = (t - facts.tMin) / (0 - facts.tMin);
-      setAttr(traceDot.current, "cx", ((u < 0 ? 0 : u > 1 ? 1 : u) * 100).toFixed(1));
-      setAttr(traceDot.current, "cy", traceY(read.tws).toFixed(1));
-      setText(biasDeg.current, `${signed(read.twd, 1)}°`);
-      setText(biasSec.current, `${read.biasSeconds.toFixed(1)} s`);
+      const { mpx: scale, anchor, tracks: drawn, stripAt: at } = view.current;
+      const twd = read.twd.toFixed(2);
+
+      /* The ladder is one group turned about the line's middle, so every rung
+         and the wedge under them state the same direction by construction. */
+      setAttr(rungGroup.current, "transform", `rotate(${twd} 0 0)`);
+      const end = read.favored === "boat" ? facts.lineHalf : -facts.lineHalf;
+      setAttr(wedge.current, "points", wedgePoints(end, read.twd));
+      if (wedge.current !== null) {
+        wedge.current.style.display = read.favored === "square" ? "none" : "";
+      }
+
+      setAttr(
+        windArrow.current,
+        "transform",
+        `translate(${anchor.x.toFixed(2)} ${anchor.y.toFixed(2)}) rotate(${twd}) scale(${scale.toFixed(4)})`,
+      );
+      setText(windTag.current, `${signed(read.twd, 0)}°`);
+
+      if (favPin.current !== null) favPin.current.style.opacity = read.favored === "pin" ? "1" : "0";
+      if (favBoat.current !== null) {
+        favBoat.current.style.opacity = read.favored === "boat" ? "1" : "0";
+      }
+
+      for (let i = 0; i < drawn.length; i += 1) {
+        const track = drawn[i];
+        poseAt(race, track.boat.id, t, "smooth", pose.current);
+        setAttr(
+          hulls.current[i],
+          "transform",
+          `translate(${pose.current.x.toFixed(2)} ${(-pose.current.y).toFixed(2)}) rotate(${pose.current.hdg.toFixed(1)}) scale(${scale.toFixed(4)})`,
+        );
+        /* The dash is inherited by both paths in the group, so a dark hue's
+           light underlay is revealed by exactly the same stretch of water. */
+        setAttr(
+          trails.current[i],
+          "stroke-dasharray",
+          `${lengthAt(track, t).toFixed(2)} ${track.total.toFixed(2)}`,
+        );
+      }
+
+      const dot = at(t);
+      setAttr(stripDot.current, "cx", dot.x.toFixed(1));
+      setAttr(stripDot.current, "cy", dot.y.toFixed(2));
+
+      setText(toGun.current, clock(t));
+      setText(twsValue.current, knots(read.tws));
+      setText(biasValue.current, meters(read.biasMeters));
+
       setText(favEnd.current, endLabel(read.favored));
       setText(favSec.current, `${read.biasSeconds.toFixed(1)} s`);
       if (favBy.current !== null) {
         const by = read.favored === "square" ? "none" : "";
         if (favBy.current.style.display !== by) favBy.current.style.display = by;
       }
-      if (favPin.current !== null) favPin.current.style.opacity = read.favored === "pin" ? "1" : "0";
-      if (favBoat.current !== null) {
-        favBoat.current.style.opacity = read.favored === "boat" ? "1" : "0";
-      }
-      setAttr(windArrow.current, "transform", `rotate(${read.twd.toFixed(1)} 50 12)`);
-      setText(windTag.current, `TWD ${signed(read.twd, 0)}°`);
-      setText(twdTag.current, `${signed(read.twd, 0)}°`);
-      setText(gunIn.current, `gun in ${Math.max(0, -t).toFixed(1)} s`);
     },
     [race, facts],
   );
@@ -195,14 +350,42 @@ export function RaceBrief({
     }
   }, []);
 
+  /* The chart is fitted to the box it is actually given rather than to a stated
+   * aspect, so the drawing fills it at every width with no letterbox and the
+   * scale stays isotropic. Measured in a layout effect, which runs before the
+   * browser paints, so the server's wide frame is never the one a narrow reader
+   * sees. */
+  const measure = useCallback(() => {
+    const plot = plotNode.current;
+    if (plot !== null) {
+      const box = plot.getBoundingClientRect();
+      if (box.width > 1 && box.height > 1) {
+        setPlotBox((prev) =>
+          Math.abs(prev.w - box.width) < 0.5 && Math.abs(prev.h - box.height) < 0.5
+            ? prev
+            : { w: box.width, h: box.height },
+        );
+      }
+    }
+    const strip = stripNode.current;
+    if (strip !== null) {
+      const width = strip.getBoundingClientRect().width;
+      if (width > 1) setStripW((prev) => (Math.abs(prev - width) < 0.5 ? prev : width));
+    }
+  }, []);
+
   useLayoutEffect(() => {
     fitTitle();
+    measure();
     const node = root.current;
     if (node === null || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(() => fitTitle());
+    const observer = new ResizeObserver(() => {
+      fitTitle();
+      measure();
+    });
     observer.observe(node);
     return () => observer.disconnect();
-  }, [fitTitle]);
+  }, [fitTitle, measure]);
 
   /* The Continue button takes focus when the cover mounts: it is the only
    * control on the layer, and a viewer arriving by keyboard should not have to
@@ -212,26 +395,39 @@ export function RaceBrief({
   }, []);
 
   /**
-   * The prestart, run on the replay's own clock.
+   * A repaint whenever the drawing's own frame moves.
    *
-   * The loop seeks the store rather than keeping a clock of its own, so the
-   * dial and the scene warming underneath it are reading the same instant and
-   * the brief's wind is the replay's wind by construction rather than by two
-   * formulas agreeing. It stops writing while the capture hold is on, which is
-   * what lets a screenshot state its own time.
-   *
-   * Reduced motion never runs it at all. The brief holds the first fix in the
-   * feed, and the store's clock stays where it opened, at the mid-beat moment
-   * the store picks for a viewer who asked for less motion.
+   * A resize changes the metres per pixel every symbol is scaled by, and the
+   * viewBox the tracks are plotted in. The loop below would pick that up on its
+   * next frame, but a viewer who asked for less motion has no loop, so the
+   * static state is painted here and nowhere else.
    */
   useEffect(() => {
     if (reduced) {
       paint(race.tMin);
       return;
     }
+    paint(useReplay.getState().t);
+  }, [paint, reduced, race, plotBox, stripW]);
+
+  /**
+   * The prestart, run on the replay's own clock.
+   *
+   * The loop seeks the store rather than keeping a clock of its own, so the
+   * fleet on the chart and the scene warming underneath it are reading the same
+   * instant and the brief's wind is the replay's wind by construction rather
+   * than by two formulas agreeing. It stops writing while the capture hold is
+   * on, which is what lets a screenshot state its own time.
+   *
+   * Reduced motion never runs it at all. The brief holds the first fix in the
+   * feed, and the store's clock stays where it opened, at the mid-beat moment
+   * the store picks for a viewer who asked for less motion.
+   */
+  useEffect(() => {
+    if (reduced) return;
     const store = useReplay;
     const span = 0 - race.tMin;
-    let frame = 0;
+    let frameId = 0;
     let origin = 0;
     const step = (stamp: number): void => {
       const state = store.getState();
@@ -239,7 +435,7 @@ export function RaceBrief({
        * left to live through: another second of this loop seeking behind it
        * would fight the autoplay for the same clock. */
       if (state.briefDone) return;
-      frame = requestAnimationFrame(step);
+      frameId = requestAnimationFrame(step);
       if (state.frozen) {
         paint(state.t);
         return;
@@ -253,17 +449,17 @@ export function RaceBrief({
     store.getState().seek(race.tMin);
     /* Painting stops at the release, not at the unmount. The cover has a 900ms
      * fade left and the replay is already running the gun off behind it, so a
-     * brief that kept reading the clock would spend its last second swinging
-     * its needle through the start of the race. What dissolves is the brief
-     * the reader was reading. */
+     * brief that kept reading the clock would spend its last second running its
+     * fleet through the start of the race. What dissolves is the brief the
+     * reader was reading. */
     const stop = store.subscribe((state) => {
       if (state.briefDone) return;
       paint(state.t);
     });
     paint(store.getState().t);
-    frame = requestAnimationFrame(step);
+    frameId = requestAnimationFrame(step);
     return () => {
-      cancelAnimationFrame(frame);
+      cancelAnimationFrame(frameId);
       stop();
     };
   }, [race, paint, reduced]);
@@ -296,11 +492,17 @@ export function RaceBrief({
     return () => document.removeEventListener("keydown", onKey);
   }, [release]);
 
-  const tracePoints = trace
-    .map((point, index) => `${((index / TRACE_STEPS) * 100).toFixed(1)},${traceY(point.tws).toFixed(1)}`)
-    .join(" ");
-
+  const { startPin, startBoat } = race.course;
   const lineMeters = Math.round(facts.lineLength);
+  const prestartSeconds = Math.round(-race.tMin);
+  const swing = twdSwing(series);
+  const glyph = LABEL_PX * mpx;
+  /* Every stroke width in the stylesheet is stated in pixels and multiplied
+     back into metres by this, which is why the drawing has one scale factor and
+     not a hardcoded width per element. */
+  const plotStyle = { "--plot-px": mpx.toFixed(5) } as CSSProperties;
+  const barY = frame.y + frame.h - 10 * mpx;
+  const barX = frame.x + 10 * mpx;
 
   return (
     <section className={styles.brief} ref={root} aria-label={`Race brief, ${name}`}>
@@ -314,12 +516,297 @@ export function RaceBrief({
       </header>
 
       <div className={styles.briefMain}>
-        <div className={styles.panel}>
+        <div className={`${styles.panel} ${styles.plotPlate}`}>
           <div className={styles.panelLabel}>
-            <span>Fleet at the line</span>
+            <span>{`The last ${prestartSeconds} seconds`}</span>
             <span className={styles.panelCount}>{facts.boats.length}</span>
           </div>
-          {facts.boats.map((boat) => (
+
+          <div className={styles.plotBox} ref={plotNode}>
+            <svg
+              className={styles.plot}
+              viewBox={frame.viewBox}
+              preserveAspectRatio="xMidYMid meet"
+              style={plotStyle}
+              role="img"
+              aria-label={`The last ${prestartSeconds} seconds before the gun, seen from above at true scale: the ${lineMeters} metre start line, the ${facts.boats.length} approach tracks the fleet sails onto it, and the breeze lying across the course`}
+            >
+              {/* The wind's own field: contours of equal gain to windward, one
+                  group turned about the line's middle so every rung states the
+                  same direction, and the sliver the favored end has won drawn
+                  between the line and the rung through it. */}
+              <g ref={rungGroup} transform={`rotate(${seed.twd.toFixed(2)} 0 0)`}>
+                {rungs.map((y) => (
+                  <line
+                    key={y}
+                    className={styles.rung}
+                    x1={-RUNG_REACH}
+                    y1={y}
+                    x2={RUNG_REACH}
+                    y2={y}
+                  />
+                ))}
+              </g>
+              <polygon
+                className={styles.wedge}
+                ref={wedge}
+                points={wedgePoints(seed.favored === "boat" ? facts.lineHalf : -facts.lineHalf, seed.twd)}
+                style={{ display: seed.favored === "square" ? "none" : undefined }}
+              />
+
+              {/* Every approach in dim, then the water each hull has already
+                  crossed drawn over it in the boat's own colour at twice the
+                  weight. Weight carries "already sailed", not a second hue. */}
+              {tracks.map((track) => (
+                <path
+                  key={track.boat.id}
+                  className={styles.trackAhead}
+                  d={toPath(track.points)}
+                />
+              ))}
+              {tracks.map((track, index) => (
+                <g
+                  key={track.boat.id}
+                  ref={(node) => {
+                    trails.current[index] = node;
+                  }}
+                  strokeDasharray={`0 ${track.total.toFixed(2)}`}
+                >
+                  {track.boat.dark ? (
+                    <path className={styles.trackDark} d={toPath(track.points)} />
+                  ) : null}
+                  <path
+                    className={styles.trackSailed}
+                    d={toPath(track.points)}
+                    stroke={track.boat.hue}
+                  />
+                </g>
+              ))}
+
+              {/* The line, in the wind's colour: the console's contract names
+                  "the start line before the gun" as one of the things amber
+                  means, and everything on this layer is before the gun. Its two
+                  ends stay in ink, because a pin and a committee boat are marks
+                  on the water rather than weather, and they are told apart by
+                  shape rather than by a colour each. */}
+              <line
+                className={styles.plotLine}
+                x1={startPin.x}
+                y1={-startPin.y}
+                x2={startBoat.x}
+                y2={-startBoat.y}
+              />
+              <g transform={`translate(${startPin.x} ${-startPin.y}) scale(${mpx.toFixed(4)})`}>
+                <circle className={styles.plotMark} r={PIN_R} />
+              </g>
+              <path
+                className={styles.plotMarkFill}
+                d={BOAT_MARK}
+                transform={`translate(${startBoat.x} ${-startBoat.y}) scale(${mpx.toFixed(4)})`}
+              />
+              <polygon
+                className={styles.favMark}
+                ref={favPin}
+                points={FAV_MARK}
+                transform={`translate(${startPin.x} ${-startPin.y}) scale(${mpx.toFixed(4)})`}
+                style={{ opacity: seed.favored === "pin" ? 1 : 0 }}
+              />
+              <polygon
+                className={styles.favMark}
+                ref={favBoat}
+                points={FAV_MARK}
+                transform={`translate(${startBoat.x} ${-startBoat.y}) scale(${mpx.toFixed(4)})`}
+                style={{ opacity: seed.favored === "boat" ? 1 : 0 }}
+              />
+              <text
+                className={styles.plotLabel}
+                x={startPin.x}
+                y={-startPin.y - 15 * mpx}
+                fontSize={glyph}
+                textAnchor="middle"
+              >
+                Pin
+              </text>
+              <text
+                className={styles.plotLabel}
+                x={startBoat.x}
+                y={-startBoat.y - 15 * mpx}
+                fontSize={glyph}
+                textAnchor="middle"
+              >
+                Committee boat
+              </text>
+
+              {/* Where each hull ends up at the gun, outlined rather than
+                  filled: fill separates "now" from "then". Both are drawn at a
+                  fixed size in pixels, because the feed holds no hull length
+                  and a symbol scaled to the chart would invent one. */}
+              {tracks.map((track) => {
+                const last = track.points.length - 2;
+                return (
+                  <g key={track.boat.id}>
+                    <path
+                      className={styles.hullGun}
+                      d={HULL}
+                      stroke={track.boat.dark ? "var(--brief-dim)" : track.boat.hue}
+                      transform={`translate(${track.points[last].toFixed(2)} ${track.points[last + 1].toFixed(2)}) rotate(${track.gunHdg.toFixed(1)}) scale(${mpx.toFixed(4)})`}
+                    />
+                    {/* The tags share one row off the line rather than each
+                        hanging under its own ghost, so six labels a metre or
+                        two apart in y cannot stack on each other. */}
+                    <text
+                      className={styles.plotSail}
+                      x={track.points[last]}
+                      y={-startPin.y + 11 * mpx}
+                      fontSize={glyph}
+                      textAnchor="middle"
+                    >
+                      {track.boat.sail}
+                    </text>
+                  </g>
+                );
+              })}
+
+              {tracks.map((track, index) => (
+                <g
+                  key={track.boat.id}
+                  ref={(node) => {
+                    hulls.current[index] = node;
+                  }}
+                  transform={`translate(${track.points[0].toFixed(2)} ${track.points[1].toFixed(2)}) rotate(${track.openHdg.toFixed(1)}) scale(${mpx.toFixed(4)})`}
+                >
+                  <path
+                    className={styles.hullNow}
+                    d={HULL}
+                    fill={track.boat.hue}
+                    stroke={track.boat.dark ? "var(--brief-dim)" : undefined}
+                    strokeWidth={track.boat.dark ? 0.7 : undefined}
+                  />
+                </g>
+              ))}
+
+              {/* One instrument for the wind and one only: an arrow lying
+                  across the course with the direction it is blowing from. The
+                  rungs are the field it makes, not a second reading of it. */}
+              <g
+                ref={windArrow}
+                transform={`translate(${windAnchor.x.toFixed(2)} ${windAnchor.y.toFixed(2)}) rotate(${seed.twd.toFixed(2)}) scale(${mpx.toFixed(4)})`}
+              >
+                <line
+                  className={styles.windStroke}
+                  x1={WIND_SHAFT.x1}
+                  y1={WIND_SHAFT.y1}
+                  x2={WIND_SHAFT.x2}
+                  y2={WIND_SHAFT.y2}
+                />
+                <polygon className={styles.windFill} points={WIND_HEAD} />
+              </g>
+              <text
+                className={styles.plotLabel}
+                x={windAnchor.x - 10 * mpx}
+                y={windAnchor.y}
+                fontSize={glyph}
+                textAnchor="end"
+              >
+                TWD{" "}
+                <tspan className={styles.windTag} ref={windTag}>
+                  {`${signed(seed.twd, 0)}°`}
+                </tspan>
+              </text>
+
+              {/* The mark the fleet is about to beat to, off the top of the
+                  drawing at a distance the course states. */}
+              <text
+                className={styles.plotLabel}
+                x={0}
+                y={frame.y + 11 * mpx}
+                fontSize={glyph}
+                textAnchor="middle"
+              >
+                Windward mark{" "}
+                <tspan className={styles.plotFig}>{`${Math.round(race.course.windward.y)} m`}</tspan>
+              </text>
+
+              {/* Nothing on this chart is drawn at a size the reader cannot
+                  check, which is what the bar is for. */}
+              <g className={styles.scaleRule}>
+                <line x1={barX} y1={barY} x2={barX + bar} y2={barY} />
+                <line x1={barX} y1={barY - 4 * mpx} x2={barX} y2={barY} />
+                <line
+                  x1={barX + bar}
+                  y1={barY - 4 * mpx}
+                  x2={barX + bar}
+                  y2={barY}
+                />
+              </g>
+              <text
+                className={styles.plotFig}
+                x={barX}
+                y={barY - 5 * mpx}
+                fontSize={glyph}
+              >
+                {`${bar} m`}
+              </text>
+            </svg>
+          </div>
+
+          {/* A square line is favored by nobody, so the "by" goes with the
+              seconds rather than dangling off the end of the sentence. Not a
+              theoretical state: the breeze crosses the course axis inside the
+              prestart on two of the three shipped seeds, 42 of 4001 samples on
+              the shipped race and 19 on Kestrel Sound. */}
+          <div className={styles.plotCap}>
+            <p className={styles.favored}>
+              Favored: <b ref={favEnd}>{endLabel(seed.favored)}</b>
+              <span
+                className={styles.favBy}
+                ref={favBy}
+                style={{ display: seed.favored === "square" ? "none" : undefined }}
+              >
+                {" by "}
+                <span className={styles.favSec} ref={favSec}>
+                  {`${seed.biasSeconds.toFixed(1)} s`}
+                </span>
+              </span>
+            </p>
+          </div>
+        </div>
+
+        <div className={`${styles.panel} ${styles.stripPlate}`}>
+          <span className={styles.stripLabel}>TWD swing</span>
+          <svg
+            className={styles.stripPlot}
+            ref={stripNode}
+            viewBox={`0 0 ${stripW.toFixed(1)} ${STRIP_H}`}
+            preserveAspectRatio="none"
+            role="img"
+            aria-label={`True wind direction across the prestart: ${swing.toFixed(1)} degrees of swing, with the course axis as the rule the favored end changes hands across`}
+          >
+            <line
+              className={styles.stripRule}
+              x1="0"
+              y1={stripY(0).toFixed(2)}
+              x2={stripW.toFixed(1)}
+              y2={stripY(0).toFixed(2)}
+            />
+            <polyline className={styles.stripTrace} points={stripPoints} />
+            <circle
+              className={styles.stripDot}
+              ref={stripDot}
+              r="2.4"
+              cx={stripAt(race.tMin).x.toFixed(1)}
+              cy={stripAt(race.tMin).y.toFixed(2)}
+            />
+          </svg>
+          <span className={styles.stripValue}>{`${swing.toFixed(1)}°`}</span>
+        </div>
+
+        <div className={`${styles.panel} ${styles.ledger}`}>
+          <div className={styles.panelLabel}>
+            <span>At the gun, pin end to boat end</span>
+            <span className={styles.panelCount}>{facts.boats.length}</span>
+          </div>
+          {ledger.map((boat) => (
             <div className={styles.fleetRow} key={boat.id}>
               <span
                 className={boat.dark ? `${styles.chip} ${styles.chipDark}` : styles.chip}
@@ -328,181 +815,48 @@ export function RaceBrief({
               />
               <span className={styles.sail}>{boat.sail}</span>
               <span className={styles.boatName}>{boat.name}</span>
-              <span className={styles.slot}>{signed(boat.gunX, 0)} m</span>
+              <span className={styles.across}>{`${signed(boat.gunX, 0)} m`}</span>
+              <span className={styles.slot}>{`${meters(boat.offLine)} m off`}</span>
             </div>
           ))}
           <div className={styles.fleetFoot}>
-            <span ref={gunIn}>{`gun in ${Math.max(0, -race.tMin).toFixed(1)} s`}</span>
             <span>
               {facts.first === null
                 ? "no boat crossed"
                 : `${facts.first.sail} ${signed(facts.first.t, 2)} s first cross`}
             </span>
-            <span>{`line ${lineMeters} m`}</span>
+            <span>{`beat ${Math.round(facts.beatTwa)}° off the breeze`}</span>
           </div>
         </div>
 
-        <div className={styles.panel}>
-          <div className={styles.panelLabel}>
-            <span>Wind, live off the seed</span>
-          </div>
-          <div className={styles.dialWrap}>
-            <svg
-              className={styles.dial}
-              viewBox="0 0 40 40"
-              role="img"
-              aria-label="Wind dial: the needle points where the breeze is coming from, against the course axis"
-            >
-              <path className={styles.dialBand} d={BAND} />
-              <circle className={styles.dialFace} cx={DIAL_C} cy={DIAL_C} r={DIAL_R} />
-              <g className={styles.dialTicks}>
-                <line x1={DIAL_C} y1={DIAL_C - DIAL_R} x2={DIAL_C} y2={DIAL_C - DIAL_R + 4} />
-                <line x1={DIAL_C + DIAL_R} y1={DIAL_C} x2={DIAL_C + DIAL_R - 3} y2={DIAL_C} />
-                <line x1={DIAL_C} y1={DIAL_C + DIAL_R} x2={DIAL_C} y2={DIAL_C + DIAL_R - 3} />
-                <line x1={DIAL_C - DIAL_R} y1={DIAL_C} x2={DIAL_C - DIAL_R + 3} y2={DIAL_C} />
-              </g>
-              <g ref={needle} transform={`rotate(${seed.twd.toFixed(2)} ${DIAL_C} ${DIAL_C})`}>
-                <line
-                  className={styles.dialNeedle}
-                  x1={DIAL_C}
-                  y1={DIAL_C}
-                  x2={DIAL_C}
-                  y2={DIAL_C - DIAL_R + 5}
-                />
-                <polygon
-                  className={styles.dialHead}
-                  points={`${DIAL_C} ${DIAL_C - DIAL_R + 1}, ${DIAL_C - 2.6} ${DIAL_C - DIAL_R + 6}, ${DIAL_C + 2.6} ${DIAL_C - DIAL_R + 6}`}
-                />
-              </g>
-              <circle className={styles.dialHub} cx={DIAL_C} cy={DIAL_C} r="1.6" />
-            </svg>
-          </div>
-          <div className={styles.twsRow}>
-            <span className={styles.twsBig} ref={twsBig}>
-              {(seed.tws * KNOTS).toFixed(1)}
-            </span>
-            <span className={styles.twsUnit}>kn TWS</span>
-          </div>
-          <svg
-            className={styles.trace}
-            viewBox="0 0 100 24"
-            preserveAspectRatio="none"
-            role="img"
-            aria-label="True wind speed through the prestart"
-          >
-            <line x1="0" y1="22" x2="100" y2="22" stroke="rgba(255,255,255,.25)" strokeWidth=".5" />
-            <polyline points={tracePoints} fill="none" stroke="rgba(255,255,255,.85)" strokeWidth="1" />
-            <circle ref={traceDot} r="1.8" fill="#fff" cx="0" cy={traceY(seed.tws).toFixed(1)} />
-          </svg>
-        </div>
-
-        <div className={styles.panel}>
-          <div className={styles.panelLabel}>
-            <span>Start line</span>
-            <span className={styles.panelCount} ref={twdTag}>
-              {`${signed(seed.twd, 0)}°`}
-            </span>
-          </div>
-          <svg
-            className={styles.lineDiagram}
-            viewBox="0 0 100 76"
-            preserveAspectRatio="xMidYMid meet"
-            role="img"
-            aria-label="The start line looking upwind: the pin at the left, the committee boat at the right, the fleet where each hull sat at the gun"
-          >
-            <g ref={windArrow} transform={`rotate(${seed.twd.toFixed(1)} 50 12)`}>
-              <line className={styles.windStroke} x1="50" y1="3" x2="50" y2="17" strokeWidth="1.1" />
-              <polygon className={styles.windFill} points="50,21 47.6,15.8 52.4,15.8" />
-              <text className={`${styles.diagramTag} ${styles.windFill}`} ref={windTag} x="54" y="10">
-                {`TWD ${signed(seed.twd, 0)}°`}
-              </text>
-            </g>
-            <line
-              x1="50"
-              y1="26"
-              x2="50"
-              y2="62"
-              stroke="rgba(255,255,255,.35)"
-              strokeWidth=".5"
-              strokeDasharray="2 2"
-            />
-            <text className={styles.diagramNote} x="54" y="44">
-              square transit
-            </text>
-            {/* The line itself, in the wind's colour: the console's contract
-                names "the start line before the gun" as one of the things amber
-                means, and everything on this layer is before the gun. The two
-                ends stay in ink, because a pin and a committee boat are marks
-                on the water rather than weather. */}
-            <line className={styles.windStroke} x1="13" y1="66" x2="87" y2="66" strokeWidth="1.4" />
-            <circle cx="13" cy="66" r="1.7" fill="none" stroke="#fff" strokeWidth=".8" />
-            <path d="M87 64.2 L91.5 64.2 L90.5 67.6 L88 67.6 Z" fill="#fff" />
-            {facts.boats.map((boat) => {
-              const x = boatX(boat.gunX, facts.lineHalf);
-              return (
-                <rect
-                  key={boat.id}
-                  x={(x - 2.1).toFixed(1)}
-                  y="64.8"
-                  width="4.2"
-                  height="2.4"
-                  fill={boat.hue}
-                  stroke={boat.dark ? "rgba(255,255,255,.55)" : undefined}
-                  strokeWidth={boat.dark ? ".25" : undefined}
-                />
-              );
-            })}
-            <polygon
-              ref={favPin}
-              className={styles.favMark}
-              points="13,61.4 11.4,58.2 14.6,58.2"
-              style={{ opacity: seed.favored === "pin" ? 1 : 0 }}
-            />
-            <polygon
-              ref={favBoat}
-              className={styles.favMark}
-              points="87,61.4 85.4,58.2 88.6,58.2"
-              style={{ opacity: seed.favored === "boat" ? 1 : 0 }}
-            />
-            <text className={styles.diagramEnd} x="13" y="72.5" textAnchor="middle">
-              pin
-            </text>
-            <text className={styles.diagramEnd} x="87" y="72.5" textAnchor="end">
-              committee boat
-            </text>
-          </svg>
-          <div className={styles.biasReads}>
-            <div>
-              <div className={styles.biasNum} ref={biasDeg}>
-                {`${signed(seed.twd, 1)}°`}
-              </div>
-              <div className={styles.biasCap}>line bias</div>
-            </div>
-            <div>
-              <div className={styles.biasNum} ref={biasSec}>
-                {`${seed.biasSeconds.toFixed(1)} s`}
-              </div>
-              <div className={styles.biasCap}>to the favored end</div>
+        {/* Four readings, and each one is stated exactly once on the layer. The
+            direction is on the arrow out on the water, the seconds the favored
+            end is worth are in the sentence under the drawing, and the swing is
+            on the strip. A number in two places is a number a reader has to
+            reconcile. */}
+        <div className={`${styles.panel} ${styles.reads}`}>
+          <div className={styles.readCell}>
+            <div className={styles.readLabel}>To gun</div>
+            <div className={styles.readValue} data-read="gun" ref={toGun}>
+              {clock(race.tMin)}
             </div>
           </div>
-          {/* A square line is favored by nobody, so the "by" goes with the
-              seconds rather than dangling off the end of the sentence. Not a
-              theoretical state: the breeze crosses the course axis inside the
-              prestart on two of the three shipped seeds, 42 of 4001 samples on
-              the shipped race and 19 on Kestrel Sound. */}
-          <p className={styles.favored}>
-            Favored: <b ref={favEnd}>{endLabel(seed.favored)}</b>
-            <span
-              className={styles.favBy}
-              ref={favBy}
-              style={{ display: seed.favored === "square" ? "none" : undefined }}
-            >
-              {" by "}
-              <span className={styles.favSec} ref={favSec}>
-                {`${seed.biasSeconds.toFixed(1)} s`}
-              </span>
-            </span>
-          </p>
+          <div className={styles.readCell}>
+            <div className={styles.readLabel}>TWS kn</div>
+            <div className={styles.readValue} data-read="tws" ref={twsValue}>
+              {knots(seed.tws)}
+            </div>
+          </div>
+          <div className={styles.readCell}>
+            <div className={styles.readLabel}>Line m</div>
+            <div className={styles.readValue} data-read="line">{lineMeters}</div>
+          </div>
+          <div className={styles.readCell}>
+            <div className={styles.readLabel}>Bias m</div>
+            <div className={styles.readValue} data-read="bias" ref={biasValue}>
+              {meters(seed.biasMeters)}
+            </div>
+          </div>
         </div>
       </div>
 

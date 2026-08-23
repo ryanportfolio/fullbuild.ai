@@ -9,6 +9,12 @@
    to the bright band at the horizon around a fifth of the way down, then water
    falling away to deep.
 
+   The brief is one chart and the readings that hang off it: the last ten
+   seconds before the gun seen from above at true scale, then the fleet in the
+   order it lies along the line, then four numerals. Three panels made three
+   equal readings out of one subject, and the bias figure in the third was
+   computed from the wind in the second and the line in the first.
+
    Nothing else moves while this leaves. The canvas underneath sits at full
    strength the whole time, so the only animated value on the page is this
    layer's opacity, and what a viewer sees is a still sea starting to move.
@@ -47,26 +53,32 @@
      sea, which the library themes do not repaint: a sailcloth theme would hand
      this layer near-black ink over deep water. */
   --brief-ink: #f4f8fb;
-  --brief-dim: rgba(244, 248, 251, 0.68);
-  --brief-faint: rgba(244, 248, 251, 0.45);
-  --brief-hair: rgba(255, 255, 255, 0.16);
+  /* Stated as a colour, never as an alpha over the ink. The console's rule:
+     "Dim is a token, never an opacity: composited contrast has to be
+     knowable." This is its own --ink-dim, which is what the dock labels a
+     reader sees thirty seconds later are set in. */
+  --brief-dim: #a4bccb;
+  /* The console's --rule, stated. Hairlines are not text, so an alpha here
+     costs nothing that has to be knowable. */
+  --brief-hair: rgba(164, 188, 203, 0.28);
   /* 0.86, the alpha the console gives its own single panel ground, and it is
-     a legibility floor rather than a preference. The panels start about a fifth
-     of the way down the cover, which is where the gradient is the sky-horizon
-     token nearly neat. Measured against that band at the old 0.42: the panel
-     labels sat on 3.23:1 and the dim ink on 1.78:1, where 10px text needs 4.5.
-     At 0.86 the worst point on the panel is 11.17:1 for ink and 6.18:1 for dim.
-     A plate that lets the picture through is worth nothing if the reader cannot
-     read what is on it. */
+     a legibility floor rather than a preference. The plates start about a
+     fifth of the way down the cover, which is where the gradient is the
+     sky-horizon token nearly neat. Measured against that band at the old 0.42:
+     the panel labels sat on 3.23:1 and the dim ink on 1.78:1, where 10px text
+     needs 4.5. At 0.86 the worst point on the plate is 11.17:1 for ink and
+     6.18:1 for dim. A plate that lets the picture through is worth nothing if
+     the reader cannot read what is on it. */
   --brief-panel: rgba(7, 30, 50, 0.86);
   /* The one accent, and it is the console's own wind token rather than a hex
      of this layer's invention. The contract at the top of layline.module.css:
      "amber is the wind. Dial needle, laylines, ladder rungs, the start line
      before the gun. Nothing else may borrow it." Everything this layer draws
-     is before the gun, so amber gets the needle, the wind arrow, the start line
-     itself, the mark over the favored end and the seconds that end is worth.
-     The status hairline is not wind and does not take it. The token is declared
-     on .shell and no theme restates it, so it holds on all five. */
+     is before the gun, so amber gets the ladder rungs, the wind arrow and its
+     tag, the start line itself, the bias wedge, the mark over the favored end,
+     the seconds that end is worth, and the direction trace under the plot. The
+     status hairline is not wind and does not take it. The token is declared on
+     .shell and no theme restates it, so it holds on all five. */
   --brief-accent: var(--wind);
 
   /* The three faces, and the console's own division of labour between them.
@@ -78,15 +90,14 @@
   --brief-sans: var(--font-archivo), sans-serif;
 
   /* The header sits on the gradient's top band, which is the sky-horizon token
-     nearly neat, so its ink has to follow that token rather than the panels'.
+     nearly neat, so its ink has to follow that token rather than the plates'.
      Stated here as the light-sky branch because the shipped token is light:
      the server has no computed style to read, and defaulting to the branch the
      shipped sky needs is what keeps the first painted frame legible. LaylineApp
      measures the token's WCAG luminance after hydration and writes the white
      branch over these two if the sky came out dark. */
   --brief-head-ink: color-mix(in srgb, var(--water-deep) 88%, var(--sky-horizon));
-  /* Stated, never an opacity. The console's rule: "Dim is a token, never an
-     opacity: composited contrast has to be knowable." */
+  /* Stated, never an opacity, for the same reason as --brief-dim. */
   --brief-head-dim: color-mix(in srgb, var(--brief-head-ink) 78%, var(--sky-horizon));
   --brief-head-line: color-mix(in srgb, var(--water-deep) 30%, transparent);
 }
@@ -116,74 +127,6 @@
   color: var(--brief-ink);
   font-family: var(--brief-sans);
   font-variant-numeric: tabular-nums;
-}
-
-/* Header ink follows the sky it sits on. The gradient's top band is the
-   sky-horizon token nearly neat, so a light sky takes near-black type and a
-   dark one takes near-white, and the rule under the header goes with it. The
-   branch is computed in LaylineApp off the token's WCAG luminance; these are
-   the two results it writes. */
-.briefHead {
-  display: flex;
-  flex: none;
-  /* The name gets the whole width, at every size. Sharing the row with the meta
-     line left the title's budget swinging between 234 and 454px depending on
-     the viewport, so the size that fits two lines swung with it and the
-     stylesheet could not state one: the server painted 11cqw and the measured
-     fit corrected it to less than half that after hydration, which a reader saw
-     as the name popping in large and shrinking. Given the full width, 11cqw
-     fits every shipped name at every width and the fit never has to fire. */
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.7cqw;
-  min-width: 0;
-  padding-bottom: 1.4cqw;
-  border-bottom: 1px solid var(--brief-head-line);
-  color: var(--brief-head-ink);
-}
-
-.raceName {
-  /* Pangram, the face this page spends on the wordmark and on a section
-     heading, at the size that makes the race a title card rather than a status
-     line. Capped at two line boxes; RaceBrief measures and steps the size down
-     until the name fits inside them. */
-  font-family: var(--font-pangram);
-  font-weight: 400;
-  /* 9.4, not the 11 this started at, because 11 does not fit. Measured: the
-     largest size that holds each of the three shipped names inside two line
-     boxes lands between 9.41 and 10.40 cqw across nine viewport widths, and the
-     binding case is "Winter series race 2" at 9.41. A stated size above the
-     binding case is a size the measured fit has to correct after hydration, in
-     full view of the reader. Below it, the fit never fires and the server's
-     first paint is the final one. The fit stays as the net for a name longer
-     than any in the registry today. */
-  font-size: calc(9.4 * 1cqw);
-  line-height: 1.02;
-  letter-spacing: -0.025em;
-  text-wrap: balance;
-  max-height: 2.04em;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.raceMeta {
-  flex: none;
-  color: var(--brief-head-dim);
-  font-family: var(--brief-sans);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  line-height: 16px;
-  text-transform: uppercase;
-}
-
-.briefMain {
-  display: grid;
-  flex: 1;
-  grid-template-columns: 1.08fr 1fr 1.12fr;
-  gap: 1.8cqw;
-  min-height: 0;
-  overflow: hidden;
 }
 
 /* Every scroller on this layer, at every width, not just the stacked column
@@ -236,14 +179,95 @@
   }
 }
 
+/* Header ink follows the sky it sits on. The gradient's top band is the
+   sky-horizon token nearly neat, so a light sky takes near-black type and a
+   dark one takes near-white, and the rule under the header goes with it. The
+   branch is computed in LaylineApp off the token's WCAG luminance; these are
+   the two results it writes. */
+.briefHead {
+  display: flex;
+  flex: none;
+  /* The name gets the whole width, at every size. Sharing the row with the meta
+     line left the title's budget swinging between 234 and 454px depending on
+     the viewport, so the size that fits two lines swung with it and the
+     stylesheet could not state one: the server painted 11cqw and the measured
+     fit corrected it to less than half that after hydration, which a reader saw
+     as the name popping in large and shrinking. Given the full width, 11cqw
+     fits every shipped name at every width and the fit never has to fire. */
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.7cqw;
+  min-width: 0;
+  padding-bottom: 1.4cqw;
+  border-bottom: 1px solid var(--brief-head-line);
+  color: var(--brief-head-ink);
+}
+
+.raceName {
+  /* Pangram, the face this page spends on the wordmark and on a section
+     heading, at the size that makes the race a title card rather than a status
+     line. Capped at two line boxes; RaceBrief measures and steps the size down
+     until the name fits inside them. */
+  font-family: var(--font-pangram);
+  font-weight: 400;
+  /* 9.4, not the 11 this started at, because 11 does not fit. Measured: the
+     largest size that holds each of the three shipped names inside two line
+     boxes lands between 9.41 and 10.40 cqw across nine viewport widths, and the
+     binding case is "Winter series race 2" at 9.41. A stated size above the
+     binding case is a size the measured fit has to correct after hydration, in
+     full view of the reader. Below it, the fit never fires and the server's
+     first paint is the final one. The fit stays as the net for a name longer
+     than any in the registry today. */
+  font-size: calc(9.4 * 1cqw);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  max-height: 2.04em;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* The label size, and there is one of it: 10px Archivo on a 16px box with the
+   console's own 0.14em of dock tracking, uppercase. Every label on the layer
+   takes this rule rather than a size of its own, which is what holds the whole
+   layer to three sizes: 22 for a reading, 10 for a label, 9 inside the
+   drawing. */
+.raceMeta,
+.panelLabel,
+.stripLabel,
+.readLabel,
+.status {
+  font-family: var(--brief-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
+.raceMeta {
+  flex: none;
+  color: var(--brief-head-dim);
+}
+
+.briefMain {
+  display: grid;
+  flex: 1;
+  /* One column at both widths, so the wide layout is the same stack as the
+     narrow one and not a second design. The plot takes whatever the three
+     fixed blocks under it leave, which is what makes the chart the thing that
+     grows when the viewer's window does. */
+  grid-template-columns: 1fr;
+  grid-template-rows: minmax(0, 1fr) auto auto auto;
+  gap: 1.8cqw;
+  min-height: 0;
+  overflow: hidden;
+}
+
 /* A 1px dim rule does the job a drop shadow would, which is the console's
    standing rule and holds here. */
 .panel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.9cqw;
   min-height: 0;
-  padding: 1.5cqw 1.6cqw;
   border: 1px solid var(--brief-hair);
   background: var(--brief-panel);
   overflow: hidden;
@@ -258,6 +282,10 @@
   animation-delay: 140ms;
 }
 
+.panel:nth-child(4) {
+  animation-delay: 210ms;
+}
+
 @keyframes briefRise {
   from {
     opacity: 0;
@@ -265,251 +293,202 @@
   }
 }
 
-/* The console's own dock label, to the value: Archivo 600 at 10px on 16, with
-   0.14em of tracking, uppercase. */
 .panelLabel {
   display: flex;
+  flex: none;
   justify-content: space-between;
   color: var(--brief-dim);
-  font-family: var(--brief-sans);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  line-height: 16px;
-  text-transform: uppercase;
 }
 
 /* A measured value, so it leaves the label's face for the mono. */
 .panelCount {
-  color: var(--brief-faint);
-  font-family: var(--brief-mono);
-  letter-spacing: 0.08em;
-}
-
-/* ---- fleet at the line ---- */
-
-.fleetRow {
-  display: flex;
-  align-items: center;
-  gap: 0.9cqw;
-  font-family: var(--brief-mono);
-  padding: 0.78cqw 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: max(1.2cqw, 10px);
-}
-
-.fleetRow:last-of-type {
-  border-bottom: none;
-}
-
-.chip {
-  flex: none;
-  width: 1.25cqw;
-  min-width: 9px;
-  height: 1.25cqw;
-  min-height: 9px;
-}
-
-/* A hue that is near the panel ground needs an edge to hold against it. */
-.chipDark {
-  outline: 1px solid rgba(255, 255, 255, 0.5);
-}
-
-.sail {
-  flex: none;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-/* The one part of the row that gives way. A narrow console truncates the team
-   name rather than wrapping the sail number or the meters off the line, which
-   are the two things the row is for. */
-.boatName {
-  flex: 1 1 auto;
-  min-width: 0;
   color: var(--brief-dim);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.slot {
-  flex: none;
-  margin-left: auto;
-  color: var(--brief-faint);
-  white-space: nowrap;
-}
-
-/* Pinned to the bottom of the panel, so the three readings sit on the same
-   line whatever the fleet above them costs. */
-.fleetFoot {
-  display: flex;
-  flex-wrap: wrap;
   font-family: var(--brief-mono);
-  white-space: nowrap;
-  justify-content: space-between;
-  gap: 0.4cqw 1cqw;
-  margin-top: auto;
-  padding-top: 0.9cqw;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--brief-dim);
-  font-size: max(1cqw, 9px);
-}
-
-/* ---- wind ---- */
-
-.dialWrap {
-  display: grid;
-  flex: 1;
-  place-items: center;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.dial {
-  width: 220px;
-  max-width: 100%;
-  max-height: 100%;
-  height: auto;
-}
-
-/* The console's own dial parts, same values as hud/WindDial.tsx reads out of
-   layline.module.css, in this layer's inks where the console's would be a theme
-   token: the rim and the ticks sit on water here, not on a dock ground. */
-.dialFace {
-  fill: none;
-  stroke: var(--brief-hair-strong, rgba(255, 255, 255, 0.3));
-  stroke-width: 1;
-}
-
-/* The surveyed range, not a reading: the breeze swings plus or minus 8 degrees
-   about the course axis and the band is where that swing lives. */
-.dialBand {
-  fill: var(--brief-accent);
-  opacity: 0.24;
-}
-
-.dialTicks line {
-  stroke: var(--brief-dim);
-  stroke-width: 1;
-}
-
-.dialNeedle {
-  stroke: var(--brief-accent);
-  stroke-width: 1.6;
-}
-
-.dialHead {
-  fill: var(--brief-accent);
-}
-
-.dialHub {
-  fill: var(--brief-dim);
-}
-
-.twsRow {
-  display: flex;
-  flex: none;
-  align-items: baseline;
-  justify-content: center;
-  gap: 0.9cqw;
-}
-
-.twsBig {
-  font-family: var(--brief-mono);
-  font-size: max(2.7cqw, 20px);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-.twsUnit {
-  color: var(--brief-dim);
-  font-family: var(--brief-sans);
   font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  line-height: 16px;
-  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-transform: none;
 }
 
-.trace {
-  flex: none;
-  width: 100%;
-  height: 4.2cqw;
-  min-height: 26px;
+/* ---- the plot: the last ten seconds, from above, at true scale ---- */
+
+.plotPlate {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
 }
 
-/* ---- start line ---- */
-
-.lineDiagram {
+.plotBox {
   flex: 1;
-  width: 100%;
   min-height: 0;
 }
 
-.diagramTag {
-  font-family: var(--brief-mono);
-  font-size: 4px;
+.plot {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-.diagramNote {
-  fill: rgba(255, 255, 255, 0.55);
-  font-family: var(--brief-mono);
-  font-size: 3.4px;
+/* Metres, one to one, with y negated for the screen's downward axis: the same
+   frame components/layline/svg/chartFrame.ts draws the whole race in. Strokes
+   are non-scaling so a hairline stays a hairline whatever the window does to
+   the metres per pixel. */
+/* Every width below is stated in pixels and multiplied back into metres by
+   --plot-px, the measured metres per pixel RaceBrief writes onto the drawing.
+   vector-effect: non-scaling-stroke would have been shorter and it is wrong
+   here: Chrome then reads stroke-dasharray in device pixels too, so the dash
+   that reveals how far a boat has sailed repeated eight times down its own
+   track instead of drawing one prefix of it. Scaling the width keeps the dash
+   in metres, where the reveal is measured. */
+
+/* Solid and heavy is surveyed water: the line itself, in the wind's colour,
+   because the console's contract names "the start line before the gun" as one
+   of the things amber means and this whole layer is before the gun. */
+.plotLine {
+  stroke: var(--brief-accent);
+  stroke-width: calc(2 * var(--plot-px));
 }
 
-.diagramEnd {
-  fill: rgba(255, 255, 255, 0.75);
-  font-family: var(--brief-mono);
-  font-size: 3.6px;
+/* The two ends are marks on the water rather than weather, so they stay in
+   ink. Open ring for the pin, filled block for the committee boat: a chart
+   separates its marks by shape, not by giving each one a colour. */
+.plotMark {
+  fill: none;
+  stroke: var(--brief-ink);
+  stroke-width: 1.4;
 }
 
-.favMark {
-  fill: var(--brief-accent);
+.plotMarkFill {
+  fill: var(--brief-ink);
 }
 
-/* Amber is the wind, and on this layer that is the needle, the arrow, the tag
-   it carries, the line before the gun, and the mark over the end that line
-   favors. Nothing else. */
+/* Dotted is a limit rather than a thing. The rungs are contours of equal gain
+   to windward ten metres apart, so they are where the wind is, not what is on
+   the water, and they rotate as one group with it. */
+.rung {
+  fill: none;
+  stroke: var(--brief-accent);
+  stroke-width: calc(1 * var(--plot-px));
+  /* Metres, so the dot spacing is a distance on the water like everything else
+     in this drawing. */
+  stroke-dasharray: 0.3 2.4;
+}
+
+/* The water the favored end has already won: the sliver between the line and
+   the rung through its middle. It is the bias, drawn at the scale the bar
+   underneath it states, and it collapses as the breeze comes back to the
+   course axis. */
+.wedge {
+  /* Stated as a mix rather than as an alpha laid over the accent, so what the
+     reader sees on the plate is a colour this stylesheet named. */
+  fill: color-mix(in srgb, var(--brief-accent) 26%, transparent);
+  stroke: none;
+}
+
 .windStroke {
   stroke: var(--brief-accent);
+  stroke-width: 1.4;
 }
 
 .windFill {
   fill: var(--brief-accent);
 }
 
-.biasReads {
+/* The one figure inside the drawing that is weather, so the one that takes the
+   wind's colour out here on the water. */
+.windTag {
+  fill: var(--brief-accent);
+  font-family: var(--brief-mono);
+  letter-spacing: 0.02em;
+}
+
+.favMark {
+  fill: var(--brief-accent);
+}
+
+/* The approach still to be sailed, thin and in the dim token. Weight and not
+   hue separates it from the water already crossed, which is drawn over it in
+   the boat's own colour at twice the weight: the reader can tell the two apart
+   in a photocopy. */
+.trackAhead {
+  fill: none;
+  stroke: var(--brief-dim);
+  stroke-width: calc(1 * var(--plot-px));
+}
+
+.trackSailed {
+  fill: none;
+  stroke-width: calc(2.4 * var(--plot-px));
+}
+
+/* A near-black hull colour needs a light edge to survive the plate, the same
+   outline its ledger chip carries and the same one TrackChart gives it. */
+.trackDark {
+  fill: none;
+  stroke: var(--brief-dim);
+  stroke-width: calc(4 * var(--plot-px));
+}
+
+/* Filled is the hull now, outlined is where it will be at the gun: fill, not
+   colour, carries the difference. Both are drawn at a fixed size in pixels
+   because no hull length is in the feed, and a symbol scaled to the chart
+   would be a claim about how long these boats are. */
+.hullNow {
+  /* Set for the near-black hue, which takes a light edge to hold against the
+     plate. Every other hull leaves stroke unset, so this does nothing. */
+  stroke-width: 0.7;
+}
+
+.hullGun {
+  fill: none;
+  stroke-width: 1.2;
+}
+
+.scaleRule {
+  stroke: var(--brief-ink);
+  stroke-width: calc(1.2 * var(--plot-px));
+}
+
+/* Inside the drawing the type drops to nine, the one place on the layer it is
+   not ten, because a label out on the water is read against the chart rather
+   than against the rows beside it. Sizes are written in user units by the
+   measured metres per pixel, so nine pixels stays nine pixels at every width. */
+.plotLabel {
+  fill: var(--brief-dim);
+  font-family: var(--brief-sans);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.plotFig {
+  fill: var(--brief-dim);
+  font-family: var(--brief-mono);
+  letter-spacing: 0.02em;
+}
+
+.plotSail {
+  fill: var(--brief-ink);
+  font-family: var(--brief-mono);
+  letter-spacing: 0.02em;
+}
+
+.plotCap {
   display: flex;
   flex: none;
   justify-content: space-between;
   gap: 2cqw;
 }
 
-.biasNum {
-  font-family: var(--brief-mono);
-  font-size: max(2.2cqw, 16px);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-.biasCap {
-  margin-top: 0.3cqw;
-  color: var(--brief-dim);
-  font-family: var(--brief-sans);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  line-height: 16px;
-  text-transform: uppercase;
-}
-
 .favored {
-  flex: none;
   margin: 0;
   color: var(--brief-dim);
   font-family: var(--brief-mono);
-  font-size: max(1.15cqw, 10px);
+  font-size: 10px;
+  line-height: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .favored b {
@@ -527,6 +506,164 @@
   color: var(--brief-accent);
 }
 
+/* ---- the direction strip: where the breeze went across the ten seconds ---- */
+
+/* The one place the shift is legible as a shape. The speed moves about half a
+   metre a second across the prestart and the direction swings four to eight
+   degrees, taking the favored end with it on two of the three seeds, so this
+   band plots the direction and the readings row carries the speed. */
+.stripPlate {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  height: 28px;
+  padding: 0 10px;
+}
+
+.stripLabel {
+  flex: none;
+  color: var(--brief-dim);
+}
+
+.stripPlot {
+  flex: 1;
+  min-width: 0;
+  height: 20px;
+}
+
+.stripValue {
+  flex: none;
+  color: var(--brief-ink);
+  font-family: var(--brief-mono);
+  font-size: 10px;
+  line-height: 16px;
+}
+
+/* The course axis, which is the line the favored end changes hands across. */
+.stripRule {
+  stroke: var(--brief-hair);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+.stripTrace {
+  fill: none;
+  stroke: var(--brief-accent);
+  stroke-width: 1.5;
+}
+
+.stripDot {
+  fill: var(--brief-accent);
+}
+
+/* ---- the fleet, in the order it lies along the line ---- */
+
+.ledger {
+  display: flex;
+  flex-direction: column;
+  /* No gap between rows: the line box is the rhythm, and eight pixels between
+     six of them was sixty pixels the chart above wanted more. */
+  gap: 0;
+  padding: 10px 12px;
+}
+
+.ledger .panelLabel {
+  margin-bottom: 6px;
+}
+
+/* Pin end to boat end, which is left to right on the plot above it, so the
+   list and the drawing are visibly the same six things in the same order. */
+.fleetRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--brief-mono);
+  font-size: 10px;
+  line-height: 20px;
+}
+
+.chip {
+  flex: none;
+  width: 9px;
+  height: 9px;
+}
+
+/* A hue that is near the plate ground needs an edge to hold against it. */
+.chipDark {
+  outline: 1px solid var(--brief-dim);
+}
+
+.sail {
+  flex: none;
+  width: 52px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* The one part of the row that gives way. A narrow console truncates the team
+   name rather than wrapping the sail number or the metres, which are the two
+   things the row is for. */
+.boatName {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--brief-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.across,
+.slot {
+  flex: none;
+  width: 56px;
+  color: var(--brief-dim);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.fleetFoot {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--brief-hair);
+  color: var(--brief-dim);
+  font-family: var(--brief-mono);
+  font-size: 10px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+/* ---- the readings ---- */
+
+.readCell {
+  min-width: 0;
+}
+
+.reads {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px 12px;
+  padding: 10px 12px;
+}
+
+.readLabel {
+  color: var(--brief-dim);
+}
+
+.readValue {
+  font-family: var(--brief-mono);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 26px;
+  white-space: nowrap;
+}
+
 /* ---- footer ---- */
 
 .briefFoot {
@@ -535,15 +672,14 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 2cqw;
-  animation: briefRise 420ms var(--ease) 210ms both;
+  animation: briefRise 420ms var(--ease) 280ms both;
 }
 
 .status {
   flex: 1;
   margin: 0;
   color: var(--brief-dim);
-  font-family: var(--brief-sans);
-  font-size: 11px;
+  text-transform: none;
   letter-spacing: 0.06em;
 }
 
@@ -553,7 +689,7 @@
   width: 14cqw;
   height: 2px;
   margin-left: 1cqw;
-  background: rgba(255, 255, 255, 0.22);
+  background: var(--brief-hair);
   vertical-align: middle;
 }
 
@@ -587,12 +723,13 @@
   border: 1px solid var(--brief-ink);
   background: var(--brief-ink);
   color: var(--water-deep);
-  /* Archivo 800, the console's own primary button. Mono here would be a lie
-     about where the data is: this is a control, not a measurement. */
+  /* Archivo, the console's own primary button, and at the label size the rest
+     of the layer uses: mono here would be a lie about where the data is,
+     because this is a control and not a measurement. */
   font-family: var(--brief-sans);
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
   line-height: 16px;
   text-transform: uppercase;
   /* The house pointer, never the browser hand: every control on this page
@@ -622,12 +759,12 @@
   transform: translateX(3px);
 }
 
-/* ---- narrow: stack the brief, ground the footer ---- */
+/* ---- narrow: give the chart room, ground the footer ---- */
 
 /* Under the library's three-column threshold the console is taller than the
    viewport, so the cover is too, and a brief that filled it would put its way
    through hundreds of pixels below the fold. Held to a screen and stuck to the
-   top of one, the panels scroll inside the brief and the footer stays where a
+   top of one, the blocks scroll inside the brief and the footer stays where a
    thumb can reach it.
 
    The screen it is held to ends where the analyst's composer begins: below
@@ -664,11 +801,13 @@
     font-size: 9px;
   }
 
-  /* Stacked, each panel is as tall as what is in it and the column scrolls.
-     Wide, the three share one row and clip; here clipping would take a boat
-     off the fleet list. */
+  /* Stacked, each block is as tall as what is in it and the column scrolls.
+     The plot keeps a stated height rather than shrinking with the rest: on a
+     narrow box the chart is the one thing worth the room, and the ledger is
+     what a thumb scrolls to. */
   .briefMain {
     grid-template-columns: 1fr;
+    grid-template-rows: none;
     grid-auto-rows: min-content;
     gap: 12px;
     overflow-y: auto;
@@ -676,68 +815,39 @@
   }
 
   .panel {
-    gap: 8px;
-    padding: 12px 14px;
     animation: none;
   }
 
-  .panelLabel {
-    font-size: 9px;
+  .plotPlate {
+    gap: 6px;
+    padding: 10px;
   }
 
-  .fleetRow {
-    gap: 8px;
-    padding: 7px 0;
-    font-size: 11px;
-  }
-
-  .chip {
-    width: 10px;
-    height: 10px;
-  }
-
-  /* Nothing above it is stretching any more, so the footer sits under the
-     last boat rather than at the bottom of a panel taller than its rows. */
-  .fleetFoot {
-    margin-top: 8px;
-    gap: 4px 10px;
-    padding-top: 8px;
-    font-size: 9px;
-  }
-
-  .dialWrap {
+  .plotBox {
     flex: none;
-    min-height: 170px;
+    height: 300px;
   }
 
-  .twsRow {
-    gap: 8px;
+  .ledger,
+  .reads {
+    padding: 10px;
   }
 
-  .twsBig {
-    font-size: 24px;
+  .reads {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .lineDiagram {
-    flex: none;
-    height: 180px;
+  .stripPlate {
+    padding: 0 8px;
   }
 
-  .biasReads {
-    gap: 12px;
+  .sail {
+    width: 48px;
   }
 
-  .biasNum {
-    font-size: 18px;
-  }
-
-  .biasCap {
-    margin-top: 3px;
-    font-size: 8px;
-  }
-
-  .favored {
-    font-size: 11px;
+  .across,
+  .slot {
+    width: 48px;
   }
 
   /* The main area scrolls under this, so the way through is never the thing
@@ -758,7 +868,6 @@
   .goBtn {
     width: 100%;
     padding: 12px 16px;
-    font-size: 11px;
   }
 
   .goArrow {

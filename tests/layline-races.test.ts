@@ -16,8 +16,19 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { generateRace, polarFrac } from "../src/lib/layline/sim";
-import { briefFacts, prestartTrace, windReading, windReadingAt } from "../src/lib/layline/brief";
-import { windAt } from "../src/lib/layline/interpolate";
+import {
+  briefFacts,
+  prestartFrame,
+  prestartTracks,
+  prestartTwdSeries,
+  scaleStep,
+  twdSwing,
+  twdBand,
+  windReading,
+  windReadingAt,
+} from "../src/lib/layline/brief";
+import { startLineOf, startReadingAt } from "../src/lib/layline/analytics";
+import { poseAt, windAt } from "../src/lib/layline/interpolate";
 import { startReport } from "../src/lib/layline/analyst/tools";
 import { clock } from "../src/lib/layline/format";
 import { DEFAULT_RACE_ID, RACES, isRaceId, raceMeta } from "../src/lib/layline/races";
@@ -918,7 +929,15 @@ test("the sea cover briefs the race it is loading", () => {
   const goBtn = cover.slice(cover.indexOf(".goBtn {"), cover.indexOf(".goArrow {"));
   assert.ok(goBtn.includes("var(--brief-sans)"), "the way through went back to mono");
   assert.ok(!goBtn.includes("var(--brief-mono)"), "the way through went back to mono");
-  for (const measured of [".twsBig {", ".biasNum {", ".fleetRow {", ".panelCount {"]) {
+  for (const measured of [
+    ".readValue {",
+    ".fleetRow {",
+    ".panelCount {",
+    ".stripValue {",
+    ".favored {",
+    ".plotFig {",
+    ".plotSail {",
+  ]) {
     const block = cover.slice(cover.indexOf(measured));
     assert.ok(
       block.slice(0, block.indexOf("}")).includes("var(--brief-mono)"),
@@ -942,20 +961,25 @@ test("the sea cover briefs the race it is loading", () => {
     "the accent left the console's own wind token for a hex of this layer's own",
   );
   assert.equal((cover.match(/#ffd166/g) ?? []).length, 0, "the invented accent hex came back");
-  /* Seven users, and every one of them is the wind: the dial's survey band,
-     its needle and its head; the arrow over the start-line drawing and the TWD
-     tag it carries; the start line itself, which the contract names as one of
-     the things amber means before the gun; and the mark over the end that line
-     favors with the seconds it is worth. The status hairline is a wait, not
-     weather, and does not take it. */
+  /* Ten users, and every one of them is the wind or what the wind decides: the
+     ladder rungs and the wedge of water the favored end has already won; the
+     arrow lying across the course, its head and the direction it carries; the
+     start line itself, which the contract names as one of the things amber
+     means before the gun; the mark over the end that line favors and the
+     seconds it is worth; and the direction trace under the drawing with the
+     dot running along it. The status hairline is a wait, not weather, and does
+     not take it. Neither does a boat, a rule or a label. */
   const accentUsers = [
-    ".dialBand",
-    ".dialNeedle",
-    ".dialHead",
-    ".favMark",
+    ".rung",
+    ".wedge",
     ".windStroke",
     ".windFill",
+    ".windTag",
+    ".plotLine",
+    ".favMark",
     ".favSec",
+    ".stripTrace",
+    ".stripDot",
   ];
   assert.equal(
     (cover.match(/var\(--brief-accent\)/g) ?? []).length,
@@ -1157,14 +1181,112 @@ test("the brief's wind is the replay's wind, and the favored end is the one near
     "the live loop stopped closing the favored sentence on a square line",
   );
 
-  /* The trace under the dial is the same series, sampled across the prestart
-     and inside the sim's own clamp. */
-  const trace = prestartTrace(race, 60);
-  assert.equal(trace.length, 61);
-  assert.equal(trace[0].t, race.tMin);
-  assert.equal(trace[60].t, 0);
-  for (const point of trace) {
-    assert.ok(point.tws >= 6.2 - 1e-9 && point.tws <= 8.7 + 1e-9, "the trace left the sim's clamp");
+  /* The strip under the drawing plots direction, not speed, because direction
+     is where the movement is: the same series windAt hands the replay, sampled
+     across the prestart, ending on the gun, and inside its own stated window
+     so the trace fills the band and never leaves it. */
+  const series = prestartTwdSeries(race, 60);
+  assert.equal(series.length, 61);
+  assert.equal(series[0].t, race.tMin);
+  assert.equal(series[60].t, 0);
+  const band = twdBand(series);
+  for (const point of series) {
+    windAt(race, point.t, sample);
+    const signedTwd = (((((sample.twd % 360) + 360) % 360) + 180) % 360) - 180;
+    assert.ok(
+      Math.abs(point.twd - signedTwd) < 1e-9,
+      `the strip left windAt at t=${point.t.toFixed(2)}`,
+    );
+    assert.ok(
+      point.twd >= band.lo && point.twd <= band.hi,
+      "the trace left the band it is drawn in",
+    );
+  }
+  /* The swing is what the strip labels, and it is the movement the whole
+     drawing is about: the breeze goes right through the prestart on every
+     shipped seed and takes the favored end with it on two of the three. */
+  assert.ok(twdSwing(series) > 1, "the shipped prestart stopped shifting");
+});
+
+test("the brief's chart is fitted to the race and drawn at a stated scale", () => {
+  for (const meta of RACES) {
+    const race = generateRace(meta.seed);
+    const tracks = prestartTracks(race, 0.25);
+
+    /* One track per boat, in race.boats order, opening on the first fix and
+       ending exactly on the gun however the step divides the prestart. */
+    assert.deepEqual(
+      tracks.map((track) => track.boat.id),
+      race.boats.map((boat) => boat.id),
+      `${meta.id} lost a boat off the drawing`,
+    );
+    const pose = { x: 0, y: 0, hdg: 0, heel: 0, twa: 0, sog: 0, cog: 0, kite: 0 };
+    for (const track of tracks) {
+      assert.equal(track.times[0], race.tMin);
+      assert.equal(track.times[track.times.length - 1], 0);
+      assert.equal(track.points.length, track.times.length * 2);
+      /* Metres off poseAt with y negated for the screen, the same frame
+         chartFrame.ts draws the whole race in, so the two drawings cannot be
+         the same course at two scales. */
+      poseAt(race, track.boat.id, 0, "smooth", pose);
+      assert.ok(Math.abs(track.points[track.points.length - 2] - pose.x) < 1e-9);
+      assert.ok(Math.abs(track.points[track.points.length - 1] + pose.y) < 1e-9);
+      assert.ok(Math.abs(track.gunHdg - pose.hdg) < 1e-9);
+      /* Arc length rises along the very polyline the path is built from, which
+         is what lets a dash reveal exactly the water already sailed. */
+      assert.equal(track.lengths[0], 0);
+      for (let i = 1; i < track.lengths.length; i += 1) {
+        assert.ok(track.lengths[i] >= track.lengths[i - 1], "the arc length went backwards");
+      }
+      assert.equal(track.total, track.lengths[track.lengths.length - 1]);
+      assert.ok(track.total > 40, `${meta.id} ${track.boat.sail} sailed nowhere`);
+    }
+
+    /* The window holds every sampled fix and both ends of the line, and it is
+       isotropic: the box's aspect is spent on the frame, never on stretching
+       one axis, which is the only reason the scale bar can be honest. */
+    for (const aspect of [3.44, 1.8, 1]) {
+      const frame = prestartFrame(race, tracks, aspect);
+      assert.ok(Math.abs(frame.w / frame.h - aspect) < 1e-6, "the frame left the box's aspect");
+      assert.ok(frame.x <= race.course.startPin.x, "the pin fell off the drawing");
+      assert.ok(frame.x + frame.w >= race.course.startBoat.x, "the boat end fell off the drawing");
+      for (const track of tracks) {
+        for (let i = 0; i < track.points.length; i += 2) {
+          assert.ok(track.points[i] >= frame.x && track.points[i] <= frame.x + frame.w);
+          assert.ok(track.points[i + 1] >= frame.y && track.points[i + 1] <= frame.y + frame.h);
+        }
+      }
+      /* The bar is a round step near a fifth of the drawing, so a reader never
+         has to do arithmetic against it. */
+      const step = scaleStep(frame.w);
+      assert.ok([10, 20, 50, 100].includes(step), "the scale bar took an unreadable step");
+      assert.ok(step <= frame.w, "the scale bar is wider than the water it measures");
+    }
+  }
+});
+
+test("the brief's ledger reads each hull's distance off the line the console's own way", () => {
+  for (const meta of RACES) {
+    const race = generateRace(meta.seed);
+    const facts = briefFacts(race);
+    const line = startLineOf(race.course);
+    const pose = { x: 0, y: 0, hdg: 0, heel: 0, twa: 0, sog: 0, cog: 0, kite: 0 };
+    const out = { distance: 0, closing: 0, toLine: 0, early: false };
+    for (const boat of facts.boats) {
+      poseAt(race, boat.id, 0, "smooth", pose);
+      startReadingAt(line, pose, 0, out);
+      assert.equal(
+        boat.offLine,
+        out.distance,
+        `${meta.id} ${boat.sail} off-the-line reading left startReadingAt`,
+      );
+      /* Nobody is over at the gun on these seeds, and nobody is a boat length
+         from a line they spent ten seconds lining up on. */
+      assert.ok(
+        boat.offLine > 0 && boat.offLine < 8,
+        `${meta.id} ${boat.sail} is ${boat.offLine.toFixed(1)} m off its own line`,
+      );
+    }
   }
 });
 

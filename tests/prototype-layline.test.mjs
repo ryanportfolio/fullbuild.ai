@@ -496,8 +496,12 @@ test('the boot cover keeps the house rules while it briefs the race', async () =
   /* Every drawing that carries a reading is labelled, and every reading a
      label cannot carry is also in text underneath it. */
   const svgs = brief.match(/role="img"/g) ?? [];
-  assert.equal(svgs.length, 3, 'the brief draws something a screen reader cannot name');
-  assert.equal((brief.match(/aria-label=/g) ?? []).length, 4);
+  assert.equal(svgs.length, 2, 'the brief draws something a screen reader cannot name');
+  assert.equal((brief.match(/aria-label=/g) ?? []).length, 3);
+  /* Both labels state what the drawing shows in the race's own numbers rather
+     than naming a picture, and the layer itself is named for the race. */
+  assert.match(brief, /aria-label=\{`The last \$\{prestartSeconds\} seconds before the gun/);
+  assert.match(brief, /aria-label=\{`True wind direction across the prestart/);
 
   /* The brief holds while the renderer warms, and says which of the two it is
      waiting on. Neither string claims the race is loading: it is already
