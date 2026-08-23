@@ -1036,6 +1036,33 @@ test("the sea cover briefs the race it is loading", () => {
     app.includes('data-brief-motion={briefed ? (reducedMotion ? "off" : "on") : undefined}'),
     "the cover stopped stating whether the brief is moving",
   );
+  /* The capture hold stops this layer's entrance as well as the replay clock.
+     Two screenshots of the same stated race time a tenth of a second apart
+     otherwise catch the plates at two points of one 420ms fade, which is what
+     check 1 of .tmp/verify.mjs measures. */
+  assert.ok(
+    app.includes('data-brief-still={briefed && frozen ? "" : undefined}'),
+    "the cover stopped publishing the capture hold",
+  );
+  assert.match(cover, /\[data-brief-still\] \.panel,\s*\[data-brief-still\] \.briefFoot \{\s*animation: none;/);
+  /* Jumped to its end rather than cancelled: the hairline starts at no width,
+     so cancelling its ease would leave an empty bar in every capture. */
+  assert.match(cover, /\[data-brief-still\] \.statusFill \{\s*animation-delay: -6s;/);
+
+  /* The drawing scales its stroke widths by a measured metres-per-pixel rather
+     than reaching for vector-effect, because Chrome then reads
+     stroke-dasharray in device pixels too and the dash that reveals how far a
+     boat has sailed repeats down its own track instead of drawing one prefix
+     of it. */
+  assert.ok(brief.includes('{ "--plot-px": mpx.toFixed(5) }'), "the drawing lost its one scale factor");
+  assert.ok(
+    !cover.replace(/\/\*[\s\S]*?\*\//g, "").includes("vector-effect"),
+    "the track reveal went back to a device-pixel dash",
+  );
+  assert.ok(
+    (cover.match(/var\(--plot-px\)/g) ?? []).length >= 5,
+    "the drawing's stroke widths stopped scaling with the chart",
+  );
   /* Briefed, the cover carries the only control on the layer, so it cannot be
      hidden from a screen reader the way the bare sea was. */
   assert.ok(

@@ -92,6 +92,11 @@ export function LaylineApp({
   const rig = useReplay((state) => state.rig);
   const briefDone = useReplay((state) => state.briefDone);
   const reducedMotion = useReplay((state) => state.reducedMotion);
+  /* The capture hold, which stops the replay clock, has to stop this layer's
+   * own entrance as well: two screenshots of the same stated race time taken a
+   * tenth of a second apart would otherwise catch the plates at two points of
+   * one 420ms fade and hash differently. */
+  const frozen = useReplay((state) => state.frozen);
   const briefed = boot === "sea" && bootBrief !== undefined;
 
   /* On desktop the chart lives 350ms past the renderer's first frame so it
@@ -260,6 +265,7 @@ export function LaylineApp({
             .filter((name) => name !== "")
             .join(" ")}
           data-brief-motion={briefed ? (reducedMotion ? "off" : "on") : undefined}
+          data-brief-still={briefed && frozen ? "" : undefined}
           aria-hidden={briefed ? undefined : "true"}
           style={briefed ? undefined : { pointerEvents: "none" }}
         >

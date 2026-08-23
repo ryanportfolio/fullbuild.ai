@@ -20,6 +20,7 @@ import {
   windReading,
   windReadingAt,
   type BriefFacts,
+  type PrestartFrame,
   type PrestartTrack,
   type WindReading,
 } from "@/lib/layline/brief";
@@ -72,13 +73,12 @@ const TRACK_STEP = 0.25;
  * draws the curve between the 1 Hz wind samples rather than the samples. */
 const TWD_STEPS = 120;
 
-/* Metres of gain to windward between ladder rungs, and how far each one runs
- * either side of the course axis before the drawing's own edge cuts it. Both
- * are drawing constants: the spacing is a grid the reader counts, not a
- * reading, which is why neither is labelled with a number. */
+/* Metres of gain to windward between ladder rungs. A drawing constant: the
+ * spacing is a grid the reader counts, not a reading, which is why it is never
+ * labelled with a number. The pool is how many rungs the drawing is willing to
+ * hold, comfortably past the ten or so its own diagonal can show. */
 const RUNG_SPACING = 10;
-const RUNG_REACH = 140;
-const RUNG_MARGIN = 20;
+const RUNG_SLOTS = 16;
 
 /* The drawing box's aspect on the wide branch, used for the frame the server
  * renders. The layout effect measures the box before the first paint and
@@ -122,6 +122,84 @@ function endLabel(favored: WindReading["favored"]): string {
 
 function newPose(): Pose {
   return { x: 0, y: 0, hdg: 0, heel: 0, twa: 0, sog: 0, cog: 0, kite: 0 };
+}
+
+interface Rung {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+/**
+ * The ladder the fleet is climbing: contours of equal gain to windward, ten
+ * metres apart, turned by the breeze and trimmed to the drawing's own edges.
+ *
+ * Trimmed here rather than left to the SVG viewport, which would clip them on
+ * screen but not in the DOM: a line drawn off the chart still reports its full
+ * width to getBoundingClientRect, and check 4 of .tmp/verify.mjs reads exactly
+ * that to prove nothing on the layer overflows the cover. Twelve rungs running
+ * two hundred metres each failed it while being invisible.
+ *
+ * The gain of a screen point is `x sin twd - y cos twd`, which is zero along
+ * the line's own middle and rises up the beat. The rung of gain g is the line
+ * through `g (sin twd, -cos twd)` along `(cos twd, sin twd)`, and Liang-Barsky
+ * cuts it to the frame.
+ */
+function rungSegments(frame: PrestartFrame, twdDeg: number): Rung[] {
+  const a = (twdDeg * Math.PI) / 180;
+  const sin = Math.sin(a);
+  const cos = Math.cos(a);
+  const left = frame.x;
+  const right = frame.x + frame.w;
+  const top = frame.y;
+  const bottom = frame.y + frame.h;
+
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (const [x, y] of [
+    [left, top],
+    [right, top],
+    [left, bottom],
+    [right, bottom],
+  ]) {
+    const gain = x * sin - y * cos;
+    if (gain < lo) lo = gain;
+    if (gain > hi) hi = gain;
+  }
+
+  const out: Rung[] = [];
+  const first = Math.ceil(lo / RUNG_SPACING) * RUNG_SPACING;
+  for (let gain = first; gain <= hi && out.length < RUNG_SLOTS; gain += RUNG_SPACING) {
+    const px = gain * sin;
+    const py = -gain * cos;
+    let enter = -Infinity;
+    let leave = Infinity;
+    let crosses = true;
+    for (const [slope, room] of [
+      [-cos, px - left],
+      [cos, right - px],
+      [-sin, py - top],
+      [sin, bottom - py],
+    ]) {
+      if (Math.abs(slope) < 1e-9) {
+        if (room < 0) crosses = false;
+        continue;
+      }
+      const at = room / slope;
+      if (slope < 0) {
+        if (at > enter) enter = at;
+      } else if (at < leave) leave = at;
+    }
+    if (!crosses || enter >= leave) continue;
+    out.push({
+      x1: px + enter * cos,
+      y1: py + enter * sin,
+      x2: px + leave * cos,
+      y2: py + leave * sin,
+    });
+  }
+  return out;
 }
 
 /**
@@ -201,15 +279,9 @@ export function RaceBrief({
     [frame],
   );
 
-  /* The rungs are drawn past both edges by the margin, because the whole group
-     turns with the breeze and a rung that stopped at the top edge would swing
-     a gap into the corner. The drawing's own viewport cuts them. */
-  const rungs = useMemo(() => {
-    const out: number[] = [];
-    const first = Math.ceil((frame.y - RUNG_MARGIN) / RUNG_SPACING) * RUNG_SPACING;
-    for (let y = first; y <= frame.y + frame.h + RUNG_MARGIN; y += RUNG_SPACING) out.push(y);
-    return out;
-  }, [frame]);
+  /* What the server draws, and what the first client paint replaces a frame
+     later: the ladder at the top of the prestart. */
+  const seedRungs = useMemo(() => rungSegments(frame, seed.twd), [frame, seed]);
 
   /* Degrees to the strip's own y, off the band the series fills. */
   const stripY = useCallback(
@@ -244,7 +316,7 @@ export function RaceBrief({
   const plotNode = useRef<HTMLDivElement>(null);
   const stripNode = useRef<SVGSVGElement>(null);
   const button = useRef<HTMLButtonElement>(null);
-  const rungGroup = useRef<SVGGElement>(null);
+  const rungs = useRef<(SVGLineElement | null)[]>([]);
   const wedge = useRef<SVGPolygonElement>(null);
   const windArrow = useRef<SVGGElement>(null);
   const windTag = useRef<SVGTSpanElement>(null);
@@ -264,10 +336,10 @@ export function RaceBrief({
      read. Written in a layout effect so a resize is picked up before the
      browser paints and never through a changed paint identity, which would
      restart the loop and re-seek the clock under the reader. */
-  const view = useRef({ mpx, anchor: windAnchor, tracks, stripAt });
+  const view = useRef({ mpx, anchor: windAnchor, tracks, stripAt, frame });
   useLayoutEffect(() => {
-    view.current = { mpx, anchor: windAnchor, tracks, stripAt };
-  }, [mpx, windAnchor, tracks, stripAt]);
+    view.current = { mpx, anchor: windAnchor, tracks, stripAt, frame };
+  }, [mpx, windAnchor, tracks, stripAt, frame]);
 
   const paint = useCallback(
     (t: number) => {
@@ -275,9 +347,18 @@ export function RaceBrief({
       const { mpx: scale, anchor, tracks: drawn, stripAt: at } = view.current;
       const twd = read.twd.toFixed(2);
 
-      /* The ladder is one group turned about the line's middle, so every rung
-         and the wedge under them state the same direction by construction. */
-      setAttr(rungGroup.current, "transform", `rotate(${twd} 0 0)`);
+      /* The ladder and the wedge under it are turned by the same reading, so
+         they cannot state two directions. */
+      const ladder = rungSegments(view.current.frame, read.twd);
+      for (let i = 0; i < RUNG_SLOTS; i += 1) {
+        const rung = ladder[i];
+        const node = rungs.current[i];
+        if (node === null || node === undefined) continue;
+        setAttr(node, "x1", rung === undefined ? "0" : rung.x1.toFixed(2));
+        setAttr(node, "y1", rung === undefined ? "0" : rung.y1.toFixed(2));
+        setAttr(node, "x2", rung === undefined ? "0" : rung.x2.toFixed(2));
+        setAttr(node, "y2", rung === undefined ? "0" : rung.y2.toFixed(2));
+      }
       const end = read.favored === "boat" ? facts.lineHalf : -facts.lineHalf;
       setAttr(wedge.current, "points", wedgePoints(end, read.twd));
       if (wedge.current !== null) {
@@ -535,17 +616,23 @@ export function RaceBrief({
                   group turned about the line's middle so every rung states the
                   same direction, and the sliver the favored end has won drawn
                   between the line and the rung through it. */}
-              <g ref={rungGroup} transform={`rotate(${seed.twd.toFixed(2)} 0 0)`}>
-                {rungs.map((y) => (
-                  <line
-                    key={y}
-                    className={styles.rung}
-                    x1={-RUNG_REACH}
-                    y1={y}
-                    x2={RUNG_REACH}
-                    y2={y}
-                  />
-                ))}
+              <g>
+                {Array.from({ length: RUNG_SLOTS }, (_, index) => {
+                  const rung = seedRungs[index];
+                  return (
+                    <line
+                      key={index}
+                      ref={(node) => {
+                        rungs.current[index] = node;
+                      }}
+                      className={styles.rung}
+                      x1={rung === undefined ? 0 : rung.x1.toFixed(2)}
+                      y1={rung === undefined ? 0 : rung.y1.toFixed(2)}
+                      x2={rung === undefined ? 0 : rung.x2.toFixed(2)}
+                      y2={rung === undefined ? 0 : rung.y2.toFixed(2)}
+                    />
+                  );
+                })}
               </g>
               <polygon
                 className={styles.wedge}
@@ -709,7 +796,7 @@ export function RaceBrief({
                 textAnchor="end"
               >
                 TWD{" "}
-                <tspan className={styles.windTag} ref={windTag}>
+                <tspan className={styles.windTag} data-read="twd" ref={windTag}>
                   {`${signed(seed.twd, 0)}°`}
                 </tspan>
               </text>

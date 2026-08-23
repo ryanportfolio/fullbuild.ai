@@ -542,9 +542,12 @@
 
 /* The course axis, which is the line the favored end changes hands across. */
 .stripRule {
-  stroke: var(--brief-hair);
+  /* Dotted like the ladder rungs, and for the same reason: it is a limit
+     rather than a thing. Dim rather than amber, because a line square to the
+     course is geometry and not weather. */
+  stroke: var(--brief-dim);
   stroke-width: 1;
-  stroke-dasharray: 2 3;
+  stroke-dasharray: 1 3;
 }
 
 .stripTrace {
@@ -873,6 +876,25 @@
   .goArrow {
     margin-left: 8px;
   }
+}
+
+/* Held for a capture, the layer is a still. window.__layline.freeze() stops
+   the replay clock so a screenshot can state its own race time; this is the
+   same promise for the cover over it. Without it, two captures of the same
+   stated time taken a tenth of a second apart catch the plates at two points
+   of one 420ms entrance and hash differently, which is exactly what check 1 of
+   .tmp/verify.mjs exists to catch. */
+[data-brief-still] .panel,
+[data-brief-still] .briefFoot {
+  animation: none;
+}
+
+/* The status hairline is a six second ease, so it is jumped to its end rather
+   than cancelled: cancelling would leave the bar at the zero width it starts
+   from. A renderer already up keeps .statusFull's full bar, which states no
+   animation at all. */
+[data-brief-still] .statusFill {
+  animation-delay: -6s;
 }
 
 /* A viewer who asked for less motion gets the two pictures and no dissolve,
