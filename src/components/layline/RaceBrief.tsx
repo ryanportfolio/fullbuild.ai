@@ -242,9 +242,12 @@ export function RaceBrief({
     let frame = 0;
     let origin = 0;
     const step = (stamp: number): void => {
-      frame = requestAnimationFrame(step);
       const state = store.getState();
+      /* Released. The replay owns the clock from here, and the cover has a fade
+       * left to live through: another second of this loop seeking behind it
+       * would fight the autoplay for the same clock. */
       if (state.briefDone) return;
+      frame = requestAnimationFrame(step);
       if (state.frozen) {
         paint(state.t);
         return;
@@ -256,7 +259,15 @@ export function RaceBrief({
     /* Open the replay on the prestart before the first painted frame, so the
      * scene coming up behind the brief is at the moment the brief describes. */
     store.getState().seek(race.tMin);
-    const stop = store.subscribe((state) => paint(state.t));
+    /* Painting stops at the release, not at the unmount. The cover has a 900ms
+     * fade left and the replay is already running the gun off behind it, so a
+     * brief that kept reading the clock would spend its last second swinging
+     * its needle through the start of the race. What dissolves is the brief
+     * the reader was reading. */
+    const stop = store.subscribe((state) => {
+      if (state.briefDone) return;
+      paint(state.t);
+    });
     paint(store.getState().t);
     frame = requestAnimationFrame(step);
     return () => {
