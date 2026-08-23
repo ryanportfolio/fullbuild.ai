@@ -69,6 +69,14 @@ Then the rewrites:
 - route links lose the prefix: `/prototype/layline` becomes `/`, `/prototype/layline/<route>` becomes `/<route>`
 - relative imports inside a route folder (`../layline.module.css`) resolve unchanged, because the folder depth matches
 
+Both link rewrites have exceptions, and a blind pass gets them wrong in the direction that still compiles:
+
+- **Not every `href="/"` is the house.** `races/page.tsx`'s `Race story` link points at the story route, which on the mirror really is `/`. Only the bar's house mark and the colophon go to fullbuild.ai. Rewriting the nav link sends a visitor off the site.
+- **Not every path is a link.** `document.cookie` carries `Path=/races` in `RaceWorkspace.tsx` twice and `races/page.tsx` once. Prefixing those leaves a cookie whose Path never matches the mirror's route, so the theme and workspace preferences stop persisting with nothing failing anywhere.
+- **Prose is not a route.** Comments in `src/lib/layline/races.ts` and `analyst/AnalystSection.tsx` name `/` and `/races`, already written for the repo they sit in. Rewriting them is noise in the diff that hides a real hunk.
+
+So a mirror file whose diff is larger than the fullbuild change that prompted it has been over-rewritten, not updated. Compare the two `--numstat` outputs and make them match before you commit.
+
 ## Step 5: Check the whole shared surface, not just the two trees
 
 The path map is not the change set. Two things it misses:
@@ -119,6 +127,7 @@ Confirm `git status` is clean before you gate, and read the diff you are about t
 
 - Don't merge without an explicit request, and don't treat one repo's merge as permission for the other.
 - Don't sync from your working tree or from the stale local mirror checkout; use fullbuild's `origin/main` and a fresh mirror worktree.
+- Don't apply the route rewrite to every match. A cookie `Path`, an internal nav link and a comment all look like routes to a string replace, and all three break or bloat quietly. See the exceptions under step 4.
 - Don't read a `diff -r` line-ending storm as drift, and don't "fix" it by normalizing files wholesale.
 - Don't skip the API route because it is not in the two mirrored trees.
 - Don't delete a mirror assertion that fails; pin the new truth instead.
