@@ -178,6 +178,11 @@
   color: var(--ink);
 }
 
+.prototypeBar a strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
 /* ---- build status banner ---- */
 
 /* Loud on purpose: the owner demos this page mid-build, so the state of the
@@ -807,6 +812,53 @@
 
 .segButtonOn {
   background: rgba(236, 245, 249, 0.14);
+  color: var(--ink);
+}
+
+/* Camera choices are commands, not quiet telemetry filters. Their stronger
+   frame, persistent fill and heavier label make the click target readable
+   before hover without spending the wind or raw colours. */
+.viewGroup {
+  background: rgba(164, 188, 203, 0.08);
+  border-color: var(--ink-dim);
+}
+
+.viewButton {
+  min-width: 56px;
+  border-right-color: var(--ink-dim);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.viewButton:hover {
+  background: rgba(236, 245, 249, 0.16);
+}
+
+.viewButton.segButtonOn {
+  background: rgba(236, 245, 249, 0.24);
+}
+
+/* The camera choices are meaningless while the chart owns the viewport. One
+   filled command takes their exact job until the 3D scene returns. */
+.return3dButton {
+  min-width: 204px;
+  flex: none;
+  padding: 7px 24px;
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  color: var(--page-ground);
+  font-family: var(--font-archivo), sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
+.return3dButton:hover {
+  background: transparent;
   color: var(--ink);
 }
 
@@ -1451,6 +1503,11 @@
 }
 
 .colophon {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding: 24px 16px 32px;
   border-top: 1px solid var(--rule);
   color: var(--ink-dim);
@@ -1458,6 +1515,27 @@
   font-size: 11px;
   letter-spacing: 0.06em;
   text-align: center;
+}
+
+.colophon a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.colophon a:hover {
+  color: var(--ink);
+}
+
+.homeLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.footerHouseMark {
+  width: 20px;
+  height: 20px;
+  flex: none;
 }
 
 /* ---- handsets and tablets: the docks come out of the overlay ----
@@ -1649,10 +1727,16 @@
      that padding alone left the rate and rig cells at 35 to 37 across, so the
      floor is stated rather than inferred from the label. */
   .segButton,
-  .snapButton {
+  .snapButton,
+  .return3dButton {
     min-width: 40px;
     min-height: 40px;
     padding: 12px 10px;
+  }
+
+  .return3dButton {
+    min-width: 204px;
+    flex: 1 1 204px;
   }
 
   /* The scrub track takes the full width and the clocks read underneath it: at

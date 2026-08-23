@@ -9,6 +9,7 @@ import { IntroOverlay } from "@/components/layline/intro/IntroOverlay";
 import { LaylineApp } from "@/components/layline/LaylineApp";
 import { NotesSection } from "@/components/layline/NotesSection";
 import { TrackChart } from "@/components/layline/svg/TrackChart";
+import RailLogo from "@/components/chrome/RailLogo";
 import styles from "./layline.module.css";
 import "./scrollbar.css";
 
@@ -37,14 +38,16 @@ export default function LaylinePage() {
       <IntroOverlay />
 
       <div className={styles.prototypeBar}>
-        <strong>Race replay prototype</strong>
-        <span>Fictional event // seeded telemetry // build in progress</span>
-        <Link href="/">fullbuild.ai ↗</Link>
+        <strong>Layline race replay</strong>
+        <span>2D / 3D playback // seeded telemetry</span>
+        <Link href="https://github.com/ryanportfolio/layline">
+          <strong>View source</strong>
+        </Link>
       </div>
 
-      <div className={styles.statusBanner} role="status">
-        <strong>Build in progress · replay and analysis both running</strong>
-        <span>still landing: heel and trim on the instrument dock</span>
+      <div className={styles.statusBanner}>
+        <strong>Telemetry in, race replay out</strong>
+        <span>Playback, analytics, and post-race review in one browser experience</span>
       </div>
 
       <main className={styles.main}>
@@ -111,7 +114,18 @@ export default function LaylinePage() {
         <NotesSection race={race} />
       </main>
 
-      <footer className={styles.colophon}>Spec work by Ryan Allen | all demo concepts</footer>
+      <footer className={styles.colophon}>
+        <span>Built by Ryan Allen</span>
+        <span aria-hidden="true">·</span>
+        <Link href="https://github.com/ryanportfolio/layline">
+          <strong>View source</strong>
+        </Link>
+        <span aria-hidden="true">·</span>
+        <Link className={styles.homeLink} href="/">
+          <RailLogo className={styles.footerHouseMark} />
+          <span>fullbuild.ai</span>
+        </Link>
+      </footer>
 
       {/* The right margin, drawn as the course. Inside the shell so it inherits
           the console's palette, and last so nothing is stacked over it. It
