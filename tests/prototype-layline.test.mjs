@@ -447,3 +447,39 @@ test('the 2D view replaces camera choices with one clear return to 3D', async ()
   assert.match(viewRule, /background: color-mix\(in srgb, var\(--ink-dim\) 8%, transparent\)/);
   assert.match(viewRule, /border-color: var\(--ink-dim\)/);
 });
+
+test('the boot cover keeps the house rules while it briefs the race', async () => {
+  const cover = await read('src/components/layline/bootSea.module.css');
+  const brief = await read('src/components/layline/RaceBrief.tsx');
+
+  /* The house pointer, never the browser hand, on the one control this layer
+     carries. */
+  assert.doesNotMatch(cover, /cursor:\s*pointer/);
+  assert.match(cover, /cursor: var\(--house-cursor\)/);
+  /* The cover is one of the three surfaces allowed a gradient, and it is the
+     only gradient here: nothing inside a panel may carry one. */
+  assert.equal((cover.match(/linear-gradient|radial-gradient/g) ?? []).length, 1);
+  assert.doesNotMatch(cover, /box-shadow|backdrop-filter/);
+  assert.match(cover, /@media \(prefers-reduced-motion: reduce\)/);
+  /* Narrow stacks the three panels and grounds the footer, so the way through
+     is never what scrolls off. */
+  assert.match(cover, /@container \(max-width: 760px\)/);
+  assert.match(cover, /:focus-visible/);
+
+  /* Every drawing that carries a reading is labelled, and every reading a
+     label cannot carry is also in text underneath it. */
+  const svgs = brief.match(/role="img"/g) ?? [];
+  assert.equal(svgs.length, 3, 'the brief draws something a screen reader cannot name');
+  assert.equal((brief.match(/aria-label=/g) ?? []).length, 4);
+
+  /* The brief holds while the renderer warms, and says which of the two it is
+     waiting on. Neither string claims the race is loading: it is already
+     built by the time this layer paints. */
+  assert.match(brief, /renderer warming, the race is already loaded/);
+  assert.match(brief, /renderer up, the race is already loaded/);
+
+  /* Display text carries no periods, here as everywhere else on the page. */
+  for (const line of ['renderer warming, the race is already loaded', 'Start the race']) {
+    assert.ok(!line.endsWith('.'), `${line} ends in a period`);
+  }
+});

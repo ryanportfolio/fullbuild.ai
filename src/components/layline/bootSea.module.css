@@ -1,4 +1,5 @@
-/* The library's boot cover: the sea the scene opens on, painted flat.
+/* The library's boot cover: the sea the scene opens on, painted flat, with the
+   race brief laid over it.
 
    It lives in its own module because the console stylesheet bans gradients
    inside it, the sky and the water being the renderer's job there. This is the
@@ -10,20 +11,20 @@
 
    Nothing else moves while this leaves. The canvas underneath sits at full
    strength the whole time, so the only animated value on the page is this
-   layer's opacity, and what a viewer sees is a still sea starting to move. */
+   layer's opacity, and what a viewer sees is a still sea starting to move.
+
+   The console's bans hold up here: no drop shadow anywhere below, no gradient
+   inside a panel, and exactly one accent. The gradient above is the sea, which
+   is one of the three surfaces allowed to carry one. */
 
 .cover {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
-  /* The title is sized against this box rather than the window, so the words
-     fill the viewer's own width whatever the rails either side are doing. */
+  display: flex;
+  flex-direction: column;
+  /* The brief is sized against this box rather than the window, so the type
+     fills the viewer's own width whatever the rails either side are doing. */
   container-type: inline-size;
-  /* Centred on the water rather than on the box: white on the bright half of
-     the sky is thin, and the block is tall when a race name runs to four
-     words. */
-  padding-top: 13%;
   /* The chart, the no-WebGL answer, reveals itself on a timer at z-index 2; a
      viewer whose renderer is merely slow should not watch it arrive. The top
      bar and the docks share this level and come later in the DOM, so they stay
@@ -40,41 +41,593 @@
   );
   opacity: 1;
   transition: opacity 900ms var(--ease);
-  pointer-events: none;
+
+  /* The brief's own closed palette. Ink and hairlines are stated here rather
+     than taken from the console's theme tokens because what they sit on is the
+     sea, which the library themes do not repaint: a sailcloth theme would hand
+     this layer near-black ink over deep water. */
+  --brief-ink: #f4f8fb;
+  --brief-dim: rgba(244, 248, 251, 0.68);
+  --brief-faint: rgba(244, 248, 251, 0.45);
+  --brief-hair: rgba(255, 255, 255, 0.16);
+  --brief-panel: rgba(7, 30, 50, 0.42);
+  /* The one accent. The favored end's mark, the button's focus ring and the
+     status fill; nothing else on this layer may use it. */
+  --brief-accent: #ffd166;
+  --brief-mono: var(--font-martian), monospace;
+
+  /* The header sits on the gradient's top band, which is the sky-horizon token
+     nearly neat, so its ink has to follow that token rather than the panels'.
+     Stated here as the light-sky branch because the shipped token is light:
+     the server has no computed style to read, and defaulting to the branch the
+     shipped sky needs is what keeps the first painted frame legible. LaylineApp
+     measures the token's WCAG luminance after hydration and writes the white
+     branch over these two if the sky came out dark. */
+  --brief-head-ink: color-mix(in srgb, var(--water-deep) 88%, var(--sky-horizon));
+  --brief-head-line: color-mix(in srgb, var(--water-deep) 30%, transparent);
 }
-
-/* The race being loaded, named while it loads. Pangram, the face this page
-   spends on the wordmark and on a section heading, at a size that reads as the
-   title card it is rather than a status line. It is decorative to a screen
-   reader: the rail already names the race, and the top bar names it again the
-   moment the scene is up, so announcing it a third time is noise. */
-.label {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: #fff;
-  font-family: var(--font-pangram);
-  /* Set per race on the element: the size is whatever makes the longest word
-     in that name fill the pane, capped so a short name does not become a
-     billboard. */
-  line-height: 0.92;
-  letter-spacing: -0.025em;
-  text-align: center;
-}
-
-.word {
-  display: block;
-}
-
-
 
 .out {
   opacity: 0;
 }
 
-/* A viewer who asked for less motion gets the two pictures and no dissolve. */
+/* Briefed, the cover has to outrank the console it is covering. The top bar and
+   the three docks sit at z-index 3 and come later in the DOM, so at the same
+   level they win, and an instrument dock arriving over a brief nobody has read
+   is the exact pop this layer exists to stop. The skip links stay above at 20:
+   the way past the brief must never be behind it. */
+.briefed {
+  z-index: 4;
+}
+
+/* ---- the brief ---- */
+
+.brief {
+  display: flex;
+  flex-direction: column;
+  gap: 1.8cqw;
+  height: 100%;
+  padding: 3cqw 3.2cqw 2.2cqw;
+  overflow: hidden;
+  color: var(--brief-ink);
+  font-family: var(--brief-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Header ink follows the sky it sits on. The gradient's top band is the
+   sky-horizon token nearly neat, so a light sky takes near-black type and a
+   dark one takes near-white, and the rule under the header goes with it. The
+   branch is computed in LaylineApp off the token's WCAG luminance; these are
+   the two results it writes. */
+.briefHead {
+  display: flex;
+  flex: none;
+  align-items: baseline;
+  gap: 2cqw;
+  min-width: 0;
+  padding-bottom: 1.4cqw;
+  border-bottom: 1px solid var(--brief-head-line);
+  color: var(--brief-head-ink);
+}
+
+.raceName {
+  /* Pangram, the face this page spends on the wordmark and on a section
+     heading, at the size that makes the race a title card rather than a status
+     line. Capped at two line boxes; RaceBrief measures and steps the size down
+     until the name fits inside them. */
+  font-family: var(--font-pangram);
+  font-weight: 400;
+  font-size: calc(11 * 1cqw);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  max-height: 2.04em;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.raceMeta {
+  flex: none;
+  margin-left: auto;
+  color: var(--brief-head-ink);
+  opacity: 0.78;
+  font-size: max(1.05cqw, 9px);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: right;
+}
+
+.briefMain {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 1.08fr 1fr 1.12fr;
+  gap: 1.8cqw;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* A 1px dim rule does the job a drop shadow would, which is the console's
+   standing rule and holds here. */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9cqw;
+  min-height: 0;
+  padding: 1.5cqw 1.6cqw;
+  border: 1px solid var(--brief-hair);
+  border-radius: 16px;
+  background: var(--brief-panel);
+  overflow: hidden;
+  animation: briefRise 420ms var(--ease) both;
+}
+
+.panel:nth-child(2) {
+  animation-delay: 70ms;
+}
+
+.panel:nth-child(3) {
+  animation-delay: 140ms;
+}
+
+@keyframes briefRise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.panelLabel {
+  display: flex;
+  justify-content: space-between;
+  color: var(--brief-dim);
+  font-size: max(0.95cqw, 9px);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.panelCount {
+  color: var(--brief-faint);
+  letter-spacing: 0.08em;
+}
+
+/* ---- fleet at the line ---- */
+
+.fleetRow {
+  display: flex;
+  align-items: center;
+  gap: 0.9cqw;
+  padding: 0.78cqw 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: max(1.2cqw, 10px);
+}
+
+.fleetRow:last-of-type {
+  border-bottom: none;
+}
+
+.chip {
+  flex: none;
+  width: 1.25cqw;
+  min-width: 9px;
+  height: 1.25cqw;
+  min-height: 9px;
+  border-radius: 3px;
+}
+
+/* A hue that is near the panel ground needs an edge to hold against it. */
+.chipDark {
+  outline: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.sail {
+  flex: none;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* The one part of the row that gives way. A narrow console truncates the team
+   name rather than wrapping the sail number or the meters off the line, which
+   are the two things the row is for. */
+.boatName {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--brief-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slot {
+  flex: none;
+  margin-left: auto;
+  color: var(--brief-faint);
+  white-space: nowrap;
+}
+
+/* Pinned to the bottom of the panel, so the three readings sit on the same
+   line whatever the fleet above them costs. */
+.fleetFoot {
+  display: flex;
+  flex-wrap: wrap;
+  white-space: nowrap;
+  justify-content: space-between;
+  gap: 0.4cqw 1cqw;
+  margin-top: auto;
+  padding-top: 0.9cqw;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--brief-dim);
+  font-size: max(1cqw, 9px);
+}
+
+/* ---- wind ---- */
+
+.dialWrap {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dial {
+  width: 220px;
+  max-width: 100%;
+  max-height: 100%;
+  height: auto;
+}
+
+.twsRow {
+  display: flex;
+  flex: none;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.9cqw;
+}
+
+.twsBig {
+  font-size: max(2.7cqw, 20px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.twsUnit {
+  color: var(--brief-dim);
+  font-size: max(0.95cqw, 8px);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.trace {
+  flex: none;
+  width: 100%;
+  height: 4.2cqw;
+  min-height: 26px;
+}
+
+/* ---- start line ---- */
+
+.lineDiagram {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
+.diagramTag {
+  fill: rgba(255, 255, 255, 0.85);
+  font-family: var(--brief-mono);
+  font-size: 4px;
+}
+
+.diagramNote {
+  fill: rgba(255, 255, 255, 0.55);
+  font-family: var(--brief-mono);
+  font-size: 3.4px;
+}
+
+.diagramEnd {
+  fill: rgba(255, 255, 255, 0.75);
+  font-family: var(--brief-mono);
+  font-size: 3.6px;
+}
+
+.favMark {
+  fill: var(--brief-accent);
+}
+
+.biasReads {
+  display: flex;
+  flex: none;
+  justify-content: space-between;
+  gap: 2cqw;
+}
+
+.biasNum {
+  font-size: max(2.2cqw, 16px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.biasCap {
+  margin-top: 0.3cqw;
+  color: var(--brief-dim);
+  font-size: max(0.85cqw, 8px);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.favored {
+  flex: none;
+  margin: 0;
+  color: var(--brief-dim);
+  font-size: max(1.15cqw, 10px);
+}
+
+.favored b {
+  color: var(--brief-ink);
+  font-weight: 500;
+}
+
+.favSec {
+  color: var(--brief-accent);
+}
+
+/* ---- footer ---- */
+
+.briefFoot {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2cqw;
+  animation: briefRise 420ms var(--ease) 210ms both;
+}
+
+.status {
+  flex: 1;
+  margin: 0;
+  color: var(--brief-dim);
+  font-size: max(1cqw, 9px);
+  letter-spacing: 0.06em;
+}
+
+.statusBar {
+  position: relative;
+  display: inline-block;
+  width: 14cqw;
+  height: 2px;
+  margin-left: 1cqw;
+  background: rgba(255, 255, 255, 0.22);
+  vertical-align: middle;
+}
+
+/* Honest about what it is: it fills while the renderer warms and completes
+   when the renderer is up. It is a wait, not a percentage of anything, so it
+   eases out rather than running at a rate it cannot know. */
+.statusFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: var(--brief-accent);
+  animation: statusWarm 6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.statusFull {
+  width: 100%;
+  animation: none;
+}
+
+@keyframes statusWarm {
+  to {
+    width: 88%;
+  }
+}
+
+.goBtn {
+  padding: 1cqw 2.4cqw;
+  border: 1px solid var(--brief-ink);
+  border-radius: 100px;
+  background: var(--brief-ink);
+  color: var(--water-deep);
+  font-family: var(--brief-mono);
+  font-size: max(1.1cqw, 10px);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  /* The house pointer, never the browser hand: every control on this page
+     takes the mark the shell defines. */
+  cursor: var(--house-cursor);
+  /* Background, never shadow: the console does not raise panels and it does
+     not raise buttons either. */
+  transition:
+    background 160ms var(--ease),
+    border-color 160ms var(--ease);
+}
+
+.goArrow {
+  display: inline-block;
+  margin-left: 0.7cqw;
+  transition: transform 160ms var(--ease);
+}
+
+.goBtn:hover {
+  background: #dfe9f2;
+  border-color: #dfe9f2;
+}
+
+.goBtn:hover .goArrow {
+  transform: translateX(3px);
+}
+
+.goBtn:focus-visible {
+  outline: 3px solid var(--brief-accent);
+  outline-offset: 2px;
+}
+
+/* ---- narrow: stack the brief, ground the footer ---- */
+
+/* Under the library's three-column threshold the console is taller than the
+   viewport, so the cover is too, and a brief that filled it would put its way
+   through hundreds of pixels below the fold. Held to a screen and stuck to the
+   top of one, the panels scroll inside the brief and the footer stays where a
+   thumb can reach it.
+
+   The screen it is held to ends where the analyst's composer begins: below
+   this same width the composer leaves the flow and pins to the foot of the
+   viewport at z-index 12 (analyst.module.css), and the page already gives it
+   that much back as bottom padding. A brief measured against the whole svh
+   would put Continue underneath it, unclickable. */
+@media (max-width: 1199px) {
+  .brief {
+    position: sticky;
+    top: 0;
+    max-height: calc(100svh - var(--composer-bar, 59px) - env(safe-area-inset-bottom));
+  }
+}
+
+@container (max-width: 760px) {
+  .brief {
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .briefHead {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding-bottom: 10px;
+  }
+
+  .raceName {
+    font-size: 34px;
+  }
+
+  .raceMeta {
+    margin-left: 0;
+    font-size: 9px;
+    text-align: left;
+  }
+
+  /* Stacked, each panel is as tall as what is in it and the column scrolls.
+     Wide, the three share one row and clip; here clipping would take a boat
+     off the fleet list. */
+  .briefMain {
+    grid-template-columns: 1fr;
+    grid-auto-rows: min-content;
+    gap: 12px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .panel {
+    gap: 8px;
+    padding: 12px 14px;
+    animation: none;
+  }
+
+  .panelLabel {
+    font-size: 9px;
+  }
+
+  .fleetRow {
+    gap: 8px;
+    padding: 7px 0;
+    font-size: 11px;
+  }
+
+  .chip {
+    width: 10px;
+    height: 10px;
+  }
+
+  /* Nothing above it is stretching any more, so the footer sits under the
+     last boat rather than at the bottom of a panel taller than its rows. */
+  .fleetFoot {
+    margin-top: 8px;
+    gap: 4px 10px;
+    padding-top: 8px;
+    font-size: 9px;
+  }
+
+  .dialWrap {
+    flex: none;
+    min-height: 170px;
+  }
+
+  .twsRow {
+    gap: 8px;
+  }
+
+  .twsBig {
+    font-size: 24px;
+  }
+
+  .lineDiagram {
+    flex: none;
+    height: 180px;
+  }
+
+  .biasReads {
+    gap: 12px;
+  }
+
+  .biasNum {
+    font-size: 18px;
+  }
+
+  .biasCap {
+    margin-top: 3px;
+    font-size: 8px;
+  }
+
+  .favored {
+    font-size: 11px;
+  }
+
+  /* The main area scrolls under this, so the way through is never the thing
+     that scrolls off. */
+  .briefFoot {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin: 0 -16px -16px;
+    padding: 10px 16px 12px;
+    background: rgba(7, 30, 50, 0.94);
+  }
+
+  .status {
+    display: none;
+  }
+
+  .goBtn {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 11px;
+  }
+
+  .goArrow {
+    margin-left: 8px;
+  }
+}
+
+/* A viewer who asked for less motion gets the two pictures and no dissolve,
+   and a brief that states its numbers rather than sweeping to them. */
 @media (prefers-reduced-motion: reduce) {
   .cover {
+    transition: none;
+  }
+
+  .panel,
+  .briefFoot {
+    animation: none;
+  }
+
+  .statusFill {
+    width: 88%;
+    animation: none;
+  }
+
+  .goBtn,
+  .goArrow {
     transition: none;
   }
 }
