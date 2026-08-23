@@ -82,34 +82,26 @@ function boatX(gunX: number, half: number): number {
   return x < 15 ? 15 : x > 85 ? 85 : x;
 }
 
-/* Twelve minor ticks and four cardinals, drawn once: the ring never moves, only
- * the needle over it. */
-const DIAL_TICKS = Array.from({ length: 12 }, (_, index) => {
-  const angle = index * 30;
-  const major = angle % 90 === 0;
-  const rad = (angle * Math.PI) / 180;
-  const inner = major ? 15.2 : 16.2;
-  return {
-    key: angle,
-    x1: 20 + inner * Math.sin(rad),
-    y1: 20 - inner * Math.cos(rad),
-    x2: 20 + 18 * Math.sin(rad),
-    y2: 20 - 18 * Math.cos(rad),
-    major,
-  };
-});
-
-/* The survey range the dial's filled band shows: the breeze runs plus or minus
- * eight degrees of the course axis across a race, which is what makes a line
- * bias worth reading rather than a constant. */
+/* The dial is the console's own, from hud/WindDial.tsx, at the same viewBox and
+ * the same numbers: radius 16 on a 40 box, four cardinal ticks and no others,
+ * the plus or minus 8 degree survey band the course was laid out for, and an
+ * amber needle from the hub with no tail.
+ *
+ * The first draft of this layer drew a different instrument: twelve ticks, a
+ * white needle, a counterweight below the hub. Twelve ticks and a two-ended
+ * hand is a clock, and the reader read it as one. This is the same dial the
+ * instrument dock puts up thirty seconds later, so the brief and the console
+ * agree about what a wind dial looks like as well as about what the wind is. */
+const DIAL_R = 16;
+const DIAL_C = 20;
 const SURVEY_DEG = 8;
-const BAND = (() => {
-  const point = (angle: number, radius: number): string => {
-    const rad = (angle * Math.PI) / 180;
-    return `${(20 + radius * Math.sin(rad)).toFixed(2)} ${(20 - radius * Math.cos(rad)).toFixed(2)}`;
-  };
-  return `M20 20 L${point(-SURVEY_DEG, 17)} A17 17 0 0 1 ${point(SURVEY_DEG, 17)} Z`;
-})();
+
+function rim(angle: number, radius: number): string {
+  const a = (angle * Math.PI) / 180;
+  return `${(DIAL_C + radius * Math.sin(a)).toFixed(3)} ${(DIAL_C - radius * Math.cos(a)).toFixed(3)}`;
+}
+
+const BAND = `M ${DIAL_C} ${DIAL_C} L ${rim(-SURVEY_DEG, DIAL_R)} A ${DIAL_R} ${DIAL_R} 0 0 1 ${rim(SURVEY_DEG, DIAL_R)} Z`;
 
 export function RaceBrief({
   race,
@@ -361,25 +353,28 @@ export function RaceBrief({
               role="img"
               aria-label="Wind dial: the needle points where the breeze is coming from, against the course axis"
             >
-              <circle cx="20" cy="20" r="19" fill="rgba(4,22,38,.55)" stroke="rgba(255,255,255,.28)" />
-              <path d={BAND} fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.35)" strokeWidth=".3" />
-              {DIAL_TICKS.map((tick) => (
-                <line
-                  key={tick.key}
-                  x1={tick.x1.toFixed(2)}
-                  y1={tick.y1.toFixed(2)}
-                  x2={tick.x2.toFixed(2)}
-                  y2={tick.y2.toFixed(2)}
-                  stroke={tick.major ? "rgba(255,255,255,.7)" : "rgba(255,255,255,.3)"}
-                  strokeWidth={tick.major ? ".8" : ".5"}
-                />
-              ))}
-              <g ref={needle} transform={`rotate(${seed.twd.toFixed(2)} 20 20)`}>
-                <line x1="20" y1="24" x2="20" y2="6.5" stroke="#fff" strokeWidth="1.1" />
-                <line x1="20" y1="20" x2="20" y2="24" stroke="#fff" strokeWidth="2.6" />
-                <polygon points="20,4.2 17.7,9.2 22.3,9.2" fill="#fff" />
+              <path className={styles.dialBand} d={BAND} />
+              <circle className={styles.dialFace} cx={DIAL_C} cy={DIAL_C} r={DIAL_R} />
+              <g className={styles.dialTicks}>
+                <line x1={DIAL_C} y1={DIAL_C - DIAL_R} x2={DIAL_C} y2={DIAL_C - DIAL_R + 4} />
+                <line x1={DIAL_C + DIAL_R} y1={DIAL_C} x2={DIAL_C + DIAL_R - 3} y2={DIAL_C} />
+                <line x1={DIAL_C} y1={DIAL_C + DIAL_R} x2={DIAL_C} y2={DIAL_C + DIAL_R - 3} />
+                <line x1={DIAL_C - DIAL_R} y1={DIAL_C} x2={DIAL_C - DIAL_R + 3} y2={DIAL_C} />
               </g>
-              <circle cx="20" cy="20" r="2.1" fill="rgba(4,22,38,.9)" stroke="#fff" strokeWidth=".7" />
+              <g ref={needle} transform={`rotate(${seed.twd.toFixed(2)} ${DIAL_C} ${DIAL_C})`}>
+                <line
+                  className={styles.dialNeedle}
+                  x1={DIAL_C}
+                  y1={DIAL_C}
+                  x2={DIAL_C}
+                  y2={DIAL_C - DIAL_R + 5}
+                />
+                <polygon
+                  className={styles.dialHead}
+                  points={`${DIAL_C} ${DIAL_C - DIAL_R + 1}, ${DIAL_C - 2.6} ${DIAL_C - DIAL_R + 6}, ${DIAL_C + 2.6} ${DIAL_C - DIAL_R + 6}`}
+                />
+              </g>
+              <circle className={styles.dialHub} cx={DIAL_C} cy={DIAL_C} r="1.6" />
             </svg>
           </div>
           <div className={styles.twsRow}>
@@ -416,9 +411,9 @@ export function RaceBrief({
             aria-label="The start line looking upwind: the pin at the left, the committee boat at the right, the fleet where each hull sat at the gun"
           >
             <g ref={windArrow} transform={`rotate(${seed.twd.toFixed(1)} 50 12)`}>
-              <line x1="50" y1="3" x2="50" y2="17" stroke="#fff" strokeWidth="1.1" />
-              <polygon points="50,21 47.6,15.8 52.4,15.8" fill="#fff" />
-              <text className={styles.diagramTag} ref={windTag} x="54" y="10">
+              <line className={styles.windStroke} x1="50" y1="3" x2="50" y2="17" strokeWidth="1.1" />
+              <polygon className={styles.windFill} points="50,21 47.6,15.8 52.4,15.8" />
+              <text className={`${styles.diagramTag} ${styles.windFill}`} ref={windTag} x="54" y="10">
                 {`TWD ${signed(seed.twd, 0)}°`}
               </text>
             </g>
@@ -434,7 +429,12 @@ export function RaceBrief({
             <text className={styles.diagramNote} x="54" y="44">
               square transit
             </text>
-            <line x1="13" y1="66" x2="87" y2="66" stroke="#fff" strokeWidth="1.4" />
+            {/* The line itself, in the wind's colour: the console's contract
+                names "the start line before the gun" as one of the things amber
+                means, and everything on this layer is before the gun. The two
+                ends stay in ink, because a pin and a committee boat are marks
+                on the water rather than weather. */}
+            <line className={styles.windStroke} x1="13" y1="66" x2="87" y2="66" strokeWidth="1.4" />
             <circle cx="13" cy="66" r="1.7" fill="none" stroke="#fff" strokeWidth=".8" />
             <path d="M87 64.2 L91.5 64.2 L90.5 67.6 L88 67.6 Z" fill="#fff" />
             {facts.boats.map((boat) => {
