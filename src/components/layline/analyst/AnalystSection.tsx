@@ -376,6 +376,8 @@ export function AnalystSection({ variant = "story" }: { variant?: "story" | "rai
           t: part.t,
           hue: boat === undefined ? "var(--wind)" : boat.hue,
           dark: boat?.dark === true,
+          boatId: boat?.id,
+          sail: boat?.sail,
         });
       }
       break;
@@ -787,7 +789,9 @@ export function AnalystSection({ variant = "story" }: { variant?: "story" | "rai
               </div>
             ) : null}
 
-            <MomentStrip buoys={buoys} />
+            {/* jumpTo is the chip's own handler: a buoy is the same citation
+                seen on the clock, so it makes the same jump. */}
+            <MomentStrip buoys={buoys} onBuoy={jumpTo} />
 
             <form
               className={styles.inputRow}
