@@ -547,6 +547,36 @@
   letter-spacing: 0.06em;
 }
 
+/* The two things the status line can say, stacked, so the change from one to
+   the other crossfades on the same 700ms the bar takes to finish rather than
+   cutting in the frame the bar happens to jump. */
+.statusStack {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.statusStack span {
+  transition: opacity 700ms var(--ease);
+}
+
+.statusStack span + span {
+  position: absolute;
+  inset: 0;
+  white-space: nowrap;
+}
+
+/* Under the capture hold nothing on the footer eases: a screenshot of a
+   stated time has to be the same picture twice, and this is the one part of the
+   layer that runs on wall time rather than on the replay clock. */
+[data-hold] .statusFill,
+[data-hold] .statusBar,
+[data-hold] .statusStack span {
+  transition: none;
+}
+
+/* Hidden until the wait is long enough to be worth describing, and it fades
+   in rather than appearing, so the layer never gains a part with a cut. */
 .statusBar {
   position: relative;
   display: inline-block;
@@ -555,28 +585,27 @@
   margin-left: 1cqw;
   background: rgba(255, 255, 255, 0.22);
   vertical-align: middle;
+  transition: opacity 400ms var(--ease);
 }
 
-/* Honest about what it is: it fills while the renderer warms and completes
-   when the renderer is up. It is a wait, not a percentage of anything, so it
-   eases out rather than running at a rate it cannot know. */
+/* Honest about what it is: it fills while the renderer warms and completes when
+   the renderer is up. It is a wait, not a percentage of anything, so it eases
+   out rather than running at a rate it cannot know.
+
+   A transition rather than a keyframe, and that is the whole point. The first
+   version ran a 6s animation to 88% and then swapped in a class that set
+   animation: none with width: 100%. Killing an animation drops the element back
+   to its base width before the new one applies, so the bar snapped from wherever
+   the ramp had reached straight to full, and the status text swapped in the same
+   frame. Two hard changes at one instant read as a glitch. A transition
+   interpolates from the current computed width, so the renderer arriving mid
+   ramp is one gentle 700ms settle to full instead. */
 .statusFill {
   position: absolute;
   inset: 0 auto 0 0;
   width: 0;
   background: var(--brief-dim);
-  animation: statusWarm 6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.statusFull {
-  width: 100%;
-  animation: none;
-}
-
-@keyframes statusWarm {
-  to {
-    width: 88%;
-  }
+  transition: width var(--status-ease, 6000ms) var(--ease);
 }
 
 /* Square, like everything else on this layer and like the console's own
@@ -778,9 +807,10 @@
     animation: none;
   }
 
-  .statusFill {
-    width: 88%;
-    animation: none;
+  .statusFill,
+  .statusBar,
+  .statusStack span {
+    transition: none;
   }
 
   .goBtn,

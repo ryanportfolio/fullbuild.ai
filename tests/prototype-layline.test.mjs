@@ -505,6 +505,35 @@ test('the boot cover keeps the house rules while it briefs the race', async () =
   assert.match(brief, /renderer warming, the race is already loaded/);
   assert.match(brief, /renderer up, the race is already loaded/);
 
+  /* The hairline is transitioned, never keyframed. Killing an animation to
+     complete it drops the element to its base width first, so the bar snapped
+     to full from wherever the ramp had reached, in the same frame the text
+     swapped. Both changes are one 700ms settle now. */
+  const fillRule = cover.slice(cover.indexOf('.statusFill {'));
+  assert.match(fillRule.slice(0, fillRule.indexOf('}')), /transition: width/);
+  assert.doesNotMatch(cover, /@keyframes statusWarm/);
+  assert.ok(!cover.includes('.statusFull'), 'the class that snapped the bar to full came back');
+  assert.ok(
+    brief.includes('const SLOW_ENOUGH_TO_SAY_SO = 600;'),
+    'the hairline draws itself again on a boot too fast to have a wait in it',
+  );
+  assert.ok(
+    brief.includes("if (bar.style.opacity !== \"1\") return;"),
+    'a hairline that was never shown completes itself, which is the sweep this avoids',
+  );
+  /* Reduced motion states the wait as a value instead of creeping it across
+     the footer, and the stylesheet drops every transition on the footer's three
+     moving parts rather than only on the fill. */
+  /* Matched line by line, never across the break: this repo checks out CRLF, so
+     a pattern pinning a bare newline against source text passes here and fails
+     on a fresh clone. */
+  assert.ok(brief.includes('fill.style.width = "88%";'), 'the ramp stopped stating its target');
+  assert.ok(brief.includes('fill.style.width = "100%";'), 'the completion stopped stating its target');
+  const reducedBlock = cover.slice(cover.indexOf('@media (prefers-reduced-motion: reduce)'));
+  for (const part of ['.statusFill', '.statusBar', '.statusStack span']) {
+    assert.ok(reducedBlock.includes(part), `${part} keeps its transition under reduced motion`);
+  }
+
   /* Display text carries no periods, here as everywhere else on the page. */
   for (const line of ['renderer warming, the race is already loaded', 'Start the race']) {
     assert.ok(!line.endsWith('.'), `${line} ends in a period`);
