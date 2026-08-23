@@ -42,7 +42,21 @@ import type { CompareOut, StandingsOut } from "@/lib/layline/analyst/tools";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const MAX_TOOL_ROUNDS = 4;
+const MAX_TOOL_ROUNDS = 6;
+
+/* Rounds are capped by a clock as well as a count, because the count alone
+ * cannot see how slow the rounds are. Measured live against the shipped model,
+ * a round takes 3.3 to 6.4 seconds. The check runs after a round lands, so the
+ * ceiling is this budget plus one overrunning round plus the answer round plus
+ * the typed replay, and maxDuration above is what it has to stay under. */
+const TOOL_BUDGET_MS = 30_000;
+
+/* What the model is told when its tools are taken away. It has the results of
+ * every round it already ran; this asks it to spend them. */
+const ANSWER_NOW =
+  "No more tools. Answer the question now from the tool results above. " +
+  "If something is missing, say what you could not check rather than asking for another tool.";
+
 const DEFAULT_MODEL = "deepseek/deepseek-v4-flash-vision-exp";
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
@@ -583,7 +597,9 @@ function liveResponse(
        * models narrate their plan inside tool rounds ("I'll check the start
        * report."), and that talk is not the answer. The caller drops a tool
        * round's text and streams a final round's text itself. */
-      const runRound = async (): Promise<{ finish: string; calls: ToolCallWire[]; text: string }> => {
+      const runRound = async (
+        useTools: boolean,
+      ): Promise<{ finish: string; calls: ToolCallWire[]; text: string }> => {
         const res = await fetch(OPENROUTER_URL, {
           method: "POST",
           signal: aborter.signal,
@@ -603,7 +619,10 @@ function liveResponse(
              * without a reasoning mode ignore this. */
             reasoning: { enabled: false },
             messages,
-            tools,
+            /* Withheld, not just discouraged: a model out of rounds has to
+             * answer, and the only reliable way to stop a tool call is to
+             * offer no tool to call. */
+            ...(useTools ? { tools } : {}),
           }),
         });
         if (!res.ok || res.body === null) throw new UpstreamError(res.status);
@@ -663,11 +682,13 @@ function liveResponse(
       };
 
       try {
+        const startedAt = Date.now();
         let toolRounds = 0;
+        let forced = false;
         for (;;) {
-          const { finish, calls, text } = await runRound();
+          const { finish, calls, text } = await runRound(!forced);
 
-          if (finish !== "tool_calls" || calls.length === 0) {
+          if (forced || finish !== "tool_calls" || calls.length === 0) {
             const answer = stripPlanTalk(text).trim();
             if (answer === "") {
               /* A model that stops without words gave no answer; done would
@@ -687,11 +708,6 @@ function liveResponse(
             controller.close();
             return;
           }
-          if (toolRounds >= MAX_TOOL_ROUNDS) {
-            send(SSE_ERROR, { message: "The analyst ran long. Ask a narrower question." });
-            controller.close();
-            return;
-          }
           toolRounds += 1;
 
           messages.push({ role: "assistant", content: null, tool_calls: calls });
@@ -708,6 +724,15 @@ function liveResponse(
               tool_call_id: call.id,
               content: runTool(race, call.function.name, input),
             });
+          }
+
+          /* Out of rounds or out of clock. The tool results just gathered are
+           * enough to answer with, so the next round runs without tools and
+           * streams whatever it says. This used to send an error and drop
+           * every round of work the viewer had already waited through. */
+          if (toolRounds >= MAX_TOOL_ROUNDS || Date.now() - startedAt >= TOOL_BUDGET_MS) {
+            forced = true;
+            messages.push({ role: "system", content: ANSWER_NOW });
           }
         }
       } catch (error) {
