@@ -71,6 +71,7 @@ Topical reference lives in `.claude/reference/`. Consult BEFORE non-trivial work
 | `secrets.md` | Env var names + purpose |
 | `architecture.md` | System flow, auth, state |
 | `pitfalls.md` | Accumulated gotchas |
+| `pitfalls-layline.md` | Layline scene, render gate, capture traps |
 | `commands.md` | Build / dev / test commands |
 | `tech-stack.md` | Non-default picks + why |
 | `deployment.md` | Deploy target, artifacts |
