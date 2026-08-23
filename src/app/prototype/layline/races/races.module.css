@@ -161,6 +161,30 @@
   min-height: 420px;
 }
 
+/* The honest state for a build with no key and no mock: the pane keeps its
+   place and says why it is quiet, instead of taking questions the route would
+   answer with a 503. */
+.analystOffline {
+  flex: 1;
+  padding: 18px 16px;
+  border: 1px solid var(--rule);
+}
+
+.offlineHeading {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-family: var(--font-archivo), sans-serif;
+  font-size: 18px;
+}
+
+.offlineLine {
+  margin: 0 0 6px;
+  color: var(--ink-dim);
+  font-family: var(--font-martian), monospace;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
 /* ---- under the three-column threshold ---- */
 
 @media (max-width: 1199px) {

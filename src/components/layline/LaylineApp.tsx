@@ -23,7 +23,20 @@ const SceneIsland = dynamic(() => import("./scene/LaylineScene").then((m) => m.L
   loading: () => null,
 });
 
-export function LaylineApp({ children, venue }: { children: ReactNode; venue?: string }) {
+export function LaylineApp({
+  children,
+  venue,
+  autoplay = true,
+}: {
+  children: ReactNode;
+  venue?: string;
+  /* The story page autoplays once its intro lets go. The library opts out:
+   * its remounts happen on every race switch, the intro latch it shares with
+   * the story survives navigation, and a workspace that started playing by
+   * itself on each selection would depend on which page the visitor saw
+   * first. There the water and the transport start playback, nothing else. */
+  autoplay?: boolean;
+}) {
   const race = useMemo(() => raceData(), []);
   const live = useReplay((state) => state.webglOk);
   const chart2d = useReplay((state) => state.chart2d);
@@ -64,6 +77,7 @@ export function LaylineApp({ children, venue }: { children: ReactNode; venue?: s
       replay.setIntroDone(true);
       return;
     }
+    if (!autoplay) return;
     const start = () => {
       const state = useReplay.getState();
       state.seek(AUTOPLAY_FROM);
@@ -79,7 +93,7 @@ export function LaylineApp({ children, venue }: { children: ReactNode; venue?: s
       start();
     });
     return stop;
-  }, []);
+  }, [autoplay]);
 
   /* The water is the biggest play/pause target on the page, video-player
    * style. A press only counts as a click if the pointer barely moved; a drag

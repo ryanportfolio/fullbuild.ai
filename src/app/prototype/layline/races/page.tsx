@@ -79,7 +79,13 @@ export default async function LaylineRacesPage({
         </Link>
       </div>
 
-      <RaceWorkspace initialRaceId={selectedId} rows={rows}>
+      <RaceWorkspace
+        initialRaceId={selectedId}
+        rows={rows}
+        analystOffline={
+          !process.env.OPENROUTER_API_KEY && process.env.LAYLINE_ANALYST_MOCK !== "1"
+        }
+      >
         <div className={layline.fallback}>
           <figure className={layline.chartFigure}>
             <TrackChart race={race} />

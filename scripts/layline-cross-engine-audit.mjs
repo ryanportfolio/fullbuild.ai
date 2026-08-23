@@ -207,7 +207,15 @@ const named = new Map(registry.RACES.map((meta) => [meta.seed, meta.id]));
 
 const { fingerprint } = await import(pathToFileURL(join(OUT, "fingerprint.js")).href);
 
-const browser = await chromium.launch();
+/* Headed, per the repo's browser rule: headless renders through SwiftShader on
+   the CPU, and channel Chrome is the engine visitors actually run, which is
+   the engine whose Math this audit exists to compare. */
+let browser;
+try {
+  browser = await chromium.launch({ headless: false, channel: "chrome" });
+} catch {
+  browser = await chromium.launch({ headless: false });
+}
 const page = await browser.newPage();
 await page.route(`${ORIGIN}/**`, async (route) => {
   const path = new URL(route.request().url()).pathname.replace(/^\//, "");

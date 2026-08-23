@@ -42,10 +42,15 @@ export interface RaceRow {
 export function RaceWorkspace({
   initialRaceId,
   rows,
+  analystOffline = false,
   children,
 }: {
   initialRaceId: string;
   rows: readonly RaceRow[];
+  /* The server knows whether a key or the mock is configured; the client
+   * cannot. Offline, the rail says so instead of mounting a composer whose
+   * every question would come back a dropped connection. */
+  analystOffline?: boolean;
   children: ReactNode;
 }) {
   useState(() => {
@@ -69,13 +74,16 @@ export function RaceWorkspace({
   const raceId = mounted ? storeRaceId : initialRaceId;
   const venue = raceMeta(raceId)?.venue;
 
-  /* The store moves first so the swap is on screen this frame; the URL follows
-   * so the address bar, a reload and a shared link all agree. Replace rather
-   * than push: picking a race is changing what you are looking at, not a place
-   * to come back to, and the history would fill with one entry per glance. */
+  /* The URL moves and the store follows it through the effect above, when the
+   * navigation hands back the new prop with the new server children. One
+   * committer means the fallback chart, the finish table and the viewer can
+   * never describe two races at once, whatever the navigation does; a store
+   * that jumped ahead here would strand a WebGL-less visitor on a fallback
+   * from one race under a rail naming another. Replace rather than push:
+   * picking a race is changing what you are looking at, not a place to come
+   * back to, and the history would fill with one entry per glance. */
   const select = (id: string) => {
     if (id === raceId) return;
-    useReplay.getState().selectRace(id);
     router.replace(`${pathname}?race=${id}`, { scroll: false });
   };
 
@@ -121,7 +129,7 @@ export function RaceWorkspace({
         aria-label="Race replay console"
         tabIndex={-1}
       >
-        <LaylineApp key={raceId} venue={venue}>
+        <LaylineApp key={raceId} venue={venue} autoplay={false}>
           {children}
         </LaylineApp>
       </section>
@@ -130,7 +138,15 @@ export function RaceWorkspace({
           about, and the unmount aborts an answer still streaming for the race
           nobody is watching any more. */}
       <div id="race-analyst" className={styles.analyst} tabIndex={-1}>
-        {mounted ? (
+        {analystOffline ? (
+          <div className={styles.analystOffline}>
+            <h2 className={styles.offlineHeading}>Debrief</h2>
+            <p className={styles.offlineLine}>Analyst offline in this build</p>
+            <p className={styles.offlineLine}>
+              It answers when a model key or the mock mode is configured
+            </p>
+          </div>
+        ) : mounted ? (
           <AnalystSection key={raceId} variant="rail" />
         ) : (
           <div className={styles.analystHold} aria-hidden="true" />
