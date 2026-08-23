@@ -50,7 +50,15 @@
   --brief-dim: rgba(244, 248, 251, 0.68);
   --brief-faint: rgba(244, 248, 251, 0.45);
   --brief-hair: rgba(255, 255, 255, 0.16);
-  --brief-panel: rgba(7, 30, 50, 0.42);
+  /* 0.86, the alpha the console gives its own single panel ground, and it is
+     a legibility floor rather than a preference. The panels start about a fifth
+     of the way down the cover, which is where the gradient is the sky-horizon
+     token nearly neat. Measured against that band at the old 0.42: the panel
+     labels sat on 3.23:1 and the dim ink on 1.78:1, where 10px text needs 4.5.
+     At 0.86 the worst point on the panel is 11.17:1 for ink and 6.18:1 for dim.
+     A plate that lets the picture through is worth nothing if the reader cannot
+     read what is on it. */
+  --brief-panel: rgba(7, 30, 50, 0.86);
   /* The one accent, and it is the console's own wind token rather than a hex
      of this layer's invention. The contract at the top of layline.module.css:
      "amber is the wind. Dial needle, laylines, ladder rungs, the start line
@@ -77,6 +85,9 @@
      measures the token's WCAG luminance after hydration and writes the white
      branch over these two if the sky came out dark. */
   --brief-head-ink: color-mix(in srgb, var(--water-deep) 88%, var(--sky-horizon));
+  /* Stated, never an opacity. The console's rule: "Dim is a token, never an
+     opacity: composited contrast has to be knowable." */
+  --brief-head-dim: color-mix(in srgb, var(--brief-head-ink) 78%, var(--sky-horizon));
   --brief-head-line: color-mix(in srgb, var(--water-deep) 30%, transparent);
 }
 
@@ -157,8 +168,7 @@
 
 .raceMeta {
   flex: none;
-  color: var(--brief-head-ink);
-  opacity: 0.78;
+  color: var(--brief-head-dim);
   font-family: var(--brief-sans);
   font-size: 10px;
   font-weight: 600;
