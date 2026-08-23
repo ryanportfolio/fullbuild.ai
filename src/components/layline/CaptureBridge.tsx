@@ -8,6 +8,10 @@ export interface CaptureInfo {
   t: number;
   drawCalls: number;
   triangles: number;
+  /* Frames the renderer has actually drawn since this canvas came up. Held
+   * either side of an action, it says whether anything was drawn for that
+   * action, which a screenshot of a settled page cannot. */
+  frames: number;
 }
 
 export interface LaylineCapture {
@@ -59,6 +63,7 @@ export function CaptureBridge() {
         t: store.getState().t,
         drawCalls: renderStats.drawCalls,
         triangles: renderStats.triangles,
+        frames: renderStats.frames,
       }),
     };
     window.__layline = api;
