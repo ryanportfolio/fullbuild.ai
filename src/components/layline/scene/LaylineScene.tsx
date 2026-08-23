@@ -12,6 +12,7 @@ import {
   setFrozenFrameRequest,
 } from "./gate";
 import { BoatLabels } from "./BoatLabels";
+import { BoatPicker } from "./BoatPicker";
 import { BoatTracks } from "./BoatTracks";
 import { CameraRigs } from "./CameraRigs";
 import { CourseGraphics } from "./CourseGraphics";
@@ -403,6 +404,7 @@ export function LaylineScene({ race }: { race: RaceData }) {
       <BoatTracks race={race} />
       <CameraRigs race={race} />
       <BoatLabels race={race} />
+      <BoatPicker race={race} />
       <Clock />
       <QualityGovernor />
       <DemandBridge />

@@ -5,8 +5,19 @@ import { useEffect, useRef, useState } from "react";
 import styles from "@/app/prototype/layline/layline.module.css";
 import { MISSING, clock, gap } from "@/lib/layline/format";
 import type { BoatMeta, RaceData, StandingsRow } from "@/lib/layline/types";
+import { requestSceneFrame } from "../scene/gate";
+import { hover } from "../scene/interaction";
 import { useReplay } from "../store";
 import { onLive, sampleLive, setText } from "./live";
+
+/* Module state, and one frame asked for. Hover is read by the plate pass and
+ * by nothing that renders, so putting it in React would re-render six rows to
+ * move one border. */
+function markBoat(boatId: string | null): void {
+  if (hover.id === boatId) return;
+  hover.id = boatId;
+  requestSceneFrame();
+}
 
 interface Placing {
   boatId: string;
@@ -71,6 +82,14 @@ export function Standings({ race }: { race: RaceData }) {
                 aria-pressed={followed}
                 data-boat={boat.id}
                 onClick={() => follow(boat.id)}
+                /* The keyboard's version of hovering a boat on the water: the
+                   plate over that hull answers a focused row the same way it
+                   answers a pointer, so which boat a row names is readable
+                   without a mouse. */
+                onFocus={() => markBoat(boat.id)}
+                onBlur={() => markBoat(null)}
+                onPointerEnter={() => markBoat(boat.id)}
+                onPointerLeave={() => markBoat(null)}
               >
                 <span className={styles.standingRank}>{place.rank}</span>
                 <span
