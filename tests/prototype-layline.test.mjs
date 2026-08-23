@@ -35,7 +35,15 @@ test('Layline is discoverable and the page keeps its identity', async () => {
   assert.match(page, /title: "Layline · Race Replay"/);
   assert.match(page, /generateRace\(RACE_SEED\)/);
   assert.match(page, /Skip to the replay console/);
-  assert.match(page, /Spec work by Ryan Allen \| all demo concepts/);
+  /* The colophon is three parts: who built it, where the source is, and the way
+     back to the house. Read out of the footer it sits in rather than off the
+     whole page, so a credit that drifts out of the colophon fails here, and so
+     the source link is the colophon's own and not the one in the top bar. */
+  const colophon = page.match(/className=\{styles\.colophon\}>([\s\S]*?)<\/footer>/);
+  assert.ok(colophon !== null, 'the page has a colophon footer');
+  assert.match(colophon[1], /Built by Ryan Allen/);
+  assert.match(colophon[1], /href="https:\/\/github\.com\/ryanportfolio\/layline"/);
+  assert.match(colophon[1], /href="\/"/);
 });
 
 test('Layline engine identity holds: seed, fix rate, lens, version pin', async () => {
@@ -239,12 +247,22 @@ test('every page section the rail marks is a section the page actually renders',
 
   assert.match(page, /data-leg="Replay console"/);
   assert.match(analyst, /data-leg="Debrief"/);
-  assert.match(notes, /data-leg="How the replay works"/);
+  assert.match(notes, /data-leg="Project notes"/);
 
-  /* The mark's name is the section's own heading, not a label invented for the
-     margin. The notes section's heading renders inside the engine room. */
+  /* The mark's name is the section's own name, not a label invented for the
+     margin, and the two sections say their name in the two ways a section can.
+     The debrief points at the heading it renders; the notes section carries
+     several headings of its own and so names itself, which is what the mark has
+     to agree with. */
   assert.match(analyst, /id="debrief-heading"[\s\S]{0,80}Debrief/);
-  assert.match(engineRoom, /id="notes-heading"[\s\S]{0,120}How the replay works/);
+  assert.match(notes, /aria-label="Project notes"[\s\S]{0,40}data-leg="Project notes"/);
+
+  /* And it names itself because the heading it used to borrow is not on the
+     page: the engine room only draws its own header unembedded, and the notes
+     section is the one place anything embeds it. Flip that flag and the section
+     grows a second title the margin knows nothing about. */
+  assert.match(notes, /<EngineRoom embedded \/>/);
+  assert.match(engineRoom, /\{embedded \? null : <EngineHeader \/>\}/);
 
   /* The colophon carries no mark: it sits below the last viewport centre, so a
      mark there could never be rounded. The finish line at the foot of the rail
