@@ -911,7 +911,12 @@ test("the sea cover briefs the race it is loading", () => {
     "the cover stopped briefing the race the rail names",
   );
 
-  const brief = source("src/components/layline/RaceBrief.tsx");
+  /* The shell and its two views. Which of the three a rule lands in is a
+     question of who owns the drawing; the house rules apply to the layer. */
+  const shell = source("src/components/layline/RaceBrief.tsx");
+  const chart = source("src/components/layline/BriefChart.tsx");
+  const panels = source("src/components/layline/BriefPanels.tsx");
+  const brief = shell + chart + panels;
   const cover = source("src/components/layline/bootSea.module.css");
 
   /* The title card face, still preloaded by the page for the same reason: the
@@ -961,14 +966,16 @@ test("the sea cover briefs the race it is loading", () => {
     "the accent left the console's own wind token for a hex of this layer's own",
   );
   assert.equal((cover.match(/#ffd166/g) ?? []).length, 0, "the invented accent hex came back");
-  /* Ten users, and every one of them is the wind or what the wind decides: the
-     ladder rungs and the wedge of water the favored end has already won; the
-     arrow lying across the course, its head and the direction it carries; the
-     start line itself, which the contract names as one of the things amber
-     means before the gun; the mark over the end that line favors and the
-     seconds it is worth; and the direction trace under the drawing with the
-     dot running along it. The status hairline is a wait, not weather, and does
-     not take it. Neither does a boat, a rule or a label. */
+  /* Thirteen users across both views, and every one of them is the wind or what
+     the wind decides: the ladder rungs and the wedge of water the favored end
+     has already won; the arrow lying across the course, its head and the
+     direction it carries; the start line itself, which the contract names as
+     one of the things amber means before the gun; the mark over the end that
+     line favors and the seconds it is worth; the direction trace under the
+     drawing with the dot running along it; and, in the panel view, the dial's
+     needle, its head and the survey band behind it. The status hairline is a
+     wait, not weather, and does not take it. Neither does a boat, a rule, a
+     label, the view switch, or how far away the windward mark is. */
   const accentUsers = [
     ".rung",
     ".wedge",
@@ -980,6 +987,9 @@ test("the sea cover briefs the race it is loading", () => {
     ".favSec",
     ".stripTrace",
     ".stripDot",
+    ".dialBand",
+    ".dialNeedle",
+    ".dialHead",
   ];
   assert.equal(
     (cover.match(/var\(--brief-accent\)/g) ?? []).length,
@@ -1205,15 +1215,18 @@ test("the brief's wind is the replay's wind, and the favored end is the one near
     if (read.favored === "square") squares += 1;
   }
   assert.ok(squares > 0, "the shipped prestart no longer passes through a square line");
-  const brief = source("src/components/layline/RaceBrief.tsx");
-  assert.ok(
-    brief.includes('display: seed.favored === "square" ? "none" : undefined'),
-    "a square line leaves the favored sentence open on a dangling by",
-  );
-  assert.ok(
-    brief.includes('const by = read.favored === "square" ? "none" : "";'),
-    "the live loop stopped closing the favored sentence on a square line",
-  );
+  /* Both views carry the sentence, so both have to be able to close it. */
+  for (const view of ["BriefChart", "BriefPanels"]) {
+    const brief = source(`src/components/layline/${view}.tsx`);
+    assert.ok(
+      brief.includes('display: seed.favored === "square" ? "none" : undefined'),
+      `${view} leaves the favored sentence open on a dangling by`,
+    );
+    assert.ok(
+      brief.includes('const by = read.favored === "square" ? "none" : "";'),
+      `${view}'s live loop stopped closing the favored sentence on a square line`,
+    );
+  }
 
   /* The strip under the drawing plots direction, not speed, because direction
      is where the movement is: the same series windAt hands the replay, sampled
@@ -1416,4 +1429,47 @@ test("a gated console is one screen tall, and Continue clears the composer", () 
     cover.includes("padding: 16px 16px calc(16px + var(--brief-foot-gap));"),
     "the stacked brief stopped spending the gap",
   );
+});
+
+test("the brief draws the same ten seconds two ways, on one switch", () => {
+  const shell = source("src/components/layline/RaceBrief.tsx");
+  const chart = source("src/components/layline/BriefChart.tsx");
+  const panels = source("src/components/layline/BriefPanels.tsx");
+
+  /* The console's transport already carries this gesture: a control that swaps
+     the drawing and changes nothing else. Here it is one layer up. */
+  assert.ok(shell.includes('data-brief-switch="chart"'), "the switch stopped offering the chart");
+  assert.ok(shell.includes('data-brief-switch="panels"'), "the switch stopped offering the panels");
+  assert.ok(shell.includes('aria-pressed={view === "chart"}'), "the switch stopped saying which view is up");
+  assert.ok(shell.includes("<BriefChart race={race} reduced={reduced} />"), "the chart left the shell");
+  assert.ok(shell.includes("<BriefPanels race={race} reduced={reduced} />"), "the panels left the shell");
+
+  /* Held in the shell rather than the store, because the store re-arms the gate
+     per race and a reader who has said which drawing they want should not have
+     to say it again when the rail swaps the race under them. */
+  assert.ok(shell.includes('useState<BriefView>("chart")'), "the view stopped opening on the chart");
+
+  /* A button answers Enter itself. Without this the switch both changed the
+     drawing and released the brief on one press, which handed the reader the
+     race when they asked to see the other view. */
+  assert.ok(
+    shell.includes('if (tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON" || tag === "A") return;'),
+    "Enter on the view switch releases the brief again",
+  );
+
+  /* Only one view is mounted at a time, so each owns its own loop and both seek
+     the same store clock rather than keeping one of their own. Neither may hold
+     a clock of its own, and neither may release the brief: that is the shell's. */
+  for (const [name, view] of [["BriefChart", chart], ["BriefPanels", panels]] as const) {
+    assert.ok(view.includes("state.seek(race.tMin + phase * span)"), `${name} stopped seeking the store`);
+    assert.ok(!view.includes("releaseBrief"), `${name} took the gate off the shell`);
+    assert.ok(!view.includes("AUTOPLAY_FROM"), `${name} started deciding where the replay opens`);
+  }
+
+  /* Both views read the same race through the same helpers, so a figure cannot
+     mean one thing in one drawing and another in the other. */
+  for (const [name, view] of [["BriefChart", chart], ["BriefPanels", panels]] as const) {
+    assert.ok(view.includes("briefFacts(race)"), `${name} stopped reading the race's own facts`);
+    assert.ok(view.includes("windReadingAt(race, facts"), `${name} stopped reading the replay's wind`);
+  }
 });

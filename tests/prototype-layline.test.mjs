@@ -450,7 +450,13 @@ test('the 2D view replaces camera choices with one clear return to 3D', async ()
 
 test('the boot cover keeps the house rules while it briefs the race', async () => {
   const cover = await read('src/components/layline/bootSea.module.css');
-  const brief = await read('src/components/layline/RaceBrief.tsx');
+  const briefShell = await read('src/components/layline/RaceBrief.tsx');
+  const chart = await read('src/components/layline/BriefChart.tsx');
+  const panels = await read('src/components/layline/BriefPanels.tsx');
+  /* The shell and its two views, read as one layer: which file a rule lands
+     in is a matter of who owns the drawing, and the house rules apply to all
+     three the same way. */
+  const brief = briefShell + chart + panels;
 
   /* The house pointer, never the browser hand, on the one control this layer
      carries. */
@@ -495,9 +501,15 @@ test('the boot cover keeps the house rules while it briefs the race', async () =
 
   /* Every drawing that carries a reading is labelled, and every reading a
      label cannot carry is also in text underneath it. */
-  const svgs = brief.match(/role="img"/g) ?? [];
-  assert.equal(svgs.length, 2, 'the brief draws something a screen reader cannot name');
-  assert.equal((brief.match(/aria-label=/g) ?? []).length, 3);
+  /* The chart draws two: the plot and the direction strip. The panel view
+     draws three: the dial, its speed trace, and the line looking upwind. */
+  assert.equal((chart.match(/role="img"/g) ?? []).length, 2, 'the chart draws something a screen reader cannot name');
+  assert.equal((panels.match(/role="img"/g) ?? []).length, 3, 'the panels draw something a screen reader cannot name');
+  /* Every drawing carries its own label, and each view is named for the race
+     through the shell's own section label. */
+  assert.equal((chart.match(/aria-label=/g) ?? []).length, 2);
+  assert.equal((panels.match(/aria-label=/g) ?? []).length, 3);
+  assert.ok(briefShell.includes('aria-label={`Race brief, ${name}`}'), 'the layer stopped being named for the race');
   /* Both labels state what the drawing shows in the race's own numbers rather
      than naming a picture, and the layer itself is named for the race. */
   assert.match(brief, /aria-label=\{`The last \$\{prestartSeconds\} seconds before the gun/);

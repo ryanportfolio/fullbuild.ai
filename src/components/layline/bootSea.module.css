@@ -244,6 +244,9 @@
 .panelLabel,
 .stripLabel,
 .readLabel,
+.viewBtn,
+.twsUnit,
+.biasCap,
 .status {
   font-family: var(--brief-sans);
   font-size: 10px;
@@ -253,9 +256,53 @@
   text-transform: uppercase;
 }
 
-.raceMeta {
+/* The meta line and the view switch share a row under the name, so the switch
+   reads as belonging to the brief's own title block rather than floating over
+   the drawing it changes. */
+.headRow {
+  display: flex;
   flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1cqw 2cqw;
+}
+
+/* Given the row's spare width rather than its own intrinsic one: it is the
+   longest thing in the header and the only part of it that may wrap, and left
+   at flex: none it ran under the switch and off the layer at handset widths. */
+.raceMeta {
+  flex: 1 1 auto;
+  min-width: 0;
   color: var(--brief-head-dim);
+}
+
+/* The console's transport already carries this control: a segmented pair, the
+   selected one filled at 14% of the ink it is set in. Repeated here in the
+   header's own two inks, because the switch sits on the sky rather than on a
+   plate and the sky's ink follows the theme's own luminance. */
+.viewSwitch {
+  display: flex;
+  flex: none;
+  border: 1px solid var(--brief-head-line);
+}
+
+.viewBtn {
+  padding: 5px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--brief-head-dim);
+  cursor: var(--house-cursor);
+  transition: background 160ms var(--ease), color 160ms var(--ease);
+}
+
+.viewBtn + .viewBtn {
+  border-left: 1px solid var(--brief-head-line);
+}
+
+.viewBtnOn {
+  background: color-mix(in srgb, var(--brief-head-ink) 14%, transparent);
+  color: var(--brief-head-ink);
 }
 
 .briefMain {
@@ -366,6 +413,7 @@
   stroke-width: 1.4;
 }
 
+
 .plotMarkFill {
   fill: var(--brief-ink);
 }
@@ -461,7 +509,8 @@
    not ten, because a label out on the water is read against the chart rather
    than against the rows beside it. Sizes are written in user units by the
    measured metres per pixel, so nine pixels stays nine pixels at every width. */
-.plotLabel {
+.plotLabel,
+.plotEnd {
   fill: var(--brief-dim);
   font-family: var(--brief-sans);
   font-weight: 600;
@@ -481,11 +530,14 @@
   letter-spacing: 0.02em;
 }
 
+/* Wraps rather than truncates. Wide the two notes share a line; narrow they
+   do not fit one, and an ellipsised "favored: pin by..." states nothing. */
 .plotCap {
   display: flex;
   flex: none;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 2cqw;
+  gap: 0.4cqw 2cqw;
 }
 
 .favored {
@@ -685,6 +737,170 @@
   white-space: nowrap;
 }
 
+/* ---- the panel view ----
+
+   The same ten seconds read as three plates rather than one drawing: the fleet
+   at the line, the breeze on a dial with its trace, and what the line is worth
+   in it. Everything the two views share, the plate ground, the label type, the
+   fleet row, the accent, is stated once above and used by both; only what
+   genuinely differs is here. */
+
+.panelMain {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 1.08fr 1fr 1.12fr;
+  gap: 1.8cqw;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* A plate in this view holds a stack rather than a drawing, so it states the
+   column and the padding the chart's plates state for themselves. */
+[data-brief-view="panels"] .panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9cqw;
+  padding: 1.5cqw 1.6cqw;
+}
+
+/* Six rows on their own plate, ruled, rather than six lines of a ledger under a
+   drawing. Nothing is stretching above them here either, so the foot sits under
+   the last boat instead of at the bottom of a plate taller than its rows. */
+[data-brief-view="panels"] .fleetRow {
+  padding: 0.78cqw 0;
+  border-bottom: 1px solid var(--brief-hair);
+}
+
+/* Sized to their own figures rather than to the ledger's columns. The ledger
+   states widths so its six rows line up under a drawing three columns wide;
+   here the same two columns sit on a plate a third of that, and the width they
+   were holding came straight off the boat name, which truncated. */
+[data-brief-view="panels"] .sail {
+  width: auto;
+}
+
+[data-brief-view="panels"] .slot {
+  width: auto;
+  margin-left: auto;
+  text-align: right;
+}
+
+[data-brief-view="panels"] .fleetFoot {
+  margin-top: auto;
+}
+
+.dialWrap {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dial {
+  width: 220px;
+  max-width: 100%;
+  max-height: 100%;
+  height: auto;
+}
+
+.dialFace {
+  fill: none;
+  stroke: var(--brief-hair);
+  stroke-width: 1;
+}
+
+.dialBand {
+  fill: var(--brief-accent);
+  opacity: 0.24;
+}
+
+.dialNeedle {
+  stroke: var(--brief-accent);
+  stroke-width: 1.6;
+}
+
+.dialHead {
+  fill: var(--brief-accent);
+}
+
+.dialHub {
+  fill: var(--brief-dim);
+}
+
+.dialTicks {
+  stroke: var(--brief-dim);
+  stroke-width: 1;
+}
+
+.twsRow {
+  display: flex;
+  flex: none;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.9cqw;
+}
+
+.twsBig {
+  font-family: var(--brief-mono);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.twsUnit {
+  color: var(--brief-dim);
+}
+
+.trace {
+  flex: none;
+  width: 100%;
+  height: 4.2cqw;
+  min-height: 26px;
+}
+
+.lineDiagram {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
+.diagramEnd {
+  fill: var(--brief-ink);
+  font-family: var(--brief-mono);
+  font-size: 3.6px;
+}
+
+.diagramNote {
+  fill: var(--brief-dim);
+  font-family: var(--brief-mono);
+  font-size: 3.4px;
+}
+
+.diagramTag {
+  font-family: var(--brief-mono);
+  font-size: 4px;
+}
+
+.biasReads {
+  display: flex;
+  flex: none;
+  justify-content: space-between;
+  gap: 2cqw;
+}
+
+.biasNum {
+  font-family: var(--brief-mono);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.biasCap {
+  margin-top: 0.3cqw;
+  color: var(--brief-dim);
+}
+
 /* ---- footer ---- */
 
 .briefFoot {
@@ -841,7 +1057,8 @@
      nobody can read is worse than no label. The ledger directly under the plot
      names all six in the order they lie along the line and carries each hull's
      colour, so the drawing keeps its key. */
-  .plotSail {
+  .plotSail,
+  .plotEnd {
     display: none;
   }
 
@@ -864,13 +1081,47 @@
      The plot keeps a stated height rather than shrinking with the rest: on a
      narrow box the chart is the one thing worth the room, and the ledger is
      what a thumb scrolls to. */
-  .briefMain {
+  .briefMain,
+  .panelMain {
     grid-template-columns: 1fr;
     grid-template-rows: none;
     grid-auto-rows: min-content;
     gap: 12px;
     overflow-y: auto;
     overscroll-behavior: contain;
+  }
+
+  /* Stacked, each plate is as tall as what is in it, so the two drawings the
+     panel view gives a share of a column need a stated height instead. */
+  .dialWrap {
+    flex: none;
+    min-height: 170px;
+  }
+
+  .lineDiagram {
+    flex: none;
+    height: 180px;
+  }
+
+  [data-brief-view="panels"] .panel {
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  [data-brief-view="panels"] .fleetRow {
+    padding: 7px 0;
+  }
+
+  [data-brief-view="panels"] .fleetFoot {
+    margin-top: 8px;
+  }
+
+  .twsRow {
+    gap: 8px;
+  }
+
+  .biasReads {
+    gap: 12px;
   }
 
   .panel {
@@ -882,9 +1133,17 @@
     padding: 10px;
   }
 
+  /* The shape of what is in it, not a stated height. A near-square box holding
+     a fleet 106 m across by 23 m deep spends four fifths of itself on empty
+     water once the scale is held isotropic, which is what a true-scale chart
+     costs if the box lies about the data. RaceBrief hands over the padded
+     data's own aspect; the floor keeps the drawing tappable on a phone if a
+     course ever comes through much wider than this one. */
   .plotBox {
     flex: none;
-    height: 300px;
+    height: auto;
+    min-height: 96px;
+    aspect-ratio: var(--plot-aspect, 3.2);
   }
 
   .ledger,

@@ -311,6 +311,14 @@ export interface PrestartFrame {
   w: number;
   h: number;
   viewBox: string;
+  /**
+   * The padded data's own width over its own height, before any of it is grown
+   * to fill a box. A drawing box given this aspect holds the prestart and
+   * almost nothing else; given a squarer one, the scale stays honest and the
+   * difference is spent on empty water. It is independent of the `aspect`
+   * argument, so a layout can ask for it and then hand it straight back.
+   */
+  natural: number;
 }
 
 /**
@@ -351,6 +359,7 @@ export function prestartFrame(
 
   let w = maxX - minX;
   let h = maxY - minY;
+  const natural = h > 0 ? w / h : 1;
   const want = aspect > 0 ? w / aspect : h;
   if (want >= h) {
     minY = maxY - want;
@@ -367,6 +376,7 @@ export function prestartFrame(
     w,
     h,
     viewBox: `${minX.toFixed(2)} ${minY.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)}`,
+    natural,
   };
 }
 
@@ -432,4 +442,29 @@ export function scaleStep(across: number): number {
     if (Math.abs(step - want) < Math.abs(best - want)) best = step;
   }
   return best;
+}
+
+/**
+ * The prestart breeze as a polyline, for the trace under the panel view's dial.
+ * Sampled off `windAt` rather than off `race.wind` directly, so the curve drawn
+ * is the curve the replay reads between the 1 Hz samples.
+ */
+export function prestartTrace(race: RaceData, steps: number): { t: number; tws: number }[] {
+  const points: { t: number; tws: number }[] = [];
+  for (let i = 0; i <= steps; i += 1) {
+    const t = race.tMin + (i / steps) * (0 - race.tMin);
+    windAt(race, t, scratch);
+    points.push({ t, tws: scratch.tws });
+  }
+  return points;
+}
+
+/** Course x to the panel diagram's own -1..1 across the line, clamped to the ends. */
+export function acrossLine(x: number, half: number): number {
+  const u = half > 0 ? x / half : 0;
+  return u < -1 ? -1 : u > 1 ? 1 : u;
+}
+
+export function lineEndsOf(course: RaceData["course"]): { pinX: number; boatX: number } {
+  return { pinX: course.startPin.x, boatX: course.startBoat.x };
 }
