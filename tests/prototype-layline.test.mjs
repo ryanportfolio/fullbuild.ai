@@ -447,3 +447,111 @@ test('the 2D view replaces camera choices with one clear return to 3D', async ()
   assert.match(viewRule, /background: color-mix\(in srgb, var\(--ink-dim\) 8%, transparent\)/);
   assert.match(viewRule, /border-color: var\(--ink-dim\)/);
 });
+
+test('the boot cover keeps the house rules while it briefs the race', async () => {
+  const cover = await read('src/components/layline/bootSea.module.css');
+  const briefShell = await read('src/components/layline/RaceBrief.tsx');
+  const chart = await read('src/components/layline/BriefChart.tsx');
+  const panels = await read('src/components/layline/BriefPanels.tsx');
+  /* The shell and its two views, read as one layer: which file a rule lands
+     in is a matter of who owns the drawing, and the house rules apply to all
+     three the same way. */
+  const brief = briefShell + chart + panels;
+
+  /* The house pointer, never the browser hand, on the one control this layer
+     carries. */
+  assert.doesNotMatch(cover, /cursor:\s*pointer/);
+  assert.match(cover, /cursor: var\(--house-cursor\)/);
+  /* The cover is one of the three surfaces allowed a gradient, and it is the
+     only gradient here: nothing inside a panel may carry one. */
+  assert.equal((cover.match(/linear-gradient|radial-gradient/g) ?? []).length, 1);
+  assert.doesNotMatch(cover, /box-shadow|backdrop-filter/);
+  assert.match(cover, /@media \(prefers-reduced-motion: reduce\)/);
+  /* Narrow stacks the three panels and grounds the footer, so the way through
+     is never what scrolls off. */
+  assert.match(cover, /@container \(max-width: 760px\)/);
+
+  /* The cover states no focus ring of its own. The console rings every
+     focusable thing with one square registration box so keyboard position is
+     never ambiguous, and a second opinion on this layer was a control that
+     changed shape the moment it took focus. */
+  assert.doesNotMatch(cover, /:focus-visible/);
+  const shell = await read('src/app/prototype/layline/layline.module.css');
+  assert.match(shell, /\.shell :is\(a, button, \[tabindex\]\):focus-visible/);
+
+  /* Nothing on this layer is rounded, which is the same call the route's own
+     scrollbar stylesheet already made: "the console draws no radius anywhere". */
+  assert.doesNotMatch(cover.replace(/\/\*[\s\S]*?\*\//g, ''), /border-radius/);
+
+  /* The stacked brief is the one scroller on this route that is not the
+     platform bar, and it takes the bar the route already paints: same 10px
+     channel, same 3px inset over padding-box, same square corners, in this
+     layer's own inks because the bar sits on the sea rather than on the page
+     ground. A default browser bar here is the only chrome nobody drew. */
+  /* Stated for every scroller on the layer at every width, not for the one
+     element that happens to overflow in today's stacked layout. */
+  assert.match(cover, /\.brief::-webkit-scrollbar \{\s*width: 10px;/);
+  assert.match(cover, /\.brief ::-webkit-scrollbar-thumb/);
+  assert.match(cover, /\.brief \*,?\s*\{?\s*scrollbar-width: thin/);
+  assert.match(cover, /border: 3px solid transparent;/);
+  assert.match(cover, /@supports not selector\(::-webkit-scrollbar\)/);
+  const bar = await read('src/app/prototype/layline/scrollbar.css');
+  assert.match(bar, /width: 10px;/);
+  assert.match(bar, /border: 3px solid transparent;/);
+
+  /* Every drawing that carries a reading is labelled, and every reading a
+     label cannot carry is also in text underneath it. */
+  /* The chart draws two: the plot and the direction strip. The panel view
+     draws three: the dial, its speed trace, and the line looking upwind. */
+  assert.equal((chart.match(/role="img"/g) ?? []).length, 2, 'the chart draws something a screen reader cannot name');
+  assert.equal((panels.match(/role="img"/g) ?? []).length, 3, 'the panels draw something a screen reader cannot name');
+  /* Every drawing carries its own label, and each view is named for the race
+     through the shell's own section label. */
+  assert.equal((chart.match(/aria-label=/g) ?? []).length, 2);
+  assert.equal((panels.match(/aria-label=/g) ?? []).length, 3);
+  assert.ok(briefShell.includes('aria-label={`Race brief, ${name}`}'), 'the layer stopped being named for the race');
+  /* Both labels state what the drawing shows in the race's own numbers rather
+     than naming a picture, and the layer itself is named for the race. */
+  assert.match(brief, /aria-label=\{`The last \$\{prestartSeconds\} seconds before the gun/);
+  assert.match(brief, /aria-label=\{`True wind direction across the prestart/);
+
+  /* The brief holds while the renderer warms, and says which of the two it is
+     waiting on. Neither string claims the race is loading: it is already
+     built by the time this layer paints. */
+  assert.match(brief, /renderer warming, the race is already loaded/);
+  assert.match(brief, /renderer up, the race is already loaded/);
+
+  /* The hairline is transitioned, never keyframed. Killing an animation to
+     complete it drops the element to its base width first, so the bar snapped
+     to full from wherever the ramp had reached, in the same frame the text
+     swapped. Both changes are one 700ms settle now. */
+  const fillRule = cover.slice(cover.indexOf('.statusFill {'));
+  assert.match(fillRule.slice(0, fillRule.indexOf('}')), /transition: width/);
+  assert.doesNotMatch(cover, /@keyframes statusWarm/);
+  assert.ok(!cover.includes('.statusFull'), 'the class that snapped the bar to full came back');
+  assert.ok(
+    brief.includes('const SLOW_ENOUGH_TO_SAY_SO = 600;'),
+    'the hairline draws itself again on a boot too fast to have a wait in it',
+  );
+  assert.ok(
+    brief.includes("if (bar.style.opacity !== \"1\") return;"),
+    'a hairline that was never shown completes itself, which is the sweep this avoids',
+  );
+  /* Reduced motion states the wait as a value instead of creeping it across
+     the footer, and the stylesheet drops every transition on the footer's three
+     moving parts rather than only on the fill. */
+  /* Matched line by line, never across the break: this repo checks out CRLF, so
+     a pattern pinning a bare newline against source text passes here and fails
+     on a fresh clone. */
+  assert.ok(brief.includes('fill.style.width = "88%";'), 'the ramp stopped stating its target');
+  assert.ok(brief.includes('fill.style.width = "100%";'), 'the completion stopped stating its target');
+  const reducedBlock = cover.slice(cover.indexOf('@media (prefers-reduced-motion: reduce)'));
+  for (const part of ['.statusFill', '.statusBar', '.statusStack span']) {
+    assert.ok(reducedBlock.includes(part), `${part} keeps its transition under reduced motion`);
+  }
+
+  /* Display text carries no periods, here as everywhere else on the page. */
+  for (const line of ['renderer warming, the race is already loaded', 'Start the race']) {
+    assert.ok(!line.endsWith('.'), `${line} ends in a period`);
+  }
+});
