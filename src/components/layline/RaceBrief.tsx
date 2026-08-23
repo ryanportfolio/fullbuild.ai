@@ -176,6 +176,35 @@ export function RaceBrief({
     fill.style.width = "100%";
   }, [live, reduced]);
 
+  /**
+   * The way through, moving on the race's own clock.
+   *
+   * The console allows exactly one continuous motion verb and it is TRACK,
+   * which is clock-driven; SETTLE is the UI verb and the contract says it never
+   * loops. So a decorative pulse to say "press me" does not ship here. What
+   * moves instead is the countdown the button is offering: the band across its
+   * foot runs with the ten seconds to the gun and starts over with the loop,
+   * and the arrow rides it. The button is alive because the race is.
+   *
+   * Written as a number on the element rather than through React, the way the
+   * rest of this layer writes a reading. Because it is a function of the replay
+   * clock and not of wall time, the capture hold freezes it with everything
+   * else and two screenshots of a stated time draw the same button.
+   */
+  useEffect(() => {
+    const node = button.current;
+    if (node === null) return;
+    const span = 0 - race.tMin;
+    const write = (t: number): void => {
+      const run = span > 0 ? Math.min(1, Math.max(0, (t - race.tMin) / span)) : 0;
+      node.style.setProperty("--go-run", run.toFixed(4));
+    };
+    write(useReplay.getState().t);
+    return useReplay.subscribe((state) => {
+      if (!state.briefDone) write(state.t);
+    });
+  }, [race]);
+
   const release = useCallback(() => {
     const state = useReplay.getState();
     if (state.briefDone) return;

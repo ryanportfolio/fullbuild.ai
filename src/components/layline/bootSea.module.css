@@ -913,7 +913,7 @@
 }
 
 .status {
-  flex: 1;
+  flex: none;
   margin: 0;
   color: var(--brief-dim);
   text-transform: none;
@@ -976,18 +976,29 @@
    registration box, which states border-radius: 0 on whatever it rings. A pill
    here was a control that changed shape the moment it took focus. */
 .goBtn {
-  padding: 1cqw 2.4cqw;
+  /* Takes the footer's spare width instead of sitting in a corner of it. The
+     status line beside it is a sentence of a stated length; everything the
+     sentence does not need belongs to the way through. */
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  padding: 1.6cqw 2.4cqw;
+  overflow: hidden;
   border: 1px solid var(--brief-ink);
   background: var(--brief-ink);
   color: var(--water-deep);
-  /* Archivo, the console's own primary button, and at the label size the rest
-     of the layer uses: mono here would be a lie about where the data is,
-     because this is a control and not a measurement. */
+  /* Archivo, the console's own primary button: mono here would be a lie about
+     where the data is, because this is a control and not a measurement.
+
+     At the reading size, not the label size. It is the one thing on the layer
+     a viewer has to do, and it was set smaller than every numeral it sits
+     under. 22px is the size the readings already use, so the layer still holds
+     to three: 22 for a reading, 10 for a label, 9 inside the drawing. */
   font-family: var(--brief-sans);
-  font-size: 10px;
+  font-size: 22px;
   font-weight: 800;
   letter-spacing: 0.14em;
-  line-height: 16px;
+  line-height: 30px;
   text-transform: uppercase;
   /* The house pointer, never the browser hand: every control on this page
      takes the mark the shell defines. */
@@ -999,10 +1010,31 @@
     border-color 160ms var(--ease);
 }
 
+/* The ten seconds to the gun, drawn across the foot of the thing that fires it.
+   RaceBrief writes --go-run off the replay clock every frame, so this is TRACK,
+   the console's one continuous verb, rather than the looping decoration its
+   contract rules out: "SETTLE is a UI or camera transition ... never looping".
+   It also means the button is a function of the stated time, so the capture
+   hold stops it with everything else.
+
+   currentColor, so it inverts with the button on hover instead of naming a
+   second fill this layer would then have to defend. */
+.goBtn::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 4px;
+  background: currentColor;
+  transform: scaleX(var(--go-run, 0));
+  transform-origin: left;
+}
+
 .goArrow {
   display: inline-block;
+  /* Rides the same countdown, a few pixels of travel across the ten seconds,
+     so the arrow is going somewhere rather than pointing at nothing. */
   margin-left: 0.7cqw;
-  transition: transform 160ms var(--ease);
+  transform: translateX(calc(var(--go-run, 0) * 8px));
 }
 
 /* Inverts, the way the console's own primary button does, rather than picking
@@ -1012,8 +1044,14 @@
   color: var(--brief-ink);
 }
 
+/* Adds to the run rather than replacing it: pointing at the button must not
+   stop the countdown drawn across it. */
+/* Hover only. This layer states no focus rule of any kind, and the test that
+   pins that bans the selector by name: the console rings every focusable
+   thing on the page identically, and a second opinion here was what made the
+   button change shape the moment it took focus. */
 .goBtn:hover .goArrow {
-  transform: translateX(3px);
+  transform: translateX(calc(var(--go-run, 0) * 8px + 5px));
 }
 
 /* ---- narrow: give the chart room, ground the footer ---- */
@@ -1180,7 +1218,9 @@
 
   .goBtn {
     width: 100%;
-    padding: 12px 16px;
+    padding: 14px 16px;
+    font-size: 16px;
+    line-height: 22px;
   }
 
   .goArrow {

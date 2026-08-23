@@ -1473,3 +1473,44 @@ test("the brief draws the same ten seconds two ways, on one switch", () => {
     assert.ok(view.includes("windReadingAt(race, facts"), `${name} stopped reading the replay's wind`);
   }
 });
+
+test("the way through is the widest thing on the footer, and it moves on the race's clock", () => {
+  const shell = source("src/components/layline/RaceBrief.tsx");
+  const cover = source("src/components/layline/bootSea.module.css");
+  const goBtn = cover.slice(cover.indexOf(".goBtn {"), cover.indexOf(".goBtn::before"));
+
+  /* It takes the footer's spare width. The sentence beside it is a stated
+     length; everything that sentence does not need belongs to the button. */
+  assert.ok(goBtn.includes("flex: 1;"), "the way through stopped taking the footer's spare width");
+  const status = cover.slice(cover.indexOf(".status {\n  flex"), cover.indexOf(".statusStack {"));
+  assert.ok(!status.includes("flex: 1;"), "the status line went back to eating the footer");
+
+  /* At the reading size, not the label size, so the layer still holds to three:
+     22 for a reading, 10 for a label, 9 inside the drawing. */
+  assert.ok(goBtn.includes("font-size: 22px;"), "the way through went back to the label size");
+
+  /* Clock-driven, which is the console's one continuous verb. Its contract:
+     "SETTLE is a UI or camera transition, 1.2s at the outside, power2.inOut,
+     never looping", so a decorative pulse to say "press me" cannot ship. What
+     moves is the countdown the button is offering. */
+  assert.ok(
+    shell.includes('node.style.setProperty("--go-run", run.toFixed(4));'),
+    "the button stopped running on the replay clock",
+  );
+  assert.ok(
+    shell.includes("const run = span > 0 ? Math.min(1, Math.max(0, (t - race.tMin) / span)) : 0;"),
+    "the button's run stopped being the ten seconds to the gun",
+  );
+  assert.ok(
+    cover.includes("transform: scaleX(var(--go-run, 0));"),
+    "the countdown band stopped being drawn from the clock",
+  );
+  /* currentColor, so it inverts with the button on hover rather than naming a
+     second fill this layer would then have to defend. */
+  const band = cover.slice(cover.indexOf(".goBtn::before"), cover.indexOf(".goArrow {"));
+  assert.ok(band.includes("background: currentColor;"), "the band picked up a fill of its own");
+  /* Nothing on the button loops on wall time. That is the banned verb, and it
+     would also take the button off the stated time a held capture draws. */
+  assert.ok(!goBtn.includes("animation:"), "the way through went back to a looping decoration");
+  assert.ok(!band.includes("animation:"), "the countdown band went back to a looping decoration");
+});
