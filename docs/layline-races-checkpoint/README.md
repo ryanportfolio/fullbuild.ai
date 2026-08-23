@@ -6,11 +6,11 @@ Captured at 1600 by 1000 in headed Chrome with the replay frozen at 0:24 through
 |---|---|---:|---:|
 | Console | [console-1600.png](./console-1600.png) | 17.44:1 | 13.35:1 |
 | Sailcloth | [sailcloth-1600.png](./sailcloth-1600.png) | 12.83:1 | 14.52:1 |
-| Marine | [marine-1600.png](./marine-1600.png) | 4.93:1 | 8.47:1 |
+| Marine | [marine-1600.png](./marine-1600.png) | 11.50:1 | 8.24:1 |
 | Chart | [chart-1600.png](./chart-1600.png) | 13.57:1 | 14.50:1 |
 | Ice | [ice-1600.png](./ice-1600.png) | 15.26:1 | 15.31:1 |
 
-All reported pairs pass WCAG AA. Marine is the tightest body-text pair at 4.93:1.
+All reported pairs pass WCAG AA. Marine is still the tightest body-text pair, now at 11.50:1: it went white on a #06422e ground, so its old 4.93:1 black-on-#0c8c5e reading no longer exists.
 
 ## Icons at shipping size
 
