@@ -919,20 +919,10 @@ function luffing(build: (s: Shell, spread: number) => void): BufferGeometry {
   const shaken = finish(flat);
   drawing.morphAttributes.position = [shaken.getAttribute("position") as BufferAttribute];
   drawing.morphAttributes.normal = [shaken.getAttribute("normal") as BufferAttribute];
-  /* Culling reads one sphere per mesh and never looks at a morph, so the one on
-   * the drawn shape has to cover the flattened one as well. A sail that leaves
-   * its own bounds mid gybe is culled at the moment it is being watched. */
-  const sphere = drawing.boundingSphere;
-  if (sphere !== null) {
-    const centre = sphere.center;
-    for (let i = 0; i < flat.pos.length; i += 3) {
-      const dx = flat.pos[i] - centre.x;
-      const dy = flat.pos[i + 1] - centre.y;
-      const dz = flat.pos[i + 2] - centre.z;
-      const r = Math.sqrt(dx * dx + dy * dy + dz * dz);
-      if (r > sphere.radius) sphere.radius = r;
-    }
-  }
+  /* Again, now that the targets are on: culling reads one sphere per mesh, and
+   * the one finish left covers the drawn shape alone. A sail that leaves its own
+   * bounds mid gybe is culled at the moment it is being watched. */
+  drawing.computeBoundingSphere();
   return drawing;
 }
 
