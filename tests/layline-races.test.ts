@@ -1373,3 +1373,47 @@ test("the brief gates the replay, and re-arms with the race", () => {
   /* The label is the whole promise of the button. */
   assert.ok(brief.includes("Start the race"), "the way through changed its words");
 });
+
+test("a gated console is one screen tall, and Continue clears the composer", () => {
+  const app = source("src/components/layline/LaylineApp.tsx");
+  /* The gate is the stage's business as well as the cover's: stacked, the
+     console is a column of docks about 1300px tall, and a brief held to one
+     screen left 500-odd px of empty water under the button. The attribute goes
+     up while the brief is unread and comes off the moment it is released, so
+     the column is back to full height under a cover that has not faded yet. */
+  assert.ok(
+    app.includes('data-gate={briefed && !briefDone ? "brief" : undefined}'),
+    "the stage stopped saying when it is gated",
+  );
+
+  const css = source("src/app/prototype/layline/layline.module.css");
+  const stacked = css.slice(css.indexOf("@media (max-width: 900px) {"));
+  assert.ok(stacked.includes('.stage[data-gate="brief"] {'), "the gated console stopped being capped");
+  assert.ok(
+    stacked.includes("max-height: calc(100svh - var(--composer-bar, 59px) - env(safe-area-inset-bottom));"),
+    "the cap stopped agreeing with the height the brief is held to",
+  );
+  /* Nothing under the cover may resize while it is up: the canvas states its
+     own 48vh here and the docks are pinned to their natural height, so the cap
+     clips rather than squeezes and releasing it costs no reflow. */
+  assert.ok(stacked.includes('.stage[data-gate="brief"] > * {'), "the docks went back to shrinking under the cap");
+
+  const cover = source("src/components/layline/bootSea.module.css");
+  /* The composer pins over the foot of the viewport below 1199px. The cap
+     above only holds while the brief is pinned; scrolled to where the gate is
+     simply fully in view, its bottom edge lands on the viewport foot, and a
+     footer flush with that edge lands under the composer. */
+  assert.ok(cover.includes("--brief-foot-gap: 0px;"), "the footer gap stopped being stated at full width");
+  assert.ok(
+    cover.includes("--brief-foot-gap: calc(var(--composer-bar, 59px) + env(safe-area-inset-bottom));"),
+    "the footer stopped being held off the composer's band",
+  );
+  assert.ok(
+    cover.includes("padding: 3cqw 3.2cqw calc(2.2cqw + var(--brief-foot-gap));"),
+    "the brief stopped spending the gap",
+  );
+  assert.ok(
+    cover.includes("padding: 16px 16px calc(16px + var(--brief-foot-gap));"),
+    "the stacked brief stopped spending the gap",
+  );
+});
