@@ -175,7 +175,7 @@ test('the race library rail and workspace keep their interaction contracts', asy
 
   /* Search owns only query state. Race selection remains the URL committer,
      and both Escape and a visible button clear the view. */
-  assert.match(workspace, /aria-label="Search races"|htmlFor="race-search"/);
+  assert.match(workspace, /htmlFor="race-search">Search<\/label>/);
   assert.match(workspace, /if \(event\.key !== "Escape"\) return;/);
   assert.match(workspace, />\s*Clear\s*<\/button>/);
   assert.match(workspace, /Search hides \$\{hiddenBySearch\} races/);
