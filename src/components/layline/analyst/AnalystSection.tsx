@@ -577,10 +577,6 @@ export function AnalystSection({ variant = "story" }: { variant?: "story" | "rai
           <h2 id="analyst-dock-heading" className={styles.dockHeading}>
             Debrief
           </h2>
-          <p className={styles.dockNote}>
-            Ask about the race in the viewer. Answers cite its telemetry and jump the replay to the
-            moment
-          </p>
         </div>
       ) : (
       <div className={styles.head}>

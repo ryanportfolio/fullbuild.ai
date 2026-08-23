@@ -188,8 +188,8 @@
 /* ---- under the three-column threshold ---- */
 
 @media (max-width: 1199px) {
-  /* The bar is fixed over the page, so the page ends above it: the colophon is
-     the last thing down here and it is not going under a composer. */
+  /* The bar is fixed over the page, so the page ends above it: whatever the
+     workspace ends on is not going under a composer. */
   .page {
     padding-bottom: calc(var(--composer-bar) + env(safe-area-inset-bottom));
   }

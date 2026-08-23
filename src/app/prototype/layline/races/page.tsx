@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import RailLogo from "@/components/chrome/RailLogo";
 import { TrackChart } from "@/components/layline/svg/TrackChart";
 import { raceFor } from "@/lib/layline/analyst/data";
 import { MISSING, clock } from "@/lib/layline/format";
@@ -144,19 +143,6 @@ export default async function LaylineRacesPage({
           </div>
         </div>
       </RaceWorkspace>
-
-      <footer className={layline.colophon}>
-        <span>Spec work by Ryan Allen | all demo concepts</span>
-        <span aria-hidden="true">·</span>
-        <Link href="https://github.com/ryanportfolio/layline">
-          <strong>View source</strong>
-        </Link>
-        <span aria-hidden="true">·</span>
-        <Link className={layline.homeLink} href="/">
-          <RailLogo className={layline.footerHouseMark} />
-          <span>fullbuild.ai</span>
-        </Link>
-      </footer>
     </div>
   );
 }

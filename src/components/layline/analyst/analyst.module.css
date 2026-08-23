@@ -1660,13 +1660,6 @@
   line-height: 1.1;
 }
 
-.dockNote {
-  margin: 0;
-  color: var(--ink-dim);
-  font-size: 12px;
-  line-height: 18px;
-}
-
 .dockPanel {
   position: relative;
   display: flex;
