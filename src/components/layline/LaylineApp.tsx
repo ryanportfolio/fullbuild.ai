@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import styles from "@/app/prototype/layline/layline.module.css";
+import sea from "./bootSea.module.css";
 import { BoatCursor } from "./BoatCursor";
 import { CaptureBridge } from "./CaptureBridge";
 import { Instruments } from "./hud/Instruments";
@@ -47,10 +48,14 @@ export function LaylineApp({
   /* What covers the wait while the renderer boots. "intro" is the story page,
    * whose overlay is over the viewport anyway, so the server chart holds
    * hidden behind it and never flashes on a machine that boots inside the
-   * grace window. "chart" is the library, which has no overlay: there the
-   * chart is the loading state, revealing after a short grace and
-   * cross-fading to the scene, on every race the rail selects. */
-  boot?: "intro" | "chart";
+   * grace window.
+   *
+   * "sea" is the library, which has no overlay. It covers the wait with the
+   * sky and water the scene itself opens on, so the renderer resolves out of
+   * a picture it already agrees with rather than cutting in over a dark hole.
+   * The chart underneath it stays the honest answer for a machine that never
+   * gets a renderer, and reveals on its own if none arrives. */
+  boot?: "intro" | "sea";
 }) {
   const race = useMemo(() => raceData(), []);
   const live = useReplay((state) => state.webglOk);
@@ -75,6 +80,25 @@ export function LaylineApp({
     const timer = window.setTimeout(() => setChartGone(true), 420);
     return () => window.clearTimeout(timer);
   }, [live]);
+
+  /* The sea cover's three states. It is up while the renderer boots, over the
+   * chart as well as the canvas so nothing paints through it; it leaves the
+   * moment the renderer puts up a frame, taking 900ms about it so the scene
+   * gains depth under it rather than replacing it; and it leaves anyway at
+   * 2.6s if no frame ever comes, which is what hands a machine with no WebGL
+   * the chart it is entitled to. Gone unmounts it, one fade later. */
+  const [cover, setCover] = useState<"up" | "out" | "gone">("up");
+  useEffect(() => {
+    if (boot !== "sea") return;
+    if (live) {
+      setCover("out");
+      const timer = window.setTimeout(() => setCover("gone"), 1100);
+      return () => window.clearTimeout(timer);
+    }
+    setCover("up");
+    const timer = window.setTimeout(() => setCover("out"), 2600);
+    return () => window.clearTimeout(timer);
+  }, [live, boot]);
 
   /* Read once at mount. A visitor who has asked for less motion gets the
    * replay paused at a mid-beat moment with everything reachable by hand,
@@ -153,6 +177,16 @@ export function LaylineApp({
         {live && chart2d ? <ChartView race={race} /> : null}
         <BoatCursor targetRef={waterRef} />
       </div>
+
+      {/* The water the scene opens on, painted flat. Fades out under the first
+          rendered frame, so what changes is the picture gaining depth rather
+          than a layer being swapped for another. */}
+      {boot === "sea" && cover !== "gone" ? (
+        <div
+          className={cover === "out" ? `${sea.cover} ${sea.out}` : sea.cover}
+          aria-hidden="true"
+        />
+      ) : null}
 
       <TopBar race={race} venue={venue} />
 

@@ -769,25 +769,39 @@ test("the library starts playback on its own mount, never on the story's intro l
   assert.ok(reduced > 0 && starts > reduced, "an autoplay mode is read before reduced motion is");
 });
 
-test("the library covers the renderer's boot with the chart, the story page with its intro", () => {
+test("the library covers the renderer's boot with the sea, the story page with its intro", () => {
   const workspace = source("src/app/prototype/layline/races/RaceWorkspace.tsx");
   assert.ok(
-    workspace.includes('boot="chart"'),
-    "the library stopped asking for the chart while the renderer boots",
+    workspace.includes('boot="sea"'),
+    "the library stopped covering the renderer's boot",
   );
 
   const app = source("src/components/layline/LaylineApp.tsx");
   assert.ok(app.includes('boot = "intro"'), "the story page lost its default boot cover");
+  assert.ok(app.includes("data-boot={boot}"), "the stage no longer states which cover to draw");
+  /* The cover has to outlive the first rendered frame, else the two fades leave
+     a gap with neither picture in it. */
   assert.ok(
-    app.includes('data-boot={boot}'),
-    "the stage no longer states which cover the stylesheet should draw",
+    app.includes('setCover("gone"), 1100'),
+    "the sea cover unmounts before its own fade has finished",
   );
 
-  /* The two covers are different rules, and the chart one has to reach the
-     dock fades as well, else the docks pop in under a cross-fading chart. */
   const css = source("src/app/prototype/layline/layline.module.css");
-  assert.ok(css.includes('.stage[data-boot="chart"] .fallbackLayer'), "no chart reveal rule");
-  assert.ok(css.includes('.stage[data-boot="chart"] .dockLeft'), "the docks still pop in");
-  assert.match(css, /@keyframes chartReveal/);
-  assert.match(css, /@keyframes dockIn/);
+  assert.ok(css.includes('.stage[data-boot="sea"] .canvasLayer'), "the scene fades instead of the cover");
+  assert.ok(css.includes('.stage[data-boot="sea"] .dockLeft'), "the docks still pop in");
+  /* The chart is the no-WebGL answer, so it must still arrive on its own when
+     no renderer ever does. */
+  assert.match(
+    css,
+    /\.stage\[data-boot="sea"\] \.fallbackLayer \{\s*visibility: hidden;\s*animation: fallbackReveal 0s linear 2\.4s forwards;/,
+  );
+
+  /* The cover is a picture of the sea, in its own module so it is free to be
+     tuned without arguing with the console's stylesheet. What matters to the
+     dissolve is that it paints a sky and a water, and that only its own
+     opacity moves. */
+  const cover = source("src/components/layline/bootSea.module.css");
+  assert.match(cover, /linear-gradient/);
+  assert.match(cover, /transition:\s*opacity 900ms/);
+  assert.match(cover, /\.out \{\s*opacity: 0;/);
 });

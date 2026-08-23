@@ -1507,26 +1507,29 @@
   }
 }
 
-/* ---- the library's boot: the chart is the loading state ----
+/* ---- the library's boot: the sea the scene opens on ----
 
    The story page holds the chart hidden for 1.2s because its intro overlay is
    covering the viewport anyway, so a renderer that lands inside that window
-   never flashes a chart nobody needed. The library has no overlay: held on the
-   same rules it showed a bare page ground for the 1.3s the renderer took, and
-   then cut to a finished scene. Here the chart fades in over 240ms from its
-   own mount and cross-fades out to the renderer on the same 350ms the story
-   page already uses, so the wait is the race drawn flat rather than an empty
-   stage. No grace in front of it: a race the rail selects unmounts the
-   renderer at once, and all a grace would buy on that path is a dark hole
-   where the scene was. A renderer that comes back inside the fade leaves a
-   soft ghost of the chart rather than a flash, which is the trade. The docks fade with it: they mount when the renderer reports
-   its first frame, on every race the rail selects. */
+   never flashes a chart nobody needed. The library has no overlay, and held on
+   the same rules it showed a bare page ground for the 1.3s the renderer took,
+   then cut to a finished scene.
+
+   What covers that wait here is the sky and water the scene itself opens on,
+   painted flat in the same tokens the renderer draws with. The scene comes up
+   underneath it over 700ms and the cover leaves over the same 700ms, so the
+   change a viewer sees is a flat sea gaining depth and motion, not one layer
+   swapped for another. The docks follow 220ms later rather than arriving with
+   it. The chart stays underneath as the honest answer for a machine that never
+   gets a renderer, and reveals itself after 2.4s if none has arrived. */
+
 @media (min-width: 901px) {
-  .stage[data-boot="chart"] .fallbackLayer {
-    animation: chartReveal 240ms var(--ease) forwards;
+  .stage[data-boot="sea"] .fallbackLayer {
+    visibility: hidden;
+    animation: fallbackReveal 0s linear 2.4s forwards;
   }
 
-  .stage[data-boot="chart"] .fallbackOut {
+  .stage[data-boot="sea"] .fallbackOut {
     animation: none;
     opacity: 0;
     visibility: hidden;
@@ -1535,22 +1538,21 @@
       visibility 0s linear 350ms;
   }
 
-  .stage[data-boot="chart"] .dockLeft,
-  .stage[data-boot="chart"] .dockRight,
-  .stage[data-boot="chart"] .dockBottom {
-    animation: dockIn 260ms var(--ease) both;
-  }
-}
-
-@keyframes chartReveal {
-  from {
-    visibility: visible;
-    opacity: 0;
-  }
-
-  to {
-    visibility: visible;
+  /* The renderer does not fade here, the cover does. Two overlapping fades
+     composite to a dip in the middle, darker than either picture, and that dip
+     is what reads as a pop. The scene is simply up at full strength behind an
+     opaque cover, and one layer's opacity is the only thing that moves. */
+  .stage[data-boot="sea"] .canvasLayer {
     opacity: 1;
+    transition: none;
+  }
+
+  /* The instruments arrive into a picture that is already moving, rather than
+     landing with it. */
+  .stage[data-boot="sea"] .dockLeft,
+  .stage[data-boot="sea"] .dockRight,
+  .stage[data-boot="sea"] .dockBottom {
+    animation: dockIn 420ms var(--ease) 420ms both;
   }
 }
 
@@ -1564,26 +1566,20 @@
   }
 }
 
-/* A viewer who asked for less motion gets the same two states with no fade
-   between them: the chart while the renderer boots, the scene once it has. */
+/* A viewer who asked for less motion gets the same two pictures with no fade
+   between them: the flat sea while the renderer boots, the scene once it has. */
 @media (prefers-reduced-motion: reduce) {
-  .stage[data-boot="chart"] .fallbackLayer {
-    animation: fallbackReveal 0s linear 0s forwards;
-  }
-
-  .stage[data-boot="chart"] .fallbackOut {
-    animation: none;
-    opacity: 0;
-    visibility: hidden;
+  .stage[data-boot="sea"] .canvasLayer {
     transition: none;
   }
 
-  .stage[data-boot="chart"] .dockLeft,
-  .stage[data-boot="chart"] .dockRight,
-  .stage[data-boot="chart"] .dockBottom {
+  .stage[data-boot="sea"] .dockLeft,
+  .stage[data-boot="sea"] .dockRight,
+  .stage[data-boot="sea"] .dockBottom {
     animation: none;
   }
 }
+
 
 .fallback {
   display: grid;
