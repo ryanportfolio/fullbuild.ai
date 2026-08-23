@@ -464,7 +464,34 @@ test('the boot cover keeps the house rules while it briefs the race', async () =
   /* Narrow stacks the three panels and grounds the footer, so the way through
      is never what scrolls off. */
   assert.match(cover, /@container \(max-width: 760px\)/);
-  assert.match(cover, /:focus-visible/);
+
+  /* The cover states no focus ring of its own. The console rings every
+     focusable thing with one square registration box so keyboard position is
+     never ambiguous, and a second opinion on this layer was a control that
+     changed shape the moment it took focus. */
+  assert.doesNotMatch(cover, /:focus-visible/);
+  const shell = await read('src/app/prototype/layline/layline.module.css');
+  assert.match(shell, /\.shell :is\(a, button, \[tabindex\]\):focus-visible/);
+
+  /* Nothing on this layer is rounded, which is the same call the route's own
+     scrollbar stylesheet already made: "the console draws no radius anywhere". */
+  assert.doesNotMatch(cover.replace(/\/\*[\s\S]*?\*\//g, ''), /border-radius/);
+
+  /* The stacked brief is the one scroller on this route that is not the
+     platform bar, and it takes the bar the route already paints: same 10px
+     channel, same 3px inset over padding-box, same square corners, in this
+     layer's own inks because the bar sits on the sea rather than on the page
+     ground. A default browser bar here is the only chrome nobody drew. */
+  /* Stated for every scroller on the layer at every width, not for the one
+     element that happens to overflow in today's stacked layout. */
+  assert.match(cover, /\.brief::-webkit-scrollbar \{\s*width: 10px;/);
+  assert.match(cover, /\.brief ::-webkit-scrollbar-thumb/);
+  assert.match(cover, /\.brief \*,?\s*\{?\s*scrollbar-width: thin/);
+  assert.match(cover, /border: 3px solid transparent;/);
+  assert.match(cover, /@supports not selector\(::-webkit-scrollbar\)/);
+  const bar = await read('src/app/prototype/layline/scrollbar.css');
+  assert.match(bar, /width: 10px;/);
+  assert.match(bar, /border: 3px solid transparent;/);
 
   /* Every drawing that carries a reading is labelled, and every reading a
      label cannot carry is also in text underneath it. */

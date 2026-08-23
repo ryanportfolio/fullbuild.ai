@@ -917,11 +917,12 @@ test("the sea cover briefs the race it is loading", () => {
   );
   /* The console's standing bans. A 1px dim rule does what a shadow would. */
   assert.ok(!cover.includes("box-shadow"), "a drop shadow arrived on the cover");
-  /* Exactly one accent, stated once and reaching exactly four things, all of
-     them the favored end or the way through it: the mark over the favored end,
-     the seconds that end is worth, the status fill and the button's focus
-     ring. Anything else on this layer taking it makes the mark stop meaning
-     anything. */
+  /* Exactly one accent, stated once and reaching exactly three things, all of
+     them the favored end: the mark over it, the seconds it is worth, and the
+     fill on the status hairline. Anything else on this layer taking it makes
+     the mark stop meaning anything. The focus ring is not one of them: the
+     console rings its own focusable things and this layer does not offer a
+     second opinion. */
   assert.equal(
     (cover.match(/#ffd166/g) ?? []).length,
     1,
@@ -929,12 +930,32 @@ test("the sea cover briefs the race it is loading", () => {
   );
   assert.equal(
     (cover.match(/var\(--brief-accent\)/g) ?? []).length,
-    4,
-    "the accent reaches something beyond the favored mark, its seconds, the status fill and the ring",
+    3,
+    "the accent reaches something beyond the favored mark, its seconds and the status fill",
   );
-  for (const rule of [".favMark", ".favSec", ".statusFill", ".goBtn:focus-visible"]) {
-    assert.ok(cover.includes(rule), `${rule} left the cover, so the accent's four users moved`);
+  for (const rule of [".favMark", ".favSec", ".statusFill"]) {
+    assert.ok(cover.includes(rule), `${rule} left the cover, so the accent's three users moved`);
   }
+
+  /* Nothing on this layer is rounded. The console's registration box states
+     border-radius: 0 on whatever it rings (layline.module.css), so a rounded
+     control here was a control that changed shape the moment it took focus,
+     which is the class of pop the boot cover exists to prevent. */
+  const coverRules = cover.replace(/\/\*[\s\S]*?\*\//g, "");
+  assert.ok(!coverRules.includes("border-radius"), "a rounded corner came back to the cover");
+  assert.ok(!brief.includes('rx="'), "a rounded corner came back to the brief's drawings");
+
+  /* The race name owns its own line. Sharing the header row with the meta line
+     left its width budget swinging with the viewport, so no stated size fit
+     every case and the measured fit had to correct the server's guess after
+     hydration, in full view. */
+  /* Matched line by line rather than across the break: this repo checks out
+     CRLF, so a pattern pinning a bare newline against source text fails on a
+     fresh clone while passing here. */
+  const head = cover.slice(cover.indexOf(".briefHead {"), cover.indexOf(".raceName {"));
+  assert.ok(head.includes("flex-direction: column;"), "the race name shares its row again");
+  assert.ok(head.includes("align-items: flex-start;"), "the header stopped ranging its two lines left");
+  assert.ok(!head.includes("align-items: baseline;"), "the header went back to a baseline row");
 
   const racesPage = source("src/app/prototype/layline/races/page.tsx");
   assert.ok(
