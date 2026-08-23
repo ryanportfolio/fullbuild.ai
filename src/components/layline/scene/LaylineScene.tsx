@@ -143,24 +143,35 @@ function DemandBridge() {
   const stamp = useRef(0);
   const holding = useRef(false);
 
-  /* Also on a resize, which is the one thing that moves the picture without
-   * going through the store: a viewport, dock or font change rewrites the
-   * camera aspect and the dock measurements the rigs frame against, and the
-   * loop at "never" ignores the renderer's own invalidation. This effect runs
-   * after the observers that take those measurements, so the frame it asks for
-   * is drawn against the settled layout. */
+  /* Entering the hold draws its first frame on the spot: nothing else is
+   * going to, and the renderer zeroes its own clock on the way in, so the stamp
+   * starts again with it and only with it. */
   useEffect(() => {
     if (!frozen) {
       holding.current = false;
       return;
     }
-    /* The renderer zeroes its own clock on the way into the hold, so the stamp
-     * starts again with it and only with it. */
     if (!holding.current) stamp.current = 0;
     holding.current = true;
     stamp.current += FROZEN_STEP;
     advance(stamp.current);
-  }, [frozen, advance, width, height]);
+  }, [frozen, advance]);
+
+  /* A resized canvas is the one thing that moves the picture without going
+   * through the store: it rewrites the camera aspect and the dock measurements
+   * the rigs frame against, and the loop at "never" ignores the renderer's own
+   * invalidation. It goes through the same door as the observers watching the
+   * same layout change, so the one frame it costs is drawn after all of them
+   * have measured. The first pass only records the box it opened at. */
+  const box = useRef<string | null>(null);
+  useEffect(() => {
+    const seen = `${width}x${height}`;
+    if (box.current === seen) return;
+    const first = box.current === null;
+    box.current = seen;
+    if (first) return;
+    requestSceneFrame();
+  }, [frozen, width, height]);
 
   /* The only way into a renderer that is holding still, handed to the gate so
    * a font landing, a dock resize, a restored tab or a recovered context can

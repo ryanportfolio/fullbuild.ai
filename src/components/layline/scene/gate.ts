@@ -51,8 +51,19 @@ export const sceneGate = {
  * page can only be moved by advancing it with a stated timestamp, which is the
  * same door the capture hold uses. */
 let requestFrozenFrame: (() => void) | null = null;
+/* The animation frame a wake is waiting on, or zero. */
+let waking = 0;
 
 export function setFrozenFrameRequest(request: (() => void) | null): void {
+  /* A wake belongs to the hold that asked for it. Thawing and freezing again,
+   * or leaving and coming back, installs a different door, and a frame still
+   * waiting on the old one would land in the new hold as a frame nobody asked
+   * for. Dropping it here also leaves the queue clear, so the first request the
+   * new hold makes is not mistaken for one already in flight. */
+  if (waking !== 0) {
+    cancelAnimationFrame(waking);
+    waking = 0;
+  }
   requestFrozenFrame = request;
 }
 
@@ -60,10 +71,21 @@ export function setFrozenFrameRequest(request: (() => void) | null): void {
  * Ask for a frame. Marks the picture dirty, and wakes a frozen canvas, which a
  * flag alone cannot do: a font landing, a dock resize, a restored tab or a
  * recovered context all have to reach the screen even when the clock is held.
+ *
+ * One layout change is several observers, each measuring a different part of
+ * it, and a frozen advance draws on the spot. Asking one per observer would
+ * draw the first of them against measurements the rest had not taken yet, so
+ * the wake is held to the next animation frame, by which time every observer in
+ * the delivery has had its turn. A page that is drawing needs none of this: the
+ * flag alone is read by the frame already coming.
  */
 export function requestSceneFrame(): void {
   sceneGate.dirty = true;
-  if (requestFrozenFrame !== null) requestFrozenFrame();
+  if (requestFrozenFrame === null || waking !== 0) return;
+  waking = requestAnimationFrame(() => {
+    waking = 0;
+    if (requestFrozenFrame !== null) requestFrozenFrame();
+  });
 }
 
 export function resetSceneGate(): void {
