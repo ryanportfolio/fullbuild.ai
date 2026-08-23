@@ -51,11 +51,14 @@ const MAX_TOOL_ROUNDS = 6;
  * the typed replay, and maxDuration above is what it has to stay under. */
 const TOOL_BUDGET_MS = 30_000;
 
-/* What the model is told when its tools are taken away. It has the results of
- * every round it already ran; this asks it to spend them. */
+/* What the model is asked once its rounds are spent. It points back at the
+ * answer format in the system prompt rather than restating one: told only to
+ * answer, it writes an eleven-line dump with no chips in it. */
 const ANSWER_NOW =
-  "No more tools. Answer the question now from the tool results above. " +
-  "If something is missing, say what you could not check rather than asking for another tool.";
+  "There are no tools left to call for this question. Write the finished answer now, " +
+  "in the shape the rules above give it: one sentence that answers it, then two to four " +
+  "evidence lines with their numbers and chips. Use only what the results below already say, " +
+  "and if something is missing, say what you could not check.";
 
 const DEFAULT_MODEL = "deepseek/deepseek-v4-flash-vision-exp";
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
@@ -544,8 +547,19 @@ class UpstreamError extends Error {
  * line remains after them, so an answer can never strip to nothing. */
 const PLAN_TALK = /^(let me|i'll|i will|i am going to|i'm going to|first,? let me|now let me|okay,? let|i need to)/i;
 
+/**
+ * A model's own tool-call markup, written out as prose.
+ *
+ * Withholding the tools does not stop every model from wanting one: the
+ * shipped deepseek answers a tools-withheld round by typing its native call
+ * format as text, opening with a control token no sailing answer contains.
+ * Everything from that token on is markup, and a block truncated by the token
+ * cap has no closing tag to match, so the cut runs to the end.
+ */
+const CONTROL_MARKUP = /<[|｜][\s\S]*$/;
+
 function stripPlanTalk(text: string): string {
-  const lines = text.split("\n");
+  const lines = text.replace(CONTROL_MARKUP, "").split("\n");
   while (lines.length > 1) {
     const first = lines[0].trim();
     const restHasWords = lines.slice(1).some((line) => line.trim() !== "");
@@ -598,6 +612,7 @@ function liveResponse(
        * report."), and that talk is not the answer. The caller drops a tool
        * round's text and streams a final round's text itself. */
       const runRound = async (
+        wire: ChatMessage[],
         useTools: boolean,
       ): Promise<{ finish: string; calls: ToolCallWire[]; text: string }> => {
         const res = await fetch(OPENROUTER_URL, {
@@ -618,10 +633,7 @@ function liveResponse(
              * can stream an empty answer; the analyst wants the words. Models
              * without a reasoning mode ignore this. */
             reasoning: { enabled: false },
-            messages,
-            /* Withheld, not just discouraged: a model out of rounds has to
-             * answer, and the only reliable way to stop a tool call is to
-             * offer no tool to call. */
+            messages: wire,
             ...(useTools ? { tools } : {}),
           }),
         });
@@ -683,10 +695,15 @@ function liveResponse(
 
       try {
         const startedAt = Date.now();
+        /* What every tool returned, kept flat. The last round is asked from a
+         * clean thread rather than this one, and this is the evidence it
+         * carries across. */
+        const toolLog: string[] = [];
         let toolRounds = 0;
         let forced = false;
+        let wire = messages;
         for (;;) {
-          const { finish, calls, text } = await runRound(!forced);
+          const { finish, calls, text } = await runRound(wire, !forced);
 
           if (forced || finish !== "tool_calls" || calls.length === 0) {
             const answer = stripPlanTalk(text).trim();
@@ -719,20 +736,26 @@ function liveResponse(
               input = {};
             }
             send(SSE_STATUS, { label: toolStatusLabel(race, call.function.name, input) });
-            messages.push({
-              role: "tool",
-              tool_call_id: call.id,
-              content: runTool(race, call.function.name, input),
-            });
+            const result = runTool(race, call.function.name, input);
+            toolLog.push(`${call.function.name}(${call.function.arguments})\n${result}`);
+            messages.push({ role: "tool", tool_call_id: call.id, content: result });
           }
 
-          /* Out of rounds or out of clock. The tool results just gathered are
-           * enough to answer with, so the next round runs without tools and
-           * streams whatever it says. This used to send an error and drop
-           * every round of work the viewer had already waited through. */
+          /* Out of rounds or out of clock. The results just gathered are enough
+           * to answer with, so ask for the answer instead of sending an error
+           * and dropping every round the viewer already waited through.
+           *
+           * The ask goes on a fresh thread carrying the same system prompt,
+           * the same conversation and the tool results as plain text, because
+           * a thread full of tool calls is a format the model copies: asked on
+           * the working thread with the tools taken away, it types its own
+           * call markup out as prose instead of answering. */
           if (toolRounds >= MAX_TOOL_ROUNDS || Date.now() - startedAt >= TOOL_BUDGET_MS) {
             forced = true;
-            messages.push({ role: "system", content: ANSWER_NOW });
+            wire = [
+              ...messages.slice(0, 1 + history.length),
+              { role: "user", content: `${ANSWER_NOW}\n\n${toolLog.join("\n\n")}` },
+            ];
           }
         }
       } catch (error) {
