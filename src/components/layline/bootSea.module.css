@@ -97,8 +97,11 @@
      measures the token's WCAG luminance after hydration and writes the white
      branch over these two if the sky came out dark. */
   --brief-head-ink: color-mix(in srgb, var(--water-deep) 88%, var(--sky-horizon));
-  /* Stated, never an opacity, for the same reason as --brief-dim. */
-  --brief-head-dim: color-mix(in srgb, var(--brief-head-ink) 78%, var(--sky-horizon));
+  /* Stated, never an opacity, for the same reason as --brief-dim. 88 and not
+     the 78 this started at: the meta line is 10px, so it owes 4.5:1 against
+     the sky it sits on, and 78 measured 4.44:1 at 1440 and 4.36:1 at 606,
+     sampled off a screenshot. At 88 it reads 5.76:1 and 4.95:1. */
+  --brief-head-dim: color-mix(in srgb, var(--brief-head-ink) 88%, var(--sky-horizon));
   --brief-head-line: color-mix(in srgb, var(--water-deep) 30%, transparent);
 }
 
@@ -616,13 +619,23 @@
   white-space: nowrap;
 }
 
+/* Both figure columns are wide enough for their own longest reading at 10px
+   Martian, which is a wide face: the plate clips what overflows, and a boat
+   sitting "1.9 m of" the line is worse than a truncated team name. */
 .across,
 .slot {
   flex: none;
-  width: 56px;
   color: var(--brief-dim);
   text-align: right;
   white-space: nowrap;
+}
+
+.across {
+  width: 44px;
+}
+
+.slot {
+  width: 64px;
 }
 
 .fleetFoot {
@@ -845,11 +858,6 @@
   }
 
   .sail {
-    width: 48px;
-  }
-
-  .across,
-  .slot {
     width: 48px;
   }
 
