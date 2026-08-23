@@ -29,6 +29,7 @@ export function LaylineApp({
   venue,
   autoplay = "intro",
   boot = "intro",
+  bootLabel,
 }: {
   children: ReactNode;
   venue?: string;
@@ -56,6 +57,9 @@ export function LaylineApp({
    * The chart underneath it stays the honest answer for a machine that never
    * gets a renderer, and reveals on its own if none arrives. */
   boot?: "intro" | "sea";
+  /* Named on the cover while the renderer boots, so the wait is a title card
+   * for the race being loaded rather than an empty sea. */
+  bootLabel?: string;
 }) {
   const race = useMemo(() => raceData(), []);
   const live = useReplay((state) => state.webglOk);
@@ -141,6 +145,20 @@ export function LaylineApp({
    * or a touch scroll travels past the threshold (or ends in pointercancel)
    * and leaves playback alone. The docks and top bar sit above this layer, so
    * their controls never fall through to it. */
+  /* One word to a line, sized so the longest of them fills the viewer. 0.6em is
+   * this face's rough average advance, which is close enough to pick a size
+   * that never runs past the pane; the cap stops a two word name filling the
+   * whole picture. */
+  const bootWords = useMemo(
+    () => (bootLabel === undefined ? [] : bootLabel.split(/\s+/).filter((word) => word !== "")),
+    [bootLabel],
+  );
+  const bootSize = useMemo(() => {
+    const longest = bootWords.reduce((most, word) => Math.max(most, word.length), 0);
+    if (longest === 0) return undefined;
+    return `min(168px, calc(86cqi / ${(longest * 0.6).toFixed(2)}))`;
+  }, [bootWords]);
+
   const press = useRef<{ x: number; y: number; id: number } | null>(null);
 
   /* The water is also the one surface with no native pointer on it: the boat
@@ -185,7 +203,17 @@ export function LaylineApp({
         <div
           className={cover === "out" ? `${sea.cover} ${sea.out}` : sea.cover}
           aria-hidden="true"
-        />
+        >
+          {bootWords.length === 0 ? null : (
+            <span className={sea.label} style={{ fontSize: bootSize }}>
+              {bootWords.map((word, index) => (
+                <span key={`${word}-${index}`} className={sea.word}>
+                  {word}
+                </span>
+              ))}
+            </span>
+          )}
+        </div>
       ) : null}
 
       <TopBar race={race} venue={venue} />

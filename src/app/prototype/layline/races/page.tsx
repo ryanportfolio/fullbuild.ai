@@ -56,6 +56,18 @@ export default async function LaylineRacesPage({
 
   return (
     <div className={`${layline.shell} ${styles.page}`} data-layline-page>
+      {/* Pangram is declared font-display: block, and the boot cover names the
+          race in it while the renderer starts. Without this the title card
+          holds unpainted for the whole block period, which is the wait it
+          exists to fill. */}
+      <link
+        rel="preload"
+        href="/assets/fonts/pangram-display.woff2"
+        as="font"
+        type="font/woff2"
+        crossOrigin="anonymous"
+      />
+
       {/* Three panes, three ways in. Each link parks in the same corner and
           only the focused one is on screen, so the row costs no space. */}
       <a className={layline.skip} href="#race-list">

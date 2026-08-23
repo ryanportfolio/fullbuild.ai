@@ -15,6 +15,15 @@
 .cover {
   position: absolute;
   inset: 0;
+  display: grid;
+  place-items: center;
+  /* The title is sized against this box rather than the window, so the words
+     fill the viewer's own width whatever the rails either side are doing. */
+  container-type: inline-size;
+  /* Centred on the water rather than on the box: white on the bright half of
+     the sky is thin, and the block is tall when a race name runs to four
+     words. */
+  padding-top: 13%;
   /* The chart, the no-WebGL answer, reveals itself on a timer at z-index 2; a
      viewer whose renderer is merely slow should not watch it arrive. The top
      bar and the docks share this level and come later in the DOM, so they stay
@@ -33,6 +42,31 @@
   transition: opacity 900ms var(--ease);
   pointer-events: none;
 }
+
+/* The race being loaded, named while it loads. Pangram, the face this page
+   spends on the wordmark and on a section heading, at a size that reads as the
+   title card it is rather than a status line. It is decorative to a screen
+   reader: the rail already names the race, and the top bar names it again the
+   moment the scene is up, so announcing it a third time is noise. */
+.label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #fff;
+  font-family: var(--font-pangram);
+  /* Set per race on the element: the size is whatever makes the longest word
+     in that name fill the pane, capped so a short name does not become a
+     billboard. */
+  line-height: 0.92;
+  letter-spacing: -0.025em;
+  text-align: center;
+}
+
+.word {
+  display: block;
+}
+
+
 
 .out {
   opacity: 0;

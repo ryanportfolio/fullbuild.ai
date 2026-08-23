@@ -802,6 +802,26 @@ test("the library covers the renderer's boot with the sea, the story page with i
      opacity moves. */
   const cover = source("src/components/layline/bootSea.module.css");
   assert.match(cover, /linear-gradient/);
+  /* The cover names the race it is loading, in the display face, and the page
+     preloads that face: it is declared font-display: block, so without the
+     preload the title card holds unpainted through the wait it exists to fill. */
+  assert.match(cover, /\.label \{/);
+  /* One word to a line, sized against the pane rather than the window, so the
+     longest word in a race name is what sets the size. */
+  assert.ok(cover.includes("container-type: inline-size"), "the title stopped sizing to the pane");
+  assert.ok(app.includes("86cqi"), "the title stopped filling the pane's width");
+  assert.ok(app.includes("className={sea.word}"), "the title stopped breaking a word to a line");
+  assert.ok(cover.includes("var(--font-pangram)"), "the title card left the display face");
+  assert.ok(
+    workspace.includes("bootLabel={meta?.name}"),
+    "the cover stopped naming the race the rail names",
+  );
+  const racesPage = source("src/app/prototype/layline/races/page.tsx");
+  assert.ok(
+    racesPage.includes('href="/assets/fonts/pangram-display.woff2"'),
+    "the library stopped preloading the face its title card is set in",
+  );
+
   assert.match(cover, /transition:\s*opacity 900ms/);
   assert.match(cover, /\.out \{\s*opacity: 0;/);
 });
