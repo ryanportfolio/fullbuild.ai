@@ -768,3 +768,26 @@ test("the library starts playback on its own mount, never on the story's intro l
   const starts = app.indexOf("if (autoplay === false) return;");
   assert.ok(reduced > 0 && starts > reduced, "an autoplay mode is read before reduced motion is");
 });
+
+test("the library covers the renderer's boot with the chart, the story page with its intro", () => {
+  const workspace = source("src/app/prototype/layline/races/RaceWorkspace.tsx");
+  assert.ok(
+    workspace.includes('boot="chart"'),
+    "the library stopped asking for the chart while the renderer boots",
+  );
+
+  const app = source("src/components/layline/LaylineApp.tsx");
+  assert.ok(app.includes('boot = "intro"'), "the story page lost its default boot cover");
+  assert.ok(
+    app.includes('data-boot={boot}'),
+    "the stage no longer states which cover the stylesheet should draw",
+  );
+
+  /* The two covers are different rules, and the chart one has to reach the
+     dock fades as well, else the docks pop in under a cross-fading chart. */
+  const css = source("src/app/prototype/layline/layline.module.css");
+  assert.ok(css.includes('.stage[data-boot="chart"] .fallbackLayer'), "no chart reveal rule");
+  assert.ok(css.includes('.stage[data-boot="chart"] .dockLeft'), "the docks still pop in");
+  assert.match(css, /@keyframes chartReveal/);
+  assert.match(css, /@keyframes dockIn/);
+});

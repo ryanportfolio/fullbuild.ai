@@ -27,6 +27,7 @@ export function LaylineApp({
   children,
   venue,
   autoplay = "intro",
+  boot = "intro",
 }: {
   children: ReactNode;
   venue?: string;
@@ -43,6 +44,13 @@ export function LaylineApp({
    * page the visitor saw first. Starting on its own mount is the same
    * behaviour every time, including on each race the rail selects. */
   autoplay?: "intro" | "immediate" | false;
+  /* What covers the wait while the renderer boots. "intro" is the story page,
+   * whose overlay is over the viewport anyway, so the server chart holds
+   * hidden behind it and never flashes on a machine that boots inside the
+   * grace window. "chart" is the library, which has no overlay: there the
+   * chart is the loading state, revealing after a short grace and
+   * cross-fading to the scene, on every race the rail selects. */
+  boot?: "intro" | "chart";
 }) {
   const race = useMemo(() => raceData(), []);
   const live = useReplay((state) => state.webglOk);
@@ -116,7 +124,7 @@ export function LaylineApp({
   const waterRef = useRef<HTMLDivElement | null>(null);
 
   return (
-    <div className={styles.stage}>
+    <div className={styles.stage} data-boot={boot}>
       <div
         ref={waterRef}
         className={live ? `${styles.canvasLayer} ${styles.canvasLive}` : styles.canvasLayer}
