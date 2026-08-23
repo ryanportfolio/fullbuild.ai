@@ -32,10 +32,26 @@
    at the outside, power2.inOut, never looping. Reduced motion turns SETTLE into
    a cut and leaves every other verb reachable by hand.
 
-   BANNED HERE: post-processing and bloom, orbit controls, caustic stripe and
-   tiled water textures, invented numerals, decorative status lights, drop
-   shadows on panels (a 1px dim rule does that job), and gradients inside any
-   panel.
+   BANNED HERE: post-processing and bloom, library orbit controls, caustic
+   stripe and tiled water textures, invented numerals, decorative status lights,
+   drop shadows on panels (a 1px dim rule does that job), and gradients inside
+   any panel.
+
+   ORBIT CONTROLS, amended 2026-08-23 from banned outright to banned as a
+   library. What the ban was aimed at is a rig dropped on the scene with no
+   opinion in it: free to sit under the water, inside a hull, or a kilometre off
+   the course, and free to fight whichever automatic rig is composing at the
+   same time. That is still banned, and no such library is installed.
+     What ships instead is Freeform, a fourth rig built like the other three. It
+   composes the same shot struct, it is seeded from the shot already on screen
+   so taking the camera by hand is a continuation rather than a cut, its pitch,
+   range and eye height are bounded so it cannot stand anywhere the automatic
+   rigs would not, and it is exclusive with them so nothing is ever composing
+   against a hand. It hands back through the same 1.2s SETTLE, and reduced
+   motion cuts every ease it owns while leaving all of it reachable.
+     The reason it earned the amendment: the replay is a reconstruction, and a
+   reconstruction nobody can look around is a video. Every automatic rig answers
+   the question the page chose. This one answers the viewer's.
 
    THREE GRADIENT SURFACES, amended 2026-08-23 from two. The sky, the water,
    and now the page ground, which carries two radial falls in sky-horizon and
