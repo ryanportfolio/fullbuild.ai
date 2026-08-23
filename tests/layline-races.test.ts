@@ -745,3 +745,26 @@ test("the story page's analyst asks about the shipped race, not the store's", ()
     "the story variant posts whichever race the store holds",
   );
 });
+
+test("the library starts playback on its own mount, never on the story's intro latch", () => {
+  const workspace = source("src/app/prototype/layline/races/RaceWorkspace.tsx");
+  assert.ok(
+    workspace.includes('autoplay="immediate"'),
+    "the library viewer waits on something other than its own mount",
+  );
+
+  const app = source("src/components/layline/LaylineApp.tsx");
+  assert.ok(
+    app.includes('if (autoplay === "immediate" || replay.introDone)'),
+    "immediate autoplay no longer bypasses the intro latch",
+  );
+  assert.ok(
+    app.includes("if (autoplay === false) return;"),
+    "the viewer lost its way to opt out of autoplay entirely",
+  );
+  /* Reduced motion outranks all three modes: it returns before any of them can
+     seek to the prestart and play. */
+  const reduced = app.indexOf("if (reduced) {");
+  const starts = app.indexOf("if (autoplay === false) return;");
+  assert.ok(reduced > 0 && starts > reduced, "an autoplay mode is read before reduced motion is");
+});

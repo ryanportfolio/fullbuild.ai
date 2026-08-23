@@ -129,7 +129,7 @@ export function RaceWorkspace({
         aria-label="Race replay console"
         tabIndex={-1}
       >
-        <LaylineApp key={raceId} venue={venue} autoplay={false}>
+        <LaylineApp key={raceId} venue={venue} autoplay="immediate">
           {children}
         </LaylineApp>
       </section>

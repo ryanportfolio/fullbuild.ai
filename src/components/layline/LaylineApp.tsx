@@ -26,16 +26,23 @@ const SceneIsland = dynamic(() => import("./scene/LaylineScene").then((m) => m.L
 export function LaylineApp({
   children,
   venue,
-  autoplay = true,
+  autoplay = "intro",
 }: {
   children: ReactNode;
   venue?: string;
-  /* The story page autoplays once its intro lets go. The library opts out:
-   * its remounts happen on every race switch, the intro latch it shares with
-   * the story survives navigation, and a workspace that started playing by
-   * itself on each selection would depend on which page the visitor saw
-   * first. There the water and the transport start playback, nothing else. */
-  autoplay?: boolean;
+  /* When the replay starts itself, and what it waits for.
+   *
+   * "intro" is the story page: the intro overlay covers the viewport for its
+   * first second or so, and playing under it would run the gun off behind the
+   * cover, so playback waits for the overlay to let go.
+   *
+   * "immediate" is the race library, which has no overlay to wait for. It
+   * cannot reuse the "intro" path: introDone is one latch on a store that
+   * survives navigation, so a library entered after the story would start and
+   * a library entered directly would not, and playback would depend on which
+   * page the visitor saw first. Starting on its own mount is the same
+   * behaviour every time, including on each race the rail selects. */
+  autoplay?: "intro" | "immediate" | false;
 }) {
   const race = useMemo(() => raceData(), []);
   const live = useReplay((state) => state.webglOk);
@@ -65,9 +72,11 @@ export function LaylineApp({
    * replay paused at a mid-beat moment with everything reachable by hand,
    * never a still frame of an empty start line and never an autoplay.
    *
-   * Everyone else gets the autoplay, but not yet: the intro is covering the
+   * Everyone else gets the autoplay from the prestart, so the gun is something
+   * you watch happen. On the story page it waits: the intro is covering the
    * viewport and the prestart is five seconds long, so playing here would run
-   * the gun off behind the cover. The intro says when it has let go. */
+   * the gun off behind the cover, and the intro says when it has let go. In
+   * the library there is no cover, so it starts on mount. */
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const replay = useReplay.getState();
@@ -77,13 +86,13 @@ export function LaylineApp({
       replay.setIntroDone(true);
       return;
     }
-    if (!autoplay) return;
+    if (autoplay === false) return;
     const start = () => {
       const state = useReplay.getState();
       state.seek(AUTOPLAY_FROM);
       state.play();
     };
-    if (replay.introDone) {
+    if (autoplay === "immediate" || replay.introDone) {
       start();
       return;
     }
