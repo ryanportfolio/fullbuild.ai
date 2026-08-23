@@ -1082,6 +1082,26 @@ test("the brief's wind is the replay's wind, and the favored end is the one near
      saying nothing. */
   assert.ok(sawPin && sawBoat, "the shipped prestart no longer shows both ends favored");
 
+  /* It also passes through square, which is why the sentence has to be able to
+     stop at the end rather than trailing a "by" with nothing after it. Two of
+     the three seeds reach it; sable-reach never does. */
+  let squares = 0;
+  for (let step = 0; step <= 4000; step += 1) {
+    const t = race.tMin + (step / 4000) * (0 - race.tMin);
+    windReadingAt(race, facts, t, read);
+    if (read.favored === "square") squares += 1;
+  }
+  assert.ok(squares > 0, "the shipped prestart no longer passes through a square line");
+  const brief = source("src/components/layline/RaceBrief.tsx");
+  assert.ok(
+    brief.includes('display: seed.favored === "square" ? "none" : undefined'),
+    "a square line leaves the favored sentence open on a dangling by",
+  );
+  assert.ok(
+    brief.includes('const by = read.favored === "square" ? "none" : "";'),
+    "the live loop stopped closing the favored sentence on a square line",
+  );
+
   /* The trace under the dial is the same series, sampled across the prestart
      and inside the sim's own clamp. */
   const trace = prestartTrace(race, 60);

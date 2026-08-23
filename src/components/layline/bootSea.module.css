@@ -367,6 +367,12 @@
   font-weight: 500;
 }
 
+/* Hidden whole when the line is square, so a line favored by nobody does not
+   read "Favored: square by" with the sentence left open. */
+.favBy {
+  white-space: nowrap;
+}
+
 .favSec {
   color: var(--brief-accent);
 }
