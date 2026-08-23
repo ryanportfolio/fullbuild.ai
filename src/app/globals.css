@@ -13,6 +13,16 @@
    - Red is spent on exactly one semantic: live in production right now.
    ========================================================================= */
 
+@font-face {
+  font-family: "Pangram Display";
+  src:
+    url("/assets/fonts/pangram-display.woff2") format("woff2"),
+    url("/assets/fonts/pangram-display.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
   /* Inks — identical MEANING across themes; a few rendering values are
      theme-scoped below purely to hold WCAG contrast. */
