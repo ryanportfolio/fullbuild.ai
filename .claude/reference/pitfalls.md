@@ -347,3 +347,17 @@ Fix: every asset href/src/url() in a static prototype page is root-absolute
 follow. Files that are always requested at their real path (the foredge email
 .html artifacts) may keep relative paths. Verify new prototype pages at the
 no-slash URL.
+
+## Layline pixel comparisons: park the mouse off-canvas first (2026-08-23)
+
+Symptom: two Playwright element screenshots of the Layline canvas taken around
+a forced redraw differed by ~350 channel samples (max delta 87) and read as a
+render-gate bug. The picture was fine: element screenshots composite every DOM
+layer over the element's box, and the pointer left sitting on the water after a
+click puts the BoatCursor overlay (and any hover state) into both shots at
+slightly different paint states.
+
+Fix: `page.mouse.move()` to a corner outside the canvas box before capturing,
+then re-shoot. Control run with the pointer parked showed 0 delta across all
+2.76M samples, settled frame vs forced redraw. Applies to any DOM-overlaid
+canvas comparison on this site, headed Chrome included.
