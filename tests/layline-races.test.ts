@@ -22,6 +22,14 @@ import { SUGGESTED_QUESTIONS, parseChips } from "../src/lib/layline/analyst/prot
 import { FIX_HZ, PROGRESS_HZ, RACE_SEED } from "../src/lib/layline/types";
 import type { Fix, LegName, ProgressSample, RaceData } from "../src/lib/layline/types";
 import { POST } from "../src/app/api/layline/analyst/route";
+import {
+  ANALYST_MAX,
+  RAIL_MIN,
+  clampPaneWidth,
+  parseWorkspacePreferences,
+  raceMatchesSearch,
+  sortPinnedRows,
+} from "../src/app/prototype/layline/races/workspaceState";
 import { OPEN_AT, pointAtRace, raceData, useReplay } from "../src/components/layline/store";
 
 /* ------------------------------------------------------------------ */
@@ -399,6 +407,60 @@ test("the registry ships three races with the shipped race first", () => {
   assert.equal(isRaceId("no-such-race"), false);
   assert.equal(isRaceId(String(RACE_SEED)), false, "a raw seed is not a race id");
   assert.equal(raceMeta("no-such-race"), undefined);
+});
+
+test("race workspace preferences filter stale ids and clamp stored widths", () => {
+  const validIds = new Set(RACES.map((race) => race.id));
+  const preferences = parseWorkspacePreferences(
+    JSON.stringify({
+      pinned: ["sable-reach", "retired-race", "sable-reach"],
+      archived: ["kestrel-sound", "retired-race"],
+      railWidth: 20,
+      analystWidth: 900,
+      railSide: "right",
+      railCollapsed: true,
+    }),
+    validIds,
+  );
+
+  assert.deepEqual(preferences.pinned, ["sable-reach"]);
+  assert.deepEqual(preferences.archived, ["kestrel-sound"]);
+  assert.equal(preferences.railWidth, RAIL_MIN);
+  assert.equal(preferences.analystWidth, ANALYST_MAX);
+  assert.equal(preferences.railSide, "right");
+  assert.equal(preferences.railCollapsed, true);
+});
+
+test("search is only a view and pinned rows sort ahead of registry order", () => {
+  const selectedId = "long-beach";
+  const rows = RACES.map(({ id, name, venue, dateLabel }) => ({ id, name, venue, dateLabel }));
+  const visible = rows.filter((row) => raceMatchesSearch(row, "13 nov"));
+  assert.deepEqual(visible.map((row) => row.id), ["kestrel-sound"]);
+  assert.equal(selectedId, "long-beach", "filtering changed the loaded race");
+
+  const sorted = sortPinnedRows(rows, new Set(["sable-reach"]));
+  assert.deepEqual(sorted.map((row) => row.id), ["sable-reach", "long-beach", "kestrel-sound"]);
+});
+
+test("a resized boundary clamps to pane and viewer limits", () => {
+  assert.equal(
+    clampPaneWidth({
+      pane: "rail",
+      requested: 999,
+      workspaceWidth: 1176,
+      otherWidth: 340,
+    }),
+    252,
+  );
+  assert.equal(
+    clampPaneWidth({
+      pane: "analyst",
+      requested: 10,
+      workspaceWidth: 1568,
+      otherWidth: 280,
+    }),
+    320,
+  );
 });
 
 test("every race carries three suggested questions written for its own fleet", () => {

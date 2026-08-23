@@ -89,6 +89,142 @@ test('Layline stylesheet keeps the house rules', async () => {
   assert.doesNotMatch(styles, /linear-gradient|radial-gradient|backdrop-filter/);
 });
 
+test('the race library declares five complete route-scoped themes', async () => {
+  const [styles, page, workspace, story] = await Promise.all([
+    read('src/app/prototype/layline/layline.module.css'),
+    read('src/app/prototype/layline/races/page.tsx'),
+    read('src/app/prototype/layline/races/RaceWorkspace.tsx'),
+    read('src/app/prototype/layline/page.tsx'),
+  ]);
+  const grounds = {
+    console: '#070f16',
+    sailcloth: '#dfdcd5',
+    marine: '#0c8c5e',
+    chart: '#f5f1e4',
+    ice: '#edfffe',
+  };
+  const required = [
+    '--page-ground',
+    '--hud-ground',
+    '--ink',
+    '--ink-dim',
+    '--rule',
+    '--focus-ring',
+    '--house-cursor',
+  ];
+
+  for (const [theme, ground] of Object.entries(grounds)) {
+    const block = styles.match(
+      new RegExp(`\\.shell\\[data-layline-theme="${theme}"\\] \\{([\\s\\S]*?)\\n\\}`),
+    )?.[1];
+    assert.ok(block, `${theme} has no route-scoped token set`);
+    assert.match(block, new RegExp(`--page-ground:\\s*${ground.replace('#', '\\#')};`));
+    for (const token of required) {
+      assert.match(block, new RegExp(`${token}:`), `${theme} does not declare ${token}`);
+    }
+  }
+
+  assert.match(
+    styles.match(/\.shell\[data-layline-theme="console"\] \{([\s\S]*?)\n\}/)?.[1] ?? '',
+    /--house-cursor: var\(--house-cursor-frost\);/,
+  );
+  for (const theme of ['sailcloth', 'marine', 'chart', 'ice']) {
+    const block = styles.match(
+      new RegExp(`\\.shell\\[data-layline-theme="${theme}"\\] \\{([\\s\\S]*?)\\n\\}`),
+    )?.[1] ?? '';
+    assert.match(block, /--house-cursor: var\(--house-cursor-graphite\);/);
+  }
+
+  /* The parser-time script changes only its parent shell. It runs before the
+     controls and canvas are parsed, so a stored theme cannot flash console or
+     leak onto the separate story route. Invalid storage is ignored. */
+  assert.match(page, /suppressHydrationWarning/);
+  assert.match(page, /document\.currentScript\?\.parentElement/);
+  assert.match(page, /localStorage\.getItem\("layline-races-theme-v1"\)/);
+  assert.match(page, /\["console", "sailcloth", "marine", "chart", "ice"\]\.includes/);
+  assert.match(page, /catch \{/);
+  assert.doesNotMatch(story, /data-layline-theme|ThemePicker|layline-races-theme-v1/);
+
+  assert.match(workspace, /aria-label="Interface theme"/);
+  assert.match(workspace, />Theme<\/span>/);
+  assert.match(workspace, /Current theme \$\{current\.label\}\. Switch to \$\{next\.label\}/);
+  assert.match(workspace, /aria-live="polite"/);
+  assert.match(workspace, /\(currentIndex \+ 1\) % THEME_OPTIONS\.length/);
+  const themePicker = workspace.match(/export function ThemePicker[\s\S]*?\/\*\* One row/)?.[0] ?? '';
+  assert.doesNotMatch(themePicker, /aria-pressed/);
+  for (const theme of Object.keys(grounds)) {
+    assert.match(workspace, new RegExp(`id: "${theme}"`));
+  }
+  assert.ok(
+    (workspace.match(/<svg/g) ?? []).length >= 5,
+    'each theme has its own inline SVG rather than one reused swatch',
+  );
+  assert.match(workspace, /function PanelToggleIcon/);
+  assert.match(workspace, /action: "collapse" \| "restore"/);
+  assert.match(workspace, /M12 6 9 9l3 3/);
+});
+
+test('the race library rail and workspace keep their interaction contracts', async () => {
+  const [workspace, page, state, styles, analyst] = await Promise.all([
+    read('src/app/prototype/layline/races/RaceWorkspace.tsx'),
+    read('src/app/prototype/layline/races/page.tsx'),
+    read('src/app/prototype/layline/races/workspaceState.ts'),
+    read('src/app/prototype/layline/races/races.module.css'),
+    read('src/components/layline/analyst/AnalystSection.tsx'),
+  ]);
+
+  /* Search owns only query state. Race selection remains the URL committer,
+     and both Escape and a visible button clear the view. */
+  assert.match(workspace, /aria-label="Search races"|htmlFor="race-search"/);
+  assert.match(workspace, /if \(event\.key !== "Escape"\) return;/);
+  assert.match(workspace, />\s*Clear\s*<\/button>/);
+  assert.match(workspace, /Search hides \$\{hiddenBySearch\} races/);
+  assert.match(workspace, /stays loaded\. Search hides its row/);
+  assert.match(workspace, /router\.replace\(`\$\{pathname\}\?race=\$\{id\}`/);
+
+  /* Pin and archive are separate named buttons beside the row button. Archive
+     is a real disclosure, and archiving the loaded race opens it without a
+     navigation. */
+  assert.match(workspace, /aria-label=\{`\$\{pinned \? "Unpin" : "Pin"\}/);
+  assert.match(workspace, /aria-label=\{`\$\{archived \? "Restore" : "Archive"\}/);
+  assert.match(workspace, /<details[\s\S]*?<summary/);
+  assert.match(workspace, /if \(movingToArchive\) setArchiveOpen\(true\)/);
+  assert.match(workspace, /stays loaded and moved to Archive/);
+
+  /* Local storage owns the preferences. Its route-scoped cookie mirror lets
+     the server render the same state on first paint. Both reads sanitize ids. */
+  assert.match(workspace, /localStorage\.getItem\(WORKSPACE_STORAGE_KEY\)/);
+  assert.match(workspace, /document\.cookie = `\$\{WORKSPACE_COOKIE_KEY\}/);
+  assert.match(page, /cookies\(\)/);
+  assert.match(page, /parseWorkspacePreferences/);
+  assert.match(state, /validIds\.has\(id\)/);
+
+  /* Both boundaries expose the separator value contract. Pointer movement
+     translates only the handle, then release commits one pane width. */
+  assert.match(workspace, /role="separator"/);
+  assert.match(workspace, /aria-valuemin=/);
+  assert.match(workspace, /aria-valuemax=/);
+  assert.match(workspace, /aria-valuenow=/);
+  assert.match(workspace, /event\.key === "PageUp"/);
+  assert.match(workspace, /event\.key === "PageDown"/);
+  assert.match(workspace, /onDoubleClick=\{\(\) => commitWidth\(pane, null\)\}/);
+  assert.match(workspace, /drag\.handle\.style\.transform = `translateX/);
+  assert.match(workspace, /finishResize[\s\S]*?commitWidth\(drag\.pane, drag\.nextWidth\)/);
+
+  /* Headers carry mouse drag and a named keyboard action. The analyst extends
+     its existing rail header instead of adding a second component copy. */
+  assert.match(workspace, /data-pane-drag-handle/);
+  assert.match(workspace, /Move \$\{pane === "rail" \? "race list" : "analyst"\} to the/);
+  assert.match(workspace, /aria-live="polite"/);
+  assert.match(analyst, /railHeaderProps/);
+  assert.match(analyst, /railHeaderControls/);
+
+  assert.match(workspace, /aria-label=\{preferences\.railCollapsed \? "Restore race list" : "Collapse race list"\}/);
+  assert.match(styles, /@media \(max-width: 1199px\)/);
+  assert.match(styles, /\.separator \{[\s\S]*?display: none;/);
+  assert.match(styles, /@media \(min-width: 1200px\)[\s\S]*?\.separator \{\s*display: block;/);
+});
+
 /*
   THE COURSE RAIL. The page draws its own scrollbar as a course diagram, and
   these read the values back out of the source rather than restating them, so a
@@ -298,6 +434,6 @@ test('the 2D view replaces camera choices with one clear return to 3D', async ()
   assert.match(returnRule, /font-weight: 800/);
 
   const viewRule = styles.match(/\.viewGroup \{([\s\S]*?)\n\}/)?.[1] ?? '';
-  assert.match(viewRule, /background: rgba\(164, 188, 203, 0\.08\)/);
+  assert.match(viewRule, /background: color-mix\(in srgb, var\(--ink-dim\) 8%, transparent\)/);
   assert.match(viewRule, /border-color: var\(--ink-dim\)/);
 });
