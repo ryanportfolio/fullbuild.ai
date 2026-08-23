@@ -105,9 +105,11 @@ export function IntroOverlay() {
 
   const beatRef = useRef<Beat>("b0");
   const skipRef = useRef(false);
-  /* performance.now() at the moment the wordmark's face could first paint, or
-   * 0 while it still cannot. The loop turns this into its own beat. */
-  const faceAt = useRef(0);
+  /* True once the wordmark's face can paint. A flag rather than the time it
+   * happened: nothing in this tree is allowed to read a wall clock, so the
+   * loop stamps it with its own callback timestamp on the next frame, which
+   * is the frame the card could first have been seen in anyway. */
+  const faceReady = useRef(false);
   const lines = useRef(new Map<string, SVGPathElement | null>());
   const edges = useRef(new Map<string, SVGPathElement | null>());
   const hulls = useRef(new Map<string, SVGGElement | null>());
@@ -163,7 +165,7 @@ export function IntroOverlay() {
       .load('400 1em "Pangram Display"')
       .catch(() => undefined)
       .then(() => {
-        if (!held) faceAt.current = performance.now();
+        if (!held) faceReady.current = true;
       });
     return () => {
       held = true;
@@ -271,13 +273,13 @@ export function IntroOverlay() {
       const skip = skipRef.current;
 
       if (b0End === 0) {
-        /* Negative when the face was already in the cache and resolved before
-         * this loop had a frame to measure from: the card still gets its hold,
-         * it just gets it from the first frame. */
-        const face = faceAt.current === 0 ? Infinity : faceAt.current - started;
-        const known = face <= ms;
+        /* The face was in the cache and landed before this loop had a frame,
+         * so ms is 0 here and the card simply gets its hold from the first
+         * frame. Capped either way: a face that is still coming is not allowed
+         * to push the whole sequence out behind it. */
+        const known = faceReady.current;
         if (known || ms >= FONT_CAP || skip) {
-          b0End = Math.max(0, Math.min(known ? face : FONT_CAP, FONT_CAP)) + B0_HOLD;
+          b0End = Math.min(known ? ms : FONT_CAP, FONT_CAP) + B0_HOLD;
         }
       }
 
