@@ -331,6 +331,10 @@ export function RaceBrief({
   const favEnd = useRef<HTMLElement>(null);
   const favBy = useRef<HTMLSpanElement>(null);
   const favSec = useRef<HTMLSpanElement>(null);
+  const statusFill = useRef<HTMLElement>(null);
+  const statusBar = useRef<HTMLSpanElement>(null);
+  const statusWarming = useRef<HTMLSpanElement>(null);
+  const statusUp = useRef<HTMLSpanElement>(null);
 
   /* What the loop needs from the last render and must not re-enter React to
      read. Written in a layout effect so a resize is picked up before the
@@ -490,6 +494,76 @@ export function RaceBrief({
     }
     paint(useReplay.getState().t);
   }, [paint, reduced, race, plotBox, stripW]);
+
+  /* The two strings crossfade rather than swap, so the renderer arriving is one
+     settle instead of a text cut and a bar jump in the same frame. */
+  useEffect(() => {
+    const words = (): void => {
+      if (statusWarming.current !== null) statusWarming.current.style.opacity = live ? "0" : "1";
+      if (statusUp.current !== null) statusUp.current.style.opacity = live ? "1" : "0";
+    };
+    if (reduced) {
+      words();
+      return;
+    }
+    const frame = requestAnimationFrame(words);
+    return () => window.cancelAnimationFrame(frame);
+  }, [live, reduced]);
+
+  /**
+   * The hairline only exists if there is a wait to describe.
+   *
+   * On a machine that puts a frame up in a few hundred milliseconds, a bar that
+   * appears, ramps and completes inside a second is the whole of what a viewer
+   * sees of it, and what they see is a sweep with no information in it. So it
+   * stays off the layer until the renderer has been slow for long enough that
+   * saying so is worth a hairline, and a fast boot never draws one at all.
+   *
+   * When it does earn its place it is transitioned rather than keyframed. The
+   * first version killed a running animation to complete it, which drops the
+   * element to its base width before the new one applies, so the bar snapped to
+   * full from wherever the ramp had reached. A transition interpolates from the
+   * current computed width instead, so the renderer arriving is one settle.
+   *
+   * The ramp itself is a wait and not a measurement: nothing here knows how long
+   * a renderer will take, so it eases toward a value short of full and only
+   * completes when there is a frame on screen to complete it.
+   */
+  const SLOW_ENOUGH_TO_SAY_SO = 600;
+  const COMPLETE_MS = 900;
+  useEffect(() => {
+    if (live) return;
+    const timer = window.setTimeout(() => {
+      const bar = statusBar.current;
+      const fill = statusFill.current;
+      if (bar === null || fill === null) return;
+      bar.style.opacity = "1";
+      if (reduced) {
+        fill.style.width = "88%";
+        return;
+      }
+      window.requestAnimationFrame(() => {
+        fill.style.setProperty("--status-ease", "5400ms");
+        fill.style.width = "88%";
+      });
+    }, SLOW_ENOUGH_TO_SAY_SO);
+    return () => window.clearTimeout(timer);
+  }, [live, reduced]);
+
+  useEffect(() => {
+    const bar = statusBar.current;
+    const fill = statusFill.current;
+    if (!live || bar === null || fill === null) return;
+    /* Never shown, so there is nothing to complete: a bar that appeared only to
+     * announce that it was finished would be the sweep this avoids. */
+    if (bar.style.opacity !== "1") return;
+    if (reduced) {
+      fill.style.width = "100%";
+      return;
+    }
+    fill.style.setProperty("--status-ease", `${COMPLETE_MS}ms`);
+    fill.style.width = "100%";
+  }, [live, reduced]);
 
   /**
    * The prestart, run on the replay's own clock.
@@ -948,10 +1022,20 @@ export function RaceBrief({
       </div>
 
       <div className={styles.briefFoot}>
+        {/* Both strings are rendered and crossfaded rather than swapped, so the
+            renderer arriving is one settle rather than a text cut and a bar jump
+            in the same frame. The warming line is the one a screen reader gets:
+            it is the state the layer opens in, and a renderer coming up is not
+            news worth announcing. */}
         <p className={styles.status}>
-          {live ? "renderer up, the race is already loaded" : "renderer warming, the race is already loaded"}
-          <span className={styles.statusBar} aria-hidden="true">
-            <i className={live ? `${styles.statusFill} ${styles.statusFull}` : styles.statusFill} />
+          <span className={styles.statusStack}>
+            <span ref={statusWarming}>renderer warming, the race is already loaded</span>
+            <span ref={statusUp} style={{ opacity: 0 }} aria-hidden="true">
+              renderer up, the race is already loaded
+            </span>
+          </span>
+          <span className={styles.statusBar} ref={statusBar} style={{ opacity: 0 }} aria-hidden="true">
+            <i ref={statusFill} className={styles.statusFill} />
           </span>
         </p>
         <button className={styles.goBtn} type="button" onClick={release} ref={button}>

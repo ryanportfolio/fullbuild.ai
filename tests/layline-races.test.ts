@@ -1045,9 +1045,16 @@ test("the sea cover briefs the race it is loading", () => {
     "the cover stopped publishing the capture hold",
   );
   assert.match(cover, /\[data-brief-still\] \.panel,\s*\[data-brief-still\] \.briefFoot \{\s*animation: none;/);
-  /* Jumped to its end rather than cancelled: the hairline starts at no width,
-     so cancelling its ease would leave an empty bar in every capture. */
-  assert.match(cover, /\[data-brief-still\] \.statusFill \{\s*animation-delay: -6s;/);
+  /* The footer's three moving parts stop too. They are the one part of this
+     layer driven by wall time rather than by the replay clock, so left easing
+     they caught two captures of the same stated time at two points of one
+     crossfade and differed by 1,510 pixels. */
+  for (const part of [".statusFill", ".statusBar", ".statusStack span"]) {
+    assert.ok(
+      cover.includes(`[data-brief-still] ${part}`),
+      `${part} kept easing under the capture hold`,
+    );
+  }
 
   /* The drawing scales its stroke widths by a measured metres-per-pixel rather
      than reaching for vector-effect, because Chrome then reads
