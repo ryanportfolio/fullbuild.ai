@@ -836,6 +836,15 @@
     padding: 16px 16px calc(16px + var(--brief-foot-gap));
   }
 
+  /* The fleet lies along 61 metres of a 70 metre line, which is about 150px at
+     this width: six sail numbers sharing it overprint into a smear, and a label
+     nobody can read is worse than no label. The ledger directly under the plot
+     names all six in the order they lie along the line and carries each hull's
+     colour, so the drawing keeps its key. */
+  .plotSail {
+    display: none;
+  }
+
   .briefHead {
     flex-direction: column;
     align-items: flex-start;
