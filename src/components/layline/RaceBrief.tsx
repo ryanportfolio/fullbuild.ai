@@ -446,7 +446,6 @@ export function RaceBrief({
                   y="64.8"
                   width="4.2"
                   height="2.4"
-                  rx="0.8"
                   fill={boat.hue}
                   stroke={boat.dark ? "rgba(255,255,255,.55)" : undefined}
                   strokeWidth={boat.dark ? ".25" : undefined}

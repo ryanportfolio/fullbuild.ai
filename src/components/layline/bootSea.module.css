@@ -102,8 +102,16 @@
 .briefHead {
   display: flex;
   flex: none;
-  align-items: baseline;
-  gap: 2cqw;
+  /* The name gets the whole width, at every size. Sharing the row with the meta
+     line left the title's budget swinging between 234 and 454px depending on
+     the viewport, so the size that fits two lines swung with it and the
+     stylesheet could not state one: the server painted 11cqw and the measured
+     fit corrected it to less than half that after hydration, which a reader saw
+     as the name popping in large and shrinking. Given the full width, 11cqw
+     fits every shipped name at every width and the fit never has to fire. */
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.7cqw;
   min-width: 0;
   padding-bottom: 1.4cqw;
   border-bottom: 1px solid var(--brief-head-line);
@@ -117,7 +125,15 @@
      until the name fits inside them. */
   font-family: var(--font-pangram);
   font-weight: 400;
-  font-size: calc(11 * 1cqw);
+  /* 9.4, not the 11 this started at, because 11 does not fit. Measured: the
+     largest size that holds each of the three shipped names inside two line
+     boxes lands between 9.41 and 10.40 cqw across nine viewport widths, and the
+     binding case is "Winter series race 2" at 9.41. A stated size above the
+     binding case is a size the measured fit has to correct after hydration, in
+     full view of the reader. Below it, the fit never fires and the server's
+     first paint is the final one. The fit stays as the net for a name longer
+     than any in the registry today. */
+  font-size: calc(9.4 * 1cqw);
   line-height: 1.02;
   letter-spacing: -0.025em;
   text-wrap: balance;
@@ -128,13 +144,11 @@
 
 .raceMeta {
   flex: none;
-  margin-left: auto;
   color: var(--brief-head-ink);
   opacity: 0.78;
   font-size: max(1.05cqw, 9px);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  text-align: right;
 }
 
 .briefMain {
@@ -146,6 +160,56 @@
   overflow: hidden;
 }
 
+/* Every scroller on this layer, at every width, not just the stacked column
+   that is the only one to overflow today. The browser's default bar would be
+   the one piece of chrome on the page nobody drew.
+
+   It takes the bar the route already paints on <html>
+   (prototype/layline/scrollbar.css): 10px channel, 4px of thumb inside a 3px
+   transparent inset over padding-box, a hairline down the channel, square
+   corners because the console draws no radius anywhere.
+
+   The inks are this layer's own rather than that stylesheet's literals. Those
+   are --page-ground, --ink-dim and --rule, which are theme tokens; this bar
+   sits on the sea, which the themes deliberately do not repaint, so a #070f16
+   channel would lay a black stripe down a picture of water. Same geometry,
+   same light-thumb-on-dark-channel relationship, this layer's palette. */
+.brief ::-webkit-scrollbar,
+.brief::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.brief ::-webkit-scrollbar-track,
+.brief::-webkit-scrollbar-track {
+  background: var(--brief-panel);
+  border-left: 1px solid var(--brief-hair);
+}
+
+.brief ::-webkit-scrollbar-thumb,
+.brief::-webkit-scrollbar-thumb {
+  background: var(--brief-dim);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+}
+
+.brief ::-webkit-scrollbar-corner,
+.brief::-webkit-scrollbar-corner {
+  background: var(--brief-panel);
+}
+
+/* Blink drops the ::-webkit-scrollbar geometry the moment it sees
+   scrollbar-color, so the standard properties stay behind this guard and only
+   engines with no ::-webkit-scrollbar of their own read them. The same handling
+   the route's own bar uses. */
+@supports not selector(::-webkit-scrollbar) {
+  .brief,
+  .brief * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--brief-dim) var(--brief-panel);
+  }
+}
+
 /* A 1px dim rule does the job a drop shadow would, which is the console's
    standing rule and holds here. */
 .panel {
@@ -155,7 +219,6 @@
   min-height: 0;
   padding: 1.5cqw 1.6cqw;
   border: 1px solid var(--brief-hair);
-  border-radius: 16px;
   background: var(--brief-panel);
   overflow: hidden;
   animation: briefRise 420ms var(--ease) both;
@@ -211,7 +274,6 @@
   min-width: 9px;
   height: 1.25cqw;
   min-height: 9px;
-  border-radius: 3px;
 }
 
 /* A hue that is near the panel ground needs an edge to hold against it. */
@@ -428,10 +490,12 @@
   }
 }
 
+/* Square, like everything else on this layer and like the console's own
+   registration box, which states border-radius: 0 on whatever it rings. A pill
+   here was a control that changed shape the moment it took focus. */
 .goBtn {
   padding: 1cqw 2.4cqw;
   border: 1px solid var(--brief-ink);
-  border-radius: 100px;
   background: var(--brief-ink);
   color: var(--water-deep);
   font-family: var(--brief-mono);
@@ -462,11 +526,6 @@
 
 .goBtn:hover .goArrow {
   transform: translateX(3px);
-}
-
-.goBtn:focus-visible {
-  outline: 3px solid var(--brief-accent);
-  outline-offset: 2px;
 }
 
 /* ---- narrow: stack the brief, ground the footer ---- */
@@ -508,9 +567,7 @@
   }
 
   .raceMeta {
-    margin-left: 0;
     font-size: 9px;
-    text-align: left;
   }
 
   /* Stacked, each panel is as tall as what is in it and the column scrolls.
