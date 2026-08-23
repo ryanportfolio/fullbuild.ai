@@ -1,0 +1,498 @@
+"use client";
+
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import {
+  briefFacts,
+  prestartTrace,
+  windReading,
+  windReadingAt,
+  type BriefFacts,
+  type WindReading,
+} from "@/lib/layline/brief";
+import type { RaceData } from "@/lib/layline/types";
+import styles from "./bootSea.module.css";
+import { AUTOPLAY_FROM, OPEN_AT, useReplay } from "./store";
+
+/**
+ * The race brief: what the boot cover shows while the renderer warms.
+ *
+ * The cover used to name the race and wait. It now spends the wait stating the
+ * race: the fleet and where each hull sat on the line at the gun, the breeze
+ * running live off the seed, and what the line is worth in it. Every figure
+ * comes out of the same RaceData the replay is about to play, through the same
+ * evaluator the instrument dock reads, so nothing here can disagree with the
+ * race behind it. See lib/layline/brief.ts for where each one is read from.
+ *
+ * The brief is a gate as well as a picture. Continue, or Enter, releases it,
+ * and the replay's autoplay waits on that release rather than running the
+ * prestart off behind a cover.
+ *
+ * It writes its live readings straight into the DOM off one loop, the way the
+ * instrument dock does: a countdown that re-rendered a fleet list sixty times
+ * a second would cost more than it reports.
+ */
+
+/* One turn of the prestart in the dial, in wall-clock ms. The prestart itself
+ * is ten race seconds; nine wall seconds is slow enough that the needle reads
+ * as weather rather than as a sweep. */
+const PRESTART_LOOP_MS = 9000;
+
+/* Points in the wind trace under the dial. Six a second across the prestart,
+ * which draws the curve between the 1 Hz samples rather than the samples. */
+const TRACE_STEPS = 60;
+
+/* The trace's own vertical window, m/s. The sim clamps tws to 6.2 to 8.7
+ * (buildWind in lib/layline/sim.ts), so the whole series fits inside it and
+ * the curve never leaves the box. */
+const TRACE_LO = 6.2;
+const TRACE_HI = 8.7;
+
+/* m/s to knots. The one conversion, at the display edge, as format.ts has it. */
+const KNOTS = 1.94384;
+
+/* The diagram's half width in viewBox units. The line's two ends land on it
+ * exactly, so a boat's place on the line is its own meters scaled once. */
+const LINE_SPAN = 37;
+
+function signed(value: number, digits: number): string {
+  const text = value.toFixed(digits);
+  return value >= 0 && !text.startsWith("-") ? `+${text}` : text;
+}
+
+function setText(node: { textContent: string | null } | null, text: string): void {
+  if (node !== null && node.textContent !== text) node.textContent = text;
+}
+
+function setAttr(node: Element | null, name: string, value: string): void {
+  if (node !== null && node.getAttribute(name) !== value) node.setAttribute(name, value);
+}
+
+function endLabel(favored: WindReading["favored"]): string {
+  return favored === "pin" ? "pin" : favored === "boat" ? "committee boat" : "square";
+}
+
+function traceY(tws: number): number {
+  const u = (tws - TRACE_LO) / (TRACE_HI - TRACE_LO);
+  return 22 - (u < 0 ? 0 : u > 1 ? 1 : u) * 20;
+}
+
+function boatX(gunX: number, half: number): number {
+  const u = half > 0 ? gunX / half : 0;
+  const x = 50 + (u < -1 ? -1 : u > 1 ? 1 : u) * LINE_SPAN;
+  return x < 15 ? 15 : x > 85 ? 85 : x;
+}
+
+/* Twelve minor ticks and four cardinals, drawn once: the ring never moves, only
+ * the needle over it. */
+const DIAL_TICKS = Array.from({ length: 12 }, (_, index) => {
+  const angle = index * 30;
+  const major = angle % 90 === 0;
+  const rad = (angle * Math.PI) / 180;
+  const inner = major ? 15.2 : 16.2;
+  return {
+    key: angle,
+    x1: 20 + inner * Math.sin(rad),
+    y1: 20 - inner * Math.cos(rad),
+    x2: 20 + 18 * Math.sin(rad),
+    y2: 20 - 18 * Math.cos(rad),
+    major,
+  };
+});
+
+/* The survey range the dial's filled band shows: the breeze runs plus or minus
+ * eight degrees of the course axis across a race, which is what makes a line
+ * bias worth reading rather than a constant. */
+const SURVEY_DEG = 8;
+const BAND = (() => {
+  const point = (angle: number, radius: number): string => {
+    const rad = (angle * Math.PI) / 180;
+    return `${(20 + radius * Math.sin(rad)).toFixed(2)} ${(20 - radius * Math.cos(rad)).toFixed(2)}`;
+  };
+  return `M20 20 L${point(-SURVEY_DEG, 17)} A17 17 0 0 1 ${point(SURVEY_DEG, 17)} Z`;
+})();
+
+export function RaceBrief({
+  race,
+  name,
+  venue,
+  dateLabel,
+  live,
+  reduced,
+}: {
+  race: RaceData;
+  name: string;
+  venue: string;
+  dateLabel: string;
+  /** True once the renderer has a frame up. Only the status line reads it. */
+  live: boolean;
+  reduced: boolean;
+}) {
+  const facts: BriefFacts = useMemo(() => briefFacts(race), [race]);
+  const trace = useMemo(() => prestartTrace(race, TRACE_STEPS), [race]);
+  const reading = useRef<WindReading>(windReading());
+
+  /* The instant the server renders, and the instant a viewer who asked for
+   * less motion keeps: the first fix in the feed, the top of the prestart. */
+  const seed = useMemo(
+    () => windReadingAt(race, facts, race.tMin, windReading()),
+    [race, facts],
+  );
+
+  const root = useRef<HTMLDivElement>(null);
+  const title = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+  const gunIn = useRef<HTMLSpanElement>(null);
+  const needle = useRef<SVGGElement>(null);
+  const twsBig = useRef<HTMLSpanElement>(null);
+  const traceDot = useRef<SVGCircleElement>(null);
+  const biasDeg = useRef<HTMLDivElement>(null);
+  const biasSec = useRef<HTMLDivElement>(null);
+  const favEnd = useRef<HTMLElement>(null);
+  const favSec = useRef<HTMLSpanElement>(null);
+  const favPin = useRef<SVGPolygonElement>(null);
+  const favBoat = useRef<SVGPolygonElement>(null);
+  const windArrow = useRef<SVGGElement>(null);
+  const windTag = useRef<SVGTextElement>(null);
+  const twdTag = useRef<HTMLSpanElement>(null);
+
+  const paint = useCallback(
+    (t: number) => {
+      const read = windReadingAt(race, facts, t, reading.current);
+      setAttr(needle.current, "transform", `rotate(${read.twd.toFixed(2)} 20 20)`);
+      setText(twsBig.current, (read.tws * KNOTS).toFixed(1));
+      const u = (t - facts.tMin) / (0 - facts.tMin);
+      setAttr(traceDot.current, "cx", ((u < 0 ? 0 : u > 1 ? 1 : u) * 100).toFixed(1));
+      setAttr(traceDot.current, "cy", traceY(read.tws).toFixed(1));
+      setText(biasDeg.current, `${signed(read.twd, 1)}°`);
+      setText(biasSec.current, `${read.biasSeconds.toFixed(1)} s`);
+      setText(favEnd.current, endLabel(read.favored));
+      setText(favSec.current, read.favored === "square" ? "" : `${read.biasSeconds.toFixed(1)} s`);
+      if (favPin.current !== null) favPin.current.style.opacity = read.favored === "pin" ? "1" : "0";
+      if (favBoat.current !== null) {
+        favBoat.current.style.opacity = read.favored === "boat" ? "1" : "0";
+      }
+      setAttr(windArrow.current, "transform", `rotate(${read.twd.toFixed(1)} 50 12)`);
+      setText(windTag.current, `TWD ${signed(read.twd, 0)}°`);
+      setText(twdTag.current, `${signed(read.twd, 0)}°`);
+      setText(gunIn.current, `gun in ${Math.max(0, -t).toFixed(1)} s`);
+    },
+    [race, facts],
+  );
+
+  /* The race name is capped at two lines: measured, then stepped down a pixel
+   * at a time until it fits. Container units alone cannot do it, because what
+   * overflows is the number of words, not the width of one. */
+  const fitTitle = useCallback(() => {
+    const node = title.current;
+    if (node === null) return;
+    node.style.fontSize = "";
+    let size = Number.parseFloat(getComputedStyle(node).fontSize);
+    if (!Number.isFinite(size)) return;
+    node.style.fontSize = `${size}px`;
+    let guard = 80;
+    const fits = (): boolean => node.scrollHeight <= Math.ceil(2 * size * 1.02) + 2;
+    while (!fits() && size > 9 && guard > 0) {
+      size -= 1;
+      guard -= 1;
+      node.style.fontSize = `${size}px`;
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    fitTitle();
+    const node = root.current;
+    if (node === null || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => fitTitle());
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [fitTitle]);
+
+  /* The Continue button takes focus when the cover mounts: it is the only
+   * control on the layer, and a viewer arriving by keyboard should not have to
+   * find it. preventScroll keeps the workspace's own scroll position. */
+  useEffect(() => {
+    button.current?.focus({ preventScroll: true });
+  }, []);
+
+  /**
+   * The prestart, run on the replay's own clock.
+   *
+   * The loop seeks the store rather than keeping a clock of its own, so the
+   * dial and the scene warming underneath it are reading the same instant and
+   * the brief's wind is the replay's wind by construction rather than by two
+   * formulas agreeing. It stops writing while the capture hold is on, which is
+   * what lets a screenshot state its own time.
+   *
+   * Reduced motion never runs it at all. The brief holds the first fix in the
+   * feed, and the store's clock stays where it opened, at the mid-beat moment
+   * the store picks for a viewer who asked for less motion.
+   */
+  useEffect(() => {
+    if (reduced) {
+      paint(race.tMin);
+      return;
+    }
+    const store = useReplay;
+    const span = 0 - race.tMin;
+    let frame = 0;
+    let origin = 0;
+    const step = (stamp: number): void => {
+      frame = requestAnimationFrame(step);
+      const state = store.getState();
+      if (state.briefDone) return;
+      if (state.frozen) {
+        paint(state.t);
+        return;
+      }
+      if (origin === 0) origin = stamp;
+      const phase = ((stamp - origin) % PRESTART_LOOP_MS) / PRESTART_LOOP_MS;
+      state.seek(race.tMin + phase * span);
+    };
+    /* Open the replay on the prestart before the first painted frame, so the
+     * scene coming up behind the brief is at the moment the brief describes. */
+    store.getState().seek(race.tMin);
+    const stop = store.subscribe((state) => paint(state.t));
+    paint(store.getState().t);
+    frame = requestAnimationFrame(step);
+    return () => {
+      cancelAnimationFrame(frame);
+      stop();
+    };
+  }, [race, paint, reduced]);
+
+  const release = useCallback(() => {
+    const state = useReplay.getState();
+    if (state.briefDone) return;
+    /* Hand the clock back where the replay wants it: inside the prestart for
+     * an autoplay, so the gun is something the viewer watches happen; at the
+     * mid-beat moment for a viewer who asked for less motion, who gets no
+     * autoplay and should not be left on an empty start line. The reduced
+     * branch also undoes the one prestart seek the loop can land before the
+     * media query has been read into the store. */
+    state.seek(state.reducedMotion ? OPEN_AT : AUTOPLAY_FROM);
+    state.releaseBrief();
+  }, []);
+
+  /* Enter releases the brief from anywhere on the page, except while a viewer
+   * is typing: the analyst's composer is one Tab away. */
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key !== "Enter" || event.defaultPrevented) return;
+      const active = document.activeElement;
+      const tag = active === null ? "" : active.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (active instanceof HTMLElement && active.isContentEditable) return;
+      release();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [release]);
+
+  const tracePoints = trace
+    .map((point, index) => `${((index / TRACE_STEPS) * 100).toFixed(1)},${traceY(point.tws).toFixed(1)}`)
+    .join(" ");
+
+  const lineMeters = Math.round(facts.lineLength);
+
+  return (
+    <section className={styles.brief} ref={root} aria-label={`Race brief, ${name}`}>
+      <header className={styles.briefHead}>
+        <div className={styles.raceName} ref={title}>
+          {name}
+        </div>
+        <div className={styles.raceMeta}>
+          {venue} · {dateLabel} · {facts.boats.length} boats · one windward-leeward lap
+        </div>
+      </header>
+
+      <div className={styles.briefMain}>
+        <div className={styles.panel}>
+          <div className={styles.panelLabel}>
+            <span>Fleet at the line</span>
+            <span className={styles.panelCount}>{facts.boats.length}</span>
+          </div>
+          {facts.boats.map((boat) => (
+            <div className={styles.fleetRow} key={boat.id}>
+              <span
+                className={boat.dark ? `${styles.chip} ${styles.chipDark}` : styles.chip}
+                style={{ background: boat.hue }}
+                aria-hidden="true"
+              />
+              <span className={styles.sail}>{boat.sail}</span>
+              <span className={styles.boatName}>{boat.name}</span>
+              <span className={styles.slot}>{signed(boat.gunX, 0)} m</span>
+            </div>
+          ))}
+          <div className={styles.fleetFoot}>
+            <span ref={gunIn}>{`gun in ${Math.max(0, -race.tMin).toFixed(1)} s`}</span>
+            <span>
+              {facts.first === null
+                ? "no boat crossed"
+                : `${facts.first.sail} ${signed(facts.first.t, 2)} s first cross`}
+            </span>
+            <span>{`line ${lineMeters} m`}</span>
+          </div>
+        </div>
+
+        <div className={styles.panel}>
+          <div className={styles.panelLabel}>
+            <span>Wind, live off the seed</span>
+          </div>
+          <div className={styles.dialWrap}>
+            <svg
+              className={styles.dial}
+              viewBox="0 0 40 40"
+              role="img"
+              aria-label="Wind dial: the needle points where the breeze is coming from, against the course axis"
+            >
+              <circle cx="20" cy="20" r="19" fill="rgba(4,22,38,.55)" stroke="rgba(255,255,255,.28)" />
+              <path d={BAND} fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.35)" strokeWidth=".3" />
+              {DIAL_TICKS.map((tick) => (
+                <line
+                  key={tick.key}
+                  x1={tick.x1.toFixed(2)}
+                  y1={tick.y1.toFixed(2)}
+                  x2={tick.x2.toFixed(2)}
+                  y2={tick.y2.toFixed(2)}
+                  stroke={tick.major ? "rgba(255,255,255,.7)" : "rgba(255,255,255,.3)"}
+                  strokeWidth={tick.major ? ".8" : ".5"}
+                />
+              ))}
+              <g ref={needle} transform={`rotate(${seed.twd.toFixed(2)} 20 20)`}>
+                <line x1="20" y1="24" x2="20" y2="6.5" stroke="#fff" strokeWidth="1.1" />
+                <line x1="20" y1="20" x2="20" y2="24" stroke="#fff" strokeWidth="2.6" />
+                <polygon points="20,4.2 17.7,9.2 22.3,9.2" fill="#fff" />
+              </g>
+              <circle cx="20" cy="20" r="2.1" fill="rgba(4,22,38,.9)" stroke="#fff" strokeWidth=".7" />
+            </svg>
+          </div>
+          <div className={styles.twsRow}>
+            <span className={styles.twsBig} ref={twsBig}>
+              {(seed.tws * KNOTS).toFixed(1)}
+            </span>
+            <span className={styles.twsUnit}>kn TWS</span>
+          </div>
+          <svg
+            className={styles.trace}
+            viewBox="0 0 100 24"
+            preserveAspectRatio="none"
+            role="img"
+            aria-label="True wind speed through the prestart"
+          >
+            <line x1="0" y1="22" x2="100" y2="22" stroke="rgba(255,255,255,.25)" strokeWidth=".5" />
+            <polyline points={tracePoints} fill="none" stroke="rgba(255,255,255,.85)" strokeWidth="1" />
+            <circle ref={traceDot} r="1.8" fill="#fff" cx="0" cy={traceY(seed.tws).toFixed(1)} />
+          </svg>
+        </div>
+
+        <div className={styles.panel}>
+          <div className={styles.panelLabel}>
+            <span>Start line</span>
+            <span className={styles.panelCount} ref={twdTag}>
+              {`${signed(seed.twd, 0)}°`}
+            </span>
+          </div>
+          <svg
+            className={styles.lineDiagram}
+            viewBox="0 0 100 76"
+            preserveAspectRatio="xMidYMid meet"
+            role="img"
+            aria-label="The start line looking upwind: the pin at the left, the committee boat at the right, the fleet where each hull sat at the gun"
+          >
+            <g ref={windArrow} transform={`rotate(${seed.twd.toFixed(1)} 50 12)`}>
+              <line x1="50" y1="3" x2="50" y2="17" stroke="#fff" strokeWidth="1.1" />
+              <polygon points="50,21 47.6,15.8 52.4,15.8" fill="#fff" />
+              <text className={styles.diagramTag} ref={windTag} x="54" y="10">
+                {`TWD ${signed(seed.twd, 0)}°`}
+              </text>
+            </g>
+            <line
+              x1="50"
+              y1="26"
+              x2="50"
+              y2="62"
+              stroke="rgba(255,255,255,.35)"
+              strokeWidth=".5"
+              strokeDasharray="2 2"
+            />
+            <text className={styles.diagramNote} x="54" y="44">
+              square transit
+            </text>
+            <line x1="13" y1="66" x2="87" y2="66" stroke="#fff" strokeWidth="1.4" />
+            <circle cx="13" cy="66" r="1.7" fill="none" stroke="#fff" strokeWidth=".8" />
+            <path d="M87 64.2 L91.5 64.2 L90.5 67.6 L88 67.6 Z" fill="#fff" />
+            {facts.boats.map((boat) => {
+              const x = boatX(boat.gunX, facts.lineHalf);
+              return (
+                <rect
+                  key={boat.id}
+                  x={(x - 2.1).toFixed(1)}
+                  y="64.8"
+                  width="4.2"
+                  height="2.4"
+                  rx="0.8"
+                  fill={boat.hue}
+                  stroke={boat.dark ? "rgba(255,255,255,.55)" : undefined}
+                  strokeWidth={boat.dark ? ".25" : undefined}
+                />
+              );
+            })}
+            <polygon
+              ref={favPin}
+              className={styles.favMark}
+              points="13,61.4 11.4,58.2 14.6,58.2"
+              style={{ opacity: seed.favored === "pin" ? 1 : 0 }}
+            />
+            <polygon
+              ref={favBoat}
+              className={styles.favMark}
+              points="87,61.4 85.4,58.2 88.6,58.2"
+              style={{ opacity: seed.favored === "boat" ? 1 : 0 }}
+            />
+            <text className={styles.diagramEnd} x="13" y="72.5" textAnchor="middle">
+              pin
+            </text>
+            <text className={styles.diagramEnd} x="87" y="72.5" textAnchor="end">
+              committee boat
+            </text>
+          </svg>
+          <div className={styles.biasReads}>
+            <div>
+              <div className={styles.biasNum} ref={biasDeg}>
+                {`${signed(seed.twd, 1)}°`}
+              </div>
+              <div className={styles.biasCap}>line bias</div>
+            </div>
+            <div>
+              <div className={styles.biasNum} ref={biasSec}>
+                {`${seed.biasSeconds.toFixed(1)} s`}
+              </div>
+              <div className={styles.biasCap}>to the favored end</div>
+            </div>
+          </div>
+          <p className={styles.favored}>
+            Favored: <b ref={favEnd}>{endLabel(seed.favored)}</b> by{" "}
+            <span className={styles.favSec} ref={favSec}>
+              {seed.favored === "square" ? "" : `${seed.biasSeconds.toFixed(1)} s`}
+            </span>
+          </p>
+        </div>
+      </div>
+
+      <div className={styles.briefFoot}>
+        <p className={styles.status}>
+          {live ? "renderer up, the race is already loaded" : "renderer warming, the race is already loaded"}
+          <span className={styles.statusBar} aria-hidden="true">
+            <i className={live ? `${styles.statusFill} ${styles.statusFull}` : styles.statusFill} />
+          </span>
+        </p>
+        <button className={styles.goBtn} type="button" onClick={release} ref={button}>
+          Start the race
+          <span className={styles.goArrow} aria-hidden="true">
+            →
+          </span>
+        </button>
+      </div>
+    </section>
+  );
+}
