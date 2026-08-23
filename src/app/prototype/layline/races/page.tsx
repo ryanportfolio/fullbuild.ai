@@ -6,6 +6,7 @@ import { raceFor } from "@/lib/layline/analyst/data";
 import { MISSING, clock } from "@/lib/layline/format";
 import { DEFAULT_RACE_ID, RACES, isRaceId } from "@/lib/layline/races";
 import { RaceWorkspace, type RaceRow } from "./RaceWorkspace";
+import styles from "./races.module.css";
 import layline from "../layline.module.css";
 import "../scrollbar.css";
 
@@ -54,7 +55,7 @@ export default async function LaylineRacesPage({
   });
 
   return (
-    <div className={layline.shell} data-layline-page>
+    <div className={`${layline.shell} ${styles.page}`} data-layline-page>
       {/* Three panes, three ways in. Each link parks in the same corner and
           only the focused one is on screen, so the row costs no space. */}
       <a className={layline.skip} href="#race-list">

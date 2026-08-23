@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { clock } from "@/lib/layline/format";
+import { RACES } from "@/lib/layline/races";
 import { generateRace } from "@/lib/layline/sim";
 import { RACE_SEED } from "@/lib/layline/types";
 import { AnalystSection } from "@/components/layline/analyst/AnalystSection";
@@ -27,6 +28,10 @@ export default function LaylinePage() {
    * readings of one number, never two numbers. */
   const race = generateRace(RACE_SEED);
   const fleet = new Map(race.boats.map((boat) => [boat.id, boat]));
+  /* The bar's left slot names where it goes and how much is there. The count is
+   * the registry's own length, so a fourth race is announced here by shipping
+   * it rather than by remembering to edit a number. */
+  const libraryLabel = `Race library // ${RACES.length} races`;
 
   return (
     <div className={styles.shell} data-layline-page>
@@ -64,7 +69,25 @@ export default function LaylinePage() {
       <IntroOverlay />
 
       <div className={styles.prototypeBar}>
-        <strong>Layline race replay</strong>
+        {/* aria-label pins the name, so the sheen's duplicate of the words is
+            never read out as a second label. */}
+        <Link
+          className={styles.libraryCta}
+          href="/prototype/layline/races"
+          aria-label={libraryLabel}
+        >
+          <strong className={styles.ctaLabel} data-label={libraryLabel}>
+            {libraryLabel}
+          </strong>
+          <svg className={styles.ctaArrow} viewBox="0 0 12 8" aria-hidden="true" focusable="false">
+            <path
+              d="M0.5 4h10M7.5 1l3 3-3 3"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.2"
+            />
+          </svg>
+        </Link>
         <span>2D / 3D playback // seeded telemetry</span>
         {/* The mark rides the right end of the bar and links home, the same
             job it does in the colophon. The source link beside it keeps its

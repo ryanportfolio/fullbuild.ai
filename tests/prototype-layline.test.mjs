@@ -35,6 +35,12 @@ test('Layline is discoverable and the page keeps its identity', async () => {
   assert.match(page, /title: "Layline · Race Replay"/);
   assert.match(page, /generateRace\(RACE_SEED\)/);
   assert.match(page, /Skip to the replay console/);
+  /* The bar's left slot is the way through to the library, and it counts the
+     races off the registry. A hardcoded count would go stale the day a fourth
+     race ships, so the literal is barred here rather than in review. */
+  assert.match(page, /href="\/prototype\/layline\/races"/);
+  assert.match(page, /`Race library \/\/ \$\{RACES\.length\} races`/);
+  assert.doesNotMatch(page, /Race library \/\/ \d+ races/);
   /* The colophon is three parts: who built it, where the source is, and the way
      back to the house. Read out of the footer it sits in rather than off the
      whole page, so a credit that drifts out of the colophon fails here, and so

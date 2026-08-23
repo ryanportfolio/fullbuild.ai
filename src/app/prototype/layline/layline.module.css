@@ -222,6 +222,108 @@
   flex: none;
 }
 
+/* ---- the way through to the race library ----
+
+   The bar's left slot is a link in the bar's own register. Everything it does,
+   the idle sweep, the underline and the arrow, is paint or transform inside a
+   box that never changes size, so the bar holds its 33px through all of it and
+   nothing beside it moves. */
+
+.libraryCta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ctaLabel {
+  position: relative;
+  display: inline-block;
+}
+
+/* The sweep: the same words in the wind colour, clipped to a band that crosses
+   them once every 7 seconds. A second copy of the text rather than a gradient,
+   which this page bans, and clipping needs no mask to stay on the letters. */
+.ctaLabel::after {
+  content: attr(data-label);
+  position: absolute;
+  inset: 0;
+  color: var(--wind);
+  clip-path: inset(0 100% 0 0);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ctaLabel::after {
+    animation: ctaSheen 7000ms var(--ease) infinite;
+  }
+}
+
+@keyframes ctaSheen {
+  0%,
+  64% {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  72% {
+    clip-path: inset(0 76% 0 0);
+  }
+
+  88% {
+    clip-path: inset(0 0 0 76%);
+  }
+
+  96%,
+  100% {
+    clip-path: inset(0 0 0 100%);
+  }
+}
+
+/* The underline draws itself from the left on hover. Absolute, so the bar's
+   line box never learns it is there. */
+.libraryCta::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -3px;
+  left: 0;
+  height: 1px;
+  background: var(--ink);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 220ms var(--ease);
+}
+
+.libraryCta:hover::after,
+.libraryCta:focus-visible::after {
+  transform: scaleX(1);
+}
+
+.ctaArrow {
+  flex: none;
+  width: 12px;
+  height: 8px;
+  transition: transform 160ms var(--ease);
+}
+
+.libraryCta:hover .ctaArrow {
+  transform: translateX(3px);
+}
+
+/* Static for a viewer who asked for less motion: no sweep, no draw, no nudge.
+   Focus still lands as the shell's registration box, which is instant paint on
+   every focusable thing on the page. */
+@media (prefers-reduced-motion: reduce) {
+  .libraryCta::after,
+  .ctaArrow {
+    transition: none;
+  }
+
+  .libraryCta:hover .ctaArrow {
+    transform: none;
+  }
+}
+
 /* ---- build status banner ---- */
 
 /* Loud on purpose: the owner demos this page mid-build, so the state of the

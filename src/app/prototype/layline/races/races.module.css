@@ -20,6 +20,14 @@
                  rules take the viewer apart into its docks.
    ========================================================================= */
 
+/* The height of the composer bar the analyst pins to the foot of the viewport
+   below 1200px: a 42px field inside 8px of padding either side, over a 1px
+   rule. Declared on the page because two rules read it, the bar itself in the
+   analyst sheet and the room this page leaves under everything for it. */
+.page {
+  --composer-bar: 59px;
+}
+
 .workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -156,6 +164,12 @@
 /* ---- under the three-column threshold ---- */
 
 @media (max-width: 1199px) {
+  /* The bar is fixed over the page, so the page ends above it: the colophon is
+     the last thing down here and it is not going under a composer. */
+  .page {
+    padding-bottom: calc(var(--composer-bar) + env(safe-area-inset-bottom));
+  }
+
   /* The rail becomes a picker across the top, carrying the same four readings
      a row carries in the column: a chip that drops the fleet size and the
      winning time would ask a phone to choose between races on the name alone. */
