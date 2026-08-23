@@ -274,7 +274,7 @@ function mockStandings(race: RaceData): MockStep[] {
     kind: "text",
     value:
       `No model is answering right now, so this reply is a stand-in.\n` +
-      `The three suggested questions are scripted and everything else gets the standings. ` +
+      `The three suggested questions are scripted and everything else gets the standings.\n` +
       `Set OPENROUTER_API_KEY to have a model read your question and call the tools itself.\n` +
       `At ${mid.raceClock} ${lead.sail} led on the ${lead.leg}, with ${second.sail} ${gapWords(second.gapSeconds)} back ` +
       `and ${third.sail} third at ${gapWords(third.gapSeconds)}. ${serializeChip(45, lead.boatId)}\n` +
@@ -404,17 +404,24 @@ class UpstreamError extends Error {
 }
 
 /* Small models open their final answer with plan talk ("Let me check the
- * downwind legs.") despite the prompt. Leading paragraphs that read as
- * planning are dropped, but only while a real paragraph remains after them,
- * so an answer can never strip to nothing. */
+ * downwind legs.") despite the prompt. The answer shape is one sentence per
+ * line, so plan talk arrives as leading lines, not leading paragraphs.
+ * Leading lines that read as planning are dropped, but only while a real
+ * line remains after them, so an answer can never strip to nothing. */
 const PLAN_TALK = /^(let me|i'll|i will|i am going to|i'm going to|first,? let me|now let me|okay,? let|i need to)/i;
 
 function stripPlanTalk(text: string): string {
-  const paragraphs = text.split(/\n\s*\n/);
-  while (paragraphs.length > 1 && PLAN_TALK.test(paragraphs[0].trim())) {
-    paragraphs.shift();
+  const lines = text.split("\n");
+  while (lines.length > 1) {
+    const first = lines[0].trim();
+    const restHasWords = lines.slice(1).some((line) => line.trim() !== "");
+    if (first === "" || (PLAN_TALK.test(first) && restHasWords)) {
+      lines.shift();
+      continue;
+    }
+    break;
   }
-  return paragraphs.join("\n\n");
+  return lines.join("\n");
 }
 
 function liveResponse(

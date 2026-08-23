@@ -228,6 +228,12 @@ test("mock mode says so when a question is outside its script", async () => {
     .join("");
   assert.match(answer, /stand-in/, `expected the stand-in disclosure in: ${answer}`);
   assert.match(answer, /OPENROUTER_API_KEY/);
+  /* One sentence per line holds in the fallback too: the key instruction
+   * opens its own line rather than trailing the scripted-questions sentence. */
+  assert.ok(
+    answer.split("\n").some((line) => line.startsWith("Set OPENROUTER_API_KEY")),
+    `expected the key instruction on its own line in: ${answer}`,
+  );
 });
 
 test("mock mode streams status and deltas and ends with done", async () => {
@@ -276,7 +282,8 @@ async function mockDeltas(question: string): Promise<string[]> {
 }
 
 test("every scripted answer is a lead line plus evidence lines, chips at line ends", async () => {
-  for (const question of SUGGESTED_QUESTIONS) {
+  /* The stand-in reply for an unscripted question follows the same shape. */
+  for (const question of [...SUGGESTED_QUESTIONS, "When did NZL 7 tack?"]) {
     const answer = (await mockDeltas(question)).join("");
     const lines = answer.split("\n").filter((line) => line.trim() !== "");
     assert.ok(lines.length >= 3, `expected a lead and evidence lines in: ${answer}`);
