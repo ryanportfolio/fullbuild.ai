@@ -24,6 +24,12 @@ This is the Codex boundary for repositories using the AI Operating System starte
 - Use native commands for mutations, interactivity, unsupported syntax, exact-output parsing, and diagnosis when filtering hides detail.
 - Codex has no Claude RTK rewrite hook here. Invoke `rtk` explicitly.
 
+## Gates under a review sandbox
+
+- The gates are `npm run typecheck`, `npm run lint`, and `npm test` (`test:mjs` for the node suites, `test:ts` for the TypeScript ones, both from `node_modules`, no network fetch).
+- `codex exec review` runs workspace-write over the workdir and temp only. Anything writing outside that fails there, `npm` and `npx` first, because their cache is under `%LOCALAPPDATA%` or `~/.npm`. A gate that comes back as a permission error under review is an artefact of the sandbox, not a defect in the diff: read the gate results stated in the request instead.
+- Repo-wide `npm run lint` carries pre-existing `@next/next/no-html-link-for-pages` and `no-img-element` errors in the threadline, showcase, morrow and prediction-lab prototypes. They predate any current branch; scope lint findings to the files the diff touches.
+
 ## Safety
 
 - Caveman Ultra is a communication default, not side-effect authorization. Auto-merge and other persistent side-effect modes require explicit current-session intent.

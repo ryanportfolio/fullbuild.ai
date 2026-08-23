@@ -8,7 +8,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint src",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "npm run test:mjs && npm run test:ts",
+    "test:mjs": "node --test \"tests/**/*.test.mjs\"",
+    "test:ts": "node --import tsx --test \"tests/**/*.test.ts\""
   },
   "dependencies": {
     "@react-three/drei": "^10.0.0",
@@ -34,6 +37,7 @@
     "eslint": "^9.39.5",
     "eslint-config-next": "^15.5.23",
     "playwright": "^1.61.1",
+    "tsx": "^4.23.12",
     "typescript": "^5.7.0"
   }
 }
