@@ -17,3 +17,56 @@ Fix: `page.mouse.move()` to a corner outside the canvas box before capturing,
 then re-shoot. Control run with the pointer parked showed 0 delta across all
 2.76M samples, settled frame vs forced redraw. Applies to any DOM-overlaid
 canvas comparison on this site, headed Chrome included.
+
+## Per-cent-of-target needs a steady-sailing window (2026-08-23)
+
+Symptom: the brief's performance view read the fleet at 257 to 864 per cent of
+polar target on the beat. Nothing was wrong with the polar or the fixes.
+
+Cause: `polarFrac(twa)` goes to nearly zero inside the no-go zone, so a boat
+swinging through head to wind divides its own speed by almost nothing and the
+ratio runs away. On the shipped race, 18 of about 100 beat fixes per boat sit
+inside a turn at 4 Hz, which is enough to carry the mean.
+
+Fix: `analytics.polarReview` drops every fix within `STEADY_WINDOW` (3 s, the
+same window `maneuversOf` merges flips across) of a detected turn. The fleet
+then reads 87.5 to 92.1 per cent, and the dropped seconds are accounted
+separately as the knots each turn cost. A TWA floor alone is not enough and is
+not needed: with the window applied, floors of 0, 20 and 30 degrees give
+identical figures.
+
+## The cover's stroke widths no longer need --plot-px (2026-08-23)
+
+While the boot cover drew the fleet's approach tracks, `vector-effect:
+non-scaling-stroke` was banned on the layer: Chrome reads `stroke-dasharray` in
+device pixels once a stroke is non-scaling, and the reveal (how far a boat had
+sailed, cut out of the dash) repeated down the track instead of drawing one
+prefix. The workaround was a measured metres-per-pixel written onto the drawing
+as `--plot-px` and multiplied into every width.
+
+Those tracks are gone. Nothing on the cover reveals a path with a dash now, so
+the polar's grid, its target curve and the VMG traces use non-scaling-stroke
+like the console's own strip does. Bring the ban back with any dash-reveal.
+
+## One clock, owned by the shell (2026-08-23)
+
+The brief's prestart loop lives in `RaceBrief.tsx`, not in a view. Only one view
+is mounted at a time and the performance view does not move, so a loop inside
+`BriefPanels` stopped the countdown, and the scene warming behind the cover with
+it, the moment a reader opened the other tab. Views subscribe to the store and
+paint; the shell seeks.
+
+The opening seek stays guarded (`!(t >= race.tMin && t < 0)`). Unguarded it
+fires on every view swap: measured before the guard, switching at t = -6 put the
+clock back to -10 and a held capture left its stated time.
+
+## The polar cloud is not byte-reproducible (2026-08-23)
+
+Two captures of the performance view at a stated time land on one of exactly two
+hashes, differing by 6 pixels out of 691,390, each off by one LSB in one
+channel, all of them antialiased edges of individual dots in the 886-sample
+cloud. It is a Chrome rasterization path choice, not motion: the view has no
+animation and the two hashes are stable values rather than a continuum.
+`shape-rendering: geometricPrecision` changes nothing (verified: identical
+hashes). Do not demand a byte-identical hash for this view; the panels view is
+byte-identical across four runs and still worth pinning.
