@@ -148,6 +148,7 @@ export function RaceBrief({
   const biasDeg = useRef<HTMLDivElement>(null);
   const biasSec = useRef<HTMLDivElement>(null);
   const favEnd = useRef<HTMLElement>(null);
+  const favBy = useRef<HTMLSpanElement>(null);
   const favSec = useRef<HTMLSpanElement>(null);
   const favPin = useRef<SVGPolygonElement>(null);
   const favBoat = useRef<SVGPolygonElement>(null);
@@ -166,7 +167,11 @@ export function RaceBrief({
       setText(biasDeg.current, `${signed(read.twd, 1)}°`);
       setText(biasSec.current, `${read.biasSeconds.toFixed(1)} s`);
       setText(favEnd.current, endLabel(read.favored));
-      setText(favSec.current, read.favored === "square" ? "" : `${read.biasSeconds.toFixed(1)} s`);
+      setText(favSec.current, `${read.biasSeconds.toFixed(1)} s`);
+      if (favBy.current !== null) {
+        const by = read.favored === "square" ? "none" : "";
+        if (favBy.current.style.display !== by) favBy.current.style.display = by;
+      }
       if (favPin.current !== null) favPin.current.style.opacity = read.favored === "pin" ? "1" : "0";
       if (favBoat.current !== null) {
         favBoat.current.style.opacity = read.favored === "boat" ? "1" : "0";
@@ -470,10 +475,22 @@ export function RaceBrief({
               <div className={styles.biasCap}>to the favored end</div>
             </div>
           </div>
+          {/* A square line is favored by nobody, so the "by" goes with the
+              seconds rather than dangling off the end of the sentence. Not a
+              theoretical state: the breeze crosses the course axis inside the
+              prestart on two of the three shipped seeds, 42 of 4001 samples on
+              the shipped race and 19 on Kestrel Sound. */}
           <p className={styles.favored}>
-            Favored: <b ref={favEnd}>{endLabel(seed.favored)}</b> by{" "}
-            <span className={styles.favSec} ref={favSec}>
-              {seed.favored === "square" ? "" : `${seed.biasSeconds.toFixed(1)} s`}
+            Favored: <b ref={favEnd}>{endLabel(seed.favored)}</b>
+            <span
+              className={styles.favBy}
+              ref={favBy}
+              style={{ display: seed.favored === "square" ? "none" : undefined }}
+            >
+              {" by "}
+              <span className={styles.favSec} ref={favSec}>
+                {`${seed.biasSeconds.toFixed(1)} s`}
+              </span>
             </span>
           </p>
         </div>
