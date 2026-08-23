@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { NeutralToneMapping } from "three";
 import type { RaceData } from "@/lib/layline/types";
-import { renderStats, useReplay } from "../store";
+import { renderStats, resetRenderStats, useReplay } from "../store";
 import {
   requestSceneFrame,
   resetSceneGate,
@@ -314,10 +314,14 @@ function RenderGate() {
       sceneGate.chase -= 1;
     }
 
+    /* Stamped with the instant this frame was drawn at, because the clock
+     * runs whether or not the picture does: reading a live t next to the cost
+     * of a frame drawn seconds ago would describe a picture nobody has seen. */
     const drawn = state.gl.info.render;
     renderStats.drawCalls = drawn.calls;
     renderStats.triangles = drawn.triangles;
     renderStats.frames += 1;
+    renderStats.drawnAt = replay.t;
 
     /* Raised here and nowhere else: the flag says a frame is on screen, and
      * this is the only line that knows one is. The intro drops its cover on
@@ -339,6 +343,7 @@ export function LaylineScene({ race }: { race: RaceData }) {
   if (!opened.current) {
     opened.current = true;
     resetSceneGate();
+    resetRenderStats();
   }
 
   /* The store is one per document and outlives every canvas mounted into it,
@@ -350,6 +355,7 @@ export function LaylineScene({ race }: { race: RaceData }) {
     () => () => {
       useReplay.getState().setWebglOk(false);
       resetSceneGate();
+      resetRenderStats();
     },
     [],
   );
