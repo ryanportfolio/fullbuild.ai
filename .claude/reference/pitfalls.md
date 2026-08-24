@@ -348,4 +348,29 @@ follow. Files that are always requested at their real path (the foredge email
 .html artifacts) may keep relative paths. Verify new prototype pages at the
 no-slash URL.
 
+## Headed Chrome steals the screen unless you place it (2026-08-23)
+
+The browser rule is headed Chrome on the real GPU, and a plain
+`chromium.launch({ headless: false, channel: "chrome" })` drops that window on
+top of whatever the operator is doing and takes the keyboard with it.
+
+Minimizing does not solve it. Measured on the owner's box: a window minimized
+through CDP (`Browser.setWindowBounds`, `windowState: "minimized"`) loses its
+compositor surface on Windows and requestAnimationFrame throttles to **1 Hz**,
+with or without `--disable-features=CalculateNativeWinOcclusion`. Screenshots
+still return fresh pixels at 1 Hz, so a static DOM shot survives; every frame
+timing, scroll narrative, Lenis/GSAP/R3F run and the Layline pixel-ratio
+governor read garbage.
+
+Fix: `scripts/lib/launch-chrome.mjs` -> `launchPlacedChrome()`. It places the
+window on a display that is not holding the foreground window, then hands the
+foreground back to the window that had it. `CHROME_PLACE` picks the mode:
+`other-monitor` (default), `offscreen` (parked at -2400,-2400, rendered but
+never visible, and the fallback when only one display is attached), or `here`.
+Both placed modes held 100.5 fps on a 100 Hz panel, same as an unplaced window.
+
+Notes: `--window-position` applies to the first window of a launch, so one
+launch per run. Placement is Windows-only and degrades to a plain headed launch
+elsewhere. The DIP-to-pixel mapping assumes both displays share a scale factor.
+
 Layline-specific traps live in `pitfalls-layline.md`.
