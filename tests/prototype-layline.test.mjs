@@ -90,27 +90,56 @@ test('Layline stylesheet keeps the house rules', async () => {
 });
 
 test('the race library CTA counts a real prestart down to the gun', async () => {
-  const [page, board, bridge, css, format] = await Promise.all([
+  const [page, board, bridge, css, format, notes] = await Promise.all([
     read('src/app/prototype/layline/page.tsx'),
     read('src/components/layline/StartSequence.tsx'),
     read('src/components/layline/StartSequenceCapture.tsx'),
     read('src/components/layline/StartSequence.module.css'),
     read('src/lib/layline/format.ts'),
+    read('src/components/layline/NotesSection.tsx'),
   ]);
 
-  /* The board closes the document, under the notes it answers: a reader who has
-     been told what was built is the one being asked to open a race. It has to
-     be inside <main> as well as last, because PageGround is fixed at z-index 0
-     inside the shell and only .prototypeBar, .statusBanner, .main and .colophon
-     are lifted over it. A static sibling of <main> paints underneath the page
-     ground and nobody sees the countdown at all. */
+  /* THE BOARD LIVES IN THE NOTES SECTION, between the performance cards and the
+     interpolation lab: a reader who has just been told what the engine costs is
+     the one to ask which race to open.
+
+     It still has to render inside <main>, and it does that through the notes
+     section, because PageGround is fixed at z-index 0 inside the shell and only
+     .prototypeBar, .statusBanner, .main and .colophon are lifted over it. A
+     static sibling of <main> paints underneath the page ground and nobody sees
+     the countdown at all. Both halves are asserted, because either one alone
+     would pass with the board painting under the ground. */
   const main = page.match(/<main className=\{styles\.main\}>([\s\S]*?)<\/main>/);
   assert.ok(main !== null, 'the page lost the main element the board lives in');
-  assert.match(main[1], /<StartSequence \/>/);
+  assert.match(main[1], /<NotesSection race=\{race\} \/>/);
+  assert.doesNotMatch(page, /<StartSequence \/>/);
+  assert.match(notes, /import \{ StartSequence \} from "\.\/StartSequence";/);
+  assert.match(notes, /<StartSequence \/>/);
+
+  /* Where it sits inside that section is the point of moving it, so the order
+     is asserted rather than assumed: after the performance cards, before the
+     block carrying the Interpolation lab. */
   assert.ok(
-    main[1].lastIndexOf('<StartSequence />') > main[1].lastIndexOf('<NotesSection'),
-    'the board moved off the end of main, above the notes section',
+    notes.indexOf('<StartSequence />') > notes.indexOf('notes.gridTwo'),
+    'the board moved above the performance cards',
   );
+  assert.ok(
+    notes.indexOf('<StartSequence />') < notes.indexOf('notes.engineProof'),
+    'the board moved below the interpolation lab',
+  );
+
+  /* AND IT CARRIES NO LEG MARK OF ITS OWN. The course rail collects [data-leg]
+     flat and letters whichever leg the reader is inside, so a second mark
+     nested in the notes section would take the interpolation lab and the
+     production path with it and letter them the race library. The section still
+     names itself for a screen reader.
+
+     Counted on code, not on prose: the component explains at that spot why it
+     carries no mark, and naming the attribute to say it is absent would
+     otherwise fail the assertion that it is absent. Same reason the stylesheet
+     assertions below strip comments first. */
+  assert.doesNotMatch(board.replace(/\/\*[\s\S]*?\*\//g, ''), /data-leg/);
+  assert.match(board, /aria-label="Race library"/);
 
   /* The bar's own way through to the library is not what this section replaced,
      and the count in it still comes off the registry. */
@@ -201,9 +230,12 @@ test('the race library CTA counts a real prestart down to the gun', async () => 
   assert.doesNotMatch(css, /outline/);
   assert.match(css, /\.row:hover \.name::after,\s*\.row:focus-visible \.name::after/);
 
-  /* The rail mark and the landmark are the same string, the rule the notes
-     section keeps two tests below this one. */
-  assert.match(board, /aria-label="Race library"[\s\S]{0,40}data-leg="Race library"/);
+  /* This used to pin the rail mark and the landmark to the same string, the
+     rule the notes section keeps two tests below. The board no longer carries a
+     mark at all, since it is nested inside the notes section's own leg, so what
+     survives of that rule is the landmark, asserted with the placement above.
+     The section is still a labelled region rather than an anonymous div. */
+  assert.match(board, /<section id="race-library" className=\{styles\.section\} aria-label="Race library">/);
 
   /* A label is display text like any other on this page, so none of them ends
      in a period. This sees the literal labels only: `aria-label={row.label}` is
