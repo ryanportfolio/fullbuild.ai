@@ -441,3 +441,29 @@ Symptom: Invalid arguments or silent no-output from pwsh tool calls carrying mul
 Cause: the DSH run_code/pwsh bridge mangles multiline strings with nested quotes passed inline.
 
 Resolution: write .mjs/.ps1 files with the file-write tool, then execute by path (node file.mjs, pwsh -File file.ps1). Recurs across every session in this harness.
+
+## Histogram parity hid a 248px-tall section (2026-08-24)
+
+Symptom: OCI recreation round 1 closed dry with every layout pair at histCosine >= 0.996, yet round 2's fresh pass found the process section 248px too tall (wrong card rotations, margins, overflow clip), every later section top +260px, and docH +3.84%.
+
+Cause: global luminance histograms measure tone distribution, not geometry; they tolerate layout shift.
+
+Resolution: gate structure numerically every comparison round - per-section element-count census vs reference, docH within 1%, section tops within ~4px, scrollWidth == viewport at every width. Rules added to the reference-site-prototyping skill. Related: rotated elements must be compared by computed transform + unrotated layout box, not bounding rect; scroll-coupled motion needs two-scroll sampling to extract per-element rates (one offset misread project-name parallax as reveal stagger); substitute fonts need per-element tracking to hold reference line widths (Instrument Sans ran a hero line 20% wide at matched cap height).
+
+## DSH sandbox: headed Chrome spawn EPERM (2026-08-24)
+
+Symptom: playwright-core chromium.launch (pipe CDP transport) fails "spawn EPERM" under the DSH workspace-write sandbox; launching Chrome via Start-Process + remote-debugging-port dies when the pwsh call ends (process-tree teardown); same EPERM inside subagent shells.
+
+Resolution: one-shot escalation to danger-full-access for the exact browser command is the clean path when the approval policy allows; external launch + connectOverCDP inside one long-lived invocation is the restructure fallback. Headed stays mandatory for GPU judgment - never fall back to headless.
+
+## DSH subagent runtime: background launches fail, foreground capped at 600s (2026-08-24)
+
+Symptom: large multi-step background subagent turns report running indefinitely with zero files written and zero child processes (2/2 wedged); later every background launch (and only background) rejected with "missing required property description" despite valid args (6/6), while foreground launches kept working.
+
+Resolution: keep subagent turns small and single-purpose; run heavy multi-phase browser probes in-session from the manager with .mjs files executed by path; put subagent briefs in a FILE with a one-line prompt pointing at it, and chunk work under the 600s foreground ceiling (a file-based foreground audit finished in ~90s after an inline-brief run timed out). Log the independence gap when the auditor leg cannot launch; stagnation rule (same failure twice = change approach) catches both wedges.
+
+## Slot drift: reconcile against reference census, not the copy doc (2026-08-24)
+
+Symptom: demo-copy.md specified 5 process steps; the reference has 4; the build shipped 4 - and round 1 still recorded structure match because the census was never re-asserted against the reference during comparison rounds.
+
+Resolution: the copy doc is not ground truth for counts. Re-assert per-section element counts against a live reference census in every comparison round (now a numeric dry gate in the skill).
