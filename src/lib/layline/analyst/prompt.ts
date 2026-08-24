@@ -82,6 +82,7 @@ export function buildSystemPrompt(race: RaceData, venue = "Long Beach"): string 
     "Grounding rules",
     "- Every number you state comes from a tool result or from the card above. If you have not read a number, call the tool that has it. Never estimate, never invent, never round a story past what the data says.",
     "- Times you speak are the race clock, minutes:seconds against the gun.",
+    "- Range comparisons use distance-to-finish progress against the named rival or the returned fixed fleet cohort. Positive advantage means the selected boat is ahead; positive gain means it improved over the exact range. Ground-track and ground-to-mark facts are not wind-axis dock VMG. State the returned coverage/status, and call the final equation term residual rather than assigning it a cause.",
     "- A question outside this race gets one sentence steering back to the race, nothing more.",
     "",
     "Marking moments",

@@ -7,24 +7,16 @@
    governs, so no gradients and no drop shadows; selection is stated the way the
    standings dock states a followed row, an ink wash behind a 2px ink edge.
 
-   Three widths, and only the middle pane is the same shape in all of them.
-   Desktop figures are defaults. The rail runs 220 to 400px, the analyst 320
-   to 520px, and the viewer keeps at least 560px. A dragged separator previews
-   its destination, then commits once on release so the canvas resizes once.
+   The replay owns the default desktop. Both contextual rails open from 52px
+   registration tabs without remounting the race they refer to. Open panes
+   keep the stored 220 to 400px race width, 320 to 520px analyst width, side,
+   pin, archive and search preferences landed with the persistent workspace.
+   Dragged separators preview their destination and commit once on release.
 
-   1600 and up   280 / flex / 380, one viewport tall, nothing on the page
-                 scrolls but the rail, the thread and the finish table.
-   1200 to 1599  220 / flex / 340. The rail gives up 60px and the analyst 40
-                 before the viewer gives up any.
-   Under 1200    one column. Three panes will not hold their jobs at a third of
-                 a laptop each, so the rail becomes a chip row across the top,
-                 the viewer takes a stated slice of the viewport and the analyst
-                 runs full width under it. Below 901 the console's own stacked
-                 rules take the viewer apart into its docks.
-
-   Under 1200 the separators and move controls disappear. Stored order and
-   collapse state wait for desktop, while the full race list remains in the
-   stacked flow and the viewport-foot composer keeps its reserved clearance.
+   Under 1200 the same controls become horizontal bars around one column. An
+   open race library becomes a chip row, the replay takes a stated viewport
+   slice and the debrief follows it in document flow. Below 901 the console's
+   own stacked rules take the viewer apart into its docks.
    ========================================================================= */
 
 /* The height of the composer bar the analyst pins to the foot of the viewport
@@ -159,7 +151,10 @@
   --analyst-width: 340px;
   --rail-render-width: var(--rail-width);
   --analyst-render-width: var(--analyst-width);
-  --rail-active-width: var(--rail-render-width);
+  --rail-active-width: 52px;
+  --analyst-active-width: 52px;
+  --library-track: 52px;
+  --analyst-track: 52px;
 
   position: relative;
   display: grid;
@@ -168,10 +163,72 @@
   padding: 12px;
 }
 
+/* ---- the two contextual rails ---- */
+
+.libraryPane,
+.analystPane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.paneBar {
+  display: flex;
+  flex: none;
+}
+
+.paneToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 10px;
+  background: var(--hud-ground);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  color: var(--ink);
+  font-family: var(--font-archivo), sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  line-height: 16px;
+  text-transform: uppercase;
+  cursor: var(--house-cursor);
+}
+
+.paneToggle:hover {
+  background: rgba(236, 245, 249, 0.08);
+  border-color: var(--ink-dim);
+}
+
+.paneArrow {
+  color: var(--wind);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.drawerBody {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding-top: 10px;
+}
+
+/* Author styles can outrank the user-agent hidden rule. State the result here
+   so a closed drawer cannot paint or leave any descendant in the tab order. */
+.drawerBody[hidden] {
+  display: none;
+}
+
 /* ---- the race rail ---- */
 
 .library {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 8px;
   min-width: 0;
@@ -464,7 +521,7 @@
   z-index: 9;
   top: 16px;
   left: 16px;
-  display: none;
+  display: grid;
   place-items: center;
   width: 24px;
   height: 24px;
@@ -477,7 +534,7 @@
 }
 
 .workspace[data-rail-side="right"] .panelToggle {
-  right: calc(16px + var(--rail-render-width) - 24px);
+  right: calc(16px + var(--rail-active-width) - 24px);
   left: auto;
 }
 
@@ -501,6 +558,7 @@
 
 .analyst {
   display: flex;
+  flex: 1;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
@@ -543,9 +601,18 @@
 /* ---- under the three-column threshold ---- */
 
 @media (max-width: 1199px) {
-  /* The bar is fixed over the page, so the page ends above it: whatever the
-     workspace ends on is not going under a composer. */
-  .page {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .workspace[data-rail-side="right"] .panelToggle {
+    right: auto;
+    left: 16px;
+  }
+
+  /* The composer exists only while its drawer is open. Its fixed bar needs a
+     matching landing strip at the page foot, and a closed drawer needs none. */
+  .page:has(.workspace[data-analyst-open="true"]) {
     padding-bottom: calc(var(--composer-bar) + env(safe-area-inset-bottom));
   }
 
@@ -623,46 +690,45 @@
   .workspace {
     flex: 1;
     min-height: 0;
-    grid-template-columns:
-      var(--left-pane-width)
-      12px
-      minmax(560px, 1fr)
-      12px
-      var(--right-pane-width);
+    grid-template-columns: var(--library-track) minmax(0, 1fr) var(--analyst-track);
     gap: 0;
   }
 
-  .workspace[data-rail-side="left"] .library,
-  .workspace[data-rail-side="right"] .analyst {
+  .workspace[data-rail-side="left"] .libraryPane,
+  .workspace[data-rail-side="right"] .analystPane {
     grid-column: 1;
   }
 
   .console {
+    grid-column: 2;
+  }
+
+  .workspace[data-rail-side="left"] .analystPane,
+  .workspace[data-rail-side="right"] .libraryPane {
     grid-column: 3;
   }
 
-  .workspace[data-rail-side="left"] .analyst,
-  .workspace[data-rail-side="right"] .library {
-    grid-column: 5;
-  }
-
-  .library,
+  .libraryPane,
   .console,
-  .analyst,
+  .analystPane,
   .separator {
     grid-row: 1;
   }
 
   .separator {
     display: block;
+    position: absolute;
+    top: 16px;
+    bottom: 16px;
+    width: 12px;
   }
 
   .separator[data-boundary="left"] {
-    grid-column: 2;
+    left: calc(16px + var(--library-track) - 6px);
   }
 
   .separator[data-boundary="right"] {
-    grid-column: 4;
+    right: calc(16px + var(--analyst-track) - 6px);
   }
 
   .movePaneButton {
@@ -692,6 +758,32 @@
   }
 
   .workspace[data-resizing] .console {
+    pointer-events: none;
+  }
+
+  /* Closed tabs use their whole viewport-height rail as a target. Their label
+     turns with the rail so the 52px track stays readable without widening. */
+  .workspace[data-library-open="false"] .libraryPane .paneBar,
+  .workspace[data-analyst-open="false"] .analystPane .paneBar {
+    flex: 1;
+  }
+
+  .workspace[data-library-open="false"] .libraryPane .paneToggle,
+  .workspace[data-analyst-open="false"] .analystPane .paneToggle {
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+  }
+
+  .workspace[data-library-open="false"] .libraryPane .paneLabel,
+  .workspace[data-analyst-open="false"] .analystPane .paneLabel {
+    writing-mode: vertical-rl;
+  }
+
+  .workspace[data-library-open="false"] .separator[data-pane="rail"],
+  .workspace[data-analyst-open="false"] .separator[data-pane="analyst"] {
+    visibility: hidden;
     pointer-events: none;
   }
 }
@@ -776,15 +868,25 @@
 }
 
 .workspace[data-rail-collapsed="true"] {
-  --rail-active-width: 0px;
+  --rail-active-width: 52px;
+}
+
+.workspace[data-library-open="true"] {
+  --rail-active-width: var(--rail-render-width);
+  --library-track: 220px;
+}
+
+.workspace[data-analyst-open="true"] {
+  --analyst-active-width: var(--analyst-render-width);
+  --analyst-track: 340px;
 }
 
 .workspace[data-rail-side="left"] {
-  --left-pane-width: var(--rail-active-width);
-  --right-pane-width: var(--analyst-render-width);
+  --library-track: var(--rail-active-width);
+  --analyst-track: var(--analyst-active-width);
 }
 
 .workspace[data-rail-side="right"] {
-  --left-pane-width: var(--analyst-render-width);
-  --right-pane-width: var(--rail-active-width);
+  --library-track: var(--analyst-active-width);
+  --analyst-track: var(--rail-active-width);
 }

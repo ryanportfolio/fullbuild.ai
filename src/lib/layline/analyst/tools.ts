@@ -6,7 +6,14 @@
  * the same edge every on-screen number crosses.
  */
 import { maneuversOf } from "@/lib/layline/analytics";
-import { clock, deg, knots } from "@/lib/layline/format";
+import {
+  compareRange,
+  type BoatRangeFacts,
+  type ComparisonRequest,
+  type RangeComparison,
+  type ReferenceRangeFacts,
+} from "@/lib/layline/comparison";
+import { MISSING, clock, deg, knots } from "@/lib/layline/format";
 import type { BoatMeta, Fix, LegName, RaceData } from "@/lib/layline/types";
 import { lookupTerms } from "./knowledge";
 
@@ -82,12 +89,6 @@ function toMarkOf(fix: Fix, leg: LegName): number | null {
  */
 function vmgOf(fix: Fix): number {
   return fix.sog * Math.cos(fix.twa * DEG);
-}
-
-function mean(values: number[]): number {
-  let sum = 0;
-  for (const value of values) sum += value;
-  return values.length === 0 ? NaN : sum / values.length;
 }
 
 function round1(value: number): number {
@@ -209,8 +210,15 @@ export interface CompareSideOut {
   sail: string;
   avgSogKnots: string;
   avgToMarkKnots: string | null;
-  avgVmgKnots: string;
-  distanceSailedMeters: number;
+  avgVmgKnots: null;
+  distanceSailedMeters: number | null;
+}
+
+export interface CompareEquationOut {
+  observedGainMeters: number | null;
+  straightMadeGoodDeltaMeters: number | null;
+  maneuverWindowMadeGoodDeltaMeters: number | null;
+  residualMeters: number | null;
 }
 
 export interface CompareOut {
@@ -218,28 +226,73 @@ export interface CompareOut {
   toClock: string;
   a: CompareSideOut;
   b: CompareSideOut;
-  aAheadByMetersAtStart: number;
-  aAheadByMetersAtEnd: number;
+  aAheadByMetersAtStart: number | null;
+  aAheadByMetersAtEnd: number | null;
+  comparison: RangeComparison;
+  equation: CompareEquationOut;
 }
 
-function compareSide(race: RaceData, boat: BoatMeta, t0: number, t1: number): CompareSideOut {
-  const fixes = race.fixes[boat.id].filter((fix) => fix.t >= t0 && fix.t <= t1);
-  /* Only the fixes with a mark to make good toward feed this average; a
-   * window that is all prestart or all post-finish has nothing to report. */
-  const toMarks = fixes
-    .map((fix) => toMarkOf(fix, progressAt(race, boat.id, fix.t).leg))
-    .filter((value): value is number => value !== null);
-  let distance = 0;
-  for (let i = 1; i < fixes.length; i++) {
-    distance += Math.hypot(fixes[i].x - fixes[i - 1].x, fixes[i].y - fixes[i - 1].y);
-  }
+type CompareSideFacts = Pick<
+  BoatRangeFacts | ReferenceRangeFacts,
+  "meanSogMps" | "meanVmgMps" | "sailedDistanceMeters"
+>;
+
+function compareSide(
+  boat: Pick<BoatMeta, "id" | "sail"> | null,
+  facts: CompareSideFacts | null,
+): CompareSideOut {
   return {
-    boatId: boat.id,
-    sail: boat.sail,
-    avgSogKnots: knots(mean(fixes.map((fix) => fix.sog))),
-    avgToMarkKnots: toMarks.length === 0 ? null : knots(mean(toMarks)),
-    avgVmgKnots: knots(mean(fixes.map(vmgOf))),
-    distanceSailedMeters: Math.round(distance),
+    boatId: boat?.id ?? "fleet-median",
+    sail: boat?.sail ?? "Fixed fleet median",
+    avgSogKnots: facts?.meanSogMps == null ? MISSING : knots(facts.meanSogMps),
+    avgToMarkKnots: facts?.meanVmgMps == null ? null : knots(facts.meanVmgMps),
+    /* Legacy dock-VMG key stays present, but compareRange does not compute the
+     * distinct wind-axis quantity. Null is honest; copying mark VMG here would
+     * collapse two different reference frames. */
+    avgVmgKnots: null,
+    distanceSailedMeters:
+      facts?.sailedDistanceMeters == null ? null : finiteRounded(facts.sailedDistanceMeters),
+  };
+}
+
+function finiteRounded(value: number | null): number | null {
+  if (!Number.isFinite(value)) return null;
+  const rounded = Math.round(value as number);
+  if (!Number.isFinite(rounded)) return null;
+  return Object.is(rounded, -0) ? 0 : rounded;
+}
+
+/** Exact analyst adapter. Canonical arithmetic is returned unchanged. */
+export function compareRangeForAnalyst(
+  race: RaceData,
+  request: ComparisonRequest,
+): CompareOut | { error: string } {
+  const result = compareRange(race, request);
+  if (result.status === "invalid-request" || result.primary === null) {
+    return { error: result.invalidReason ?? "comparison request is invalid" };
+  }
+  const primary = boatById(race, result.primaryBoatId);
+  if (primary === undefined) return { error: unknownBoat(race, result.primaryBoatId) };
+  const rival =
+    result.reference.boatId === null ? null : boatById(race, result.reference.boatId) ?? null;
+  const rivalFacts =
+    result.reference.boatId === null
+      ? result.referenceFacts
+      : result.boats.find((facts) => facts.boatId === result.reference.boatId) ?? null;
+  return {
+    fromClock: clock(result.range.from),
+    toClock: clock(result.range.to),
+    a: compareSide(primary, result.primary),
+    b: compareSide(rival, rivalFacts),
+    aAheadByMetersAtStart: finiteRounded(result.startAdvantageMeters),
+    aAheadByMetersAtEnd: finiteRounded(result.endAdvantageMeters),
+    comparison: result,
+    equation: {
+      observedGainMeters: result.progressGainedMeters,
+      straightMadeGoodDeltaMeters: result.straightDeltaMeters,
+      maneuverWindowMadeGoodDeltaMeters: result.maneuverWindowDeltaMeters,
+      residualMeters: result.residualMeters,
+    },
   };
 }
 
@@ -254,21 +307,12 @@ export function compareBoats(
   const b = boatById(race, bId);
   if (a === undefined) return { error: unknownBoat(race, aId) };
   if (b === undefined) return { error: unknownBoat(race, bId) };
-  let t0 = clampT(race, t0Raw);
-  let t1 = clampT(race, t1Raw);
-  if (t0 > t1) [t0, t1] = [t1, t0];
-  const pa0 = progressAt(race, a.id, t0);
-  const pb0 = progressAt(race, b.id, t0);
-  const pa1 = progressAt(race, a.id, t1);
-  const pb1 = progressAt(race, b.id, t1);
-  return {
-    fromClock: clock(t0),
-    toClock: clock(t1),
-    a: compareSide(race, a, t0, t1),
-    b: compareSide(race, b, t0, t1),
-    aAheadByMetersAtStart: Math.round(pb0.dtf - pa0.dtf),
-    aAheadByMetersAtEnd: Math.round(pb1.dtf - pa1.dtf),
-  };
+  return compareRangeForAnalyst(race, {
+    primaryBoatId: a.id,
+    reference: { kind: "boat", boatId: b.id },
+    /* compareRange owns safe integer-microsecond validation before clamping. */
+    range: { from: t0Raw, to: t1Raw },
+  });
 }
 
 export interface ManeuverOut {
@@ -279,7 +323,7 @@ export interface ManeuverOut {
   raceClock: string;
   entrySogKnots: string;
   exitSogKnots: string;
-  speedLossKnots: string;
+  speedLossKnots: string | null;
 }
 
 /**
@@ -456,17 +500,31 @@ export const ANALYST_TOOLS: AnalystTool[] = [
   {
     name: "compare_boats",
     description:
-      `Compare two boats over a time window: average sog, average speed to the mark and average VMG in knots, distance sailed in meters, and the along-course gap between them at the start and end of the window, positive when boat a is ahead. ${SPEED_NOTE}`,
+      "Compare one selected boat with either a named rival or a fixed fleet median over an exact race-time range. Returns compareRange unchanged under comparison: exact requested and eligible cohort IDs, status and disjoint coverage, boundary advantage, signed gain, ground-track distance and ground-to-mark VMG deltas, detected maneuver observations with unsupported costs left null, and the closing gain = straight + maneuver-window + residual equation. Positive advantage means the selected boat is ahead; positive gain means it improved over the range. Legacy a, b and display keys remain present, but legacy avgVmgKnots is null because wind-axis dock VMG is distinct from ground-to-mark VMG and compareRange does not compute it.",
     strict: true,
     input_schema: {
       type: "object",
       properties: {
-        a: { type: "string", description: "Lowercase id of the first boat" },
-        b: { type: "string", description: "Lowercase id of the second boat" },
-        t0: { type: "number", description: `Window start. ${T_NOTE}` },
-        t1: { type: "number", description: `Window end. ${T_NOTE}` },
+        a: { type: "string", description: "Lowercase id of the selected boat" },
+        referenceKind: {
+          type: "string",
+          enum: ["boat", "fleet-median"],
+          description: "Named rival or fixed fleet-median reference",
+        },
+        b: {
+          type: ["string", "null"],
+          description: "Named rival id when referenceKind is boat; otherwise null",
+        },
+        cohortBoatIds: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "Fixed requested boat ids when referenceKind is fleet-median; otherwise an empty array",
+        },
+        t0: { type: "number", description: `Exact range start. ${T_NOTE}` },
+        t1: { type: "number", description: `Exact range end. ${T_NOTE}` },
       },
-      required: ["a", "b", "t0", "t1"],
+      required: ["a", "referenceKind", "b", "cohortBoatIds", "t0", "t1"],
       additionalProperties: false,
     },
   },
@@ -536,6 +594,25 @@ function str(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
+function comparisonRequest(args: Record<string, unknown>): ComparisonRequest {
+  const primaryBoatId = str(args.a);
+  if (args.referenceKind === "fleet-median") {
+    const boatIds = Array.isArray(args.cohortBoatIds)
+      ? args.cohortBoatIds.filter((id): id is string => typeof id === "string")
+      : [];
+    return {
+      primaryBoatId,
+      reference: { kind: "fleet-median", boatIds },
+      range: { from: num(args.t0), to: num(args.t1) },
+    };
+  }
+  return {
+    primaryBoatId,
+    reference: { kind: "boat", boatId: str(args.b) },
+    range: { from: num(args.t0), to: num(args.t1) },
+  };
+}
+
 /** Run one tool by name against one race. Returns the tool_result JSON. */
 export function runTool(race: RaceData, name: string, input: unknown): string {
   const args = (typeof input === "object" && input !== null ? input : {}) as Record<
@@ -548,9 +625,7 @@ export function runTool(race: RaceData, name: string, input: unknown): string {
     case "boat_state":
       return JSON.stringify(boatState(race, str(args.boatId), num(args.t)));
     case "compare_boats":
-      return JSON.stringify(
-        compareBoats(race, str(args.a), str(args.b), num(args.t0), num(args.t1)),
-      );
+      return JSON.stringify(compareRangeForAnalyst(race, comparisonRequest(args)));
     case "maneuvers": {
       const boatId = typeof args.boatId === "string" && args.boatId.length > 0 ? args.boatId : undefined;
       if (boatId !== undefined && boatById(race, boatId) === undefined) {
@@ -590,7 +665,9 @@ export function toolStatusLabel(race: RaceData, name: string, input: unknown): s
     case "boat_state":
       return `reading ${sail(args.boatId)} at ${clock(clampT(race, num(args.t)))}`;
     case "compare_boats":
-      return `comparing ${sail(args.a)} and ${sail(args.b)}`;
+      return args.referenceKind === "fleet-median"
+        ? `comparing ${sail(args.a)} with the fixed fleet median`
+        : `comparing ${sail(args.a)} and ${sail(args.b)}`;
     case "maneuvers":
       return typeof args.boatId === "string" && args.boatId.length > 0
         ? `counting ${sail(args.boatId)} tacks and gybes`

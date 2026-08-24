@@ -25,7 +25,14 @@ export const KNOWLEDGE: KnowledgeChunk[] = [
     title: "VMG and speed to the mark",
     terms: ["vmg", "velocity", "made", "good", "along", "course", "speed", "mark", "tomark"],
     text:
-      "Velocity made good is the share of boat speed actually spent getting somewhere, and this page shows two of them because there are two somewheres. The dock's VMG tile resolves speed onto the wind axis: positive climbing to windward, negative on the run, since a boat running is sailing away from the wind it is measured against. The strip beside it, labelled To mark, resolves speed onto the course axis toward whichever mark is next, so it stays positive whenever the boat is gaining. They agree only when the wind lies straight down the course. A boat can be fastest through the water and lose on either one by sailing too wide an angle.",
+      "Velocity made good is the share of boat speed actually spent getting somewhere, and this page shows two of them because there are two somewheres. The dock's VMG tile resolves speed onto the wind axis: positive climbing to windward, negative on the run, since a boat running is sailing away from the wind it is measured against. The strip beside it, labelled To mark, resolves ground velocity onto the line from the boat to its current mark, so it stays positive whenever the boat is gaining. They agree only when the wind and mark reference axes align. A boat can be fastest over the ground and lose on either one by sailing too wide an angle.",
+  },
+  {
+    id: "range-comparison",
+    title: "Range comparison",
+    terms: ["compare", "comparison", "advantage", "gain", "range", "median", "cohort", "residual"],
+    text:
+      "A range comparison measures the selected boat against one named rival or the returned fixed fleet-median cohort over exact race-time boundaries. Advantage is reference distance to finish minus selected distance to finish, so positive means the selected boat is ahead. Gain is end advantage minus start advantage, so positive means it improved over the range. Ground-track distance and VMG use only shared valid racing coverage. The equation is observed gain equals straight made-good difference plus made good during detected maneuver windows plus residual; the residual closes those measured terms and is not proof of a cause. Recorded maneuver speed loss is an observation, while maneuver cost in meters or seconds stays unavailable without a counterfactual.",
   },
   {
     id: "tack-gybe",

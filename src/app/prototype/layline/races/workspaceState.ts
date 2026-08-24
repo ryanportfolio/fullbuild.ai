@@ -25,7 +25,7 @@ export const DEFAULT_WORKSPACE_PREFERENCES: WorkspacePreferences = {
   railWidth: null,
   analystWidth: null,
   railSide: "left",
-  railCollapsed: false,
+  railCollapsed: true,
 };
 
 export function raceMatchesSearch(
@@ -91,6 +91,38 @@ export function parseWorkspacePreferences(
   } catch {
     return DEFAULT_WORKSPACE_PREFERENCES;
   }
+}
+
+/**
+ * Reconcile the server's cookie-backed preference with the browser copy.
+ * A local value wins only when it exists and parses. Missing or blocked local
+ * storage leaves the server value intact, including its rail preference.
+ */
+export function hydrateWorkspacePreferences(
+  serverPreferences: WorkspacePreferences,
+  localRaw: string | undefined | null,
+  validIds: ReadonlySet<string>,
+): WorkspacePreferences {
+  const server = sanitizeWorkspacePreferences(serverPreferences, validIds);
+  if (localRaw === undefined || localRaw === null || localRaw === "") return server;
+  try {
+    return sanitizeWorkspacePreferences(JSON.parse(localRaw), validIds);
+  } catch {
+    return server;
+  }
+}
+
+export function libraryOpenFromPreferences(preferences: WorkspacePreferences): boolean {
+  return !preferences.railCollapsed;
+}
+
+export function toggleLibraryPreference(
+  preferences: WorkspacePreferences,
+): WorkspacePreferences {
+  return {
+    ...preferences,
+    railCollapsed: !preferences.railCollapsed,
+  };
 }
 
 export function defaultPaneWidth(pane: "rail" | "analyst", viewportWidth: number): number {

@@ -38,18 +38,20 @@ const DEG = Math.PI / 180;
 export interface Maneuver {
   t: number;
   kind: "tack" | "gybe";
+  /** Unrounded observed speed drawdown in m/s for range comparison. */
+  lossMps: number | null;
   /**
    * The drawdown off the speed the boat carried in: the fastest reading in the
    * four seconds up to the flip, minus the slowest reading between that peak
    * and four seconds past the flip, in knots.
    */
-  lossKnots: string;
+  lossKnots: string | null;
   /**
    * The same drawdown in m/s, which is what a mean over several turns has to
    * be taken in. Averaging the formatted strings would round every turn to a
    * tenth of a knot first and then average the rounding.
    */
-  loss: number;
+  loss: number | null;
 }
 
 /* Merge window from the analyst tool, kept the same so the markers on the
@@ -59,6 +61,14 @@ const MERGE_SECONDS = 3;
 const LOSS_WINDOW = 4;
 
 const maneuverCache = new WeakMap<RaceData, Map<string, Maneuver[]>>();
+
+/** Finite speed drawdown in m/s. Overflow is unavailable, never clamped. */
+export function maneuverLoss(entryMps: number, slowestMps: number): number | null {
+  if (!Number.isFinite(entryMps) || !Number.isFinite(slowestMps)) return null;
+  const loss = entryMps - slowestMps;
+  if (!Number.isFinite(loss)) return null;
+  return Object.is(loss, -0) ? 0 : loss;
+}
 
 function detect(race: RaceData, boatId: string): Maneuver[] {
   const out: Maneuver[] = [];
@@ -103,13 +113,15 @@ function detect(race: RaceData, boatId: string): Maneuver[] {
           if (fix.t > tFlip + LOSS_WINDOW) break;
           if (fix.sog < slowest) slowest = fix.sog;
         }
+        const loss = maneuverLoss(entry, slowest);
         out.push({
           /* Rounded the way the analyst tool rounds it, so a marker and the
            * row Debrief reads back name the same instant. */
           t: Math.round(tFlip * 100) / 100,
           kind: width < 90 ? "tack" : "gybe",
-          lossKnots: knots(entry - slowest),
-          loss: entry - slowest,
+          lossMps: loss,
+          lossKnots: loss === null ? null : knots(loss),
+          loss,
         });
       }
       lastFlipT = tFlip;
@@ -456,10 +468,14 @@ function review(race: RaceData): PolarReview {
     }
 
     let lossSum = 0;
+    let validLosses = 0;
     let tacks = 0;
     let gybes = 0;
     for (const move of moves) {
-      lossSum += move.loss;
+      if (move.loss !== null) {
+        lossSum += move.loss;
+        validLosses += 1;
+      }
       if (move.kind === "tack") tacks += 1;
       else gybes += 1;
     }
@@ -473,7 +489,10 @@ function review(race: RaceData): PolarReview {
       runVmg: runN > 0 ? runVmg / runN : Number.NaN,
       tacks,
       gybes,
-      lossPerTurn: moves.length > 0 ? lossSum / moves.length : Number.NaN,
+      lossPerTurn:
+        moves.length > 0 && validLosses === moves.length
+          ? lossSum / moves.length
+          : Number.NaN,
       samples,
     };
   });

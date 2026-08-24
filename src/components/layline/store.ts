@@ -2,7 +2,20 @@
 
 import { create } from "zustand";
 import { generateRace } from "@/lib/layline/sim";
+import {
+  createAnalysisState,
+  reconcileAnalysisState,
+  transitionAnalysisOwner,
+  transitionAnalysisPrimary,
+  type AnalysisAction,
+  type AnalysisState,
+} from "@/lib/layline/analysis-state";
 import { DEFAULT_RACE_ID, raceMeta } from "@/lib/layline/races";
+import {
+  OPEN_AT,
+  RACE_REPLAY_DEFAULTS,
+  transitionReplay,
+} from "@/lib/layline/replay-transitions";
 import { FIX_HZ } from "@/lib/layline/types";
 import type { RaceData, ReplayMode, RigName } from "@/lib/layline/types";
 import { resetFreeformCamera } from "./scene/interaction";
@@ -60,7 +73,7 @@ export function resetRenderStats(): void {
 
 /* A mid-beat moment with the fleet split and the standings meaningful. Reduced
  * motion opens here rather than on an empty prestart line. */
-export const OPEN_AT = 18;
+export { OPEN_AT };
 
 /* Live playback starts inside the prestart so the gun is something you watch
  * happen rather than something you scrub back to. Five seconds is the whole
@@ -69,23 +82,6 @@ export const OPEN_AT = 18;
 export const AUTOPLAY_FROM = -5;
 
 export type PlayRate = 1 | 2 | 4;
-
-/* Everything that belongs to the race in front of the viewer rather than to the
- * viewer. Selecting another race resets these and leaves the rest alone: a
- * reduced-motion preference or a WebGL verdict is about the machine, not about
- * which race is loaded. */
-const RACE_DEFAULTS = {
-  t: OPEN_AT,
-  playing: false,
-  followId: "nzl",
-  rig: "tv" as RigName,
-  chart2d: false,
-  /* Re-armed with the race, unlike introDone. The brief states this race's
-   * wind, line and fleet, so a rail selection has a new brief to read and
-   * gets one; a latch that survived the swap would drop a viewer straight
-   * into a race nobody had been briefed on. */
-  briefDone: false,
-};
 
 interface ReplayStore {
   /* The registry id of the loaded race. Bumping it remounts the viewer, so a
@@ -98,10 +94,14 @@ interface ReplayStore {
   mode: ReplayMode;
   rig: RigName;
   followId: string;
+  analysis: AnalysisState;
   /* The top-down chart in place of the rendered scene, on the same clock. A
    * mode, not a fallback: the renderer stays up behind it, because the clock
    * runs inside its frame loop and a chart with no clock is a picture. */
   chart2d: boolean;
+  /* Audit overlay only. It never changes the evaluator mode: smooth and raw
+   * playback keep their existing meanings while this exposes both answers. */
+  truthMode: boolean;
   reducedMotion: boolean;
   /* True once the renderer has put a frame on screen, not merely once the
    * canvas element exists: the fallback chart stays up until there is an
@@ -132,7 +132,9 @@ interface ReplayStore {
   setMode: (mode: ReplayMode) => void;
   setRig: (rig: RigName) => void;
   setChart2d: (on: boolean) => void;
+  setTruthMode: (on: boolean) => void;
   follow: (boatId: string) => void;
+  setAnalysis: (action: AnalysisAction) => void;
   setReducedMotion: (reduced: boolean) => void;
   setWebglOk: (ok: boolean) => void;
   setHudReady: (ready: boolean) => void;
@@ -153,18 +155,23 @@ function clampTime(t: number): number {
 
 export const useReplay = create<ReplayStore>((set, get) => ({
   raceId: DEFAULT_RACE_ID,
-  t: RACE_DEFAULTS.t,
-  playing: RACE_DEFAULTS.playing,
+  t: RACE_REPLAY_DEFAULTS.t,
+  playing: RACE_REPLAY_DEFAULTS.playing,
   rate: 1,
   mode: "smooth",
-  rig: RACE_DEFAULTS.rig,
-  followId: RACE_DEFAULTS.followId,
-  chart2d: RACE_DEFAULTS.chart2d,
+  rig: RACE_REPLAY_DEFAULTS.rig,
+  followId: RACE_REPLAY_DEFAULTS.followId,
+  analysis: createAnalysisState(
+    raceData(),
+    RACE_REPLAY_DEFAULTS.t,
+  ),
+  chart2d: RACE_REPLAY_DEFAULTS.chart2d,
+  truthMode: false,
   reducedMotion: false,
   webglOk: false,
   hudReady: false,
   introDone: false,
-  briefDone: RACE_DEFAULTS.briefDone,
+  briefDone: false,
   frozen: false,
 
   /* Play from the end means play it again: the replay never loops on its own,
@@ -207,10 +214,15 @@ export const useReplay = create<ReplayStore>((set, get) => ({
   },
 
   setRate: (rate) => set({ rate }),
-  setMode: (mode) => set({ mode }),
+  setMode: (mode) => set((state) => transitionReplay(state, { type: "set-mode", mode })),
   setRig: (rig) => set({ rig }),
-  setChart2d: (on) => set({ chart2d: on }),
-  follow: (boatId) => set({ followId: boatId }),
+  setChart2d: (on) =>
+    set((state) => transitionReplay(state, { type: "set-chart-2d", on })),
+  setTruthMode: (on) => set((state) => transitionReplay(state, { type: "set-truth", on })),
+  follow: (boatId) =>
+    set((state) => transitionAnalysisPrimary(raceData(), state, boatId)),
+  setAnalysis: (action) =>
+    set((state) => transitionAnalysisOwner(raceData(), state, action)),
   setReducedMotion: (reduced) => set({ reducedMotion: reduced }),
   setWebglOk: (ok) => set({ webglOk: ok }),
   setHudReady: (ready) => set({ hudReady: ready }),
@@ -242,6 +254,15 @@ export const useReplay = create<ReplayStore>((set, get) => ({
     /* The camera a hand left pointing at the last race's windward mark is not
      * a view of this one. It goes back to its opening state with the rig. */
     resetFreeformCamera();
-    set({ raceId: id, ...RACE_DEFAULTS });
+    set((state) => {
+      const next = transitionReplay(state, { type: "select-race", raceId: id });
+      return {
+        ...next,
+        analysis: reconcileAnalysisState(raceData(), state.analysis, next.followId),
+        /* Re-armed with the race, unlike introDone. The brief states this
+         * race's wind, line and fleet, so a rail selection gets a new brief. */
+        briefDone: false,
+      };
+    });
   },
 }));

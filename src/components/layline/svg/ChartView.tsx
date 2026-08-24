@@ -2,8 +2,13 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import styles from "@/app/prototype/layline/layline.module.css";
-import { poseAt } from "@/lib/layline/interpolate";
-import { FIX_HZ, type Pose, type RaceData } from "@/lib/layline/types";
+import {
+  poseAt,
+  telemetryTruthAt,
+  TRUTH_FIX_COUNT,
+  truthFixWindow,
+} from "@/lib/layline/interpolate";
+import { FIX_HZ, type Pose, type RaceData, type TelemetryTruth } from "@/lib/layline/types";
 import { useReplay } from "../store";
 import { onLive, sampleLive } from "../hud/live";
 import { chartFrame, lengthAt, toPath, type ChartTrack } from "./chartFrame";
@@ -28,6 +33,23 @@ interface Node {
   hdg: number;
 }
 
+function blankPose(): Pose {
+  return { x: 0, y: 0, hdg: 0, heel: 0, twa: 0, sog: 0, cog: 0, kite: 0 };
+}
+
+function truthBuffer(): TelemetryTruth {
+  return {
+    t: 0,
+    beforeIndex: -1,
+    afterIndex: -1,
+    before: null,
+    after: null,
+    u: 0,
+    raw: blankPose(),
+    reconstructed: blankPose(),
+  };
+}
+
 /**
  * 2D mode. The same fitted frame as the still chart, on the replay clock: each
  * track draws itself as its boat sails it and a hull marker sits at the head of
@@ -40,13 +62,16 @@ interface Node {
  */
 export function ChartView({ race }: { race: RaceData }) {
   const followId = useReplay((state) => state.followId);
+  const truthMode = useReplay((state) => state.truthMode);
   const frame = useMemo(() => chartFrame(race), [race]);
   const lines = useRef(new Map<string, SVGPathElement | null>());
   const outlines = useRef(new Map<string, SVGPathElement | null>());
   const hulls = useRef(new Map<string, SVGGElement | null>());
+  const truthFixes = useRef<(SVGCircleElement | null)[]>([]);
   /* One pose for the whole pass: every boat is evaluated into it in turn and
    * nothing survives the frame. */
   const pose = useRef<Pose>({ x: 0, y: 0, hdg: 0, heel: 0, twa: 0, sog: 0, cog: 0, kite: 0 });
+  const truth = useRef(truthBuffer());
 
   /* The drawing is seeded off the clock this render sees rather than left at
    * nothing for the listener to fill in, so the mode opens on the race as it
@@ -60,6 +85,9 @@ export function ChartView({ race }: { race: RaceData }) {
     poseAt(race, boatId, now.t, now.mode, seedPose);
     return `translate(${seedPose.x.toFixed(1)} ${(-seedPose.y).toFixed(1)}) rotate(${seedPose.hdg.toFixed(1)})`;
   };
+  const seedTruth = telemetryTruthAt(race, followId, now.t, truth.current);
+  const seedFixes = race.fixes[followId] ?? [];
+  const seedTruthWindow = truthFixWindow(seedFixes.length, seedTruth.beforeIndex);
 
   useEffect(() => {
     const nodes: Node[] = [];
@@ -110,8 +138,32 @@ export function ChartView({ race }: { race: RaceData }) {
           );
         }
       }
+
+      if (truthMode) {
+        const reading = telemetryTruthAt(race, live.followId, live.t, truth.current);
+        const fixes = race.fixes[live.followId] ?? [];
+        const fixWindow = truthFixWindow(fixes.length, reading.beforeIndex);
+        for (let slot = 0; slot < TRUTH_FIX_COUNT; slot++) {
+          const marker = truthFixes.current[slot];
+          if (marker === null || marker === undefined) continue;
+          if (slot >= fixWindow.count) {
+            marker.style.display = "none";
+            continue;
+          }
+          const index = fixWindow.start + slot;
+          const fix = fixes[index];
+          marker.style.display = "";
+          if (marker.dataset.fixIndex !== String(index)) {
+            marker.dataset.fixIndex = String(index);
+            marker.setAttribute("cx", fix.x.toFixed(2));
+            marker.setAttribute("cy", (-fix.y).toFixed(2));
+          }
+          const bracket = index === reading.beforeIndex || index === reading.afterIndex ? "true" : "false";
+          if (marker.dataset.bracket !== bracket) marker.dataset.bracket = bracket;
+        }
+      }
     });
-  }, [race, frame]);
+  }, [race, frame, truthMode]);
 
   return (
     <div className={styles.chartLayer}>
@@ -120,7 +172,7 @@ export function ChartView({ race }: { race: RaceData }) {
         viewBox={frame.viewBox}
         preserveAspectRatio="xMidYMid meet"
         role="img"
-        aria-label={`Course chart on the replay clock: ${race.boats.length} boat tracks drawing from the prestart, with the start line and the windward mark`}
+        aria-label={`Course chart on the replay clock: ${race.boats.length} boat tracks drawing from the prestart, with the start line and the windward mark${truthMode ? `, plus measured 4 Hz fixes around ${followId}` : ""}`}
         data-view="chart2d"
       >
         {/* The whole route at a whisper, so a boat is read against where it is
@@ -182,6 +234,31 @@ export function ChartView({ race }: { race: RaceData }) {
             />
           </g>
         ))}
+
+        {truthMode ? (
+          <g data-truth-fixes={followId} data-provenance="measured" aria-hidden="true">
+            {Array.from({ length: TRUTH_FIX_COUNT }, (_, slot) => {
+              const index = seedTruthWindow.start + slot;
+              const fix = seedFixes[index];
+              const bracket = index === seedTruth.beforeIndex || index === seedTruth.afterIndex;
+              return (
+                <circle
+                  key={slot}
+                  ref={(node) => {
+                    truthFixes.current[slot] = node;
+                  }}
+                  className={styles.chartTruthFix}
+                  cx={fix?.x ?? 0}
+                  cy={fix === undefined ? 0 : -fix.y}
+                  r={1.8}
+                  data-fix-index={fix === undefined ? undefined : index}
+                  data-bracket={bracket ? "true" : "false"}
+                  style={fix === undefined ? { display: "none" } : undefined}
+                />
+              );
+            })}
+          </g>
+        ) : null}
       </svg>
     </div>
   );

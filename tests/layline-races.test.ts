@@ -1357,6 +1357,7 @@ test("the brief's performance view measures the fleet against the engine's own p
          rounding. */
       let loss = 0;
       for (const move of moves) {
+        if (move.loss === null) assert.fail("normal seeded maneuver loss became unavailable");
         loss += move.loss;
         assert.equal(move.lossKnots, knots(move.loss), "the two loss readings parted");
       }

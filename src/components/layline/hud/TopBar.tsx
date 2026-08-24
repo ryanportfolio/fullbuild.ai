@@ -23,6 +23,8 @@ export function TopBar({ race, venue = "Long Beach" }: { race: RaceData; venue?:
   const clockRef = useRef<HTMLSpanElement>(null);
   const legRef = useRef<HTMLSpanElement>(null);
   const raw = useReplay((state) => state.mode === "raw");
+  const truthMode = useReplay((state) => state.truthMode);
+  const setTruthMode = useReplay((state) => state.setTruthMode);
   /* No renderer, no readings: the bar keeps its wordmark and gives the stage
      back to the chart standing in for the replay. */
   const sceneUp = useReplay((state) => state.webglOk);
@@ -60,11 +62,28 @@ export function TopBar({ race, venue = "Long Beach" }: { race: RaceData; venue?:
       </div>
 
       <div className={styles.windGroup}>
-        {raw ? (
-          <span className={styles.rawChip} data-chip="raw">
-            RAW 4 HZ
-          </span>
-        ) : null}
+        {/* Independent of the playback lens. It exposes both evaluator answers
+            without changing which one poses the fleet. Kept in the bar so a
+            no-WebGL visitor can still open the 2D truth path. */}
+        <button
+          type="button"
+          className={truthMode ? `${styles.truthButton} ${styles.truthButtonOn}` : styles.truthButton}
+          aria-label={`Telemetry truth mode, ${truthMode ? "on" : "off"}`}
+          aria-pressed={truthMode}
+          aria-controls={truthMode ? "truth-inspector" : undefined}
+          aria-expanded={truthMode}
+          data-control="truth-mode"
+          onClick={() => setTruthMode(!truthMode)}
+        >
+          <span>Truth</span>
+          <span className={styles.truthButtonState}>{truthMode ? "ON" : "OFF"}</span>
+        </button>
+        <span
+          className={raw ? `${styles.replayStatus} ${styles.rawChip}` : styles.replayStatus}
+          data-chip="replay-status"
+        >
+          {raw ? "RAW 4 HZ" : "SMOOTH"}
+        </span>
         {sceneUp ? <WindDial race={race} /> : null}
       </div>
     </header>

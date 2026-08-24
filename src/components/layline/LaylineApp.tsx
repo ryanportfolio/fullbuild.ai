@@ -3,15 +3,18 @@
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import styles from "@/app/prototype/layline/layline.module.css";
+import { compareRange } from "@/lib/layline/comparison";
 import sea from "./bootSea.module.css";
 import { BoatCursor } from "./BoatCursor";
 import { CaptureBridge } from "./CaptureBridge";
 import { Instruments } from "./hud/Instruments";
+import { ComparisonPanel } from "./hud/ComparisonPanel";
 import { Standings } from "./hud/Standings";
 import { StartLine } from "./hud/StartLine";
 import { Timeline } from "./hud/Timeline";
 import { TopBar } from "./hud/TopBar";
 import { Transport } from "./hud/Transport";
+import { TruthInspector } from "./hud/TruthInspector";
 import { VmgStrip } from "./hud/VmgStrip";
 import { ChartView } from "./svg/ChartView";
 import { RaceBrief } from "./RaceBrief";
@@ -52,6 +55,7 @@ export function LaylineApp({
   autoplay = "intro",
   boot = "intro",
   bootBrief,
+  comparison = false,
 }: {
   children: ReactNode;
   venue?: string;
@@ -85,6 +89,9 @@ export function LaylineApp({
    * read out of the RaceData below, not out of this: what comes through here
    * is only what the registry knows and a simulation cannot. */
   bootBrief?: { name: string; venue: string; dateLabel: string };
+  /* Enables the replay-workspace comparison surface without changing the
+   * story console that shares this viewer shell. */
+  comparison?: boolean;
 }) {
   const race = useMemo(() => raceData(), []);
   const live = useReplay((state) => state.webglOk);
@@ -98,6 +105,18 @@ export function LaylineApp({
    * one 420ms fade and hash differently. */
   const frozen = useReplay((state) => state.frozen);
   const briefed = boot === "sea" && bootBrief !== undefined;
+  const truthMode = useReplay((state) => state.truthMode);
+  const followId = useReplay((state) => state.followId);
+  const analysis = useReplay((state) => state.analysis);
+  const rangeComparison = useMemo(
+    () =>
+      compareRange(race, {
+        primaryBoatId: followId,
+        reference: analysis.reference,
+        range: analysis.selectedRange,
+      }),
+    [analysis.reference, analysis.selectedRange, followId, race],
+  );
 
   /* On desktop the chart lives 350ms past the renderer's first frame so it
    * can fade out instead of cutting; boot inside its own 1.2s reveal delay
@@ -290,15 +309,16 @@ export function LaylineApp({
         {live ? <Standings race={race} /> : null}
       </div>
       <div className={styles.dockRight} data-dock="instruments">
-        {live ? <Instruments race={race} /> : null}
+        {truthMode ? <TruthInspector race={race} /> : live ? <Instruments race={race} /> : null}
       </div>
       <div className={styles.dockBottom} data-dock="transport">
-        {live ? (
+        {live || comparison ? (
           <div className={styles.panel}>
-            <Transport />
-            <StartLine race={race} />
-            <VmgStrip race={race} />
-            <Timeline race={race} />
+            {live ? <Transport /> : null}
+            {live ? <StartLine race={race} /> : null}
+            {live ? <VmgStrip race={race} /> : null}
+            {comparison ? <ComparisonPanel race={race} comparison={rangeComparison} /> : null}
+            <Timeline race={race} comparison={comparison ? rangeComparison : undefined} />
           </div>
         ) : null}
       </div>
@@ -308,6 +328,15 @@ export function LaylineApp({
           {children}
         </div>
       )}
+
+      {/* A context-free truth view. It replaces the static finish sheet only
+          while explicitly requested and reads the same clock and selected
+          boat as the 3D path. The inspector above states why this is 2D. */}
+      {truthMode && !live ? (
+        <div className={styles.truthFallbackLayer}>
+          <ChartView race={race} />
+        </div>
+      ) : null}
 
       <CaptureBridge />
     </div>

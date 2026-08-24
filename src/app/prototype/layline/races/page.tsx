@@ -113,14 +113,14 @@ export default async function LaylineRacesPage({
 
       {/* Three panes, three ways in. Each link parks in the same corner and
           only the focused one is on screen, so the row costs no space. */}
-      <a className={layline.skip} href="#race-list">
-        Skip to the race list
+      <a className={layline.skip} href="#race-list-toggle">
+        Skip to the race picker
       </a>
       <a className={layline.skip} href="#replay-console">
         Skip to the replay console
       </a>
-      <a className={layline.skip} href="#race-analyst">
-        Skip to the analyst
+      <a className={layline.skip} href="#race-analyst-toggle">
+        Skip to the debrief
       </a>
 
       <div className={layline.prototypeBar}>

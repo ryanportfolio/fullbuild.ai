@@ -23,6 +23,8 @@ import type {
   RaceResult,
   ReplayMode,
   StandingsRow,
+  TelemetryFixWindow,
+  TelemetryTruth,
   WindSample,
 } from "./types";
 
@@ -32,6 +34,9 @@ const DEG = Math.PI / 180;
  * noise: the tangent gets capped instead of believed, which keeps a single bad
  * fix from spinning the boat. */
 const MAX_TURN_RATE = 60; // deg/s
+
+/** Four fixes either side of the held fix. */
+export const TRUTH_FIX_COUNT = 9;
 
 interface Timed {
   t: number;
@@ -228,6 +233,92 @@ export function poseAt(
   out.sog = scalarAt(prev.sog, a.sog, b.sog, next.sog, prev.t, a.t, b.t, next.t, u);
   out.kite = hermite(a.kite, kiteRate(fixes, i, n) * dt, b.kite, kiteRate(fixes, i + 1, n) * dt, u);
   return out;
+}
+
+interface TelemetryTruthPoseBuffers {
+  raw: Pose;
+  reconstructed: Pose;
+}
+
+const telemetryTruthPoseBuffers = new WeakMap<TelemetryTruth, TelemetryTruthPoseBuffers>();
+
+function emptyPose(): Pose {
+  return { x: 0, y: 0, hdg: 0, heel: 0, twa: 0, sog: 0, cog: 0, kite: 0 };
+}
+
+function truthPoseBuffers(out: TelemetryTruth): TelemetryTruthPoseBuffers {
+  const known = telemetryTruthPoseBuffers.get(out);
+  if (known !== undefined) return known;
+  const buffers = {
+    raw: out.raw ?? emptyPose(),
+    reconstructed: out.reconstructed ?? emptyPose(),
+  };
+  telemetryTruthPoseBuffers.set(out, buffers);
+  return buffers;
+}
+
+/**
+ * The measured fixes and the two evaluator answers at one replay instant.
+ *
+ * This is the telemetry truth boundary for renderers and inspectors. It uses
+ * `locate` for sample identity and `poseAt` for both states, so an audit view
+ * cannot grow a second interpolation implementation beside the one that poses
+ * the fleet. The caller owns `out`; pose scratch stays private while either
+ * public answer is unavailable.
+ */
+export function telemetryTruthAt(
+  race: RaceData,
+  boatId: string,
+  t: number,
+  out: TelemetryTruth,
+): TelemetryTruth {
+  out.t = t;
+  const poses = truthPoseBuffers(out);
+  const fixes: Fix[] | undefined = race.fixes[boatId];
+  if (fixes === undefined || fixes.length === 0) {
+    out.beforeIndex = -1;
+    out.afterIndex = -1;
+    out.before = null;
+    out.after = null;
+    out.u = 0;
+    out.raw = null;
+    out.reconstructed = null;
+    return out;
+  }
+
+  const last = fixes.length - 1;
+  if (t <= fixes[0].t) {
+    out.beforeIndex = 0;
+    out.afterIndex = 0;
+  } else if (t >= fixes[last].t) {
+    out.beforeIndex = last;
+    out.afterIndex = last;
+  } else {
+    const before = locate(fixes, t);
+    out.beforeIndex = before;
+    out.afterIndex = t === fixes[before].t ? before : before + 1;
+  }
+
+  out.before = fixes[out.beforeIndex];
+  out.after = fixes[out.afterIndex];
+  const span = out.after.t - out.before.t;
+  out.u = span > 0 ? (t - out.before.t) / span : 0;
+  poseAt(race, boatId, t, "raw", poses.raw);
+  poseAt(race, boatId, t, "smooth", poses.reconstructed);
+  out.raw = poses.raw;
+  out.reconstructed = poses.reconstructed;
+  return out;
+}
+
+/**
+ * Selects measured fixes around a truth reading. The half-open range stays
+ * nine fixes wide where possible and slides intact against either end.
+ */
+export function truthFixWindow(fixCount: number, beforeIndex: number): TelemetryFixWindow {
+  const count = Math.min(TRUTH_FIX_COUNT, Math.max(0, fixCount));
+  const centered = Math.max(0, beforeIndex - Math.floor(count / 2));
+  const start = Math.min(centered, fixCount - count);
+  return { start, end: start + count, count };
 }
 
 /* Wind is uniform over the course, so one sample pair covers every boat. Linear

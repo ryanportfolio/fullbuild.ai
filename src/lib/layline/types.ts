@@ -116,6 +116,30 @@ export interface Pose {
   kite: number;
 }
 
+/* One audit reading at one replay instant. The fix references point straight
+ * into RaceData. Both poses are absent when the selected fix series is absent
+ * or empty, so a consumer cannot mistake an old caller buffer for current
+ * telemetry. `u` is the clock's derived position between the two measured
+ * fixes. At an exact fix or either series boundary, both references name that
+ * fix and u is zero. */
+export interface TelemetryTruth {
+  t: number;
+  beforeIndex: number;
+  afterIndex: number;
+  before: Fix | null;
+  after: Fix | null;
+  u: number;
+  raw: Pose | null;
+  reconstructed: Pose | null;
+}
+
+/** Half-open measured-fix range selected around one truth reading. */
+export interface TelemetryFixWindow {
+  start: number;
+  end: number;
+  count: number;
+}
+
 export type ReplayMode = "smooth" | "raw";
 
 export type RigName = "chase" | "tv" | "tactical" | "freeform";
