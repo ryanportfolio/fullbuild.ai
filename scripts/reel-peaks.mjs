@@ -12,9 +12,9 @@
    The rest of the deliverable pipeline, for the same reason (every figure the
    sheet prints was measured, and can be measured again):
 
-     # 1. encode: x264 CRF 22, 2 s GOP so scrubbing lands near a keyframe,
+     # 1. encode: x264 CRF 29, 2 s GOP so scrubbing lands near a keyframe,
      #    faststart so the moov atom precedes the media data
-     ffmpeg -i master.mp4 -c:v libx264 -preset slow -crf 22 -profile:v high \
+     ffmpeg -i master.mp4 -c:v libx264 -preset slow -crf 29 -profile:v high \
        -level 4.2 -pix_fmt yuv420p -g 120 -keyint_min 60 \
        -c:a aac -b:a 128k -ac 2 -movflags +faststart out.mp4
 
@@ -29,8 +29,16 @@
      ffmpeg -i out.mp4 -vf "fps=1/2,scale=160:90,tile=12x11" -frames:v 1 \
        -q:v 6 public/<sheet>/scrub-sprites.jpg
 
-   The encoded file itself is hosted as a GitHub release asset (free
-   range-request hosting, no new infra) and never committed.
+   The encoded file is committed to public/, which is what makes the response
+   `video/mp4`; a GitHub release asset is served `application/octet-stream` as
+   an attachment and a strict media engine will not decode it. That is what
+   sets the CRF: a committed file stays under 50 MB, and CRF 29 lands at
+   47.3 MB and SSIM Y 0.994 against the master. Re-cutting it means re-running
+   steps 2-4 and this script, because every figure the sheet prints comes off
+   the file it actually serves.
+
+     ffmpeg -ss 90 -t 15 -i master.mp4 -ss 90 -t 15 -i out.mp4 \
+       -lavfi "[0:v][1:v]ssim" -f null -
    ========================================================================= */
 
 import { spawnSync } from 'node:child_process';

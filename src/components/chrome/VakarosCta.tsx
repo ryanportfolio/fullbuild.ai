@@ -1,6 +1,7 @@
 'use client';
 
 import { useLayoutEffect, useRef } from 'react';
+import { reducedMotion } from '@/lib/motion';
 import { MARK_GLYPHS, MARK_VIEWBOX } from './vakarosMark';
 import styles from './VakarosCta.module.css';
 
@@ -22,10 +23,15 @@ import styles from './VakarosCta.module.css';
    - Each letter is drawn as a moving pen: its contour is stroked with a
      dash rig at pathLength 1, then the letter pours solid behind the finished
      line. Pencil first, then ink, the same order RailLogo works in.
-   - The mark ships DRAWN. No-JS and reduced-motion readers get the finished
-     word and the caption with no motion at all; the pre-paint hold in
-     globals.css covers the finished state only until this effect arms the
-     hidden one, so nothing flashes and nothing snaps away.
+   - The mark ships DRAWN, so a no-JS reader gets the finished word and the
+     caption with no motion at all; the pre-paint hold in globals.css covers
+     the finished state only until this effect arms the hidden one, so nothing
+     flashes and nothing snaps away.
+   - REDUCED MOTION STILL DRAWS HERE, and only here. This sheet carries the
+     flag that opts one route out of the set's reduced-motion collapse: the
+     address is the page, and a still mark is not it. src/lib/motion.ts holds
+     the reasoning; the check below reads it rather than the media query, so
+     moving this back under the preference is one edit in one file.
    - A teardown mid-draw leaves the finished mark, never a half-drawn word.
    ========================================================================= */
 
@@ -54,10 +60,10 @@ export default function VakarosCta() {
     const svg = svgRef.current;
     const caption = capRef.current;
     if (!svg || !caption) return;
-    const reduce =
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) return; // the finished word stands, no motion
+    // This sheet runs its motion for everyone (src/lib/motion.ts), so the read
+    // is here rather than absent: a caller that skips the check is a caller
+    // that cannot be moved back under the preference in one edit.
+    if (reducedMotion()) return; // the finished word stands, no motion
 
     const groups = Array.from(svg.querySelectorAll<SVGGElement>('g[data-glyph]'));
     if (!groups.length) return;

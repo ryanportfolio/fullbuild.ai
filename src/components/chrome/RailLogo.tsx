@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef } from 'react';
 import { afterIntroHold } from '@/lib/introHold';
+import { reducedMotion } from '@/lib/motion';
 
 /* ============================================================================
    RAIL LOGO — the mark. A long shed half-drawn, half-poured: the left bay is
@@ -36,10 +37,7 @@ export default function RailLogo({ className }: { className?: string }) {
   useLayoutEffect(() => {
     const svg = ref.current;
     if (!svg) return;
-    const reduce =
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) return; // finished mark stands, no motion
+    if (reducedMotion()) return; // finished mark stands, no motion
 
     const strokes = Array.from(svg.querySelectorAll<SVGPathElement>('path[data-stroke]'));
     const pour = svg.querySelector<SVGPathElement>('path[data-pour]');

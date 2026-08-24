@@ -84,6 +84,18 @@ const noFlashPipeline = `(function(){try{if(window.matchMedia('(prefers-reduced-
 // frame one), and no-JS visitors never run this at all.
 const noFlashDepth = `(function(){try{if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;document.documentElement.style.setProperty('--depth','0');}catch(e){}})();`;
 
+// Mark the one sheet that runs its motion for everyone, BEFORE any script below
+// reads the preference and before first paint, so CSS and JS both see the flag on
+// the frame they decide. E-02 is a record of a build in operation and its rail
+// carries the drawn address the sheet exists to hand over; the reduced path would
+// leave a reader who came to watch a tape play looking at a still mark. See
+// src/lib/motion.ts for the reasoning and the shared read.
+//
+// THE PATH CHECK IS THE WHOLE SCRIPT, the same way it is in noFlashIntro below:
+// without it this would quietly cancel the reduced-motion preference across every
+// route in the site.
+const motionAlways = `(function(){try{if(window.location.pathname!=='/layline-vid')return;document.documentElement.setAttribute('data-motion-always','');}catch(e){}})();`;
+
 // Hold the plotted linework BEFORE first paint. The drawings are SSR-complete so
 // that no-JS and reduced-motion visitors get the finished sheet, which means the
 // first frame would otherwise show every stroke drawn only to have DrawingSet and
@@ -91,8 +103,10 @@ const noFlashDepth = `(function(){try{if(window.matchMedia('(prefers-reduced-mot
 // exist to prevent, one layer down. Each owner stamps data-ws-armed per stroke as
 // it takes the hidden state, dropping out of the CSS hold with no frame between;
 // the timer restores the linework if hydration never arrives. Same carve-outs:
-// reduced motion opts out, no-JS never runs this.
-const noFlashDraw = `(function(){try{if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;var d=document.documentElement;d.setAttribute('data-draw-pending','');window.__drawGuard=window.setTimeout(function(){d.removeAttribute('data-draw-pending');},3000);}catch(e){}})();`;
+// reduced motion opts out, no-JS never runs this. The exception is the sheet that
+// opted out of the opt-out above: where data-motion-always is set the linework is
+// going to draw, so it has to be held first or the finished mark flashes.
+const noFlashDraw = `(function(){try{var d=document.documentElement;if(!d.hasAttribute('data-motion-always')&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;d.setAttribute('data-draw-pending','');window.__drawGuard=window.setTimeout(function(){d.removeAttribute('data-draw-pending');},3000);}catch(e){}})();`;
 
 // Cover the homepage BEFORE first paint so the intro's opening frame is the first thing
 // anyone sees, rather than a flash of the finished set that the overlay then covers up.
@@ -153,6 +167,8 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: noFlashPlot }} />
         <script dangerouslySetInnerHTML={{ __html: noFlashPipeline }} />
         <script dangerouslySetInnerHTML={{ __html: noFlashDepth }} />
+        {/* runs before the hold below it, which reads the flag it writes */}
+        <script dangerouslySetInnerHTML={{ __html: motionAlways }} />
         <script dangerouslySetInnerHTML={{ __html: noFlashDraw }} />
         <script dangerouslySetInnerHTML={{ __html: noFlashIntro }} />
       </head>

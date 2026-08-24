@@ -46,7 +46,10 @@ test('the draw-in releases the pre-paint hold on every path, including reduced m
   assert.match(hook, /setAttribute\('data-ws-armed', ''\)/);
   // The reduced-motion path arms and returns: finished record, no animation,
   // never a hidden or half-drawn one.
-  const reducedBlock = hook.slice(hook.indexOf('if (reduced)'), hook.indexOf('const paintAt'));
+  // the preference is read through src/lib/motion.ts, which is what lets one
+  // route opt out of the collapse without a second reading living here
+  assert.match(hook, /import \{ reducedMotion \} from '@\/lib\/motion';/);
+  const reducedBlock = hook.slice(hook.indexOf('if (reducedMotion())'), hook.indexOf('const paintAt'));
   assert.match(reducedBlock, /arm\(\);/);
   assert.match(reducedBlock, /return;/);
   assert.ok(!reducedBlock.includes('requestAnimationFrame'), 'reduced motion never animates');

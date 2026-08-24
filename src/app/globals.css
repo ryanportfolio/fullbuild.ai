@@ -325,11 +325,16 @@ html[data-intro-pending] body::before {
   outline-offset: 3px;
 }
 
-/* Reduced motion collapses the set to four finished static sheets. */
+/* Reduced motion collapses the set to four finished static sheets.
+   The one exception carries its own flag, written on <html> before first paint
+   by the route-scoped script in layout.tsx: E-02 plays a recording on a drawn
+   transport and hands over a drawn address, and neither reads as a sheet once
+   it stops moving. Scoping the rule here rather than fighting it per component
+   is what keeps `!important` from winning against the sheet that opted out. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  html:not([data-motion-always]) *,
+  html:not([data-motion-always]) *::before,
+  html:not([data-motion-always]) *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;

@@ -23,6 +23,8 @@
      scene owns.
    - No JS: the video ships with native controls and the chart chrome stays
      hidden; hydration removes `controls` and takes over in the same frame.
+     Fullscreen hands them straight back, because the drawn bench does not go
+     to the display with the tape: only the tape does.
    ========================================================================= */
 
 import {
@@ -37,6 +39,11 @@ import {
 import { REEL, timecode } from './reel';
 import peaksData from './peaks.json';
 import styles from './layline-vid.module.css';
+
+/* iOS Safari has no Element.requestFullscreen. It has one fullscreen entry
+   point and it lives on the media element itself, which is the other reason
+   the button targets the video rather than the sheet. */
+type IosFullscreenVideo = HTMLVideoElement & { webkitEnterFullscreen?: () => void };
 
 /* Chart geometry, viewBox units. One x-unit per peak bin keeps the drawing an
    unresampled plot of the data. */
@@ -75,6 +82,9 @@ export default function TapePlayer() {
 
   const [enhanced, setEnhanced] = useState(false);
   const [playing, setPlaying] = useState(false);
+  /* True while the tape itself holds the display. The bench chrome cannot
+     follow it there, so this is what hands the native controls back. */
+  const [full, setFull] = useState(false);
   const [muted, setMuted] = useState(false);
   const [preview, setPreview] = useState<{ x: number; t: number } | null>(null);
 
@@ -125,11 +135,14 @@ export default function TapePlayer() {
     };
     const onSeek = () => paint(video.currentTime);
 
+    const onFullChange = () => setFull(document.fullscreenElement === video);
+
     video.addEventListener('play', start);
     video.addEventListener('pause', stop);
     video.addEventListener('ended', stop);
     video.addEventListener('seeked', onSeek);
     video.addEventListener('loadedmetadata', onSeek);
+    document.addEventListener('fullscreenchange', onFullChange);
 
     window.__laylineReel = {
       freeze: () => {
@@ -155,6 +168,7 @@ export default function TapePlayer() {
       video.removeEventListener('ended', stop);
       video.removeEventListener('seeked', onSeek);
       video.removeEventListener('loadedmetadata', onSeek);
+      document.removeEventListener('fullscreenchange', onFullChange);
       delete window.__laylineReel;
     };
   }, [paint]);
@@ -191,11 +205,23 @@ export default function TapePlayer() {
     setMuted(v.muted);
   }, []);
 
+  /* FULLSCREEN IS THE TAPE'S, NOT THE SHEET'S. This used to request it on the
+     player section, which blew the whole drawing up to the display instead of
+     the recording, and on iOS Safari did nothing at all: that engine implements
+     fullscreen on <video> and on nothing else. So the request goes to the one
+     element a fullscreen button on a video can mean.
+     The drawn bench does not follow the tape up there, so the native controls
+     take over for the duration (see `controls` on the element): a fullscreen
+     viewer with no transport and no chart would have no way to pause. */
   const toggleFull = useCallback(() => {
-    const root = rootRef.current;
-    if (!root) return;
-    if (document.fullscreenElement) void document.exitFullscreen();
-    else void root.requestFullscreen?.();
+    const v = videoRef.current;
+    if (!v) return;
+    if (document.fullscreenElement) {
+      void document.exitFullscreen();
+      return;
+    }
+    if (typeof v.requestFullscreen === 'function') void v.requestFullscreen();
+    else (v as IosFullscreenVideo).webkitEnterFullscreen?.();
   }, []);
 
   /* Bench keys. Scoped to the player region; arrow keys are left to the chart
@@ -268,7 +294,7 @@ export default function TapePlayer() {
           poster={REEL.poster}
           preload="metadata"
           playsInline
-          controls={!enhanced}
+          controls={!enhanced || full}
           muted={muted}
           onClick={enhanced ? toggle : undefined}
           aria-label="Layline screen capture, 4 minutes 17 seconds"
