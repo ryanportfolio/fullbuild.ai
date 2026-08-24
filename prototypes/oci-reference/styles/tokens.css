@@ -1,0 +1,75 @@
+/* Design tokens — oci-reference prototype.
+   Source of truth: .tmp/long-horizon/oci-homepage/design-contract.md (Tokens section). */
+
+:root {
+  /* Colors (structure-1440.json colors; uniforms.json programs) */
+  --color-blue: #1925aa;        /* accent/deep blue — footer bg, CTA fill, hairlines, display text */
+  --color-bone: #e8e6e0;        /* page background on <html>; body + sections stay transparent */
+  --color-periwinkle: #b7b9d3;  /* halftone light tone (uColorLight) */
+  --color-white: #ffffff;       /* hero display text, menu panel bg, roll incoming label */
+
+  /* Type (substitute OFL faces; scale numbers from structure-1440.json typeScale) */
+  --font-sans: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", "Courier New", monospace;
+
+  --font-size-display: clamp(3rem, 11.11vw, 10rem); /* 49.2px @390 → 113.78px @1024 → 160px cap @1440 */
+  --font-size-display-leading: 0.9375;              /* 150/160 measured */
+  --font-size-accordion: 1.875rem;                  /* 30px accordion titles */
+  --font-size-h3-card: 1.125rem;                    /* 18px article card h3 */
+  --font-size-body: 1rem;                           /* 16px */
+  --font-size-body-leading: 1.5;                    /* 16/24 */
+  --font-size-mono: 0.875rem;                       /* 14px roll CTAs */
+  --font-size-mono-small: 0.75rem;                  /* 12px nav + kickers */
+  --font-size-micro: 0.625rem;                      /* 10px category tags */
+
+  /* Spacing — 5px-base utility scale observed (structure-1440.json) */
+  --spacing-unit: 0.25rem;
+  --gutter-page: 15px;          /* px-15 */
+  --gap-grid: 15px;             /* lg:gap-x-15 */
+  --space-section-top: 50px;    /* pt-50 */
+  --title-under-gap: 110px;     /* mb-110 */
+  --cta-pad-block: 25px;        /* py-25 */
+  --cta-pad-inline: 46px;       /* px-46 */
+  --row-height: 64px;           /* accordion row @1440 (45.5px @1024, vw-proportional) */
+  --nav-offset: 15px;           /* top-15 */
+
+  /* Radii/shadows — contract mandates radii 0, zero box-shadows */
+  --radius-0: 0px;
+  --shadow-none: none;
+  --rule-hairline: 1px solid var(--color-blue);
+  --rule-hairline-light: 1px solid rgba(232, 230, 224, 0.4);
+
+  /* Published timing tokens (:root/bundle via .tmp/oci-forensics.json) */
+  --duration-fast: 0.15s;
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-200: 0.2s;
+  --transition-300: 0.3s;
+  --transition-500: 0.5s;
+
+  /* Derived motion values (measured, design-contract Motion table; (p) = proposed) */
+  --ease-out-entry: cubic-bezier(0.16, 1, 0.3, 1); /* strong ease-out, no overshoot (p) */
+  --duration-reveal: 480ms;    /* measured 458–499ms band */
+  --stagger-lines: 90ms;       /* design 80–100ms */
+  --stagger-steps: 110ms;       /* step-card entrance stagger (design) */
+  --reveal-shift: 50.59px;     /* measured entry translateY */
+  --duration-accordion: 450ms; /* measured ≈450–500ms */
+  --duration-roll: 282ms;      /* measured roll */
+  --roll-shift: -44.78px;      /* outgoing label travel */
+  --roll-in-shift: 64.61px;    /* incoming label start offset (measured R2) */
+  --duration-menu: 750ms;      /* measured slide-in */
+  --ease-menu: cubic-bezier(0.16, 1, 0.3, 1); /* long-decel tail */
+
+  /* Custom scrollbar (replicated Lenis-style thumb, (p)) */
+  --thumb-width: 4px;
+  --thumb-bg: var(--color-blue);
+  --thumb-fade: 300ms;
+  --scrollbar-inset: 8px;
+}
+
+@media (max-width: 767px) {
+  :root {
+    /* stacked transforms: 52px @768, 49.2px @390 */
+    --font-size-display: clamp(3rem, 12.6vw, 3.25rem);
+    --row-height: 64px;
+  }
+}

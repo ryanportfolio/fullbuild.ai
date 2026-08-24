@@ -1,0 +1,131 @@
+/* Motion system — utilities, state classes, custom scrollbar.
+   Durations/easings live in tokens.css (published tokens + measured values). */
+
+.transition-200 { transition-duration: var(--transition-200); }
+.transition-300 { transition-duration: var(--transition-300); }
+.transition-500 { transition-duration: var(--transition-500); }
+
+/* ---- Line-split reveals: scroll-coupled, REVERSIBLE (contract Motion row 2) ----
+   JS wraps each .seed into .line > .line-inner (which INHERITS the seed's display
+   classes) and toggles .is-revealed via observer. Hidden pre-states only with JS. */
+[data-split] .line { display: block; overflow: hidden; }
+[data-split] .line-inner { display: inline-block; will-change: transform, opacity; }
+html.js [data-split] .line-inner {
+  opacity: 0;
+  transform: translateY(var(--reveal-shift));
+  transition:
+    opacity var(--duration-reveal) var(--ease-out-entry),
+    transform var(--duration-reveal) var(--ease-out-entry);
+  transition-delay: calc(var(--line-i, 0) * var(--stagger-lines));
+}
+html.js [data-split].is-revealed .line-inner { opacity: 1; transform: translateY(0); }
+
+/* Entry cascade arms only after boot (.js-ready added post line-split build) */
+html.js:not(.js-ready) [data-split] .line-inner { transition: none; }
+
+/* ---- Step-card staircase reveal: rotate/translate in on scroll (ref §4) ----
+   Cards start fanned/lowered and settle to their resting staircase rotation as they
+   cross into view. Reversible. --step-start-rot/--step-rest-rot set per nth-child. */
+html.js .step-card { opacity: 0; transform: translateY(90px) rotate(var(--step-start-rot, 4deg)); transition: opacity var(--duration-reveal) var(--ease-out-entry), transform var(--duration-reveal) var(--ease-out-entry); }
+html.js .step-card.is-revealed { opacity: 1; transform: translateY(0) rotate(var(--step-rest-rot, 0deg)); }
+html.js .step-card { transition-delay: calc(var(--step-i, 0) * var(--stagger-steps)); }
+html.js:not(.js-ready) .step-card { transition: none; }
+
+/* ---- Nav scroll states (ref: links+rules at top; MENU box once scrolled) ---- */
+.nav-cols { transition: opacity var(--duration-fast) var(--ease-default), visibility var(--duration-fast); }
+html.scrolled .nav-cols { opacity: 0; visibility: hidden; pointer-events: none; }
+
+/* ---- Roll CTA: duplicate stacked labels inside overflow-hidden anchor ---- */
+.roll {
+  position: relative;
+  display: inline-flex;
+  overflow: hidden;
+  text-decoration: none;
+}
+.roll-stack { display: block; position: relative; }
+.roll .label {
+  display: block;
+  transition:
+    transform var(--duration-roll) var(--ease-default),
+    opacity var(--duration-roll) var(--ease-default);
+}
+.roll .label.incoming {
+  position: absolute;
+  inset: 0;
+  transform: translateY(var(--roll-in-shift)); /* measured incoming travel 64.61px (R2) */
+  opacity: 0; /* rest state must not peek inside the CTA padding box */
+}
+.roll:hover .label.outgoing,
+.roll:focus-visible .label.outgoing,
+.roll.is-hovered .label.outgoing { transform: translateY(var(--roll-shift)); opacity: 0; }
+.roll:hover .label.incoming,
+.roll:focus-visible .label.incoming,
+.roll.is-hovered .label.incoming { transform: translateY(0); opacity: 1; }
+
+/* ---- Accordion: grid-template-rows 0fr<->1fr bloom, icon rotates 135deg ---- */
+.acc-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--duration-accordion) var(--ease-out-entry);
+}
+.acc-item.open .acc-panel { grid-template-rows: 1fr; }
+.acc-panel-inner { overflow: hidden; min-height: 0; }
+.acc-icon { transition: transform var(--duration-accordion) var(--ease-default); }
+.acc-item.open .acc-icon { transform: rotate(135deg); }
+
+/* ---- Link fades (nav hover opacity 1->0.5, .15s token) ---- */
+.link { transition: opacity var(--duration-fast) var(--ease-default); }
+.link:hover { opacity: 0.5; }
+.site-footer .link:hover, .menu-panel .link:hover { opacity: 0.5; }
+
+/* ---- Menu overlay slide (translateX 687px->0 shape, long decel) ---- */
+.menu-panel {
+  transform: translateX(calc(100% + 20px)); /* fully clear the 15px right inset */
+  transition: transform var(--duration-menu) var(--ease-menu);
+}
+html.menu-open .menu-panel { transform: translateX(0); }
+.menu-link {
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity var(--transition-300) var(--ease-default),
+    transform var(--transition-300) var(--ease-default);
+  transition-delay: calc(120ms + var(--menu-i, 0) * 50ms);
+}
+html.menu-open .menu-link { opacity: 1; transform: translateY(0); }
+
+/* ---- Focus visibility (added; reference sampled none) ---- */
+:focus-visible { outline: 2px solid var(--color-blue); outline-offset: 2px; }
+.site-footer :focus-visible,
+.menu-panel :focus-visible { outline-color: var(--color-bone); }
+
+/* ---- Custom scrollbar: 15px track at right edge, thin centered thumb ----
+   Root scroller is <html>: hide the NATIVE bar on html.js (body rule was ineffective
+   and left a live 15px gutter -> canvas 1425px). Custom thumb fades with activity. */
+html.js { scrollbar-width: none; }
+html.js::-webkit-scrollbar { width: 0; height: 0; }
+.scrollbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 15px;
+  z-index: 1200;
+  pointer-events: none;
+}
+.scrollbar-thumb {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 5px;
+  width: 5px;
+  height: 0;
+  background: var(--thumb-bg);
+  opacity: 0;
+  transition: opacity var(--thumb-fade) var(--ease-default);
+}
+.scrollbar.is-visible .scrollbar-thumb { opacity: 1; }
+html:not(.js) .scrollbar { display: none; }
+
+/* ---- no-JS fallback: accordions render expanded so copy stays reachable ---- */
+html:not(.js) .acc-panel { grid-template-rows: 1fr; }

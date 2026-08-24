@@ -1,0 +1,384 @@
+<!doctype html>
+<!-- oci-reference prototype — demo-branded reconstruction. Placeholder copy only:
+     fictional "Bluestone Permits Group, LLC" per demo-copy.md; zero reference-site strings. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bluestone Permits Group, LLC — idea → design → engineering → shipped</title>
+  <meta name="description" content="Fictional demo identity for a layout prototype. Not a real firm." />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="stylesheet" href="./styles/main.css" />
+  <script>document.documentElement.classList.add("js");</script>
+</head>
+<body id="top">
+
+  <!-- Fixed WebGL halftone canvas (z-index -1, pointer-events none; contract §Canvas).
+       Visible through the hero only — every later section paints an opaque background. -->
+  <canvas class="canvas-fixed" id="gl" aria-hidden="true"></canvas>
+
+  <nav class="site-nav" aria-label="Primary">
+    <a class="brand link" href="#top">
+      <svg class="brand-mark" viewBox="0 0 28 28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="14" cy="14" r="8" /><path d="M14 0v7M14 21v7M0 14h7M21 14h7" /></svg>
+      <span class="brand-name">Bluestone Permits Group, LLC</span>
+    </a>
+    <div class="nav-cols">
+      <ul class="nav-col">
+        <li><a class="link" href="#practice">Practice</a></li>
+        <li><a class="link" href="#method">Method</a></li>
+        <li><a class="link" href="#work">Work</a></li>
+        <li><a class="link" href="#notes">Notes</a></li>
+      </ul>
+      <ul class="nav-col">
+        <li><a class="link" href="#voices">Careers</a></li>
+        <li><a class="link" href="#notes">News</a></li>
+        <li><a class="link" href="#contact">Contact</a></li>
+      </ul>
+    </div>
+    <div class="nav-actions">
+      <button class="menu-btn js-menu" id="menuBtn" type="button" aria-expanded="false" aria-controls="menuPanel">
+        <span class="label-open">Menu</span>
+        <span class="label-close">Close</span>
+      </button>
+      <a class="pencil-btn" href="#contact" aria-label="Start a project">
+        <svg viewBox="0 0 18 18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11.5 2.5l4 4L6 16H2v-4l9.5-9.5z" /></svg>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Overlay menu (slides from right; locks scroll while open).
+       Panel content mirrors ref menu: big links, COMPANY + STAY IN TOUCH rows,
+       arrow email field (g7-menu-open-ref, r9-iter4). -->
+  <div class="menu-panel" id="menuPanel" aria-hidden="true">
+    <ul class="menu-list">
+      <li><a class="menu-link link" style="--menu-i:0" href="#practice">Practice</a></li>
+      <li><a class="menu-link link" style="--menu-i:1" href="#method">Method</a></li>
+      <li><a class="menu-link link" style="--menu-i:2" href="#work">Work</a></li>
+      <li><a class="menu-link link" style="--menu-i:3" href="#notes">Notes</a></li>
+      <li><a class="menu-link link" style="--menu-i:4" href="#contact">Contact</a></li>
+    </ul>
+    <div class="menu-info">
+      <div class="menu-info-row">
+        <span class="menu-info-label">Company</span>
+        <ul class="menu-info-col">
+          <li><a class="link" href="#voices">Careers</a></li>
+          <li><a class="link" href="#notes">News</a></li>
+          <li><a class="link" href="#contact">Contact</a></li>
+        </ul>
+      </div>
+      <div class="menu-info-row">
+        <span class="menu-info-label">Stay in touch</span>
+        <div class="menu-info-col">
+          <p><a class="link" href="tel:+10000000000">(000) 000-0000</a></p>
+          <p><a class="link" href="mailto:hello@bluestonepermits.example">hello@bluestonepermits.example</a></p>
+          <p>1 Permit Way, Suite 3<br />New York, New York 10001</p>
+        </div>
+      </div>
+      <form class="newsletter menu-newsletter" action="#" method="get" onsubmit="return false">
+        <input type="email" name="email" placeholder="Email address" aria-label="Email address" autocomplete="email" />
+        <button type="submit" aria-label="Subscribe">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12h17M14 5.5L20.5 12 14 18.5" /></svg>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <header class="hero" id="hero">
+    <h1 class="sr-only">Bluestone Permits Group, LLC</h1>
+    <div data-split>
+      <span class="seed display hero-title-line">Bluestone</span>
+      <span class="seed display hero-title-line">Permits Group,&nbsp;LLC</span>
+    </div>
+    <p class="hero-tag" data-split>
+      <span class="seed">Getting plans approved</span>
+      <span class="seed">without the runaround —</span>
+      <span class="seed">start to finish.</span>
+    </p>
+  </header>
+
+  <main>
+    <!-- Intro statement band (opaque blue; staircase cutout bottom-left) -->
+    <section class="intro" id="about" aria-labelledby="aboutTitle">
+      <h2 class="intro-statement" id="aboutTitle" data-split>
+        <span class="seed">Permits, variances, inspections, and</span>
+        <span class="seed">closeouts — one team shepherding your</span>
+        <span class="seed">project through every code and zoning</span>
+        <span class="seed">question from first sketch to final</span>
+        <span class="seed">sign-off.</span>
+      </h2>
+      <div class="intro-cols">
+        <p>From first sketch to final sign-off, Bluestone works beside you — code, zoning, and every review in between.</p>
+        <p>Our permit specialists keep submissions clean, trackers full, and surprises off the critical path.</p>
+      </div>
+      <div class="intro-steps" aria-hidden="true"></div>
+    </section>
+
+    <section class="services section-bone" id="practice" aria-labelledby="practiceTitle">
+      <h2 class="sr-only" id="practiceTitle">Practice Areas</h2>
+      <div class="grid12 section-titles">
+        <div class="title-left" data-split><span class="seed display services-title">Our</span></div>
+        <div class="title-right" data-split><span class="seed display services-title">Practice</span></div>
+      </div>
+      <div class="grid12 services-body">
+        <div class="services-media">
+          <img src="./images/hero-source-alt.png" alt="" width="340" height="240" />
+          <p class="media-caption">What we handle</p>
+        </div>
+        <div class="services-rows">
+          <div class="acc-item">
+            <button class="acc-row" type="button" aria-expanded="false" aria-controls="acc-panel-1">
+              <span>Approval Strategy</span>
+              <svg class="acc-icon" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v14M2 9h14" fill="none" stroke="currentColor" stroke-width="1.5" /></svg>
+            </button>
+            <div class="acc-panel" id="acc-panel-1" role="region" aria-label="Approval Strategy">
+              <div class="acc-panel-inner"><div class="acc-body">
+                <p>We map every agency touchpoint up front so reviews clear in one pass, not three.</p>
+                <a class="learn-more" href="#practice">[ Read more &rarr; ]</a>
+              </div></div>
+            </div>
+          </div>
+          <div class="acc-item">
+            <button class="acc-row" type="button" aria-expanded="false" aria-controls="acc-panel-2">
+              <span>Closeout Coordination</span>
+              <svg class="acc-icon" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v14M2 9h14" fill="none" stroke="currentColor" stroke-width="1.5" /></svg>
+            </button>
+            <div class="acc-panel" id="acc-panel-2" role="region" aria-label="Closeout Coordination">
+              <div class="acc-panel-inner"><div class="acc-body">
+                <p>Closeout paperwork and final filings tracked through the very last signature.</p>
+                <a class="learn-more" href="#practice">[ Read more &rarr; ]</a>
+              </div></div>
+            </div>
+          </div>
+          <div class="acc-item">
+            <button class="acc-row" type="button" aria-expanded="false" aria-controls="acc-panel-3">
+              <span>Field Inspections</span>
+              <svg class="acc-icon" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v14M2 9h14" fill="none" stroke="currentColor" stroke-width="1.5" /></svg>
+            </button>
+            <div class="acc-panel" id="acc-panel-3" role="region" aria-label="Field Inspections">
+              <div class="acc-panel-inner"><div class="acc-body">
+                <p>Walkthroughs scheduled around your crew, with findings written in plain language.</p>
+                <a class="learn-more" href="#practice">[ Read more &rarr; ]</a>
+              </div></div>
+            </div>
+          </div>
+          <div class="acc-item">
+            <button class="acc-row" type="button" aria-expanded="false" aria-controls="acc-panel-4">
+              <span>Violation Cleanup</span>
+              <svg class="acc-icon" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v14M2 9h14" fill="none" stroke="currentColor" stroke-width="1.5" /></svg>
+            </button>
+            <div class="acc-panel" id="acc-panel-4" role="region" aria-label="Violation Cleanup">
+              <div class="acc-panel-inner"><div class="acc-body">
+                <p>Open violations closed out with a documented plan and a formal closing letter.</p>
+                <a class="learn-more" href="#practice">[ Read more &rarr; ]</a>
+              </div></div>
+            </div>
+          </div>
+          <div class="acc-item">
+            <button class="acc-row" type="button" aria-expanded="false" aria-controls="acc-panel-5">
+              <span>Zoning Sessions</span>
+              <svg class="acc-icon" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v14M2 9h14" fill="none" stroke="currentColor" stroke-width="1.5" /></svg>
+            </button>
+            <div class="acc-panel" id="acc-panel-5" role="region" aria-label="Zoning Sessions">
+              <div class="acc-panel-inner"><div class="acc-body">
+                <p>Straight answers on use and bulk questions before drawings get expensive.</p>
+                <a class="learn-more" href="#practice">[ Read more &rarr; ]</a>
+              </div></div>
+            </div>
+          </div>
+          <div class="acc-item">
+            <button class="acc-row" type="button" aria-expanded="false" aria-controls="acc-panel-6">
+              <span>Permit Calendars</span>
+              <svg class="acc-icon" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2v14M2 9h14" fill="none" stroke="currentColor" stroke-width="1.5" /></svg>
+            </button>
+            <div class="acc-panel" id="acc-panel-6" role="region" aria-label="Permit Calendars">
+              <div class="acc-panel-inner"><div class="acc-body">
+                <p>Renewal and expiration dates watched so nothing lapses quietly.</p>
+                <a class="learn-more" href="#practice">[ Read more &rarr; ]</a>
+              </div></div>
+            </div>
+          </div>
+          <a class="roll cta" href="#practice">
+            <span class="roll-stack">
+              <span class="label outgoing">Browse all services</span>
+              <span class="label incoming" aria-hidden="true">Browse all services</span>
+            </span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="process section-bone" id="method" aria-labelledby="methodTitle">
+      <div class="section-kicker-row">
+        <p class="kicker">Process</p>
+        <span class="sec-tag">[BPG.2]</span>
+      </div>
+      <div class="process-grid">
+        <div class="process-sticky">
+          <h2 class="display process-title" id="methodTitle" data-split><span class="seed">Through</span><span class="seed">every step</span></h2>
+          <p class="process-blurb">Review cycles, resubmittals, and sign-off queues can stall any project — we keep yours moving.</p>
+        </div>
+          <div class="step-cards">
+          <article class="step-card">
+            <header><h3>Intake</h3><span class="step-num">01</span></header>
+            <p>One call maps the approvals path and the paperwork mountain ahead.</p>
+          </article>
+          <article class="step-card">
+            <header><h3>Review</h3><span class="step-num">02</span></header>
+            <p>Drawings and documents checked against the checklist before anything files.</p>
+          </article>
+          <article class="step-card">
+            <header><h3>Submission</h3><span class="step-num">03</span></header>
+            <p>Packages filed complete, the first time, with every attachment in place.</p>
+          </article>
+          <article class="step-card">
+            <header><h3>Handover</h3><span class="step-num">04</span></header>
+            <p>Approval letters archived and delivered, and the file closed clean.</p>
+          </article>
+          </div>
+        </div>
+    </section>
+
+    <section class="projects section-bone" id="work" aria-labelledby="workTitle">
+      <h2 class="display projects-title" id="workTitle" data-split><span class="seed">Selected</span><span class="seed">Site Work</span></h2>
+      <ul class="project-strip grid12">
+        <li class="project-card">
+          <div class="project-meta"><span class="project-num">01</span><span class="project-tag">Healthcare</span></div>
+          <span class="project-name">Clinic fit-out</span>
+          <img src="./images/hero-source-alt.png" alt="" width="340" height="240" loading="lazy" />
+        </li>
+        <li class="project-card">
+          <div class="project-meta"><span class="project-num">02</span><span class="project-tag">Civic</span></div>
+          <span class="project-name">School envelope repair</span>
+          <img src="./images/hero-source.png" alt="" width="340" height="240" loading="lazy" />
+        </li>
+        <li class="project-card">
+          <div class="project-meta"><span class="project-num">03</span><span class="project-tag">Industrial</span></div>
+          <span class="project-name">Warehouse change-of-use</span>
+          <img src="./images/hero-source-alt.png" alt="" width="340" height="240" loading="lazy" />
+        </li>
+      </ul>
+      <div class="pager">
+        <button class="pager-btn" type="button" aria-label="Previous project">
+          <svg class="arrow-svg" viewBox="0 0 18 18" aria-hidden="true" style="transform:rotate(180deg)"><path d="M3 9h11M9 4l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" /></svg>
+        </button>
+        <button class="pager-btn" type="button" aria-label="Next project">
+          <svg class="arrow-svg" viewBox="0 0 18 18" aria-hidden="true"><path d="M3 9h11M9 4l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" /></svg>
+        </button>
+      </div>
+      <a class="roll cta compact" href="#work">
+        <span class="roll-stack">
+          <span class="label outgoing">Browse all work</span>
+          <span class="label incoming" aria-hidden="true">Browse all work</span>
+        </span>
+      </a>
+    </section>
+
+    <!-- Testimonials carousel (opaque white) -->
+    <section class="testimonials" id="voices" aria-labelledby="voicesTitle">
+      <div class="section-kicker-row">
+        <p class="kicker">Testimonials</p>
+        <span class="sec-tag">[BPG.3]</span>
+      </div>
+      <h2 class="sr-only" id="voicesTitle">Client voices</h2>
+      <div class="testi-grid">
+        <div class="testi-left">
+          <p class="testi-client" id="testiClient">Meridian Bank</p>
+          <div class="testi-arrows">
+            <button class="testi-arrow" id="testiPrev" type="button" aria-label="Previous testimonial">
+              <svg viewBox="0 0 18 18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 15V3M4.5 7.5L9 3l4.5 4.5" /></svg>
+            </button>
+            <button class="testi-arrow" id="testiNext" type="button" aria-label="Next testimonial">
+              <svg viewBox="0 0 18 18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3v12M4.5 10.5L9 15l4.5-4.5" /></svg>
+            </button>
+          </div>
+        </div>
+        <blockquote class="testi-quote" id="testiQuote">&ldquo;Working with Bluestone feels like adding a permit department to our own staff &mdash; submissions land complete and approvals stop being a surprise.&rdquo;</blockquote>
+      </div>
+      <div class="testi-meta">
+        <span class="testi-count" id="testiCount">01 / 03</span>
+        <p class="testi-who" id="testiWho">R. Alvarez, VP Operations<br />Meridian Bank</p>
+      </div>
+    </section>
+
+    <section class="articles section-bone" id="notes" aria-labelledby="notesTitle">
+      <div class="articles-kicker-row">
+        <p class="kicker">Latest news</p>
+        <a class="roll cta-link" href="#notes">
+          <span class="roll-stack">
+            <span class="label outgoing">[ View all news &rarr; ]</span>
+            <span class="label incoming" aria-hidden="true">[ View all news &rarr; ]</span>
+          </span>
+        </a>
+      </div>
+      <h2 class="sr-only" id="notesTitle">Field notes</h2>
+      <div class="articles-grid">
+        <div class="articles-media">
+          <img src="./images/hero-source.png" alt="" width="697" height="650" loading="lazy" />
+        </div>
+        <ul class="article-cards">
+          <li><a class="article-card is-filled" href="#notes"><span class="tag">Builders</span><h3>Why small projects stall in review, and how to keep yours moving</h3></a></li>
+          <li><a class="article-card" href="#notes"><span class="tag">Designers</span><h3>Drawing sets that survive first-round reviewer comments</h3></a></li>
+          <li><a class="article-card" href="#notes"><span class="card-date">05.01</span><span class="tag">Owners</span><h3>A plain-language guide to zoning questions before you sign a lease</h3></a></li>
+          <li><a class="article-card" href="#notes"><span class="card-date">04.26</span><span class="tag">Boards</span><h3>Scheduling inspections around the crew, not against it</h3></a></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" id="contact" aria-labelledby="footerTitle">
+    <h2 class="sr-only" id="footerTitle">Contact</h2>
+    <div class="footer-grid">
+      <div class="footer-reticle">
+        <svg viewBox="0 0 440 440" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="30"><circle cx="220" cy="220" r="190" /><path d="M220 0v440M0 220h440" /></svg>
+      </div>
+      <div class="footer-right">
+        <div class="footer-cols">
+          <ul class="footer-col">
+            <li><a class="link" href="#practice">Practice</a></li>
+            <li><a class="link" href="#method">Method</a></li>
+            <li><a class="link" href="#work">Work</a></li>
+            <li><a class="link" href="#notes">Notes</a></li>
+          </ul>
+          <ul class="footer-col">
+            <li><a class="link" href="#voices">Careers</a></li>
+            <li><a class="link" href="#notes">News</a></li>
+            <li><a class="link" href="#contact">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer-mid">
+          <a class="link footer-faq" href="#notes">FAQ</a>
+          <div class="footer-touch">
+            <p class="touch-line"><span class="touch-label">Stay in touch</span><span class="touch-sep">|</span><a class="link" href="tel:+10000000000">(000) 000-0000</a></p>
+            <form class="newsletter" action="#" method="get" onsubmit="return false">
+              <input type="email" name="email" placeholder="Your email.." aria-label="Email address" autocomplete="email" />
+              <button type="submit" aria-label="Subscribe">
+                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12h17M14 5.5L20.5 12 14 18.5" /></svg>
+              </button>
+            </form>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <ul class="footer-col">
+            <li><a class="link" href="#contact">Facebook</a></li>
+            <li><a class="link" href="#contact">Instagram</a></li>
+            <li><a class="link" href="#contact">LinkedIn</a></li>
+            <li><a class="link" href="#contact">X</a></li>
+          </ul>
+          <ul class="footer-col">
+            <li><a class="link" href="#contact">Privacy policy</a></li>
+            <li><a class="link" href="#contact">Terms and conditions</a></li>
+            <li><a class="link" href="#top">Made by Bluestone</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <p class="copyright">&copy; 2026. Bluestone Permits Group, LLC. All rights reserved. Fictional demo identity.</p>
+  </footer>
+
+  <!-- Thin custom scrollbar synced to Lenis-lite progress -->
+  <div class="scrollbar" aria-hidden="true"><span class="scrollbar-thumb"></span></div>
+
+  <script type="module" src="./scripts/main.mjs"></script>
+</body>
+</html>

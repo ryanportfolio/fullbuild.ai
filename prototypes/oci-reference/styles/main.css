@@ -1,0 +1,233 @@
+@import "./tokens.css";
+@import "./layout.css";
+@import "./motion.css";
+
+/* Fonts — OFL substitutes staged in prep/ (PROVENANCE.md; contract Assets table) */
+@font-face {
+  font-family: "Instrument Sans";
+  src: url("../fonts/instrumentsans/InstrumentSans[wdth,wght].ttf") format("truetype");
+  font-weight: 100 900;
+  font-stretch: 75% 100%;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Instrument Sans";
+  src: url("../fonts/instrumentsans/InstrumentSans-Italic[wdth,wght].ttf") format("truetype");
+  font-weight: 100 900;
+  font-stretch: 75% 100%;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("../fonts/ibmplexmono/IBMPlexMono-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("../fonts/ibmplexmono/IBMPlexMono-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------- Type utilities ---------- */
+.display {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: var(--font-size-display);
+  line-height: var(--font-size-display-leading);
+  letter-spacing: -0.02em;
+  margin: 0;
+  text-transform: none;
+}
+.kicker {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-mono-small);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+/* ---------- Nav ---------- */
+.nav-col a { text-decoration: none; }
+.menu-btn {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-mono-small);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.menu-btn .label-close { display: none; }
+html.menu-open .menu-btn .label-open { display: none; }
+html.menu-open .menu-btn .label-close { display: inline; }
+
+/* ---------- Menu overlay ---------- */
+.menu-panel {
+  position: fixed;
+  top: 65px; right: 15px; bottom: 15px; /* ref card inset y65-885, x728-1425 @1440 (r9-iter6 probe) */
+  width: min(697px, calc(100vw - 30px));
+  background: var(--color-white);
+  color: var(--color-blue);
+  z-index: 900;
+  padding: 50px 24px 25px; /* big links start viewport y115 (ref 115.8) */
+  visibility: hidden;
+}
+html.menu-open .menu-panel { visibility: visible; }
+.menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.menu-link {
+  display: block;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: clamp(2rem, 3.2vw, 46px); /* ref 46px @1440 */
+  line-height: 1.2; /* 55.2px measured line box */
+  text-decoration: none;
+  color: var(--color-blue);
+}
+/* Menu info rows (ref g7-menu-open: COMPANY / STAY IN TOUCH / email field) */
+.menu-info { margin-top: 110px; }
+.menu-info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 0; /* ref right column starts at card midline x1076.3 (iter6 probe) */
+  border-top: var(--rule-hairline);
+  padding: 14px 0 34px;
+}
+.menu-info-label {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-mono-small);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.menu-info-col {
+  list-style: none;
+  margin: 0; padding: 0;
+  font-size: 13.5px; /* ref small text 13.5/18.2 line boxes */
+  line-height: 1.35;
+}
+.menu-info-col p { margin: 0 0 10px; }
+.menu-panel .link { text-decoration: none; } /* ref menu links carry no underline */
+.menu-newsletter {
+  max-width: none;
+  margin-top: 26px;
+  border-top: var(--rule-hairline); /* ref rule ~y781 above the field */
+  padding-top: 18px;
+}
+.menu-newsletter input { padding: 20px 44px 20px 15px; } /* ref field h 60, y800-860 */
+.menu-newsletter input { border-color: var(--color-blue); color: var(--color-blue); caret-color: var(--color-blue); }
+.menu-newsletter input::placeholder { color: var(--color-blue); }
+.menu-newsletter button { color: var(--color-blue); }
+
+/* ---------- Hero ---------- */
+.hero-title-line { color: var(--color-white); display: block; }
+.hero-tag {
+  font-size: clamp(1rem, 1.4vw, 1.25rem);
+  line-height: 1.35;
+  color: var(--color-white);
+}
+.hero-tag .seed { display: block; }
+
+/* ---------- Services ---------- */
+.services-title { color: var(--color-blue); }
+.media-caption {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-micro);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-blue);
+}
+.acc-item { border-top: var(--rule-hairline); }
+.acc-row {
+  width: 100%;
+  min-height: var(--row-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: var(--color-blue);
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: var(--font-size-accordion);
+  line-height: 1;
+  text-align: left;
+  transition: background-color var(--duration-fast) var(--ease-default);
+}
+.acc-icon { flex: none; width: 18px; height: 18px; margin-left: 15px; }
+/* Ref panel body: mono uppercase, indented to the right half of the row (04-services-ref) */
+.acc-body { padding: 0 60px 45px 51%; }
+.acc-body p {
+  margin: 0 0 25px;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-mono-small);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.55;
+}
+.learn-more {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-mono);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-blue);
+  text-decoration: none;
+}
+
+/* Roll CTA fill states: outgoing blue/bone, incoming white bg/blue text (gap-captures.json).
+   Services CTA is a full-column-width bar (probe-services-cta). */
+.cta {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  margin-top: 15px;
+  padding: var(--cta-pad-block) var(--cta-pad-inline);
+  background: var(--color-blue);
+  color: var(--color-bone);
+  border-radius: var(--radius-0);
+  box-shadow: var(--shadow-none);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-mono);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+.cta.compact { width: auto; display: inline-flex; padding: 14px 24px; }
+/* Ref roll (r9-iter6 g6-roll-f1-ref): incoming label is a FULL-BUTTON white bar
+   sliding up inside the blue fill — at settle it covers the whole CTA (white bg,
+   blue text). Anchor it to the button box, not the text-sized stack. */
+.cta .roll-stack { position: static; }
+.cta .label.incoming {
+  background: var(--color-white);
+  color: var(--color-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------- Process ---------- */
+.process-title { color: var(--color-blue); }
+.step-num { letter-spacing: 0.02em; }
+
+/* ---------- Projects ---------- */
+.projects-title { color: var(--color-blue); }
+.project-num { letter-spacing: 0.05em; }
+.arrow-svg { width: 18px; height: 18px; }
+
+/* ---------- Footer ---------- */
+.footer-col a {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-mono-small);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-bone);
+  text-decoration: none;
+}
