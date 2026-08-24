@@ -241,7 +241,18 @@ test('the race library CTA counts a real prestart down to the gun', async () => 
      waits, and fails if the animation clock moved. A source grep cannot do
      that and this comment is here so nobody thinks it did. */
   assert.match(bridge, /useReplay\.getState\(\)\.frozen/);
-  assert.match(bridge, /useReplay\.subscribe\(\(state\) => \{\s*applyFrozen\(state\.frozen\);/);
+  /* Pinned WITH its guard, because the guard is load bearing. This store
+     carries no subscribeWithSelector, so a plain subscribe fires on every
+     set(), and LaylineScene advances the replay clock inside useFrame:
+     unguarded, this listener ran once per rendered frame, measured at 500 calls
+     over 500 frames, each one forcing layout and walking the subtree's
+     animations, with the board off screen and its gate shut. Drop the
+     comparison and the board pays that cost again with every other gate still
+     green, so the comparison is what this asserts, not just the subscribe. */
+  assert.match(
+    bridge,
+    /useReplay\.subscribe\(\(state\) => \{\s*if \(state\.frozen !== frozen\) applyFrozen\(state\.frozen\);/,
+  );
   assert.match(bridge, /root\.setAttribute\("data-frozen", "1"\)/);
 
   /* ONE OWNER FOR PAUSE AND RESUME, and it is the Web Animations API. Blink

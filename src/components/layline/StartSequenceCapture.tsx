@@ -207,8 +207,16 @@ export function StartSequenceCapture() {
       applyState();
     };
     applyFrozen(frozen);
+    /* The guard is the whole point of this line. This store is not wrapped in
+       subscribeWithSelector, so a plain subscribe has no selector and the
+       listener runs on every set(); LaylineScene advances the replay clock
+       inside useFrame, so that is every rendered frame. Unguarded, applyFrozen
+       ran 500 times over 500 frames, 100 a second on a 100Hz panel, each one
+       forcing layout through offsetHeight and walking the subtree's animation
+       set, and it kept doing it with the board off screen and the gate shut.
+       That is the exact cost the gate exists to avoid. */
     const unwatch = useReplay.subscribe((state) => {
-      applyFrozen(state.frozen);
+      if (state.frozen !== frozen) applyFrozen(state.frozen);
     });
 
     const readRows = (phaseMs: number, isBase: boolean): StartSequenceRow[] =>
