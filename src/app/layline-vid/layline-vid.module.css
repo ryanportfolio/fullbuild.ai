@@ -1,0 +1,327 @@
+/* ============================================================================
+   E-02 · LAYLINE TAPE, page contract.
+
+   The sheet lives inside The Working Set's binding contract (globals.css) and
+   adds only the strip-chart transport on top of it, the same instrument E-01
+   is played on:
+
+   - Inks: the chart plots in graphite; the not-yet-played envelope stands in
+     the RULE token (declared line ink, never opacity on an ink). The pen is
+     graphite and is the chart's only full-height stroke. No revision-red on
+     this sheet: nothing here is a live production link, so nothing earns it.
+   - The waveform is a plot of measured data (peaks.json, 516 half-second bins
+     of the tape's own audio); the minute ruling and scale note under it are
+     the plot's real axis. Nothing on the chart is decorative.
+   - No gradients, no blur, no glassmorphism. The video plate sits in a drawn
+     frame like every other figure in the set.
+   - Margin Law: the sheet ends at the rail. Below 900px the rail is a bottom
+     overlay and the sheet clears it with padding, as Sheet.module.css does.
+   - Motion: the pen and re-ink track playback (content, not ornament); the
+     only transition is the preview card's appearance, and reduced motion
+     collapses it via the global rule.
+   ========================================================================= */
+
+.page {
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: var(--sheet-margin);
+  display: flex;
+}
+
+@media (min-width: 901px) {
+  .page {
+    padding-right: calc(var(--rail-w) + var(--sheet-margin));
+  }
+}
+
+@media (max-width: 900px) {
+  .page {
+    padding-bottom: clamp(3rem, 12vh, 7rem);
+  }
+}
+
+.frame {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--rule-strong);
+  padding: clamp(1rem, 2.5vw, 2rem);
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(0.75rem, 2vw, 1.75rem);
+  padding-bottom: 0.85rem;
+  margin-bottom: clamp(1rem, 3vh, 2rem);
+  border-bottom: 1px solid var(--rule);
+}
+
+.headNo {
+  font-size: 0.7rem;
+  color: var(--ink-witness);
+  white-space: nowrap;
+}
+
+/* The sheet's name, carried on the head band as an h1: the heading element
+   for the outline, the annotation voice for the drawing. */
+.headFacts {
+  margin-left: auto;
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--ink-witness);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ---- player ---------------------------------------------------------------- */
+
+.player {
+  display: flex;
+  flex-direction: column;
+  /* The capture's own ground: the dark bench the recorded screens sit on
+     while frames arrive. Declared once so the ground is auditable, and NOT a
+     theme token on purpose: the recording's pixels do not invert with the
+     table. */
+  --capture-bench: #101010;
+}
+
+.player:fullscreen {
+  background: var(--ground);
+  padding: clamp(1rem, 2.5vw, 2rem);
+  overflow: auto;
+}
+
+.stage {
+  position: relative;
+}
+
+.video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  display: block;
+  border: 1px solid var(--rule-strong);
+  background: var(--capture-bench);
+}
+
+.player[data-enhanced] .video {
+  cursor: var(--house-cursor);
+}
+
+.plate {
+  margin-top: 0.5rem;
+  font-size: 0.62rem;
+  color: var(--ink-witness);
+}
+
+/* a fact group never breaks internally; wraps land between groups */
+.plateSeg {
+  white-space: nowrap;
+}
+
+/* Pause-state affordance: a drawn chip on the plate's frame, in the ground's
+   own paper so it holds an edge over any recorded pixel. Pointer-events off;
+   the whole plate is the button. */
+.playChip {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 2.4rem;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.68rem;
+  color: var(--ink-graphite);
+  background: var(--ground);
+  border: 1px solid var(--rule-strong);
+  pointer-events: none;
+}
+
+/* ---- chrome (hidden until hydration; native controls carry the floor) ----- */
+
+.chrome {
+  display: none;
+}
+
+.player[data-enhanced] .chrome {
+  display: block;
+  margin-top: clamp(0.75rem, 2vh, 1.25rem);
+}
+
+.deck {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.6rem, 1.5vw, 1rem);
+  margin-bottom: 0.6rem;
+}
+
+.transport {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 1px solid var(--rule-strong);
+  background: transparent;
+  color: var(--ink-graphite);
+}
+
+.transport svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.transport:hover {
+  border-color: var(--ink-graphite);
+}
+
+.timecode {
+  font-size: 0.78rem;
+  color: var(--ink-graphite);
+  min-width: 11.5ch;
+  white-space: nowrap;
+}
+
+/* the frame readout takes the slack the station readout carries on E-01, so
+   the mute and fullscreen marks stay pinned to the deck's right edge */
+.frameCount {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.62rem;
+  color: var(--ink-witness);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- the strip chart ------------------------------------------------------- */
+
+.chartBlock {
+  position: relative;
+}
+
+.chart {
+  position: relative;
+  border: 1px solid var(--rule-strong);
+}
+
+.wave {
+  width: 100%;
+  height: clamp(3.4rem, 9vh, 5rem);
+  display: block;
+}
+
+.waveBase {
+  stroke: var(--rule);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+/* The whole recording standing by in the RULE ink (a declared line token, so
+   composited contrast stays knowable) and the played reach re-inked to full
+   graphite: pencil first, then ink, the way a chart is traced. */
+.waveRest {
+  fill: var(--rule-strong);
+}
+
+.waveInked {
+  fill: var(--ink-graphite);
+}
+
+.pen line {
+  stroke: var(--ink-graphite);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+/* the scrub input owns pointer + keys + AT; drawn layers stay quiet */
+.scrub {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  margin: 0;
+  cursor: var(--house-cursor);
+}
+
+.previewCard {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.previewThumb {
+  width: 160px;
+  height: 90px;
+  border: 1px solid var(--rule-strong);
+  background-color: var(--capture-bench);
+  background-repeat: no-repeat;
+}
+
+.previewCard span {
+  font-size: 0.62rem;
+  color: var(--ink-graphite);
+  background: var(--ground);
+  padding: 0.1rem 0.35rem;
+  border: 1px solid var(--rule);
+  white-space: nowrap;
+}
+
+/* Minute ruling under the chart: the plot's time axis, in the measured voice.
+   The tape runs four minutes, so every minute carries its label without any
+   risk of two labels colliding. */
+.ruler {
+  position: relative;
+  height: 1.05rem;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  color: var(--ink-witness);
+}
+
+.rulerTick {
+  position: absolute;
+  top: 0;
+  padding-top: 0.3rem;
+  transform: translateX(-50%);
+  border-top: none;
+}
+
+.rulerTick::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 1px;
+  height: 0.34rem;
+  background: var(--rule-strong);
+}
+
+/* The plot's scale, on its own line under the ruling, so it cannot overprint
+   a minute label at any width, and it ships on mobile too. */
+.rulerScale {
+  margin-top: 0.1rem;
+  text-align: right;
+  font-size: 0.55rem;
+  color: var(--ink-witness);
+}
+
+@media (max-width: 700px) {
+  /* The deck wraps: the three drawn controls hold ONE line with the timecode,
+     and the frame readout stands alone on a full-width line beneath. */
+  .deck {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .timecode {
+    font-size: 0.7rem;
+    min-width: 0;
+  }
+  .frameCount {
+    order: 1;
+    flex-basis: 100%;
+  }
+}
