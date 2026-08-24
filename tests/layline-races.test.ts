@@ -27,7 +27,7 @@ import {
 } from "../src/lib/layline/analytics";
 import { legAt, poseAt, windAt } from "../src/lib/layline/interpolate";
 import { startReport } from "../src/lib/layline/analyst/tools";
-import { clock, knots } from "../src/lib/layline/format";
+import { MISSING, clock, knots, seconds } from "../src/lib/layline/format";
 import { DEFAULT_RACE_ID, RACES, isRaceId, raceMeta } from "../src/lib/layline/races";
 import { SUGGESTED_QUESTIONS, parseChips } from "../src/lib/layline/analyst/protocol";
 import { FIX_HZ, PROGRESS_HZ, RACE_SEED } from "../src/lib/layline/types";
@@ -424,6 +424,86 @@ test("the registry ships three races with the shipped race first", () => {
   assert.equal(isRaceId("no-such-race"), false);
   assert.equal(isRaceId(String(RACE_SEED)), false, "a raw seed is not a race id");
   assert.equal(raceMeta("no-such-race"), undefined);
+});
+
+test("every shipped race opens its prestart ten seconds before the gun", async () => {
+  /* The sequence board on the story page is a 30s loop carrying three 10s
+     prestarts, its odometers are eleven rungs tall, and its
+     animation-timing-function is a hardcoded steps(10, end). None of that is
+     read off the race at run time, so a fourth race opening anywhere but -10
+     has to fail here rather than walk its own digits out of step with its own
+     clock on a page nobody is watching that closely. */
+  const { raceFor } = await import("../src/lib/layline/analyst/data");
+  for (const meta of RACES) {
+    const race = raceFor(meta.id);
+    assert.ok(race !== null, `${meta.id} is not in the registry`);
+    assert.equal(race.tMin, -10, `${meta.id} does not open ten seconds out`);
+  }
+});
+
+test("a start line margin reads in hundredths, not as another 0:00", () => {
+  /* clock() rounds all three first crossings to 0:00, so the best number on
+     the board had no formatter to cross and the doctrine says every numeral
+     crosses exactly one. seconds() is that formatter. It returns a bare figure
+     like the rest of them: the + is a sign the cell prints, the way gap() does. */
+  const margins = RACES.map((meta) => {
+    const first = briefFacts(generateRace(meta.seed)).first;
+    assert.ok(first !== null, `${meta.id} has no first crossing`);
+    assert.equal(clock(first.t), "0:00", `${meta.id} no longer needs the second decimal`);
+    return seconds(first.t);
+  });
+  assert.deepEqual(margins, ["0.15", "0.10", "0.23"]);
+  /* Negative zero is normalised and a non-finite value is MISSING, the two
+     rules every other formatter in that file keeps. */
+  assert.equal(seconds(-0.001), "0.00");
+  assert.equal(seconds(Number.NaN), MISSING);
+  assert.equal(seconds(Number.POSITIVE_INFINITY), MISSING);
+});
+
+test("a board row's spoken label is a sentence and never ends in a period", async () => {
+  /* The .mjs suite can only see the token `aria-label={row.label}`, so it can
+     never see the string a screen reader is handed. This builds the same string
+     the component builds, from the same registry and the same formatter, and
+     pins the template it was built from so the two cannot drift apart in
+     silence. */
+  const source = readFileSync("src/components/layline/StartSequence.tsx", "utf8");
+  const template =
+    "label: `${meta.name}, ${meta.venue}, ${meta.dateLabel}${crossing}, open in the race library`,";
+  assert.ok(
+    source.includes(template),
+    "StartSequence.tsx no longer builds the row label the way this test does",
+  );
+  assert.ok(
+    source.includes(
+      ": `, first across the line ${first.sail} at plus ${seconds(first.t)} seconds`;",
+    ),
+    "StartSequence.tsx no longer builds the crossing clause the way this test does",
+  );
+
+  const { raceFor } = await import("../src/lib/layline/analyst/data");
+  const labels = RACES.map((meta) => {
+    const race = raceFor(meta.id);
+    assert.ok(race !== null, `${meta.id} is not in the registry`);
+    const first = briefFacts(race).first;
+    const crossing =
+      first === null
+        ? ""
+        : `, first across the line ${first.sail} at plus ${seconds(first.t)} seconds`;
+    return `${meta.name}, ${meta.venue}, ${meta.dateLabel}${crossing}, open in the race library`;
+  });
+
+  assert.equal(labels.length, RACES.length);
+  for (const label of labels) {
+    /* Display text on this route carries no terminal period, and the label is
+       display text a screen reader speaks rather than a sentence in prose. */
+    assert.doesNotMatch(label, /\.\s*$/, `${label} ends in a period`);
+    assert.match(label, /open in the race library$/);
+    assert.doesNotMatch(label, /undefined|NaN|\[object/);
+  }
+  assert.equal(
+    labels[0],
+    "Summer fleet race, Long Beach, 26 Jul 2028, first across the line JPN 18 at plus 0.15 seconds, open in the race library",
+  );
 });
 
 test("race workspace preferences filter stale ids and clamp stored widths", () => {
