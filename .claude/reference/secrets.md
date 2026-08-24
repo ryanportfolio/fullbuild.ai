@@ -15,3 +15,4 @@
 | `OPENROUTER_API_KEY` | Keys the Debrief race analyst on the layline page (OpenRouter, prepaid credits = hard spend ceiling). Unset = the Debrief section is not rendered and the analyst route answers 503 | `src/app/api/layline/analyst/route.ts`, `src/app/prototype/layline/page.tsx` |
 | `OPENROUTER_MODEL` | Optional model override for the analyst. Unset = the route default. Swappable in the dashboard without a deploy | `src/app/api/layline/analyst/route.ts` |
 | `LAYLINE_ANALYST_MOCK` | `1` makes the analyst route stream a deterministic answer computed from the real tools, no network. Dev and tests only, never set in prod | `src/app/api/layline/analyst/route.ts`, `src/app/prototype/layline/page.tsx` |
+| `DITTO_API_KEY` | Ditto capture/clone API. Evaluated and dropped: honors robots.txt so target reference sites refuse, and output added nothing over Playwright forensics. Key remains in user env; unused | nothing. Name documented only |
