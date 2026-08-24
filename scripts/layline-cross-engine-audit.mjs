@@ -26,7 +26,7 @@ import { readFile } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
-import { chromium } from "playwright";
+import { launchPlacedChrome } from "./lib/launch-chrome.mjs";
 
 const ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
 /* Gitignored: these are build output, regenerated on every run. */
@@ -209,13 +209,9 @@ const { fingerprint } = await import(pathToFileURL(join(OUT, "fingerprint.js")).
 
 /* Headed, per the repo's browser rule: headless renders through SwiftShader on
    the CPU, and channel Chrome is the engine visitors actually run, which is
-   the engine whose Math this audit exists to compare. */
-let browser;
-try {
-  browser = await chromium.launch({ headless: false, channel: "chrome" });
-} catch {
-  browser = await chromium.launch({ headless: false });
-}
+   the engine whose Math this audit exists to compare. launchPlacedChrome puts
+   that window on a display the operator is not using and returns the keyboard. */
+const browser = await launchPlacedChrome();
 const page = await browser.newPage();
 await page.route(`${ORIGIN}/**`, async (route) => {
   const path = new URL(route.request().url()).pathname.replace(/^\//, "");
