@@ -214,12 +214,14 @@ test('the race library CTA counts a real prestart down to the gun', async () => 
     assert.ok(!/[.]["`]\}?$/.test(label), `${label} ends in a period`);
   }
 
-  /* Three rows and the count in the lead are the registry's own length, so a
-     fourth race is announced by shipping it rather than by remembering to edit
-     a number, the same rule the top bar's label keeps. */
+  /* The rows are the registry's own length, so a fourth race is announced by
+     shipping it rather than by remembering to edit a number, the same rule the
+     top bar's label keeps. The standfirst that used to print {RACES.length} is
+     gone, and it was the only place the count was written down, so this now
+     asserts the board states no count at all: the stronger form of the rule,
+     and the one that stays true if prose comes back. */
   assert.match(board, /RACES\.map\(/);
-  assert.match(board, /\{RACES\.length\} seeded races/);
-  assert.doesNotMatch(board, /\d seeded races/);
+  assert.doesNotMatch(board, /\d+ (?:seeded )?races/);
 
   /* Every numeral on the board crosses exactly one formatter. The margin needed
      one that did not exist, so format.ts grew it instead of the component
