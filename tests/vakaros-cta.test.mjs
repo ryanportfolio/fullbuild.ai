@@ -21,6 +21,20 @@ test('the title block stands down on the tape sheet, and only there', async () =
   assert.match(block, /REV \{rev\}/);
 });
 
+test('the margin symbol points at the CTA on the tape sheet, north everywhere else', async () => {
+  const block = await read('src/components/chrome/TitleBlock.tsx');
+
+  // the pointing arrow is its own path, never a rotation of the north arrow,
+  // and it is handed to the symbol only on the one route
+  assert.match(block, /const MARGIN_DOWN = 'M12 4 L12 20 L8 16 M12 20 L16 16';/);
+  assert.match(block, /<MarginSymbol down=\{onLaylineVid\} \/>/);
+  // the set's four drafting symbols are untouched, north arrow included
+  assert.match(block, /1: 'M12 20 L12 4 L8 8 M12 4 L16 8'/);
+  assert.equal((block.match(/MARGIN_SYMBOLS: Record<PipelineState, string>/g) ?? []).length, 1);
+  // server-rendered, so no-JS gets the pointing mark and hydration flips nothing
+  assert.match(block, /d=\{down \? MARGIN_DOWN : MARGIN_SYMBOLS\[1\]\}/);
+});
+
 test('the CTA points at the race replay and says what it is', async () => {
   const cta = await read('src/components/chrome/VakarosCta.tsx');
 

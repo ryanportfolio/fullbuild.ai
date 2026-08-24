@@ -68,6 +68,13 @@ const ANCHORS = ['state-01', 'state-02', 'state-03', 'state-04'] as const;
  * morph maps subpath to subpath: north arrow (01, orientation), section marker
  * (02, cutting through the design), detail bubble (03, zooming into the build),
  * revision delta (04, issued). MorphSVG 'rotational' keeps the turn honest.
+ *
+ * DOWN is a different job, and it is why it is a different path rather than a
+ * rotation of the north arrow: on the E-02 tape sheet the margin carries no
+ * pipeline state to orient, and the one thing under it is the address the
+ * sheet exists to hand over. The arrow points at it. Every sheet that does
+ * carry a state keeps the north arrow, so the drafting symbol never means two
+ * things at once.
  */
 const MARGIN_SYMBOLS: Record<PipelineState, string> = {
   1: 'M12 20 L12 4 L8 8 M12 4 L16 8',
@@ -76,13 +83,23 @@ const MARGIN_SYMBOLS: Record<PipelineState, string> = {
   4: 'M12 4 L21 20 L3 20 Z M12 12 L12 16',
 };
 
-function MarginSymbol() {
+/** Same silhouette, same two subpaths, pointing at the block below it. */
+const MARGIN_DOWN = 'M12 4 L12 20 L8 16 M12 20 L16 16';
+
+function MarginSymbol({ down }: { down?: boolean }) {
   const state = useWorkingSet((s) => s.state);
   const ref = useRef<SVGPathElement>(null);
   const prev = useRef<PipelineState | null>(null);
   useLayoutEffect(() => {
     const el = ref.current;
-    if (!el || prev.current === state) return;
+    if (!el) return;
+    // The pointing arrow has nothing to morph between: it is the sheet's one
+    // mark, so it is set outright and the state subscription is idle.
+    if (down) {
+      el.setAttribute('d', MARGIN_DOWN);
+      return;
+    }
+    if (prev.current === state) return;
     const first = prev.current === null;
     prev.current = state;
     const d = MARGIN_SYMBOLS[state];
@@ -99,12 +116,14 @@ function MarginSymbol() {
       tween.kill();
       el.setAttribute('d', d);
     };
-  }, [state]);
+  }, [state, down]);
   return (
     <svg className={styles.marginSymbol} viewBox="0 0 24 24" aria-hidden="true">
+      {/* the server draws the mark this sheet ends on, so no-JS gets it and
+          hydration has nothing to flip */}
       <path
         ref={ref}
-        d={MARGIN_SYMBOLS[1]}
+        d={down ? MARGIN_DOWN : MARGIN_SYMBOLS[1]}
         fill="none"
         stroke="currentColor"
         strokeWidth="1.2"
@@ -332,7 +351,7 @@ export default function TitleBlock({
 
       {/* the margin's one symbol, redrawn per discipline (state) */}
       <div className={styles.marginSymbolRow} aria-hidden="true">
-        <MarginSymbol />
+        <MarginSymbol down={onLaylineVid} />
       </div>
 
       {/* Carriage telemetry — live readout of the one instrument. PenCarriage
