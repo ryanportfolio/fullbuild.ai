@@ -89,6 +89,195 @@ test('Layline stylesheet keeps the house rules', async () => {
   assert.doesNotMatch(styles, /linear-gradient|radial-gradient|backdrop-filter/);
 });
 
+test('the race library CTA counts a real prestart down to the gun', async () => {
+  const [page, board, bridge, css, format] = await Promise.all([
+    read('src/app/prototype/layline/page.tsx'),
+    read('src/components/layline/StartSequence.tsx'),
+    read('src/components/layline/StartSequenceCapture.tsx'),
+    read('src/components/layline/StartSequence.module.css'),
+    read('src/lib/layline/format.ts'),
+  ]);
+
+  /* The board closes the document, under the notes it answers: a reader who has
+     been told what was built is the one being asked to open a race. It has to
+     be inside <main> as well as last, because PageGround is fixed at z-index 0
+     inside the shell and only .prototypeBar, .statusBanner, .main and .colophon
+     are lifted over it. A static sibling of <main> paints underneath the page
+     ground and nobody sees the countdown at all. */
+  const main = page.match(/<main className=\{styles\.main\}>([\s\S]*?)<\/main>/);
+  assert.ok(main !== null, 'the page lost the main element the board lives in');
+  assert.match(main[1], /<StartSequence \/>/);
+  assert.ok(
+    main[1].lastIndexOf('<StartSequence />') > main[1].lastIndexOf('<NotesSection'),
+    'the board moved off the end of main, above the notes section',
+  );
+
+  /* The bar's own way through to the library is not what this section replaced,
+     and the count in it still comes off the registry. */
+  assert.match(page, /href="\/prototype\/layline\/races"/);
+  assert.doesNotMatch(page, /Race library \/\/ \d+ races/);
+
+  /* The one gradient on this layer, and the reason the section carries its own
+     stylesheet: layline.module.css is asserted gradient free above and stays
+     that way. */
+  assert.equal((css.match(/linear-gradient/g) ?? []).length, 1);
+  assert.doesNotMatch(css, /radial-gradient|backdrop-filter|box-shadow/);
+
+  /* Nothing here is rounded and nothing takes the browser hand, the same call
+     every other surface on this route already made.
+
+     Comments come out first so this and the steps count below both measure
+     declarations rather than prose. The stylesheet explains its own timing at
+     length and a comment that quotes a property to say why the section avoids
+     it would otherwise fail the assertion that it avoids it. */
+  const withoutComments = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.doesNotMatch(withoutComments, /border-radius/);
+  assert.doesNotMatch(css, /cursor:\s*pointer/);
+  assert.match(css, /cursor: var\(--house-cursor\)/);
+
+  /* The odometer steps a fixed ten rungs on both columns. Every shipped race
+     opens at -10, which tests/layline-races.test.ts pins on the built race
+     rather than on this text. steps(var(--steps), end) would let a race with a
+     different prestart walk its digits out of step with its own clock and say
+     nothing about it.
+
+     Counted on declarations, not on prose, the same way the border-radius call
+     above it is: the cdClock comment names steps(10, end) to explain why the
+     rearm cut is steps(1, end) instead, and a raw text count read that comment
+     as a third column. */
+  assert.equal((withoutComments.match(/steps\(10, end\)/g) ?? []).length, 2);
+  assert.doesNotMatch(css, /steps\(var\(/);
+
+  /* Both odometers cut back to their first rung when the flag starts rising,
+     not when the cycle wraps 400ms later, or the board paints a fired clock
+     over an armed row. The cut is a jump rather than a rewind because the
+     element's own steps(10, end) would otherwise walk the stack backwards
+     through ten rungs and run the count in reverse. StartSequenceCapture's
+     REARM_MS reads the same 98.6667% off the far side of this. */
+  for (const name of ['cdClock', 'cdWind']) {
+    const frames = withoutComments.match(new RegExp(`@keyframes ${name}\\s*\\{(?:[^}]*\\}){4}`));
+    assert.ok(frames, `${name} keyframes not found`);
+    assert.match(frames[0], /33\.3333% \{\s*animation-timing-function: steps\(1, end\);/);
+    assert.match(frames[0], /98\.6667% \{\s*transform: translateY\(0\);/);
+  }
+
+  /* Reduced motion is stated here rather than left to the shell's global
+     collapse, which is a safety net and not the mechanism. */
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
+
+  /* THE STILL BOARD IS THE POSTER FRAME, NOT THREE ZEROS. The base rules under
+     every animation used to draw all three rows fired, so the unhydrated first
+     paint, the reduced-motion board and hold("static") all showed the same dim
+     0:00 three times, in a section whose whole premise is a clock that counts.
+     One row is now armed at its last second instead, and which row that is is
+     stated in the server markup rather than inferred, so the still picture and
+     the lastSecond beat are the same picture.
+
+     This assertion replaces the old one that pinned the fired picture. It was
+     not deleted for being wrong about the code; the code changed under it. */
+  assert.equal((board.match(/data-poster=/g) ?? []).length, 1, 'exactly one row is the poster');
+  assert.match(board, /data-poster=\{row\.poster \? "1" : undefined\}/);
+  assert.doesNotMatch(board, /^"use client"/m, 'the board is server rendered, poster attribute and all');
+  /* Rung nine of eleven is -0:01 and rung ten is 0:00, so the poster row's
+     odometers stop one rung short of their own gun. */
+  assert.match(css, /\.row\[data-poster="1"\] \.clockStack \{\s*transform: translateY\(calc\(var\(--step\) \* -9\)\);/);
+  assert.match(css, /\.row\[data-poster="1"\] \.windStack \{\s*transform: translateY\(calc\(var\(--wind-step\) \* -9\)\);/);
+  /* Its flag is still up, its fill bar is at 9400ms of a 10000ms sweep, and its
+     result has not arrived. */
+  assert.match(css, /\.row\[data-poster="1"\] \.fill \{\s*transform: scaleX\(0\.94\);/);
+  assert.match(css, /\.row\[data-poster="1"\] \.resultBody \{\s*opacity: 0;/);
+
+  /* The FIRST ACROSS column is never a hole. While a row counts, the cell
+     carries a 24px rule on the sail line's baseline, crossed out as the result
+     rises: linework, not a dash, because a dash reads as a value. */
+  assert.match(css, /\.result::before \{[\s\S]*?border-top: 1px solid var\(--rule\);/);
+  assert.match(css, /@keyframes lineOut/);
+
+  /* The board draws no focus ring of its own. The console rings every focusable
+     thing with one square registration box, and a second opinion on this layer
+     would be a row that changed shape the moment it took focus. It does run its
+     hover treatment on :focus-visible, which is the opposite point: a keyboard
+     reader gets the underline and the chevron a mouse gets. */
+  assert.doesNotMatch(css, /outline/);
+  assert.match(css, /\.row:hover \.name::after,\s*\.row:focus-visible \.name::after/);
+
+  /* The rail mark and the landmark are the same string, the rule the notes
+     section keeps two tests below this one. */
+  assert.match(board, /aria-label="Race library"[\s\S]{0,40}data-leg="Race library"/);
+
+  /* A label is display text like any other on this page, so none of them ends
+     in a period. This sees the literal labels only: `aria-label={row.label}` is
+     a token, not a string, and matching it here proves nothing about what a
+     screen reader is handed. The constructed labels are built and asserted for
+     real in tests/layline-races.test.ts, which can import the registry. */
+  for (const label of board.match(/aria-label=(?:"[^"]*"|\{[^}]*\})/g) ?? []) {
+    assert.ok(!/[.]["`]\}?$/.test(label), `${label} ends in a period`);
+  }
+
+  /* Three rows and the count in the lead are the registry's own length, so a
+     fourth race is announced by shipping it rather than by remembering to edit
+     a number, the same rule the top bar's label keeps. */
+  assert.match(board, /RACES\.map\(/);
+  assert.match(board, /\{RACES\.length\} seeded races/);
+  assert.doesNotMatch(board, /\d seeded races/);
+
+  /* Every numeral on the board crosses exactly one formatter. The margin needed
+     one that did not exist, so format.ts grew it instead of the component
+     growing a toFixed. */
+  assert.match(format, /export function seconds\(s: number\): string \{/);
+  assert.match(board, /import \{[^}]*\bseconds\b[^}]*\} from "@\/lib\/layline\/format";/);
+  assert.doesNotMatch(board, /toFixed/);
+
+  /* ONE CAPTURE AUTHORITY PER PAGE. window.__layline.freeze() holds the replay
+     clock and the rail's wake, and this board is the third loop on the route,
+     so it answers to the same switch. Without it a shot taken after freeze()
+     catches the board mid-count and two runs of one capture disagree.
+
+     READ THIS BEFORE TRUSTING THE FIVE PINS BELOW. They are structural: they
+     assert the mechanism is still wired the way it was designed, and nothing
+     more. Every one of them passed while the freeze was completely broken,
+     because the break was a Blink flag rather than a missing line. The runtime
+     behaviour is verified by capture, `node .tmp/fx-freeze.mjs`, which freezes,
+     waits, and fails if the animation clock moved. A source grep cannot do
+     that and this comment is here so nobody thinks it did. */
+  assert.match(bridge, /useReplay\.getState\(\)\.frozen/);
+  /* Pinned WITH its guard, because the guard is load bearing. This store
+     carries no subscribeWithSelector, so a plain subscribe fires on every
+     set(), and LaylineScene advances the replay clock inside useFrame:
+     unguarded, this listener ran once per rendered frame, measured at 500 calls
+     over 500 frames, each one forcing layout and walking the subtree's
+     animations, with the board off screen and its gate shut. Drop the
+     comparison and the board pays that cost again with every other gate still
+     green, so the comparison is what this asserts, not just the subscribe. */
+  assert.match(
+    bridge,
+    /useReplay\.subscribe\(\(state\) => \{\s*if \(state\.frozen !== frozen\) applyFrozen\(state\.frozen\);/,
+  );
+  assert.match(bridge, /root\.setAttribute\("data-frozen", "1"\)/);
+
+  /* ONE OWNER FOR PAUSE AND RESUME, and it is the Web Animations API. Blink
+     sets an ignore-CSS-play-state flag on a CSS animation the moment the API
+     calls play() or pause() on it, so an animation-play-state rule in the
+     stylesheet is a second opinion that stops working after the first hold()
+     and then lies about it. The rule is gone and it stays gone. */
+  assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ''), /animation-play-state/);
+  assert.match(bridge, /const paused = frozen \|\| held;/);
+  assert.match(bridge, /if \(animation\.playState !== "paused"\) animation\.pause\(\);/);
+  assert.match(bridge, /animation\.play\(\);/);
+  /* hold("static") cancels rather than pauses, because a paused animation goes
+     on supplying its own computed value over the base rules and the board ends
+     up contradicting its own info(). */
+  assert.match(bridge, /for \(const animation of animations\(\)\) animation\.cancel\(\);/);
+  /* And the visibility gate, which is why the stylesheet names no animation
+     outside it: twenty-seven infinite animations on a page holding a live WebGL
+     context whose pixel-ratio governor steps down on sustained slow frames. */
+  assert.match(bridge, /new IntersectionObserver/);
+  assert.match(css, /\.section\[data-run="1"\]/);
+  /* And it lets go of both handles on teardown, like every other one here. */
+  assert.match(bridge, /observer\.disconnect\(\);/);
+  assert.match(bridge, /unwatch\(\);/);
+});
+
 test('the race library declares five complete route-scoped themes', async () => {
   const [styles, page, workspace, story] = await Promise.all([
     read('src/app/prototype/layline/layline.module.css'),

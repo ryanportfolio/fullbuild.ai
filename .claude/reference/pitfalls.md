@@ -404,5 +404,24 @@ Safari. Fullscreen there is `HTMLVideoElement.webkitEnterFullscreen()` and
 nothing else, so a fullscreen button that targets a wrapper is dead on that
 engine and blows the whole layout up to the display everywhere else.
 
+## The Next.js dev indicator is not page furniture (2026-08-24)
+
+Symptom: a screenshot verifier reports "the page's fixed compass badge sits over
+the CTA at the foot of the viewport", measures it at roughly x 20 to 62, and
+files a blocker. Two rounds of the Layline race-library CTA moved a button to
+clear it before anyone asked what the disc was. It is the Next.js dev-tools
+button: a 36px circle at bottom left, inside a `nextjs-portal` custom element,
+present on `next dev` only and absent from `next build` + `next start`.
+
+It hides from ordinary DOM sweeps, so it reads like unfamiliar app chrome: it
+lives in a closed-looking shadow root, so `document.querySelectorAll('*')` never
+returns it, while `document.elementFromPoint` over it returns `NEXTJS-PORTAL`
+with a 0x0 box. That is the tell.
+
+Rule: before designing around any fixed element nobody can name, find the
+component that draws it. `document.querySelectorAll('nextjs-portal')` and walking
+`el.shadowRoot` names it in one call, and a `next start` run on the built output
+settles it. Grepping the repo for the thing you think it is proves nothing when
+the thing is not in the repo.
 
 Layline-specific traps live in `pitfalls-layline.md`.
