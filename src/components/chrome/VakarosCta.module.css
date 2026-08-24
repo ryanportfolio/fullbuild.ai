@@ -1,0 +1,85 @@
+/* ============================================================================
+   THE VAKAROS CTA, frame contract.
+
+   Takes the exact frame the title block holds on every other sheet: same
+   border, same ground, so the rail's lower reach keeps its weight and only its
+   content changes. The mark is drawn in the set's own graphite rather than the
+   company's colour: this is a pencil sheet, and ink here means ink.
+   ========================================================================= */
+
+.cta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.85rem 0.7rem 0.75rem;
+  border: 1px solid var(--rule-strong);
+  background: var(--ground);
+  color: var(--ink-graphite);
+  text-decoration: none;
+}
+
+.mark {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* The wordmark is the sheet's largest drawn element, so it holds the
+     block's full measure. */
+  color: var(--ink-graphite);
+}
+
+/* the pen line: one drafting hairline at any scale, never a scaled outline */
+.stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  stroke-linejoin: round;
+}
+
+/* the poured letter behind the finished line */
+.pour {
+  fill: currentColor;
+}
+
+.caption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-stretch: 112%;
+  font-weight: 600;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  color: var(--ink-graphite);
+  border-top: 1px solid var(--rule);
+  padding-top: 0.55rem;
+}
+
+.arrow {
+  font-size: 0.9rem;
+  line-height: 1;
+  color: var(--ink-witness);
+  transition:
+    transform 0.2s var(--ease-draw),
+    color 0.2s var(--ease-draw);
+}
+
+.cta:hover .word,
+.cta:focus-visible .word {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+.cta:hover .arrow,
+.cta:focus-visible .arrow {
+  transform: translateX(0.3rem);
+  color: var(--accent-link);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrow {
+    transition: none;
+  }
+}

@@ -7,6 +7,7 @@ import { useWorkingSet, isUp, type PipelineState } from '@/lib/store';
 import { LIVE_PROJECTS } from '@/lib/projects';
 import RailLogo from './RailLogo';
 import RailSketch from './RailSketch';
+import VakarosCta from './VakarosCta';
 import { useRailSketchDraw } from './useRailSketchDraw';
 import styles from './TitleBlock.module.css';
 
@@ -206,6 +207,9 @@ export default function TitleBlock({
   // drawing rail would otherwise cover their controls and violate both visual
   // isolation and pointer access.
   const onAppPrototype = pathname === '/prototype' || pathname.startsWith('/prototype/');
+  // The E-02 tape sheet carries one address instead of the set's own: the
+  // title block stands down there and the Vakaros CTA takes its frame.
+  const onLaylineVid = pathname === '/layline-vid';
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [mounted, setMounted] = useState(false);
   // Compact strip fold (mobile only — CSS gates it under 900px). Full block at
@@ -351,6 +355,9 @@ export default function TitleBlock({
         </span>
       </div>
 
+      {onLaylineVid ? (
+        <VakarosCta />
+      ) : (
       <div className={styles.block}>
         <div className={styles.top}>
           <a href="/contact" className={styles.brand} aria-label="Contact — hi@fullbuild.ai">
@@ -452,6 +459,7 @@ export default function TitleBlock({
           </span>
         </div>
       </div>
+      )}
     </aside>
   );
 }
