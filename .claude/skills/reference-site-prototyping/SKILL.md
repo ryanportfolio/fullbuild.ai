@@ -1,6 +1,6 @@
 ---
 name: reference-site-prototyping
-description: Use when building or refining a web prototype from a live reference site's design, layout, responsive behavior, interactions, motion, canvas/WebGL effects, or page transitions; when external capture tooling is available or the user says /reference-site-prototyping.
+description: Use when building or refining a web prototype from a live reference site's design, layout, responsive behavior, interactions, motion, or page transitions; when capture tooling is available or the user says /reference-site-prototyping.
 ---
 
 # Reference-site prototyping

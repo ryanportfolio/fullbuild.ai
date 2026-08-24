@@ -10,7 +10,7 @@
 
 | Status | Skills |
 |---|---|
-| Native | `babysit-ci`, `brainstorming`, `bro`, `caveman`, `enhance-prompt`, `forge-repo-ui-skill`, `handoff-audit`, `humanizer`, `purposeful-writing`, `recall`, `unslop`, `verify-this`, `writing-plans` |
+| Native | `babysit-ci`, `brainstorming`, `bro`, `caveman`, `dsh-plugin-permanent`, `enhance-prompt`, `forge-repo-ui-skill`, `handoff-audit`, `humanizer`, `purposeful-writing`, `recall`, `unslop`, `verify-this`, `writing-plans` |
 | Adapted | `addskill`, `automate-me`, `refine`, `fable-mode`, `init-project`, `lab`, `optimize-context`, `sync-starter`, `writing-skills` |
 | Capability-gated | `advocate`, `arena`, `design-fullbuild-surfaces`, `impartial-review`, `reference-site-prototyping`, `showcase-register`, `why`, `wow-loop` |
 | Dangerous | `merge`, `ship-layline` |
