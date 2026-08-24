@@ -425,3 +425,19 @@ settles it. Grepping the repo for the thing you think it is proves nothing when
 the thing is not in the repo.
 
 Layline-specific traps live in `pitfalls-layline.md`.
+
+## External clone/capture services vs robots.txt (2026-08-24)
+
+Symptom: the Ditto clone API returned failed with a robots.txt disallows-crawling error on a target reference site (oci.madebybuzzworthy.com), while manual Playwright inspection of the same page worked fine.
+
+Cause: capture services do bulk crawling and honor robots.txt; an interactive browser session loading one page is a different activity class. Many polished portfolio sites disallow automated crawling.
+
+Resolution: do not route around a refusal. Default to the reference-site-prototyping skill Playwright forensics (screenshots, getAnimations, stylesheet inventory, shader extraction, HAR) as the primary evidence path; treat external capture services as optional tier-3 bulk inventory at best.
+
+## DSH harness: multiline inline commands fragile (2026-08-24)
+
+Symptom: Invalid arguments or silent no-output from pwsh tool calls carrying multiline inline scripts (repeated ~4x in one session).
+
+Cause: the DSH run_code/pwsh bridge mangles multiline strings with nested quotes passed inline.
+
+Resolution: write .mjs/.ps1 files with the file-write tool, then execute by path (node file.mjs, pwsh -File file.ps1). Recurs across every session in this harness.
