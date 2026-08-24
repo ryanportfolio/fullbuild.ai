@@ -32,6 +32,7 @@
    ========================================================================= */
 
 import { useEffect } from 'react';
+import { reducedMotion } from '@/lib/motion';
 
 /** Whole-record duration, ms. Long enough to read as a hand, short enough to
     be finished before a reader who came for the page's content looks up. */
@@ -65,8 +66,7 @@ export function useRailSketchDraw(): void {
     // through this hook, including the reduced-motion one.
     const arm = () => strokes.forEach((el) => el.setAttribute('data-ws-armed', ''));
 
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced) {
+    if (reducedMotion()) {
       // The server-rendered strokes carry no dash state, so they already ARE
       // the finished record. Arm and leave.
       arm();

@@ -17,8 +17,10 @@
    - Margin Law: the sheet ends at the rail. Below 900px the rail is a bottom
      overlay and the sheet clears it with padding, as Sheet.module.css does.
    - Motion: the pen and re-ink track playback (content, not ornament); the
-     only transition is the preview card's appearance, and reduced motion
-     collapses it via the global rule.
+     only transition is the preview card's appearance. This is the one sheet
+     that keeps its motion under prefers-reduced-motion, via the route flag in
+     src/lib/motion.ts: nothing here moves the ground under a reader, and a
+     tape sheet that will not play is not a sheet.
    ========================================================================= */
 
 .page {
@@ -87,10 +89,14 @@
   --capture-bench: #101010;
 }
 
-.player:fullscreen {
-  background: var(--ground);
-  padding: clamp(1rem, 2.5vw, 2rem);
-  overflow: auto;
+/* The tape takes the display on its own, not inside the sheet, so the frame
+   line and the 16:9 box both come off: the UA sizes a fullscreen video to the
+   screen and letterboxes it against this ground. */
+.video:fullscreen {
+  aspect-ratio: auto;
+  height: 100%;
+  border: none;
+  background: var(--capture-bench);
 }
 
 .stage {

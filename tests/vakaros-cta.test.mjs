@@ -7,8 +7,8 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 /* The E-02 sheet trades the set's title block for one address: the Vakaros
    wordmark, drawn, over a link to the Layline prototype. These hold the parts
    a rewrite could quietly break: the route the swap is scoped to, the letter
-   that draws first, and the floor a reader gets with no JS or reduced
-   motion. */
+   that draws first, the floor a reader gets with no JS, and the one-route
+   motion exception this sheet carries. */
 
 test('the title block stands down on the tape sheet, and only there', async () => {
   const block = await read('src/components/chrome/TitleBlock.tsx');
@@ -86,13 +86,18 @@ test('the traced letterforms are closed contours inside their own box', async ()
   assert.match(mark, /scripts\/trace-mark\.mjs/);
 });
 
-test('no-JS and reduced motion get the finished word', async () => {
+test('no-JS gets the finished word, and this sheet still draws under reduced motion', async () => {
   const cta = await read('src/components/chrome/VakarosCta.tsx');
   const css = await read('src/components/chrome/VakarosCta.module.css');
 
-  // reduced motion never arms the hidden state
-  assert.match(cta, /prefers-reduced-motion: reduce/);
-  assert.match(cta, /if \(reduce\) return;/);
+  /* The preference is still READ here, through the one function that can grant
+     a route its exception. A component that stopped asking would be a
+     component nobody could put back under the preference in one edit. */
+  assert.match(cta, /import \{ reducedMotion \} from '@\/lib\/motion';/);
+  assert.match(cta, /if \(reducedMotion\(\)\) return;/);
+  assert.ok(!cta.includes('matchMedia'), 'the preference is read in one place, not two');
+  // and nothing local cancels the motion the route just bought back
+  assert.ok(!css.includes('prefers-reduced-motion'), 'no local reduced-motion block');
   // the hidden state is armed in JS only, so the SSR markup is the drawn mark
   assert.ok(!css.includes('stroke-dashoffset'), 'no CSS hides the mark before hydration');
   assert.match(cta, /svg\.setAttribute\('data-ws-armed', ''\)/);
@@ -101,4 +106,37 @@ test('no-JS and reduced motion get the finished word', async () => {
 
   const visible = (src) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
   assert.ok(!visible(cta).includes('—'), 'no em dash in CTA output');
+});
+
+test('the motion exception is one route, written in one place', async () => {
+  const layout = await read('src/app/layout.tsx');
+  const globals = await read('src/app/globals.css');
+  const motion = await read('src/lib/motion.ts');
+
+  /* E-02 runs its motion for everyone. That is a deliberate exception to the
+     set's reduced-motion collapse, so the thing worth pinning is its blast
+     radius: one path check, one attribute, one shared read. */
+  assert.match(
+    layout,
+    /window\.location\.pathname!=='\/layline-vid'\)return;document\.documentElement\.setAttribute\('data-motion-always',''\)/,
+    'the flag is route-scoped and written before first paint',
+  );
+  assert.match(layout, /__html: motionAlways/);
+  // the pre-paint hold has to run on this route too, or the finished linework
+  // flashes before the draw it is about to start
+  assert.match(layout, /if\(!d\.hasAttribute\('data-motion-always'\)&&window\.matchMedia/);
+  // the global collapse reads the same flag, so its `!important` cannot win
+  // against the sheet that opted out
+  assert.match(globals, /html:not\(\[data-motion-always\]\) \*,/);
+
+  assert.match(motion, /export function reducedMotion\(\)/);
+  assert.match(motion, /hasAttribute\(MOTION_ALWAYS_ATTR\)/);
+  for (const path of [
+    'src/components/chrome/RailLogo.tsx',
+    'src/components/chrome/useRailSketchDraw.ts',
+  ]) {
+    const src = await read(path);
+    assert.match(src, /reducedMotion\(\)/, `${path} reads the shared preference`);
+    assert.ok(!src.includes('prefers-reduced-motion'), `${path} reads it only once`);
+  }
 });

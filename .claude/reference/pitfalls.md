@@ -373,4 +373,36 @@ Notes: `--window-position` applies to the first window of a launch, so one
 launch per run. Placement is Windows-only and degrades to a plain headed launch
 elsewhere. The DIP-to-pixel mapping assumes both displays share a scale factor.
 
+## A GitHub release asset cannot back a `<video>` (2026-08-24)
+
+Release assets are free hosting and serve `Accept-Ranges: bytes`, so a media
+element seeks in them correctly and they look like a solved problem. The
+response also carries:
+
+```
+Content-Type: application/octet-stream
+Content-Disposition: attachment; filename=<name>.mp4
+```
+
+GitHub bakes both into the signed redirect target, so nothing about how the
+file was uploaded or named changes them. Desktop Chrome sniffs the bytes and
+plays anyway, which is how it ships; an engine that takes the declared type at
+its word has no media to decode, and the element just sits there. Reported on
+`/layline-vid`: play did nothing on a phone.
+
+Fix: commit the file under `public/` and serve it same-origin. Vercel declares
+`video/mp4` with ranges intact (measured on
+`/prototype/maranatha/assets/farm1.mp4`). That puts the bytes in git forever,
+so the encode has to earn its size: `/layline-vid` re-cut CRF 22 to CRF 29 for
+47.3 MB at SSIM Y 0.994 against the master, with duration, frame count and fps
+unchanged so nothing the sheet prints moved. Re-derive the poster, the scrub
+sheet and `peaks.json` from the file actually served, and re-measure SSIM;
+`scripts/reel-peaks.mjs` carries the whole pipeline in its header.
+
+Same class, same page: `Element.requestFullscreen` does not exist on iOS
+Safari. Fullscreen there is `HTMLVideoElement.webkitEnterFullscreen()` and
+nothing else, so a fullscreen button that targets a wrapper is dead on that
+engine and blows the whole layout up to the display everywhere else.
+
+
 Layline-specific traps live in `pitfalls-layline.md`.
