@@ -236,6 +236,14 @@ export function BriefPerformance({ race }: { race: RaceData }) {
   const lo = (review.twsMin * KNOTS).toFixed(1);
   const hi = (review.twsMax * KNOTS).toFixed(1);
 
+  /* Real table semantics on the divs the grid needs.
+   *
+   * Without them the five figures in a row reach a screen reader as a bare run
+   * of numbers: read back off the accessibility tree, the first row announced
+   * "FRA 12, 87.5, 98.1, 5.4, 12.3, 3.4" with nothing anywhere saying which
+   * column any of them belongs to, because the head row was hidden and a span
+   * carries no column of its own. The roles put the heads back in the tree and
+   * tie each figure to one. */
   const numbers = (
     perf: Pick<
       BoatPerformance,
@@ -243,11 +251,21 @@ export function BriefPerformance({ race }: { race: RaceData }) {
     >,
   ) => (
     <>
-      <span className={styles.perfNum}>{percent(perf.beatFraction)}</span>
-      <span className={styles.perfNum}>{percent(perf.runFraction)}</span>
-      <span className={styles.perfNum}>{knots(perf.beatVmg)}</span>
-      <span className={styles.perfNum}>{knots(perf.runVmg)}</span>
-      <span className={styles.perfNum}>{knots(perf.lossPerTurn)}</span>
+      <span className={styles.perfNum} role="cell">
+        {percent(perf.beatFraction)}
+      </span>
+      <span className={styles.perfNum} role="cell">
+        {percent(perf.runFraction)}
+      </span>
+      <span className={styles.perfNum} role="cell">
+        {knots(perf.beatVmg)}
+      </span>
+      <span className={styles.perfNum} role="cell">
+        {knots(perf.runVmg)}
+      </span>
+      <span className={styles.perfNum} role="cell">
+        {knots(perf.lossPerTurn)}
+      </span>
     </>
   );
 
@@ -361,44 +379,61 @@ export function BriefPerformance({ race }: { race: RaceData }) {
           <span>Steady sailing, boat by boat</span>
           <span className={styles.panelCount}>{race.boats.length}</span>
         </div>
-        <div className={`${styles.perfRow} ${styles.perfHead}`} aria-hidden="true">
-          <span />
-          <span />
-          <span className={styles.perfNum}>beat %</span>
-          <span className={styles.perfNum}>run %</span>
-          <span className={styles.perfNum}>beat vmg</span>
-          <span className={styles.perfNum}>run vmg</span>
-          <span className={styles.perfNum}>turn kn</span>
-        </div>
-        {review.boats.map((boat) => {
-          const chip = meta.get(boat.boatId);
-          return (
-            <div
-              className={styles.perfRow}
-              key={boat.boatId}
-              onPointerEnter={() => raise(boat.boatId)}
-              onPointerLeave={() => raise(null)}
-            >
-              <span
-                className={
-                  chip !== undefined && chip.dark
-                    ? `${styles.chip} ${styles.chipDark}`
-                    : styles.chip
-                }
-                style={{ background: chip === undefined ? "#ffffff" : chip.hue }}
-                aria-hidden="true"
-              />
-              <span className={styles.sail}>
-                {chip === undefined ? boat.boatId : chip.sail}
-              </span>
-              {numbers(boat)}
-            </div>
-          );
-        })}
-        <div className={`${styles.perfRow} ${styles.perfMedian}`}>
-          <span className={styles.chipBlank} aria-hidden="true" />
-          <span className={styles.sail}>fleet</span>
-          {numbers(review.fleet)}
+        <div role="table" aria-label="Steady sailing, boat by boat">
+          <div className={`${styles.perfRow} ${styles.perfHead}`} role="row">
+            <span role="columnheader">boat</span>
+            <span className={styles.perfNum} role="columnheader">
+              beat %
+            </span>
+            <span className={styles.perfNum} role="columnheader">
+              run %
+            </span>
+            <span className={styles.perfNum} role="columnheader">
+              beat vmg
+            </span>
+            <span className={styles.perfNum} role="columnheader">
+              run vmg
+            </span>
+            <span className={styles.perfNum} role="columnheader">
+              turn kn
+            </span>
+          </div>
+          {review.boats.map((boat) => {
+            const chip = meta.get(boat.boatId);
+            return (
+              <div
+                className={styles.perfRow}
+                key={boat.boatId}
+                role="row"
+                onPointerEnter={() => raise(boat.boatId)}
+                onPointerLeave={() => raise(null)}
+              >
+                {/* The chip rides inside the name rather than in a column of
+                    its own. A colour is not a figure, and an empty cell over
+                    every row is one more thing a screen reader reads past. */}
+                <span className={styles.sail} role="rowheader">
+                  <span
+                    className={
+                      chip !== undefined && chip.dark
+                        ? `${styles.chip} ${styles.chipDark}`
+                        : styles.chip
+                    }
+                    style={{ background: chip === undefined ? "#ffffff" : chip.hue }}
+                    aria-hidden="true"
+                  />
+                  {chip === undefined ? boat.boatId : chip.sail}
+                </span>
+                {numbers(boat)}
+              </div>
+            );
+          })}
+          <div className={`${styles.perfRow} ${styles.perfMedian}`} role="row">
+            <span className={styles.sail} role="rowheader">
+              <span className={styles.chipBlank} aria-hidden="true" />
+              fleet
+            </span>
+            {numbers(review.fleet)}
+          </div>
         </div>
         <div className={styles.fleetFoot}>
           <span>median of the six</span>

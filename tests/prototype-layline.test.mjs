@@ -508,7 +508,16 @@ test('the boot cover keeps the house rules while it briefs the race', async () =
   /* Every drawing carries its own label, and each view is named for the race
      through the shell's own section label. */
   assert.equal((panels.match(/aria-label=/g) ?? []).length, 3);
-  assert.equal((performance.match(/aria-label=/g) ?? []).length, 2);
+  /* Three on the performance view: its two drawings, and the fleet table,
+     which carries real table semantics so its five figure columns reach a
+     screen reader tied to the head over them. Read off the accessibility tree
+     without them, a row announced "FRA 12, 87.5, 98.1, 5.4, 12.3, 3.4" with
+     nothing anywhere saying which column any number belonged to. */
+  assert.equal((performance.match(/aria-label=/g) ?? []).length, 3);
+  assert.match(performance, /role="table"/);
+  assert.equal((performance.match(/role="columnheader"/g) ?? []).length, 6);
+  assert.equal((performance.match(/role="rowheader"/g) ?? []).length, 2);
+  assert.equal((performance.match(/role="cell"/g) ?? []).length, 5);
   assert.ok(briefShell.includes('aria-label={`Race brief, ${name}`}'), 'the layer stopped being named for the race');
   /* Every label states what its drawing shows in the race's own numbers rather
      than naming a picture. */

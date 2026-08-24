@@ -784,7 +784,7 @@
   display: grid;
   align-items: center;
   grid-template-columns:
-    9px 54px repeat(2, minmax(0, 0.86fr)) repeat(2, minmax(0, 1.16fr))
+    63px repeat(2, minmax(0, 0.86fr)) repeat(2, minmax(0, 1.16fr))
     minmax(0, 0.96fr);
   gap: 0 0.42cqw;
   padding: 0.5cqw 0;
@@ -828,6 +828,15 @@
 .perfMedian {
   border-bottom: none;
   color: var(--brief-dim);
+}
+
+/* The chip travels with the sail number rather than in a column of its own,
+   so the name cell is a row of two things and the figures keep their five. */
+.perfRow .sail {
+  display: flex;
+  align-items: center;
+  gap: 0.55cqw;
+  width: auto;
 }
 
 .perfNum {
@@ -1182,8 +1191,12 @@
      column it names. Placed rather than flowed, because auto-placement puts
      the sixth cell back under the chip. */
   .perfRow {
-    grid-template-columns: 9px 54px repeat(3, minmax(0, 1fr));
+    grid-template-columns: 63px repeat(3, minmax(0, 1fr));
     gap: 1px 6px;
+  }
+
+  .perfRow > :nth-child(2) {
+    grid-area: 1 / 2;
   }
 
   .perfRow > :nth-child(3) {
@@ -1191,7 +1204,7 @@
   }
 
   .perfRow > :nth-child(4) {
-    grid-area: 1 / 4;
+    grid-area: 2 / 2;
   }
 
   .perfRow > :nth-child(5) {
@@ -1202,15 +1215,14 @@
     grid-area: 2 / 4;
   }
 
-  .perfRow > :nth-child(7) {
-    grid-area: 2 / 5;
+  /* The name sits against the two lines of figures rather than beside the
+     first of them. */
+  .perfRow > :nth-child(1) {
+    grid-row: 1 / 3;
   }
 
-  /* The sail number and its chip sit against the two lines of figures rather
-     than beside the first of them. */
-  .perfRow > :nth-child(1),
-  .perfRow > :nth-child(2) {
-    grid-row: 1 / 3;
+  .perfRow .sail {
+    gap: 6px;
   }
 
   .sail {

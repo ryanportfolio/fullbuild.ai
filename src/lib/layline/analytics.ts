@@ -399,7 +399,21 @@ function review(race: RaceData): PolarReview {
 
   const wind: WindSample = { t: 0, twd: 0, tws: 0 };
   const boats: BoatPerformance[] = race.boats.map((boat) => {
-    const moves = maneuversOf(race, boat.id);
+    /* Racing turns only. `maneuversOf` reports every wind-angle flip in the
+     * feed, which is right for the timeline: a marker belongs wherever the
+     * boat turned. It is wrong for this row three times over.
+     *
+     * NZL 7 finishes Kestrel Sound at 55.512 s and gybes at 56.13 s, luffing
+     * out its way. Counted, that turn made the boat read four turns instead of
+     * three, carried its own drawdown into a mean of what a racing turn cost
+     * (4.74 knots against 4.23), and took eleven samples of real racing out of
+     * the cloud through STEADY_WINDOW, since the window reaches back 3 s from
+     * a turn that happened after the finish. A prestart turn would do the same
+     * at the other end; no shipped seed has one, and the rule covers it. */
+    const moves = maneuversOf(race, boat.id).filter((move) => {
+      const leg = legAt(race, boat.id, move.t);
+      return leg === "beat" || leg === "run";
+    });
     const samples: PolarSample[] = [];
     let beatSum = 0;
     let beatN = 0;
@@ -485,9 +499,11 @@ function review(race: RaceData): PolarReview {
  * The fleet's race against its own polar, built once and cached against the
  * race the way every other series here is.
  *
- * Steady sailing only, on the legs only. What that leaves out is stated on
- * screen, because a performance figure whose exclusions are not stated is a
- * figure a reader cannot check.
+ * Steady sailing only, on the legs only, and that holds for the turns as well
+ * as for the samples: a boat that gybes after it has finished has not made a
+ * racing turn. What the figures leave out is stated on screen, because a
+ * performance figure whose exclusions are not stated is a figure a reader
+ * cannot check.
  */
 export function polarReview(race: RaceData): PolarReview {
   let found = reviewCache.get(race);
