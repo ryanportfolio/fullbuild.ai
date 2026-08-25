@@ -33,6 +33,7 @@ import {
 import type { RaceData, ReplayMode } from "@/lib/layline/types";
 import sea from "./bootSea.module.css";
 import { BoatCursor } from "./BoatCursor";
+import { requestInspectionSurface } from "./inspectionSurfaceClient";
 import { CaptureBridge } from "./CaptureBridge";
 import { Instruments } from "./hud/Instruments";
 import { AnalysisWorkspacePanel } from "./hud/AnalysisWorkspacePanel";
@@ -141,6 +142,7 @@ function useLaylineInspection(
   useEffect(() => {
     let timer: number | null = null;
     let disposed = false;
+    let refreshTicket = 0;
     const evaluate = (settleClock = 0) => {
       if (disposed) return;
       if (timer !== null) window.clearTimeout(timer);
@@ -162,17 +164,43 @@ function useLaylineInspection(
       );
       cadence.current = result.state;
       if (result.action === "refresh") {
-        const surface = buildLaylineInspectionSurface(race, replay.followId, replay.t);
-        /* The scene reads the surface from the store, not from props: a prop
-         * would re-render the element owning the Canvas once a second, and
-         * with a shed dpr tier every such render costs two buffer resizes. */
-        useReplay.getState().setInspectionHeld({ race, surface });
-        setEntry({
-          race,
-          boatId: replay.followId,
-          mode: replay.mode,
-          surface,
-        });
+        const refreshBoatId = replay.followId;
+        const refreshMode = replay.mode;
+        const refreshAt = replay.t;
+        const hold = (surface: LaylineInspectionSurface) => {
+          /* The scene reads the surface from the store, not from props: a prop
+           * would re-render the element owning the Canvas once a second, and
+           * with a shed dpr tier every such render costs two buffer resizes. */
+          useReplay.getState().setInspectionHeld({ race, surface });
+          setEntry({
+            race,
+            boatId: refreshBoatId,
+            mode: refreshMode,
+            surface,
+          });
+        };
+        /* A playing replay hands the build to the worker: the trace behind a
+         * surface runs tens of thousands of candidate evaluations, and on the
+         * main thread that lands as one long task inside the frame loop. The
+         * worker returns the identical surface (same function over a clone of
+         * the same race data) a few frames later, which the once-a-race-second
+         * cadence never notices. Frozen and paused replays build in place: a
+         * settled clock, and the capture rig behind it, must see the surface
+         * the moment it settles. A stale ticket is a newer refresh already in
+         * flight; its reply would overwrite fresher evidence, so it is
+         * dropped. */
+        const ticket = ++refreshTicket;
+        const offloaded = replay.playing && !replay.frozen
+          ? requestInspectionSurface(race, refreshBoatId, refreshAt)
+          : null;
+        if (offloaded === null) {
+          hold(buildLaylineInspectionSurface(race, refreshBoatId, refreshAt));
+        } else {
+          void offloaded.then((surface) => {
+            if (disposed || ticket !== refreshTicket) return;
+            hold(surface ?? buildLaylineInspectionSurface(race, refreshBoatId, refreshAt));
+          });
+        }
       } else {
         setEntry((current) =>
           current !== null &&

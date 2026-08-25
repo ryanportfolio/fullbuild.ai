@@ -104,7 +104,7 @@ export interface VelocityProjection {
 
 /** Signed component of a course-frame velocity vector along a bearing. */
 export function projectVelocityOntoBearing(x: number, y: number, bearing: number): number | null {
-  if (![x, y, bearing].every(Number.isFinite)) return null;
+  if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(bearing)) return null;
   const unit = unitVectorFromCourse(bearing);
   const projection = x * unit.x + y * unit.y;
   return Number.isFinite(projection) ? positiveZero(projection) : null;
@@ -197,7 +197,10 @@ export function velocityFromComponents<T extends Partial<DerivedVelocity>>(
   const stw = Math.hypot(waterX, waterY);
   const currentDrift = Math.hypot(currentX, currentY);
   const sog = Math.hypot(groundX, groundY);
-  if (![groundX, groundY, stw, currentDrift, sog].every(Number.isFinite)) {
+  if (
+    !Number.isFinite(groundX) || !Number.isFinite(groundY) || !Number.isFinite(stw) ||
+    !Number.isFinite(currentDrift) || !Number.isFinite(sog)
+  ) {
     throw new RangeError("velocity derivation overflowed");
   }
   const rawCtw = courseFromVector(waterX, waterY);

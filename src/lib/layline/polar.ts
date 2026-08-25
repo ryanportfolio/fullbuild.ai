@@ -24,7 +24,26 @@ export const FICTIONAL_ONE_DESIGN_POLAR: Readonly<PolarModel> = Object.freeze({
   highTailDropFraction: 0.1,
 });
 
+/* A layline trace asks about the same model object six figures of times per
+ * surface build, and the structural walk below spreads both tables into a
+ * fresh array per call. The verdict is a property of the object, so it is
+ * computed once per object and remembered; a model mutated after its first
+ * validation keeps its first verdict, which no runtime path does (the shipped
+ * model and every trace snapshot are frozen). */
+const MODEL_VERDICTS = new WeakMap<object, boolean>();
+
 function validModel(model: PolarModel): boolean {
+  const cacheable = typeof model === "object" && model !== null;
+  if (cacheable) {
+    const known = MODEL_VERDICTS.get(model);
+    if (known !== undefined) return known;
+  }
+  const verdict = modelVerdict(model);
+  if (cacheable) MODEL_VERDICTS.set(model, verdict);
+  return verdict;
+}
+
+function modelVerdict(model: PolarModel): boolean {
   if (!model || !Number.isSafeInteger(model.version) || typeof model.kind !== "string" || typeof model.provenance !== "string") return false;
   if (!Array.isArray(model.twaDegrees) || !Array.isArray(model.speedFractions) || model.twaDegrees.length !== model.speedFractions.length || model.twaDegrees.length < 2) return false;
   const values = [...model.twaDegrees, ...model.speedFractions, model.lowTailAngleDegrees, model.lowTailFraction, model.highTailAngleDegrees, model.highTailFraction, model.highTailDropFraction];

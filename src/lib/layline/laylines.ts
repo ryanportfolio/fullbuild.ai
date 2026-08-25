@@ -326,7 +326,7 @@ function evaluateVelocity(request: LaylineTraceRequest, x: number, y: number, t:
   } catch {
     return { x: 0, y: 0, speed: 0, candidates: 0, valid: false };
   }
-  if (![windFromX, windFromY, currentX, currentY].every(finite)) return { x: 0, y: 0, speed: 0, candidates: 0, valid: false };
+  if (!finite(windFromX) || !finite(windFromY) || !finite(currentX) || !finite(currentY)) return { x: 0, y: 0, speed: 0, candidates: 0, valid: false };
   const tws = Math.hypot(windFromX, windFromY);
   if (!finite(tws)) return { x: 0, y: 0, speed: 0, candidates: 0, valid: false };
   const twd = courseFromVector(windFromX, windFromY);
