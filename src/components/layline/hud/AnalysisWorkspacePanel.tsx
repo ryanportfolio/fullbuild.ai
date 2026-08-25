@@ -13,7 +13,6 @@ import type { LaylineInspectionSurface } from "@/lib/layline/surfaces";
 import type { RaceData } from "@/lib/layline/types";
 import { ComparisonPanel } from "./ComparisonPanel";
 import { StartLine } from "./StartLine";
-import { Standings } from "./Standings";
 import { TruthInspector } from "./TruthInspector";
 import {
   ANALYSIS_WORKSPACE_PANEL_ID,
@@ -41,9 +40,9 @@ export function AnalysisWorkspacePanel({
 }) {
   const model = analysisWorkspacePanelModel(workspace);
   const layerControls = analysisLayerControlModels(session, workspace);
-  let surface: ReactNode;
-  if (model.surface === "standings") {
-    surface = <Standings race={race} />;
+  let surface: ReactNode = null;
+  if (model.surface === "none") {
+    surface = null;
   } else if (model.surface === "start-line") {
     surface = (
       <div className={styles.analysisWorkspacePanelSurface}>

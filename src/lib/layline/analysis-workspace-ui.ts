@@ -172,7 +172,7 @@ export function comparisonRangeEvidence(
 }
 
 export type AnalysisWorkspacePanelSurface =
-  | "standings"
+  | "none"
   | "start-line"
   | "comparison"
   | "performance-unavailable"
@@ -192,10 +192,10 @@ export function analysisWorkspacePanelModel(
   if (workspace.panel === "standings-leg-summary") {
     return Object.freeze({
       panelId: workspace.panel,
-      surface: "standings",
+      surface: "none",
       available: true,
       title: "Overview",
-      description: "Fleet order at the shared replay time.",
+      description: "Replay overview with fleet order in the selected race sidebar.",
     });
   }
   if (workspace.panel === "start-line") {

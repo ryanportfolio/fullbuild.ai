@@ -642,6 +642,21 @@
   width: 100%;
   min-width: 120px;
   max-width: 144px;
+  color-scheme: dark;
+}
+
+.analysisLayerControl select option {
+  background: var(--page-ground);
+  color: var(--ink);
+}
+
+.shell[data-layline-theme="sailcloth"] .analysisLayerControl select {
+  color-scheme: light;
+}
+
+.shell[data-layline-theme="chart"] .analysisLayerControl select,
+.shell[data-layline-theme="ice"] .analysisLayerControl select {
+  color-scheme: light;
 }
 
 .analysisLayerUnavailable {

@@ -264,7 +264,7 @@ test("resolved panels map to reused production surfaces with honest capability",
   assert.ok(ui, "production workspace UI model is missing");
   const race = generateRace(RACES[0].seed);
   const expected = {
-    overview: "standings",
+    overview: "none",
     start: "start-line",
     compare: "comparison",
     performance: "performance-unavailable",
@@ -296,7 +296,9 @@ test("resolved panels map to reused production surfaces with honest capability",
   }
 
   const panelSource = source("src/components/layline/hud/AnalysisWorkspacePanel.tsx");
-  assert.match(panelSource, /<Standings race=\{race\}/);
+  assert.doesNotMatch(panelSource, /import\s+\{\s*Standings\s*\}/);
+  assert.doesNotMatch(panelSource, /<Standings\b/);
+  assert.match(panelSource, /if \(model\.surface === "none"\) \{\s*surface = null;/);
   assert.match(panelSource, /<StartLine race=\{race\}/);
   assert.match(panelSource, /<ComparisonPanel race=\{race\}/);
   assert.match(panelSource, /<TruthInspector race=\{race\}/);

@@ -75,6 +75,25 @@ test("Analysis Layers is one readable control column with compact unavailable ro
   assert.match(panel, /Reset range and layers/);
 });
 
+test("Analysis Layers native option menus keep explicit theme contrast", () => {
+  assert.match(
+    block(laylineCss, ".analysisLayerControl select option"),
+    /background:\s*var\(--page-ground\)/,
+  );
+  assert.match(
+    block(laylineCss, ".analysisLayerControl select option"),
+    /color:\s*var\(--ink\)/,
+  );
+  assert.match(
+    laylineCss,
+    /(?:^|\n)\.analysisLayerControl select\s*\{[^}]*color-scheme:\s*dark/,
+  );
+  assert.match(
+    block(laylineCss, '.shell[data-layline-theme="sailcloth"] .analysisLayerControl select'),
+    /color-scheme:\s*light/,
+  );
+});
+
 test("vector witness gives plot provenance and exact values a readable hierarchy", () => {
   assert.match(block(laylineCss, ".vectorTriangle"), /grid-template-columns:\s*minmax\(112px,\s*0\.8fr\)\s+minmax\(0,\s*1\.2fr\)/);
   assert.match(block(laylineCss, ".vectorPlot"), /min-width:\s*112px/);
