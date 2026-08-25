@@ -17,17 +17,35 @@ function clamp(value: number, minimum: number, maximum: number): number {
   return value < minimum ? minimum : value > maximum ? maximum : value;
 }
 
+/* The hot paths through this module (a layline trace runs tens of thousands
+ * of angle evaluations per surface build, and poseAt derives a velocity every
+ * frame for every boat) allocate nothing: the unit vector below is written
+ * into one module scratch that every caller reads before the next call can
+ * overwrite it, and velocityFromComponents assigns fields directly instead of
+ * building a literal. Same operations, same order, no garbage. */
+const UNIT_SCRATCH: Vec2 = { x: 0, y: 0 };
+
 function unitVectorFromCourse(course: number): Vec2 {
   const wrapped = wrap360(course);
-  if (wrapped === 0) return { x: 0, y: 1 };
-  if (wrapped === 90) return { x: 1, y: 0 };
-  if (wrapped === 180) return { x: 0, y: -1 };
-  if (wrapped === 270) return { x: -1, y: 0 };
-  const radians = wrapped * DEG;
-  return {
-    x: positiveZero(Math.sin(radians)),
-    y: positiveZero(Math.cos(radians)),
-  };
+  const out = UNIT_SCRATCH;
+  if (wrapped === 0) {
+    out.x = 0;
+    out.y = 1;
+  } else if (wrapped === 90) {
+    out.x = 1;
+    out.y = 0;
+  } else if (wrapped === 180) {
+    out.x = 0;
+    out.y = -1;
+  } else if (wrapped === 270) {
+    out.x = -1;
+    out.y = 0;
+  } else {
+    const radians = wrapped * DEG;
+    out.x = positiveZero(Math.sin(radians));
+    out.y = positiveZero(Math.cos(radians));
+  }
+  return out;
 }
 
 export function wrap360(angle: number): number {
@@ -56,7 +74,9 @@ export function vectorFromSpeedCourse<T extends Partial<Vec2>>(
   finite(speed, "speed");
   finite(course, "course");
   if (speed < 0) throw new RangeError("speed must be non-negative");
-  const unit = courseUnitVector(course, {});
+  /* The raw unit vector: courseUnitVector would only re-apply positiveZero to
+   * components that already carry it, at the price of a throwaway object. */
+  const unit = unitVectorFromCourse(course);
   const x = speed * unit.x;
   const y = speed * unit.y;
   if (!Number.isFinite(x) || !Number.isFinite(y)) throw new RangeError("component conversion overflowed");
@@ -183,19 +203,18 @@ export function velocityFromComponents<T extends Partial<DerivedVelocity>>(
   const rawCtw = courseFromVector(waterX, waterY);
   const rawCurrentSet = courseFromVector(currentX, currentY);
   const rawCog = courseFromVector(groundX, groundY);
-  Object.assign(out, {
-    waterX: positiveZero(waterX),
-    waterY: positiveZero(waterY),
-    currentX: positiveZero(currentX),
-    currentY: positiveZero(currentY),
-    stw: positiveZero(stw),
-    ctw: rawCtw,
-    currentDrift: positiveZero(currentDrift),
-    currentSet: rawCurrentSet,
-    groundX: positiveZero(groundX),
-    groundY: positiveZero(groundY),
-    sog: positiveZero(sog),
-    cog: rawCog,
-  });
-  return out as T & DerivedVelocity;
+  const derived = out as T & DerivedVelocity;
+  derived.waterX = positiveZero(waterX);
+  derived.waterY = positiveZero(waterY);
+  derived.currentX = positiveZero(currentX);
+  derived.currentY = positiveZero(currentY);
+  derived.stw = positiveZero(stw);
+  derived.ctw = rawCtw;
+  derived.currentDrift = positiveZero(currentDrift);
+  derived.currentSet = rawCurrentSet;
+  derived.groundX = positiveZero(groundX);
+  derived.groundY = positiveZero(groundY);
+  derived.sog = positiveZero(sog);
+  derived.cog = rawCog;
+  return derived;
 }

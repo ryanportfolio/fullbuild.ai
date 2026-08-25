@@ -311,26 +311,40 @@ function raceBoundsMicros(race: RaceData): { from: number; to: number } | null {
   return { from, to };
 }
 
-function validSeriesTimes(series: readonly Timed[] | undefined): series is readonly Timed[] {
-  if (series === undefined) return false;
+/* Validation and conversion are O(series) and the bracket search below runs
+ * thousands of times per compareRange call, so the derived microsecond array
+ * is computed once per series object and remembered. Race series are frozen
+ * inputs: a different array is a different race, and the WeakMap lets a
+ * replaced race's cache entries be collected with it. `null` records an
+ * invalid series so failure is cached as cheaply as success. */
+const SERIES_MICROS_CACHE = new WeakMap<readonly Timed[], readonly number[] | null>();
+
+function seriesMicrosOf(series: readonly Timed[]): readonly number[] | null {
+  const cached = SERIES_MICROS_CACHE.get(series);
+  if (cached !== undefined) return cached;
+  let times: number[] | null = [];
   let previous: number | null = null;
   for (const sample of series) {
     const at = secondsToMicros(sample.t);
-    if (at === null || (previous !== null && at <= previous)) return false;
+    if (at === null || (previous !== null && at <= previous)) {
+      times = null;
+      break;
+    }
     previous = at;
-  }
-  return true;
-}
-
-function seriesMicros(series: readonly Timed[] | undefined): number[] | null {
-  if (!validSeriesTimes(series)) return null;
-  const times: number[] = [];
-  for (const sample of series) {
-    const at = secondsToMicros(sample.t);
-    if (at === null) return null;
     times.push(at);
   }
+  SERIES_MICROS_CACHE.set(series, times);
   return times;
+}
+
+function validSeriesTimes(series: readonly Timed[] | undefined): series is readonly Timed[] {
+  if (series === undefined) return false;
+  return seriesMicrosOf(series) !== null;
+}
+
+function seriesMicros(series: readonly Timed[] | undefined): readonly number[] | null {
+  if (series === undefined) return null;
+  return seriesMicrosOf(series);
 }
 
 const LEG_NAMES = new Set<LegName>(["prestart", "beat", "run", "finished"]);
@@ -649,12 +663,15 @@ export function normalizeAnalysisRange(race: RaceData, from: number, to: number)
 
 function bracketAtValid<T extends Timed>(series: readonly T[], atMicros: number): Bracket<T> | null {
   if (series.length === 0 || !Number.isSafeInteger(atMicros)) return null;
+  /* The cached microsecond array: one conversion per series, not one per
+   * binary-search probe. A series that fails conversion has no brackets. */
+  const times = seriesMicrosOf(series);
+  if (times === null) return null;
   let lo = 0;
   let hi = series.length - 1;
   while (lo <= hi) {
     const mid = (lo + hi) >> 1;
-    const sampleMicros = secondsToMicros(series[mid].t);
-    if (sampleMicros === null) return null;
+    const sampleMicros = times[mid];
     if (sampleMicros < atMicros) lo = mid + 1;
     else if (sampleMicros > atMicros) hi = mid - 1;
     else return { before: series[mid], after: series[mid], u: 0 };
@@ -662,9 +679,8 @@ function bracketAtValid<T extends Timed>(series: readonly T[], atMicros: number)
   if (hi < 0 || lo >= series.length) return null;
   const before = series[hi];
   const after = series[lo];
-  const beforeMicros = secondsToMicros(before.t);
-  const afterMicros = secondsToMicros(after.t);
-  if (beforeMicros === null || afterMicros === null) return null;
+  const beforeMicros = times[hi];
+  const afterMicros = times[lo];
   if (!(afterMicros > beforeMicros)) return null;
   return { before, after, u: (atMicros - beforeMicros) / (afterMicros - beforeMicros) };
 }

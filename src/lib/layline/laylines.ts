@@ -299,16 +299,28 @@ function candidateAngles(leg: "beat" | "run", declared: number, model: PolarMode
 }
 
 interface Evaluation { x: number; y: number; speed: number; candidates: number; valid: boolean }
+
+/* One evaluation runs up to 92 candidate angles and a trace runs two
+ * evaluations per step for up to 360 steps, all synchronous inside one frame.
+ * The helpers take out-parameters, so the intermediates below are module
+ * scratch rather than fresh objects: every value is copied out before the next
+ * call writes over it, and a surface build stops paying a six-figure
+ * allocation bill to the collector mid-frame. */
+const WIND_SCRATCH: WindFromVector = { windFromX: 0, windFromY: 0 };
+const CURRENT_SCRATCH: Vec2 = { x: 0, y: 0 };
+const WATER_SCRATCH: Vec2 = { x: 0, y: 0 };
+const VELOCITY_SCRATCH = {};
+
 function evaluateVelocity(request: LaylineTraceRequest, x: number, y: number, t: number, angles: readonly number[], model: PolarModel): Evaluation {
   let windFromX: number;
   let windFromY: number;
   let currentX: number;
   let currentY: number;
   try {
-    const wind = request.sampleWindField(x, y, t, { windFromX: 0, windFromY: 0 });
+    const wind = request.sampleWindField(x, y, t, WIND_SCRATCH);
     windFromX = wind.windFromX;
     windFromY = wind.windFromY;
-    const current = request.sampleCurrentField(x, y, t, { x: 0, y: 0 });
+    const current = request.sampleCurrentField(x, y, t, CURRENT_SCRATCH);
     currentX = current.x;
     currentY = current.y;
   } catch {
@@ -340,8 +352,8 @@ function evaluateVelocity(request: LaylineTraceRequest, x: number, y: number, t:
     if (scaledTarget <= LAYLINE_STALL_SPEED_MPS) continue;
     let velocity;
     try {
-      const water = vectorFromSpeedCourse(scaledTarget, course.ctw, {});
-      velocity = velocityFromComponents(water.x, water.y, currentX, currentY, {});
+      const water = vectorFromSpeedCourse(scaledTarget, course.ctw, WATER_SCRATCH);
+      velocity = velocityFromComponents(water.x, water.y, currentX, currentY, VELOCITY_SCRATCH);
     } catch {
       return { x: 0, y: 0, speed: 0, candidates: count, valid: false };
     }
