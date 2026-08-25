@@ -196,13 +196,18 @@ function surfaceAt(swell: Swell, x: number, z: number): number {
  */
 export function CourseGraphics({
   race,
-  inspection,
   showLaylines,
 }: {
   race: RaceData;
-  inspection: LaylineInspectionSurface | null;
   showLaylines: boolean;
 }) {
+  /* From the store, not from props: the surface refreshes once a race-second
+   * and a prop would carry that refresh through the element that owns the
+   * Canvas. The race guard drops a surface the last race left behind; the
+   * boat guard below already drops another boat's. */
+  const held = useReplay((state) => state.inspectionHeld);
+  const inspection: LaylineInspectionSurface | null =
+    held !== null && held.race === race ? held.surface : null;
   const gl = useThree((state) => state.gl);
   const wind = useMemo(() => swellDirection(race), [race]);
   const kit = useMemo(() => buildCourse(wind[0], wind[1]), [wind]);

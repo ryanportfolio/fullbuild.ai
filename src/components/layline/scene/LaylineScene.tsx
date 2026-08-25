@@ -5,7 +5,6 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { NeutralToneMapping } from "three";
 import type { RaceData } from "@/lib/layline/types";
 import type { LayerVisibility } from "@/lib/layline/analysis-state";
-import type { LaylineInspectionSurface } from "@/lib/layline/surfaces";
 import { renderStats, resetRenderStats, useReplay } from "../store";
 import {
   requestSceneFrame,
@@ -357,11 +356,9 @@ function RenderGate() {
 
 export function LaylineScene({
   race,
-  inspection,
   layers,
 }: {
   race: RaceData;
-  inspection: LaylineInspectionSurface | null;
   layers: LayerVisibility;
 }) {
   const frozen = useReplay((state) => state.frozen);
@@ -414,7 +411,7 @@ export function LaylineScene({
       <SkyDome />
       <Water race={race} />
       <CurrentField race={race} visible={layers.current} />
-      <CourseGraphics race={race} inspection={inspection} showLaylines={layers.laylines} />
+      <CourseGraphics race={race} showLaylines={layers.laylines} />
       <Fleet race={race} />
       <WakeTrails race={race} />
       <BoatTracks

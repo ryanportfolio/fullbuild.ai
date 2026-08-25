@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import styles from "@/app/prototype/layline/layline.module.css";
 import {
   type AnalysisWorkspaceId,
@@ -73,10 +73,14 @@ import { useSpaceToggle, useWaterPointer, useWheelZoom } from "./useWaterPointer
 /* WebGL cannot render on the server, and the loading state has nothing to add:
  * the server-rendered chart is already on screen in the layer above and stays
  * there until the renderer has a real frame to replace it with. */
-const SceneIsland = dynamic(() => import("./scene/LaylineScene").then((m) => m.LaylineScene), {
-  ssr: false,
-  loading: () => null,
-});
+/* memo, because the app re-renders at the analysis cadence while the race
+ * plays and the Canvas must not: see the stableSceneLayers note below. */
+const SceneIsland = memo(
+  dynamic(() => import("./scene/LaylineScene").then((m) => m.LaylineScene), {
+    ssr: false,
+    loading: () => null,
+  }),
+);
 
 /** Compact route-owned input for a deterministic first render. */
 export interface InitialRaceAuthority {
@@ -158,11 +162,16 @@ function useLaylineInspection(
       );
       cadence.current = result.state;
       if (result.action === "refresh") {
+        const surface = buildLaylineInspectionSurface(race, replay.followId, replay.t);
+        /* The scene reads the surface from the store, not from props: a prop
+         * would re-render the element owning the Canvas once a second, and
+         * with a shed dpr tier every such render costs two buffer resizes. */
+        useReplay.getState().setInspectionHeld({ race, surface });
         setEntry({
           race,
           boatId: replay.followId,
           mode: replay.mode,
-          surface: buildLaylineInspectionSurface(race, replay.followId, replay.t),
+          surface,
         });
       } else {
         setEntry((current) =>
@@ -306,7 +315,7 @@ export function LaylineApp({
           );
   }, [analysis, analysisReplayCadence, analysisWorkspaces, followId, race]);
   const layerIntent = analysisWorkspace?.layers ?? LEGACY_REPLAY_LAYER_VISIBILITY;
-  const sceneLayers = useMemo(
+  const sceneLayersFresh = useMemo(
     () => rendererLayerVisibility(layerIntent, "3d"),
     [layerIntent],
   );
@@ -318,6 +327,21 @@ export function LaylineApp({
     () => rendererLayerVisibility(layerIntent, "no-webgl"),
     [layerIntent],
   );
+
+  /* The scene's props must hold their references between renders:
+   * resolveAnalysisWorkspace hands back a fresh layers object at the analysis
+   * cadence, and a scene re-rendered with it would re-render the Canvas at
+   * that cadence. Every Canvas re-render re-runs the renderer's reconfigure
+   * pass, which re-applies the dpr prop; once the quality governor has shed a
+   * tier, that is two full drawing-buffer resizes per re-render, a stutter no
+   * frame budget survives. SceneIsland is memoized at its declaration, so with
+   * the layers object swapped only when its VALUES change, app re-renders
+   * never reach the Canvas. */
+  const sceneLayersRef = useRef(sceneLayersFresh);
+  if (JSON.stringify(sceneLayersRef.current) !== JSON.stringify(sceneLayersFresh)) {
+    sceneLayersRef.current = sceneLayersFresh;
+  }
+  const sceneLayers = sceneLayersRef.current;
   const selectedAnalysisRange = useMemo(
     () => analysisWorkspaceSelectedRange(analysisWorkspace, analysis.selectedRange),
     [analysis.selectedRange, analysisWorkspace],
@@ -526,7 +550,7 @@ export function LaylineApp({
             working, so the mode switch is instant in both directions. */}
         {webglCapable ? (
           <div className={chart2d ? styles.sceneHeld : styles.sceneShown}>
-            <SceneIsland race={race} inspection={visibleInspection} layers={sceneLayers} />
+            <SceneIsland race={race} layers={sceneLayers} />
           </div>
         ) : null}
         {live && chart2d ? (

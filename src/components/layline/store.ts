@@ -21,6 +21,7 @@ import {
   transitionReplay,
   transitionReplayClock,
 } from "@/lib/layline/replay-transitions";
+import type { LaylineInspectionSurface } from "@/lib/layline/surfaces";
 import type { RaceData, ReplayMode, RigName } from "@/lib/layline/types";
 import { resetFreeformCamera } from "./scene/interaction";
 
@@ -106,6 +107,15 @@ interface ReplayStore {
   /* Audit overlay only. It never changes the evaluator mode: smooth and raw
    * playback keep their existing meanings while this exposes both answers. */
   truthMode: boolean;
+  /* The layline inspection surface, carried with the race it was built from.
+   * It travels through the store rather than through LaylineScene's props
+   * because the scene element must stay referentially stable: any re-render
+   * of the element that owns the Canvas re-runs the renderer's reconfigure
+   * pass, which re-applies the dpr prop, and after the quality governor has
+   * shed a tier that turns every refresh into two drawing-buffer resizes.
+   * CourseGraphics reads it from under the Canvas and guards race and boat
+   * itself. */
+  inspectionHeld: { race: RaceData; surface: LaylineInspectionSurface } | null;
   reducedMotion: boolean;
   /* True once the renderer has put a frame on screen, not merely once the
    * canvas element exists: the fallback chart stays up until there is an
@@ -137,6 +147,7 @@ interface ReplayStore {
   setRig: (rig: RigName) => void;
   setChart2d: (on: boolean) => void;
   setTruthMode: (on: boolean) => void;
+  setInspectionHeld: (held: { race: RaceData; surface: LaylineInspectionSurface } | null) => void;
   follow: (boatId: string) => void;
   setAnalysis: (action: AnalysisAction) => void;
   selectAnalysisWorkspace: (workspaceId: AnalysisWorkspaceId) => void;
@@ -169,6 +180,7 @@ export const useReplay = create<ReplayStore>((set, get) => ({
   ),
   chart2d: RACE_REPLAY_DEFAULTS.chart2d,
   truthMode: false,
+  inspectionHeld: null,
   reducedMotion: false,
   webglOk: false,
   hudReady: false,
@@ -217,6 +229,9 @@ export const useReplay = create<ReplayStore>((set, get) => ({
   setChart2d: (on) =>
     set((state) => transitionReplay(state, { type: "set-chart-2d", on })),
   setTruthMode: (on) => set((state) => transitionReplay(state, { type: "set-truth", on })),
+  setInspectionHeld: (held) => {
+    if (get().inspectionHeld !== held) set({ inspectionHeld: held });
+  },
   follow: (boatId) =>
     set((state) => transitionAnalysisWorkspacePrimaryPatch(raceData(), state, boatId)),
   setAnalysis: (action) =>
