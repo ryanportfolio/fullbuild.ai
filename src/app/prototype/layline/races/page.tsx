@@ -75,6 +75,7 @@ export default async function LaylineRacesPage({
   const initialTheme = storedTheme(cookieStore.get("layline-races-theme-v1")?.value);
   const race = raceFor(selectedId);
   if (race === null) throw new Error(`missing race ${selectedId}`);
+  const initialRace = Object.freeze({ id: selectedId, seed: race.seed });
   const fleet = new Map(race.boats.map((boat) => [boat.id, boat]));
 
   const rows: RaceRow[] = RACES.map((meta) => {
@@ -143,7 +144,7 @@ export default async function LaylineRacesPage({
       </div>
 
       <RaceWorkspace
-        initialRaceId={selectedId}
+        initialRace={initialRace}
         rows={rows}
         initialPreferences={initialPreferences}
         analystOffline={
@@ -153,7 +154,7 @@ export default async function LaylineRacesPage({
         <div className={layline.fallback}>
           <figure className={layline.chartFigure}>
             <TrackChart race={race} />
-            <figcaption className={layline.caption}>
+            <figcaption className={layline.caption} data-analysis-layer-caption="tracks">
               Every track, sampled once a second through the same evaluator the replay reads
             </figcaption>
           </figure>

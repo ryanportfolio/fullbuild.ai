@@ -13,9 +13,14 @@ import {
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AnalystSection } from "@/components/layline/analyst/AnalystSection";
-import { LaylineApp } from "@/components/layline/LaylineApp";
-import { pointAtRace, useReplay } from "@/components/layline/store";
+import {
+  LaylineApp,
+  type InitialRaceAuthority,
+} from "@/components/layline/LaylineApp";
+import { pointAtRace, raceData, useReplay } from "@/components/layline/store";
 import { raceMeta } from "@/lib/layline/races";
+import { createInspectionPlayingCadenceBudget } from "@/lib/layline/surfaces";
+import { RaceSidebarStatus } from "./RaceSidebarStatus";
 import styles from "./races.module.css";
 import {
   ANALYST_MAX,
@@ -197,6 +202,7 @@ function RaceListRow({
   onSelect,
   onPin,
   onArchive,
+  status,
 }: {
   row: RaceRow;
   current: boolean;
@@ -205,6 +211,7 @@ function RaceListRow({
   onSelect: () => void;
   onPin: () => void;
   onArchive: () => void;
+  status?: ReactNode;
 }) {
   return (
     <li className={styles.rowShell} data-current={current ? "true" : undefined}>
@@ -242,6 +249,7 @@ function RaceListRow({
           {archived ? "Restore" : "Archive"}
         </button>
       </span>
+      {status}
     </li>
   );
 }
@@ -267,13 +275,13 @@ function RaceListRow({
  * the wrong one.
  */
 export function RaceWorkspace({
-  initialRaceId,
+  initialRace,
   rows,
   initialPreferences,
   analystOffline = false,
   children,
 }: {
-  initialRaceId: string;
+  initialRace: InitialRaceAuthority;
   rows: readonly RaceRow[];
   initialPreferences: WorkspacePreferences;
   /* The server knows whether a key or the mock is configured; the client
@@ -282,15 +290,26 @@ export function RaceWorkspace({
   analystOffline?: boolean;
   children: ReactNode;
 }) {
+  const initialRaceId = initialRace.id;
   useState(() => {
-    if (typeof window !== "undefined") pointAtRace(initialRaceId);
+    if (typeof window !== "undefined") pointAtRace(initialRace.id);
     return null;
   });
+
+  /* Query-driven race changes preserve this workspace while key={raceId}
+   * intentionally remounts the race viewer. The shared budget carries only
+   * an integer replay second across those child remounts, never RaceData.
+   * A full workspace remount gets a new budget and may perform its first trace. */
+  const [inspectionCadenceBudget] = useState(
+    () => createInspectionPlayingCadenceBudget(),
+  );
 
   const router = useRouter();
   const pathname = usePathname();
   const storeRaceId = useReplay((state) => state.raceId);
+  const briefDone = useReplay((state) => state.briefDone);
   const [mounted, setMounted] = useState(false);
+  const [pendingRaceId, setPendingRaceId] = useState<string | null>(null);
   const validIds = useMemo(() => new Set(rows.map((row) => row.id)), [rows]);
   const initialPreferencesRef = useRef(initialPreferences);
   const [preferences, setPreferences] = useState(() =>
@@ -389,6 +408,7 @@ export function RaceWorkspace({
    * costs nothing. */
   useEffect(() => {
     useReplay.getState().selectRace(initialRaceId);
+    setPendingRaceId(null);
     setMounted(true);
   }, [initialRaceId]);
 
@@ -430,6 +450,7 @@ export function RaceWorkspace({
    * back to, and the history would fill with one entry per glance. */
   const select = (id: string) => {
     if (id === raceId) return;
+    setPendingRaceId(id);
     router.replace(`${pathname}?race=${id}`, { scroll: false });
   };
 
@@ -679,18 +700,26 @@ export function RaceWorkspace({
     emptyMainCopy = "Every active race is pinned";
   }
 
-  const renderRow = (row: RaceRow, inArchive = false) => (
-    <RaceListRow
+  const renderRow = (row: RaceRow, inArchive = false) => {
+    const current = row.id === raceId;
+    return (
+      <RaceListRow
       key={row.id}
       row={row}
-      current={row.id === raceId}
+      current={current}
       pinned={pinned.has(row.id)}
       archived={inArchive}
       onSelect={() => select(row.id)}
       onPin={() => togglePin(row.id)}
       onArchive={() => toggleArchive(row.id)}
+      status={
+        current && briefDone && pendingRaceId === null && storeRaceId === initialRaceId
+          ? <RaceSidebarStatus race={raceData()} />
+          : null
+      }
     />
-  );
+    );
+  };
 
   return (
     <main
@@ -839,15 +868,19 @@ export function RaceWorkspace({
       >
         <LaylineApp
           key={raceId}
+          initialRace={initialRace}
+          useInitialRace={!mounted}
           venue={venue}
           autoplay="immediate"
           boot="sea"
+          inspectionCadenceBudget={inspectionCadenceBudget}
           bootBrief={
             meta === undefined
               ? undefined
               : { name: meta.name, venue: meta.venue, dateLabel: meta.dateLabel }
           }
           comparison
+          analysisWorkspaces
         >
           {children}
         </LaylineApp>

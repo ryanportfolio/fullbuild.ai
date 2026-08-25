@@ -4,9 +4,9 @@
  * here, so they can only disagree with each other by asking about different
  * times, never by doing the arithmetic differently.
  *
- * Two honest modes. Smooth is a cubic Hermite whose tangents are the measured
- * SOG/COG at each fix rather than neighbour differences, so the curve carries
- * the velocity the boat actually reported. Raw is a zero-order hold: the fix
+ * Two honest modes. Smooth is a cubic Hermite whose tangents are the derived
+ * ground components at each fix rather than neighbour differences, so the
+ * curve carries the velocity represented by the recorded component tuple. Raw is a zero-order hold: the fix
  * and nothing between it and the next, which is the whole point of the SNAP
  * lens and must not be softened.
  *
@@ -27,6 +27,7 @@ import type {
   TelemetryTruth,
   WindSample,
 } from "./types";
+import { velocityFromComponents } from "./velocity";
 
 const DEG = Math.PI / 180;
 
@@ -181,9 +182,9 @@ function holdFix(f: Fix, out: Pose): Pose {
   out.hdg = f.hdg;
   out.heel = f.heel;
   out.twa = f.twa;
-  out.sog = f.sog;
-  out.cog = f.cog;
   out.kite = f.kite;
+  velocityFromComponents(f.waterX, f.waterY, f.currentX, f.currentY, out);
+  out.telemetryProvenance = "recorded-fix";
   return out;
 }
 
@@ -214,23 +215,27 @@ export function poseAt(
   const prev = i > 0 ? fixes[i - 1] : a;
   const next = i + 2 < n ? fixes[i + 2] : b;
 
-  /* Position tangents are the reported velocity vectors, so the curve leaves
-   * each fix on the heading the instrument recorded. Course frame: 0 deg is
+  /* Position tangents are the fix-derived ground vectors, so the curve leaves
+   * each fix on the course represented by its stored components. Course frame: 0 deg is
    * +y and angles grow clockwise, hence sin on x and cos on y. */
-  const ca = a.cog * DEG;
-  const cb = b.cog * DEG;
-  out.x = hermite(a.x, a.sog * Math.sin(ca) * dt, b.x, b.sog * Math.sin(cb) * dt, u);
-  out.y = hermite(a.y, a.sog * Math.cos(ca) * dt, b.y, b.sog * Math.cos(cb) * dt, u);
+  const aGroundX = a.waterX + a.currentX;
+  const aGroundY = a.waterY + a.currentY;
+  const bGroundX = b.waterX + b.currentX;
+  const bGroundY = b.waterY + b.currentY;
+  out.x = hermite(a.x, aGroundX * dt, b.x, bGroundX * dt, u);
+  out.y = hermite(a.y, aGroundY * dt, b.y, bGroundY * dt, u);
 
   out.hdg = wrap360(angleAt(prev.hdg, a.hdg, b.hdg, next.hdg, prev.t, a.t, b.t, next.t, u));
-  /* Recomputing cog from the position derivative would report a heading the
-   * boat never sent, so it interpolates on its own short arc like hdg. */
-  out.cog = wrap360(angleAt(prev.cog, a.cog, b.cog, next.cog, prev.t, a.t, b.t, next.t, u));
   /* twa is an angle too: a gybe steps 175 to -176 and only the short arc keeps
    * the boat downwind through it instead of sweeping it head to wind. */
   out.twa = wrapSigned(angleAt(prev.twa, a.twa, b.twa, next.twa, prev.t, a.t, b.t, next.t, u));
   out.heel = scalarAt(prev.heel, a.heel, b.heel, next.heel, prev.t, a.t, b.t, next.t, u);
-  out.sog = scalarAt(prev.sog, a.sog, b.sog, next.sog, prev.t, a.t, b.t, next.t, u);
+  const waterX = scalarAt(prev.waterX, a.waterX, b.waterX, next.waterX, prev.t, a.t, b.t, next.t, u);
+  const waterY = scalarAt(prev.waterY, a.waterY, b.waterY, next.waterY, prev.t, a.t, b.t, next.t, u);
+  const currentX = scalarAt(prev.currentX, a.currentX, b.currentX, next.currentX, prev.t, a.t, b.t, next.t, u);
+  const currentY = scalarAt(prev.currentY, a.currentY, b.currentY, next.currentY, prev.t, a.t, b.t, next.t, u);
+  velocityFromComponents(waterX, waterY, currentX, currentY, out);
+  out.telemetryProvenance = "reconstructed-from-fixes";
   out.kite = hermite(a.kite, kiteRate(fixes, i, n) * dt, b.kite, kiteRate(fixes, i + 1, n) * dt, u);
   return out;
 }
@@ -242,16 +247,22 @@ interface TelemetryTruthPoseBuffers {
 
 const telemetryTruthPoseBuffers = new WeakMap<TelemetryTruth, TelemetryTruthPoseBuffers>();
 
-function emptyPose(): Pose {
-  return { x: 0, y: 0, hdg: 0, heel: 0, twa: 0, sog: 0, cog: 0, kite: 0 };
+export function createPose(): Pose {
+  return {
+    x: 0, y: 0, hdg: 0, heel: 0, twa: 0, kite: 0,
+    waterX: 0, waterY: 0, currentX: 0, currentY: 0,
+    stw: 0, ctw: null, currentDrift: 0, currentSet: null,
+    groundX: 0, groundY: 0, sog: 0, cog: null,
+    telemetryProvenance: "recorded-fix",
+  };
 }
 
 function truthPoseBuffers(out: TelemetryTruth): TelemetryTruthPoseBuffers {
   const known = telemetryTruthPoseBuffers.get(out);
   if (known !== undefined) return known;
   const buffers = {
-    raw: out.raw ?? emptyPose(),
-    reconstructed: out.reconstructed ?? emptyPose(),
+    raw: out.raw ?? createPose(),
+    reconstructed: out.reconstructed ?? createPose(),
   };
   telemetryTruthPoseBuffers.set(out, buffers);
   return buffers;

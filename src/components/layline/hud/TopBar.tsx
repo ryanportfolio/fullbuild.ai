@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import styles from "@/app/prototype/layline/layline.module.css";
 import { clock } from "@/lib/layline/format";
 import type { LegName, RaceData } from "@/lib/layline/types";
@@ -19,7 +19,15 @@ const LEG_LABEL: Record<LegName, string> = {
  * the server, where the store holds the default race whatever the URL asked
  * for, and a venue read there would hydrate into a different string. The
  * default is the shipped race's own, so the story page passes nothing. */
-export function TopBar({ race, venue = "Long Beach" }: { race: RaceData; venue?: string }) {
+export function TopBar({
+  race,
+  venue = "Long Beach",
+  analysisNavigation,
+}: {
+  race: RaceData;
+  venue?: string;
+  analysisNavigation?: ReactNode;
+}) {
   const clockRef = useRef<HTMLSpanElement>(null);
   const legRef = useRef<HTMLSpanElement>(null);
   const raw = useReplay((state) => state.mode === "raw");
@@ -40,7 +48,11 @@ export function TopBar({ race, venue = "Long Beach" }: { race: RaceData; venue?:
   );
 
   return (
-    <header className={styles.dockTop}>
+    <header
+      className={analysisNavigation === undefined
+        ? styles.dockTop
+        : `${styles.dockTop} ${styles.dockTopAnalysis}`}
+    >
       <div className={styles.wordmarkBlock}>
         <span className={styles.wordmark}>LAYLINE</span>
         <span className={styles.wordmarkMeta}>{`Fleet race · ${venue}`}</span>
@@ -86,6 +98,7 @@ export function TopBar({ race, venue = "Long Beach" }: { race: RaceData; venue?:
         </span>
         {sceneUp ? <WindDial race={race} /> : null}
       </div>
+      {analysisNavigation}
     </header>
   );
 }

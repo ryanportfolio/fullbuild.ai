@@ -21,6 +21,7 @@ registerHooks({
 const { compareRange, dtfAt, integrateTrackRange, normalizeAnalysisRange } = await import(
   "../src/lib/layline/comparison.ts"
 );
+const { createCurrentFieldSpec } = await import("../src/lib/layline/current.ts");
 const { RACES } = await import("../src/lib/layline/races.ts");
 const { generateRace } = await import("../src/lib/layline/sim.ts");
 
@@ -42,12 +43,15 @@ function syntheticRace() {
         if (t >= 5 && t < 9) twa = -40;
         else if (t >= 9 && t < 10) twa = 40;
       }
+      const speed = 1 + boatIndex * 0.1;
       fixes[id].push({
         t,
         x: 1 + boatIndex,
         y: beat ? t : 20 - t,
-        sog: 1 + boatIndex * 0.1,
-        cog: beat ? 0 : 180,
+        waterX: 0,
+        waterY: beat ? speed : -speed,
+        currentX: 0,
+        currentY: 0,
         hdg: beat ? 0 : 180,
         heel: 0,
         twa,
@@ -67,16 +71,18 @@ function syntheticRace() {
       });
     }
   }
+  const course = {
+    startPin: { x: -5, y: 0 },
+    startBoat: { x: 5, y: 0 },
+    windward: { x: 0, y: 12 },
+    zoneRadius: 2,
+  };
   return {
     seed: 1,
     tMin: -2,
     tMax: 20,
-    course: {
-      startPin: { x: -5, y: 0 },
-      startBoat: { x: 5, y: 0 },
-      windward: { x: 0, y: 12 },
-      zoneRadius: 2,
-    },
+    course,
+    environment: { current: createCurrentFieldSpec(1, course) },
     wind: [],
     boats: ids.map(boat),
     fixes,
@@ -108,9 +114,11 @@ function curvedSyntheticRace() {
       const dy = 1 + 0.06 * fix.t - boatIndex * 0.01;
       fix.x = boatIndex * 3 + 0.08 * fix.t ** 2 + boatIndex * 0.03 * fix.t;
       fix.y = fix.t + 0.03 * fix.t ** 2 - boatIndex * 0.01 * fix.t;
-      fix.sog = Math.hypot(dx, dy);
-      fix.cog = (Math.atan2(dx, dy) * 180) / Math.PI;
-      fix.hdg = fix.cog;
+      fix.waterX = dx;
+      fix.waterY = dy;
+      fix.currentX = 0;
+      fix.currentY = 0;
+      fix.hdg = (Math.atan2(dx, dy) * 180) / Math.PI;
       fix.twa = fix.t < 10 ? 40 : 140;
     }
   }
@@ -329,7 +337,7 @@ test("missing progress at a range boundary returns DTF-unavailable without inven
 
 test("non-finite telemetry fails preflight before range facts", () => {
   const race = syntheticRace();
-  race.fixes.a.find((fix) => fix.t === 4).sog = Number.NaN;
+  race.fixes.a.find((fix) => fix.t === 4).waterX = Number.NaN;
   const result = compareRange(race, named({ from: 3, to: 5 }));
   assert.equal(result.status, "missing-boundary-data");
   assert.equal(result.boundaryFactsStatus, "invalid-sample");
@@ -383,7 +391,7 @@ test("prestart, finished, and mixed ranges close with precedence", () => {
   closure(mixed);
 });
 
-test("whole-range coverage closes exactly for all three seeded races", () => {
+test("whole-range fleets report exact component eligibility when feeds end before tMax", () => {
   let probes = 0;
   for (const meta of RACES) {
     const race = generateRace(meta.seed);
@@ -392,8 +400,15 @@ test("whole-range coverage closes exactly for all three seeded races", () => {
       reference: { kind: "fleet-median", boatIds: race.boats.map((boat) => boat.id) },
       range: { from: race.tMin, to: race.tMax },
     });
-    assert.ok(["ok", "no-racing-coverage"].includes(result.status), `${meta.id}: ${result.status}`);
-    assert.equal(result.reference.eligibleCohortIds.length, race.boats.length);
+    const expected = {
+      "long-beach": { status: "insufficient-fleet-coverage", eligible: ["aus"] },
+      "kestrel-sound": { status: "missing-boundary-data", eligible: ["usa", "jpn"] },
+      "sable-reach": { status: "insufficient-fleet-coverage", eligible: ["jpn"] },
+    }[meta.id];
+    assert.equal(result.status, expected.status, `${meta.id}: ${result.status}`);
+    assert.deepEqual(result.reference.requestedCohortIds, race.boats.map((boat) => boat.id));
+    assert.deepEqual(result.reference.eligibleCohortIds, expected.eligible, `${meta.id}: eligible cohort`);
+    assert.ok(!result.reference.eligibleCohortIds.includes(result.primaryBoatId));
     closure(result);
     probes++;
   }
@@ -506,7 +521,7 @@ test("empty, missing, and invalid telemetry expose null ground facts", () => {
     },
     {
       mutate(race) {
-        for (const fix of race.fixes.a) fix.sog = Number.NaN;
+        for (const fix of race.fixes.a) fix.waterX = Number.NaN;
       },
       trackStatus: "invalid-sample",
     },
@@ -595,7 +610,7 @@ test("all seeded races classify missing and invalid fix-progress telemetry consi
       expectedReason: "invalidSample",
       expectedTrackStatus: "invalid-sample",
       mutate(race, boatId) {
-        for (const fix of race.fixes[boatId]) fix.sog = Number.NaN;
+        for (const fix of race.fixes[boatId]) fix.waterX = Number.NaN;
       },
     },
   ];
@@ -769,21 +784,30 @@ test("overflowed per-boat and fleet progress stays null with an invalid arithmet
       for (const referenceKind of ["boat", "fleet-median"]) {
         const race = generateRace(meta.seed);
         const primaryBoatId = race.boats[0].id;
+        const range = {
+          from: Math.max(...race.boats.map((boat) => race.progress[boat.id][0].t)),
+          to: Math.min(...race.boats.flatMap((boat) => [
+            race.progress[boat.id].at(-1).t,
+            race.fixes[boat.id].at(-1).t,
+          ])),
+        };
         for (const boat of race.boats) {
           const samples = race.progress[boat.id];
-          samples[0].dtf = startDtf;
-          samples[samples.length - 1].dtf = endDtf;
+          const setBoundary = (at, value) => {
+            const after = samples.findIndex((sample) => sample.t >= at);
+            assert.ok(after >= 0, `${meta.id} ${boat.id} has no progress bracket at ${at}`);
+            samples[after].dtf = value;
+            if (samples[after].t !== at) samples[after - 1].dtf = value;
+          };
+          setBoundary(range.from, startDtf);
+          setBoundary(range.to, endDtf);
         }
-        const primarySamples = race.progress[primaryBoatId];
         const result = compareRange(race, {
           primaryBoatId,
           reference: referenceKind === "boat"
             ? { kind: "boat", boatId: race.boats[1].id }
             : { kind: "fleet-median", boatIds: race.boats.map((boat) => boat.id) },
-          range: {
-            from: primarySamples[0].t,
-            to: primarySamples[primarySamples.length - 1].t,
-          },
+          range,
         });
 
         assert.equal(result.boundaryFactsStatus, "invalid-arithmetic");

@@ -162,6 +162,103 @@ function assertPreflightAcceptance(race, request) {
   assertFiniteOrNullTree(view, "view");
 }
 
+test("current spec snapshot contract protects every public fact path", () => {
+  const canonical = generateRace(RACES[0].seed);
+  for (const copyCurrent of [
+    (current) => JSON.parse(JSON.stringify(current)),
+    (current) => structuredClone(current),
+  ]) {
+    const race = structuredClone(canonical);
+    race.environment.current = copyCurrent(canonical.environment.current);
+    for (const kind of ["boat", "fleet-median"]) {
+      assertPreflightAcceptance(race, requestFor(race, kind));
+    }
+  }
+
+  class CurrentFieldRecord {}
+  const hostileFactories = [
+    (current) => null,
+    (current) => [],
+    (current) => Object.assign(new CurrentFieldRecord(), current),
+    (current) => Object.assign(Object.create({ inherited: true }), current),
+    (current) => Object.assign(Object.create(null), current),
+    (current) => ({ ...current, extra: 1 }),
+    (current) => {
+      const candidate = { ...current };
+      delete candidate.yTimePeriodSeconds;
+      return candidate;
+    },
+    (current) => {
+      const candidate = { ...current };
+      candidate.xBaseMps = candidate;
+      return candidate;
+    },
+    (current) => {
+      const candidate = { ...current };
+      let reads = 0;
+      Object.defineProperty(candidate, "xBaseMps", {
+        configurable: true,
+        enumerable: true,
+        get() {
+          reads++;
+          return reads < 2 ? current.xBaseMps : 0.2;
+        },
+      });
+      return candidate;
+    },
+    (current) => {
+      const candidate = { ...current };
+      let reads = 0;
+      Object.defineProperty(candidate, "xBaseMps", {
+        configurable: true,
+        enumerable: true,
+        get() {
+          reads++;
+          return reads < 3 ? current.xBaseMps : 0.2;
+        },
+      });
+      return candidate;
+    },
+    (current) => {
+      const candidate = { ...current };
+      Object.defineProperty(candidate, "xBaseMps", {
+        configurable: true,
+        enumerable: true,
+        get() {
+          throw new Error("hostile current getter");
+        },
+      });
+      return candidate;
+    },
+    (current) => new Proxy({ ...current }, {
+      getPrototypeOf() { throw new Error("hostile current prototype"); },
+    }),
+    (current) => new Proxy({ ...current }, {
+      ownKeys() { throw new Error("hostile current ownKeys"); },
+    }),
+    (current) => new Proxy({ ...current }, {
+      getOwnPropertyDescriptor() { throw new Error("hostile current descriptor"); },
+    }),
+    (current) => new Proxy({ ...current }, {}),
+  ];
+
+  for (const [index, hostileFactory] of hostileFactories.entries()) {
+    for (const kind of ["boat", "fleet-median"]) {
+      const race = structuredClone(canonical);
+      race.environment.current = hostileFactory(canonical.environment.current);
+      assert.doesNotThrow(
+        () => assertPreflightRejection(
+          race,
+          requestFor(race, kind),
+          "invalid-sample",
+          "invalid-sample",
+        ),
+        `hostile current ${index} ${kind}`,
+      );
+    }
+  }
+});
+
 function eventOf(race, kind, boatId) {
   const event = race.events.find(
     (candidate) =>
@@ -469,8 +566,10 @@ test("invalid fix fields, progress fields, and series order fail before boundary
     ["twa", (race, boatId) => race.fixes[boatId][2].twa = Number.NaN],
     ["x", (race, boatId) => race.fixes[boatId][2].x = Infinity],
     ["y", (race, boatId) => race.fixes[boatId][2].y = Number.NaN],
-    ["sog", (race, boatId) => race.fixes[boatId][2].sog = Infinity],
-    ["cog", (race, boatId) => race.fixes[boatId][2].cog = Number.NaN],
+    ["waterX", (race, boatId) => race.fixes[boatId][2].waterX = Infinity],
+    ["waterY", (race, boatId) => race.fixes[boatId][2].waterY = Number.NaN],
+    ["currentX", (race, boatId) => race.fixes[boatId][2].currentX = Infinity],
+    ["currentY", (race, boatId) => race.fixes[boatId][2].currentY = Number.NaN],
     ["duplicate-fix", (race, boatId) => race.fixes[boatId][2].t = race.fixes[boatId][1].t],
     ["reversed-fix", (race, boatId) => [race.fixes[boatId][1].t, race.fixes[boatId][2].t] = [race.fixes[boatId][2].t, race.fixes[boatId][1].t]],
     ["dtf", (race, boatId) => race.progress[boatId][2].dtf = Number.NaN],
@@ -559,25 +658,19 @@ test("fleet preflight rejects required corruption but ignores or removes optiona
   }
 });
 
-test("opposite extreme speeds produce coherent nullable maneuver loss without clamping", () => {
+test("overflowing component sums fail full preflight before comparison arithmetic", () => {
   for (const meta of RACES) {
     for (const kind of ["boat", "fleet-median"]) {
       const race = generateRace(meta.seed);
       const primaryId = race.boats[0].id;
       for (const fix of race.fixes[primaryId]) {
         fix.twa = fix.t < 9 ? 40 : -40;
-        fix.sog = fix.t < 9 ? Number.MAX_VALUE : -Number.MAX_VALUE;
+        fix.waterX = Number.MAX_VALUE;
+        fix.currentX = Number.MAX_VALUE;
       }
-      const moves = maneuversOf(race, primaryId);
-      assert.ok(moves.length > 0);
-      assert.ok(
-        moves.some(
-          (move) => move.loss === null && move.lossMps === null && move.lossKnots === null,
-        ),
-      );
-      assertFiniteOrNullTree(moves, "maneuvers");
+      assert.equal(raceAnalysisValidity(race, [primaryId]).status, "invalid-sample");
       const result = compareRange(race, requestFor(race, kind));
-      assert.equal(result.status, "invalid-arithmetic");
+      assert.equal(result.status, "missing-boundary-data");
       assertFiniteOrNullTree(result, "comparison");
     }
   }

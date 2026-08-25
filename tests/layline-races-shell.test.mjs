@@ -45,7 +45,7 @@ test("the shell gives desktop width to replay and stacks its drawers around it o
 
   assert.match(
     css,
-    /grid-template-columns:\s*var\(--library-track\) minmax\(0, 1fr\) var\(--analyst-track\)/,
+    /grid-template-columns:\s*var\(--library-track\)\s+12px\s+minmax\(560px,\s*1fr\)\s+12px\s+var\(--analyst-track\)/,
   );
   assert.match(css, /--library-track:\s*52px/);
   assert.match(css, /--analyst-track:\s*52px/);
@@ -56,6 +56,21 @@ test("the shell gives desktop width to replay and stacks its drawers around it o
   const stacked = css.match(/@media \(max-width: 1199px\) \{([\s\S]*?)\n\}/)?.[1] ?? "";
   assert.match(stacked, /grid-template-columns:\s*minmax\(0, 1fr\)/);
   assert.match(stacked, /\.console\s*\{[\s\S]*height:\s*70vh/);
+});
+
+test("the selected live race stays a wide compact phone card so replay remains in the first viewport", () => {
+  const css = source("src/app/prototype/layline/races/races.module.css");
+  const stacked = css.match(/@media \(max-width: 1199px\) \{([\s\S]*?)\n\}/)?.[1] ?? "";
+
+  assert.match(
+    stacked,
+    /\.rowShell\[data-current="true"\]\s*\{[\s\S]*width:\s*min\(316px,\s*calc\(100vw - 48px\)\)/,
+  );
+  assert.match(
+    stacked,
+    /\.raceStatusRows\s*\{[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/,
+  );
+  assert.match(stacked, /\.raceStatusRow\s*\{[\s\S]*min-height:\s*36px/);
 });
 
 test("skip links land on controls that stay available while drawers are closed", () => {

@@ -11,8 +11,15 @@ import {
   type ReactNode,
 } from "react";
 import styles from "@/app/prototype/layline/layline.module.css";
-import { analysisEvidenceTarget, analysisFocusWindow } from "@/lib/layline/analysis-state";
-import type { RangeComparison } from "@/lib/layline/comparison";
+import {
+  analysisFocusWindow,
+  type AnalysisTimelineLaneId,
+} from "@/lib/layline/analysis-state";
+import {
+  analysisRangeEvidenceTarget,
+  analysisTimelineLayout,
+} from "@/lib/layline/analysis-workspace-ui";
+import type { AnalysisRange, RangeComparison } from "@/lib/layline/comparison";
 import { clock, signedMeters } from "@/lib/layline/format";
 import {
   clipTimelineInterval,
@@ -20,6 +27,7 @@ import {
   packTimelinePoints,
   placeTimelinePoint,
   recenterTimelineWindow,
+  TIMELINE_POINT_OWNERSHIP_CLEARANCE,
   TIMELINE_POINT_ROW_LIMIT,
   type TimelineIntervalEvidence,
   type TimelinePointEvidence,
@@ -48,6 +56,7 @@ type TimelineStyle = CSSProperties & {
   "--point-row"?: number;
   "--point-rows"?: number;
   "--point-reserved-rows"?: number;
+  "--timeline-height-budget"?: string;
 };
 
 function pct(fraction: number): string {
@@ -78,21 +87,33 @@ function timelineValueText(
 function PackedPointRail<TItem extends TimelinePointEvidence>({
   ariaLabel,
   className,
+  gridRow,
   items,
+  ownershipClearance = TIMELINE_POINT_OWNERSHIP_CLEARANCE,
+  reservedRows = TIMELINE_POINT_ROW_LIMIT,
   timelineWindow,
   renderPoint,
 }: {
   ariaLabel: string;
   className: string;
+  gridRow?: number;
   items: readonly TItem[];
+  ownershipClearance?: number;
+  reservedRows?: number;
   timelineWindow: TimelineWindow;
   renderPoint: (item: TItem, style: TimelineStyle) => ReactNode;
 }) {
   const railRef = useRef<HTMLDivElement>(null);
   const [geometry, setGeometry] = useState({ laneWidth: 0, clearance: 0 });
   const packed = useMemo(
-    () => packTimelinePoints(items, timelineWindow, geometry.laneWidth, geometry.clearance),
-    [geometry, items, timelineWindow],
+    () => packTimelinePoints(
+      items,
+      timelineWindow,
+      geometry.laneWidth,
+      geometry.clearance,
+      ownershipClearance,
+    ),
+    [geometry, items, ownershipClearance, timelineWindow],
   );
 
   /* Target width and focus clearance change only at responsive breakpoints.
@@ -130,9 +151,10 @@ function PackedPointRail<TItem extends TimelinePointEvidence>({
       role="group"
       aria-label={ariaLabel}
       style={{
+        gridRow,
         "--point-rows": packed.rowCount,
-        "--point-reserved-rows": TIMELINE_POINT_ROW_LIMIT,
-      } satisfies TimelineStyle}
+        "--point-reserved-rows": reservedRows,
+      } as TimelineStyle}
     >
       {packed.items.map(({ item, fraction, row }) =>
         renderPoint(item, {
@@ -144,10 +166,21 @@ function PackedPointRail<TItem extends TimelinePointEvidence>({
   );
 }
 
-export function Timeline({ race, comparison }: { race: RaceData; comparison?: RangeComparison }) {
+export function Timeline({
+  race,
+  comparison,
+  selectedRange,
+  visibleLaneIds,
+}: {
+  race: RaceData;
+  comparison?: RangeComparison;
+  selectedRange?: Readonly<AnalysisRange>;
+  visibleLaneIds?: readonly AnalysisTimelineLaneId[];
+}) {
   const followId = useReplay((state) => state.followId);
   const raw = useReplay((state) => state.mode === "raw");
   const analysis = useReplay((state) => state.analysis);
+  const activeSelectedRange = selectedRange ?? analysis.selectedRange;
   const focusSpan = analysis.focusSpanSeconds;
 
   const evidence = useMemo(() => deriveEvidenceTimeline(race, followId), [race, followId]);
@@ -157,17 +190,37 @@ export function Timeline({ race, comparison }: { race: RaceData; comparison?: Ra
   const phases = intervalItems(phaseLane?.items ?? []);
   const raceEvents = pointItems(eventLane?.items ?? []);
   const maneuvers = pointItems(maneuverLane?.items ?? []);
+  const defaultLaneIds = useMemo<readonly AnalysisTimelineLaneId[]>(
+    () => comparison === undefined
+      ? ["phase", "event", "maneuver"]
+      : ["phase", "event", "maneuver", "gain-loss"],
+    [comparison],
+  );
+  const layout = useMemo(
+    () => analysisTimelineLayout(visibleLaneIds ?? defaultLaneIds, comparison !== undefined),
+    [comparison, defaultLaneIds, visibleLaneIds],
+  );
+  const laneRow = (laneId: Exclude<AnalysisTimelineLaneId, "raw-fix">) =>
+    layout.rows.find((row) => row.id === laneId);
   const timelineWindow = useMemo(
     () => analysisFocusWindow(race, analysis),
     [race, analysis],
   );
-  const selectedRangePlacement = useMemo(
+  const startPlacement = useMemo(
     () => clipTimelineInterval(
-      analysis.selectedRange.from,
-      analysis.selectedRange.to,
+      Math.max(race.tMin, -10),
+      Math.min(race.tMax, 0),
       timelineWindow,
     ),
-    [analysis.selectedRange, timelineWindow],
+    [race.tMax, race.tMin, timelineWindow],
+  );
+  const selectedRangePlacement = useMemo(
+    () => clipTimelineInterval(
+      activeSelectedRange.from,
+      activeSelectedRange.to,
+      timelineWindow,
+    ),
+    [activeSelectedRange, timelineWindow],
   );
   const hues = useMemo(
     () => new Map(race.boats.map((boat) => [boat.id, boat.hue])),
@@ -180,6 +233,18 @@ export function Timeline({ race, comparison }: { race: RaceData; comparison?: Ra
   const ticksRef = useRef<(HTMLDivElement | null)[]>([]);
   const dragging = useRef(false);
   const timelineHelpId = useId();
+  const evidenceDetailPrefix = useId();
+  const [activeEvidence, setActiveEvidence] = useState<string | null>(null);
+
+  const evidenceDisclosureProps = (descriptionId: string, detail: string) => ({
+    "aria-describedby": descriptionId,
+    onPointerEnter: () => setActiveEvidence(detail),
+    onPointerLeave: (event: ReactPointerEvent<HTMLButtonElement>) => {
+      if (document.activeElement !== event.currentTarget) setActiveEvidence(null);
+    },
+    onFocus: () => setActiveEvidence(detail),
+    onBlur: () => setActiveEvidence(null),
+  });
 
   /* React may render when the range or followed boat changes. Keep the latest
    * listener-owned clock here so that render cannot restore mount-time ARIA. */
@@ -217,7 +282,7 @@ export function Timeline({ race, comparison }: { race: RaceData; comparison?: Ra
         setText(elapsedRef.current, reading);
       }
 
-      if (live.mode !== "raw") return;
+      if (live.mode !== "raw" && !layout.showRawFixes) return;
       const visibleRaw = clipTimelineInterval(
         live.t - RAW_WINDOW / 2,
         live.t + RAW_WINDOW / 2,
@@ -246,7 +311,7 @@ export function Timeline({ race, comparison }: { race: RaceData; comparison?: Ra
         node.style.left = pct(placed.fraction);
       }
     });
-  }, [focusSpan, race, raw, timelineWindow]);
+  }, [focusSpan, layout.showRawFixes, race, raw, timelineWindow]);
 
   const seekFromPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
     const track = trackRef.current;
@@ -264,7 +329,7 @@ export function Timeline({ race, comparison }: { race: RaceData; comparison?: Ra
 
   const seekSelectedRange = (edge: "in" | "out") => {
     const replay = useReplay.getState();
-    const evidence = analysisEvidenceTarget(replay.analysis, edge);
+    const evidence = analysisRangeEvidenceTarget(activeSelectedRange, edge);
     replay.seek(evidence.seekTo);
   };
 
@@ -280,7 +345,11 @@ export function Timeline({ race, comparison }: { race: RaceData; comparison?: Ra
       : `${clock(timelineWindow.from)} to ${clock(timelineWindow.to)}`;
 
   return (
-    <div className={`${styles.timelineRow} ${comparison === undefined ? styles.timelineRowBasic : ""}`}>
+    <div
+      className={`${styles.timelineRow} ${laneRow("gain-loss") === undefined ? styles.timelineRowBasic : ""}`}
+      data-analysis-flow="timeline"
+      style={{ "--timeline-height-budget": `${layout.heightBudgetPx}px` } as TimelineStyle}
+    >
       <div className={styles.timelineTools}>
         <span className={styles.timelineTitle}>Evidence timeline</span>
         <div className={styles.rangeGroup} role="group" aria-label="Timeline focus window">
@@ -303,127 +372,222 @@ export function Timeline({ race, comparison }: { race: RaceData; comparison?: Ra
           ))}
         </div>
         <span className={styles.rangeReadout}>{rangeText}</span>
+        <span
+          className={styles.evidenceDisclosure}
+          data-evidence-disclosure={activeEvidence === null ? "idle" : "active"}
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {activeEvidence ?? "Hover or focus an evidence mark for time, detail, and source"}
+        </span>
       </div>
 
-      <span className={`${styles.evidenceLaneLabel} ${styles.phaseLaneLabel}`}>
-        {phaseLane?.label ?? "Phases"}
-      </span>
-      <div
-        className={styles.phaseRail}
-        role="group"
-        aria-label={phaseLane?.label ?? "Race phases"}
-      >
-        {phases.map((phase) => {
-          const placed = clipTimelineInterval(phase.from, phase.to, timelineWindow);
-          if (placed === null) return null;
-          return (
-            <button
-              key={phase.id}
-              type="button"
-              className={`${styles.phaseBand} ${phaseWeight(phase.id)}`}
-              style={{ left: pct(placed.left), width: pct(placed.width) }}
-              title={`${phase.label} ${clock(phase.from)} to ${clock(phase.to)} · Source ${phase.provenance.source}`}
-              aria-label={`Go to ${phase.label} start at ${clock(phase.from)}`}
-              onClick={() => seekEvidence(phase.from)}
-            >
-              <span className={styles.bandLabel}>{phase.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      <span className={`${styles.evidenceLaneLabel} ${styles.eventLaneLabel}`}>
-        {eventLane?.label ?? "Race events"}
-      </span>
-      <PackedPointRail
-        className={styles.eventRail}
-        ariaLabel="Race events"
-        items={raceEvents}
-        timelineWindow={timelineWindow}
-        renderPoint={(item, pointStyle) => (
-          <button
-            key={item.id}
-            type="button"
-            className={`${styles.pointMark} ${styles.eventMark}`}
-            style={{
-              ...pointStyle,
-              color: item.boatId === undefined ? undefined : hues.get(item.boatId),
-            }}
-            data-event={item.eventKind}
-            title={`${item.label} at ${clock(item.at)} · Source ${item.provenance.source}`}
-            aria-label={`Go to ${item.label} at ${clock(item.at)}`}
-            onClick={() => seekEvidence(item.at)}
-          >
-            <span>{item.shortLabel}</span>
-          </button>
-        )}
-      />
-
-      <span className={`${styles.evidenceLaneLabel} ${styles.maneuverLaneLabel}`}>
-        {maneuverLane?.label ?? "Turns"}
-      </span>
-      <PackedPointRail
-        className={styles.manRail}
-        ariaLabel={maneuverLane?.label ?? "Tacks and gybes"}
-        items={maneuvers}
-        timelineWindow={timelineWindow}
-        renderPoint={(maneuver, pointStyle) => (
-          <button
-            key={maneuver.id}
-            type="button"
-            className={`${styles.pointMark} ${styles.manMark}`}
-            style={pointStyle}
-            data-maneuver={maneuver.maneuverKind}
-            data-at={maneuver.at}
-            title={`${maneuver.label} at ${clock(maneuver.at)}, ${maneuver.detail} · Source ${maneuver.provenance.source}`}
-            aria-label={`Go to the ${maneuver.label.toLowerCase()} at ${clock(maneuver.at)}`}
-            onClick={() => seekEvidence(maneuver.at)}
-          >
-            <svg className={styles.manGlyph} viewBox="0 0 10 10" aria-hidden="true">
-              <path d={maneuver.maneuverKind === "tack" ? TACK_GLYPH : GYBE_GLYPH} />
-            </svg>
-          </button>
-        )}
-      />
-
-      {comparison === undefined ? null : (
+      {laneRow("start") === undefined ? null : (
         <>
-          <span className={`${styles.evidenceLaneLabel} ${styles.comparisonLaneLabel}`}>
-            Ground gain
-          </span>
-          <div className={styles.comparisonRail} role="group" aria-label="Selected ground-reference comparison range">
-            {selectedRangePlacement === null ? null : (
-          <button
-            type="button"
-            className={styles.comparisonRangeBand}
-            style={{
-              left: pct(selectedRangePlacement.left),
-              width: pct(selectedRangePlacement.width),
-            }}
-            data-gain={
-              comparison.progressGainedMeters === null
-                ? "unavailable"
-                : comparison.progressGainedMeters > 0
-                  ? "gained"
-                  : comparison.progressGainedMeters < 0
-                    ? "lost"
-                    : "even"
-            }
-            aria-label={`Seek selected comparison range start ${clock(analysis.selectedRange.from)}. Ground-reference progress ${comparison.progressGainedMeters === null ? "unavailable" : `${signedMeters(comparison.progressGainedMeters)} metres`}.`}
-            onClick={() => seekSelectedRange("in")}
+          <span
+            className={styles.evidenceLaneLabel}
+            style={{ gridRow: laneRow("start")?.labelGridRow }}
           >
-            {comparison.progressGainedMeters === null
-              ? "Unavailable"
-              : `${signedMeters(comparison.progressGainedMeters)} m`}
-          </button>
+            Start window
+          </span>
+          <div
+            className={styles.phaseRail}
+            role="group"
+            aria-label="Start evidence window"
+            style={{ gridRow: laneRow("start")?.railGridRow }}
+          >
+            {startPlacement === null ? null : (
+              <button
+                type="button"
+                className={`${styles.phaseBand} ${styles.bandQuiet}`}
+                style={{ left: pct(startPlacement.left), width: pct(startPlacement.width) }}
+                aria-label={`Go to start window at ${clock(Math.max(race.tMin, -10))}`}
+                onClick={() => seekEvidence(Math.max(race.tMin, -10))}
+              >
+                <span className={styles.bandLabel}>Last 10 seconds</span>
+              </button>
             )}
           </div>
         </>
       )}
 
-      <span className={`${styles.evidenceLaneLabel} ${styles.replayLaneLabel}`}>Replay</span>
+      {laneRow("phase") === undefined ? null : (
+        <>
+          <span
+            className={styles.evidenceLaneLabel}
+            style={{ gridRow: laneRow("phase")?.labelGridRow }}
+          >
+            {phaseLane?.label ?? "Phases"}
+          </span>
+          <div
+            className={styles.phaseRail}
+            role="group"
+            aria-label={phaseLane?.label ?? "Race phases"}
+            style={{ gridRow: laneRow("phase")?.railGridRow }}
+          >
+            {phases.map((phase, index) => {
+              const placed = clipTimelineInterval(phase.from, phase.to, timelineWindow);
+              if (placed === null) return null;
+              const descriptionId = `${evidenceDetailPrefix}-phase-${index}`;
+              const detail = `${phase.label} · ${clock(phase.from)} to ${clock(phase.to)} · Source ${phase.provenance.source}`;
+              return (
+                <button
+                  key={phase.id}
+                  type="button"
+                  className={`${styles.phaseBand} ${phaseWeight(phase.id)}`}
+                  style={{ left: pct(placed.left), width: pct(placed.width) }}
+                  aria-label={`Go to ${phase.label} start at ${clock(phase.from)}`}
+                  {...evidenceDisclosureProps(descriptionId, detail)}
+                  onClick={() => seekEvidence(phase.from)}
+                >
+                  <span className={styles.bandLabel}>{phase.label}</span>
+                  <span id={descriptionId} className={styles.srOnly}>{detail}</span>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {laneRow("event") === undefined ? null : (
+        <>
+          <span
+            className={styles.evidenceLaneLabel}
+            style={{ gridRow: laneRow("event")?.labelGridRow }}
+          >
+            {eventLane?.label ?? "Race events"}
+          </span>
+          <PackedPointRail
+            className={styles.eventRail}
+            gridRow={laneRow("event")?.railGridRow}
+            ariaLabel="Race events"
+            items={raceEvents}
+            ownershipClearance={28}
+            timelineWindow={timelineWindow}
+            renderPoint={(item, pointStyle) => {
+              const descriptionId = `${evidenceDetailPrefix}-${item.id}`;
+              const detail = `${item.label} · ${clock(item.at)} · Source ${item.provenance.source}`;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`${styles.pointMark} ${styles.eventMark}`}
+                  style={{
+                    ...pointStyle,
+                    color: item.boatId === undefined ? undefined : hues.get(item.boatId),
+                  }}
+                  data-event={item.eventKind}
+                  aria-label={`Go to ${item.label} at ${clock(item.at)}`}
+                  {...evidenceDisclosureProps(descriptionId, detail)}
+                  onClick={() => seekEvidence(item.at)}
+                >
+                  <span>{item.shortLabel}</span>
+                  <span id={descriptionId} className={styles.srOnly}>{detail}</span>
+                </button>
+              );
+            }}
+          />
+        </>
+      )}
+
+      {laneRow("maneuver") === undefined ? null : (
+        <>
+          <span
+            className={styles.evidenceLaneLabel}
+            style={{ gridRow: laneRow("maneuver")?.labelGridRow }}
+          >
+            {maneuverLane?.label ?? "Turns"}
+          </span>
+          <PackedPointRail
+            className={styles.manRail}
+            gridRow={laneRow("maneuver")?.railGridRow}
+            ariaLabel={maneuverLane?.label ?? "Tacks and gybes"}
+            items={maneuvers}
+            ownershipClearance={46}
+            reservedRows={1}
+            timelineWindow={timelineWindow}
+            renderPoint={(maneuver, pointStyle) => {
+              const descriptionId = `${evidenceDetailPrefix}-${maneuver.id}`;
+              const detail = `${maneuver.label} · ${clock(maneuver.at)} · ${maneuver.detail} · Source ${maneuver.provenance.source}`;
+              return (
+                <button
+                  key={maneuver.id}
+                  type="button"
+                  className={`${styles.pointMark} ${styles.manMark}`}
+                  style={pointStyle}
+                  data-maneuver={maneuver.maneuverKind}
+                  data-at={maneuver.at}
+                  aria-label={`Go to the ${maneuver.label.toLowerCase()} at ${clock(maneuver.at)}`}
+                  {...evidenceDisclosureProps(descriptionId, detail)}
+                  onClick={() => seekEvidence(maneuver.at)}
+                >
+                  <svg className={styles.manGlyph} viewBox="0 0 10 10" aria-hidden="true">
+                    <path d={maneuver.maneuverKind === "tack" ? TACK_GLYPH : GYBE_GLYPH} />
+                  </svg>
+                  <span className={styles.manLabel}>
+                    {maneuver.maneuverKind === "tack" ? "Tack" : "Gybe"}
+                  </span>
+                  <span id={descriptionId} className={styles.srOnly}>{detail}</span>
+                </button>
+              );
+            }}
+          />
+        </>
+      )}
+
+      {comparison === undefined || laneRow("gain-loss") === undefined ? null : (
+        <>
+          <span
+            className={styles.evidenceLaneLabel}
+            style={{ gridRow: laneRow("gain-loss")?.labelGridRow }}
+          >
+            Ground gain
+          </span>
+          <div
+            className={styles.comparisonRail}
+            role="group"
+            aria-label="Selected ground-reference comparison range"
+            style={{ gridRow: laneRow("gain-loss")?.railGridRow }}
+          >
+            {selectedRangePlacement === null ? null : (
+              <button
+                type="button"
+                className={styles.comparisonRangeBand}
+                style={{
+                  left: pct(selectedRangePlacement.left),
+                  width: pct(selectedRangePlacement.width),
+                }}
+                data-gain={
+                  comparison.progressGainedMeters === null
+                    ? "unavailable"
+                    : comparison.progressGainedMeters > 0
+                      ? "gained"
+                      : comparison.progressGainedMeters < 0
+                        ? "lost"
+                        : "even"
+                }
+                aria-label={`Seek selected comparison range start ${clock(activeSelectedRange.from)}. Ground-reference progress ${comparison.progressGainedMeters === null ? "unavailable" : `${signedMeters(comparison.progressGainedMeters)} metres`}.`}
+                onClick={() => seekSelectedRange("in")}
+              >
+                {comparison.progressGainedMeters === null
+                  ? "Unavailable"
+                  : `${signedMeters(comparison.progressGainedMeters)} m`}
+              </button>
+            )}
+          </div>
+        </>
+      )}
+
+      <span
+        className={styles.evidenceLaneLabel}
+        style={{ gridRow: layout.replayLabelGridRow }}
+      >
+        Replay
+      </span>
       <div
         className={styles.track}
+        style={{ gridRow: layout.replayRailGridRow }}
         ref={trackRef}
         role="slider"
         tabIndex={0}
@@ -460,18 +624,18 @@ export function Timeline({ race, comparison }: { race: RaceData; comparison?: Ra
           event.preventDefault();
         }}
       >
-        {comparison === undefined || selectedRangePlacement === null ? null : (
+        {comparison === undefined || laneRow("gain-loss") === undefined || selectedRangePlacement === null ? null : (
           <div
             className={styles.selectedRangeHighlight}
             style={{
               left: pct(selectedRangePlacement.left),
               width: pct(selectedRangePlacement.width),
             }}
-            data-analysis-range={`${analysis.selectedRange.fromMicros}:${analysis.selectedRange.toMicros}`}
+            data-analysis-range={`${activeSelectedRange.fromMicros}:${activeSelectedRange.toMicros}`}
             aria-hidden="true"
           />
         )}
-        {raw ? (
+        {raw || layout.showRawFixes ? (
           <div className={styles.rawStrip} aria-hidden="true">
             <div className={styles.rawWindow} ref={rawWindowRef} />
             {Array.from({ length: RAW_TICKS }, (item, index) => (
@@ -501,10 +665,17 @@ export function Timeline({ race, comparison }: { race: RaceData; comparison?: Ra
         Arrow keys move one 0.25 second telemetry sample. Home and End move to the visible range
         limits.
       </span>
-      <span className={styles.timeClockNow} ref={elapsedRef} data-live="elapsed">
+      <span
+        className={styles.timeClockNow}
+        ref={elapsedRef}
+        data-live="elapsed"
+        style={{ gridRow: layout.clockGridRow }}
+      >
         {clock(liveTimeRef.current)}
       </span>
-      <span className={styles.timeClockTotal}>{clock(race.tMax)}</span>
+      <span className={styles.timeClockTotal} style={{ gridRow: layout.clockGridRow }}>
+        {clock(race.tMax)}
+      </span>
     </div>
   );
 }

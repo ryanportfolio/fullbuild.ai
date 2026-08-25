@@ -1,6 +1,24 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { registerHooks } from 'node:module';
 import { test } from 'node:test';
+
+const sourceRoot = new URL('../src/', import.meta.url);
+registerHooks({
+  resolve(specifier, context, nextResolve) {
+    try {
+      return nextResolve(specifier, context);
+    } catch (error) {
+      if (specifier.startsWith('@/')) {
+        return nextResolve(new URL(`${specifier.slice(2)}.ts`, sourceRoot).href, context);
+      }
+      if (!specifier.startsWith('.')) throw error;
+      return nextResolve(`${specifier}.ts`, context);
+    }
+  },
+});
+
+const { replayRawFixesVisible } = await import('../src/lib/layline/analysis-layers.ts');
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
@@ -25,9 +43,12 @@ test('truth mode is explicit state and does not replace the playback lens', asyn
 test('inspector states provenance and reads one shared derivation helper', async () => {
   const inspector = await read('src/components/layline/hud/TruthInspector.tsx');
 
-  assert.match(inspector, /import \{ fixStamp, heading \} from "@\/lib\/layline\/format"/);
+  assert.match(inspector, /import \{[^}]*fixStamp[^}]*heading[^}]*\} from "@\/lib\/layline\/format"/);
   assert.doesNotMatch(inspector, /function (?:fixStamp|heading)\(/);
   assert.match(inspector, /telemetryTruthAt\(race, live\.followId, live\.t, buffer\.current\)/);
+  assert.match(inspector, /Recorded current sample/);
+  assert.match(inspector, /Reconstructed current from recorded fixes/);
+  assert.match(inspector, /<VectorTriangle race=\{race\} inspection=\{inspection\} \/>/);
   assert.match(inspector, /MEASURED · BEFORE \/ CURRENT/);
   assert.match(inspector, /MEASURED · AFTER \/ CURRENT/);
   assert.match(inspector, /DERIVED · CLOCK POSITION/);
@@ -48,10 +69,13 @@ test('inspector states provenance and reads one shared derivation helper', async
 test('3D truth fixes reuse persistent instances and dispose every render resource', async () => {
   const tracks = await read('src/components/layline/scene/BoatTracks.tsx');
 
-  assert.match(tracks, /telemetryTruthAt\(race, followId, t, truth\)/);
-  assert.match(tracks, /truthFixWindow\(fixes\.length, truth\.beforeIndex\)/);
-  assert.match(tracks, /dots\.visible = raw \|\| truthMode/);
-  assert.match(tracks, /kit\.dotData\[at \* 3\] = fix\.x/);
+  assert.match(tracks, /createReplayRawFixEvidenceModel\(race\)/);
+  assert.match(tracks, /sampleReplayRawFixEvidence\(race, t, followId, showRawFixes, truthMode, rawFixEvidence\)/);
+  assert.match(tracks, /replayRawFixesVisible\(showRawFixes, truthMode\)/);
+  assert.match(tracks, /dots\.visible = rawFixesVisible/);
+  assert.doesNotMatch(tracks, /dots\.visible = \(showTracks && raw\)/);
+  assert.match(tracks, /for \(const entry of rawFixEvidence\.slots\)/);
+  assert.match(tracks, /kit\.dotData\[offset\] = fix\.x/);
   assert.match(tracks, /new InstancedBufferGeometry\(\)/);
   assert.match(tracks, /for \(const ribbon of ribbons\) ribbon\.geometry\.dispose\(\)/);
   assert.match(tracks, /dots\.dispose\(\)/);
@@ -59,32 +83,58 @@ test('3D truth fixes reuse persistent instances and dispose every render resourc
   assert.doesNotMatch(tracks.match(/useFrame\(\(state\) => \{[\s\S]*?\n  \}, -55\);/)?.[0] ?? '', /new (BufferGeometry|InstancedBufferGeometry)/);
 });
 
-test('2D and no-WebGL truth paths draw measured selected-boat fixes', async () => {
+test('raw-fix evidence visibility follows layer or truth across both replay modes', (t) => {
+  let states = 0;
+  for (const replayMode of ['raw', 'smooth']) {
+    for (const rawFixesLayerOn of [false, true]) {
+      for (const truthMode of [false, true]) {
+        const layers = { 'raw-fixes': rawFixesLayerOn };
+        assert.equal(
+          replayRawFixesVisible(rawFixesLayerOn, truthMode),
+          rawFixesLayerOn || truthMode,
+          `3D ${replayMode}: layer=${rawFixesLayerOn}, truth=${truthMode}`,
+        );
+        assert.equal(
+          replayRawFixesVisible(layers, truthMode),
+          rawFixesLayerOn || truthMode,
+          `2D/no-WebGL ${replayMode}: layer=${rawFixesLayerOn}, truth=${truthMode}`,
+        );
+        states++;
+      }
+    }
+  }
+  assert.equal(states, 8);
+  t.diagnostic(`${states} raw-fix visibility states`);
+});
+
+test('2D and no-WebGL paths draw the shared measured evidence model', async () => {
   const [chart, app, styles] = await Promise.all([
     read('src/components/layline/svg/ChartView.tsx'),
     read('src/components/layline/LaylineApp.tsx'),
     read('src/app/prototype/layline/layline.module.css'),
   ]);
 
-  assert.match(chart, /data-truth-fixes=\{followId\}/);
+  assert.match(chart, /data-truth-fixes=\{rawFixEvidence\.kind === "truth-witness" \? followId : undefined\}/);
+  assert.match(chart, /data-raw-fix-boats=\{\s*rawFixEvidence\.kind === "fleet-window" \? rawFixEvidence\.boatCount : undefined\s*\}/);
   assert.match(chart, /data-provenance="measured"/);
-  assert.match(chart, /const fix = fixes\[index\]/);
-  assert.match(chart, /telemetryTruthAt\(race, live\.followId, live\.t, truth\.current\)/);
-  assert.match(chart, /truthFixWindow\(fixes\.length, reading\.beforeIndex\)/);
+  assert.match(chart, /createReplayRawFixEvidenceModel\(race\)/);
+  assert.match(chart, /sampleReplayRawFixEvidence\([\s\S]*?live\.followId,[\s\S]*?layers,[\s\S]*?truthMode,[\s\S]*?rawFixEvidence/);
+  assert.match(chart, /rawFixEvidence\.slots\.map\(\(entry\)/);
   assert.doesNotMatch(chart, /function truthWindowStart/);
   assert.doesNotMatch(chart, /beforeIndex - Math\.floor/);
   assert.doesNotMatch(await read('src/components/layline/scene/BoatTracks.tsx'), /beforeIndex - Math\.floor/);
-  assert.match(app, /truthMode && !live/);
+  assert.match(app, /!live && analysisWorkspaceReady && \(analysisWorkspace !== null \|\| truthMode\)/);
   assert.match(app, /className=\{styles\.truthFallbackLayer\}/);
-  assert.match(app, /<ChartView race=\{race\} \/>/);
+  assert.match(app, /<ChartView race=\{race\} inspection=\{visibleInspection\} layers=\{noWebglLayers\} \/>/);
   assert.match(styles, /\.truthFallbackLayer \{[\s\S]*?background: var\(--water-deep\)/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
-test('truth control mounts a matching inspector only while on and leaves an empty mobile dock off', async () => {
-  const [topBar, app, inspector, styles] = await Promise.all([
+test('truth control swaps inspector and instruments while preserving the no-WebGL vector surface', async () => {
+  const [topBar, app, workspacePanel, inspector, styles] = await Promise.all([
     read('src/components/layline/hud/TopBar.tsx'),
     read('src/components/layline/LaylineApp.tsx'),
+    read('src/components/layline/hud/AnalysisWorkspacePanel.tsx'),
     read('src/components/layline/hud/TruthInspector.tsx'),
     read('src/app/prototype/layline/layline.module.css'),
   ]);
@@ -92,7 +142,8 @@ test('truth control mounts a matching inspector only while on and leaves an empt
   assert.match(topBar, /aria-controls=\{truthMode \? "truth-inspector" : undefined\}/);
   assert.match(topBar, /aria-pressed=\{truthMode\}/);
   assert.doesNotMatch(topBar, /aria-controls="truth-inspector"/);
-  assert.match(app, /\{truthMode \? <TruthInspector race=\{race\} \/> : live \? <Instruments race=\{race\} \/> : null\}/);
+  assert.match(app, /truthMode && analysisWorkspace\?\.panel !== "truth-provenance" \? \([\s\S]*?<TruthInspector race=\{race\} inspection=\{visibleInspection\} \/>[\s\S]*?\) : live \? \([\s\S]*?<Instruments race=\{race\} inspection=\{visibleInspection\} \/>[\s\S]*?\) : null/);
+  assert.match(workspacePanel, /<TruthInspector race=\{race\} inspection=\{inspection\} \/>/);
   assert.doesNotMatch(app, /<TruthInspector[^>]+hidden=/);
   assert.match(inspector, /id="truth-inspector"/);
   assert.doesNotMatch(inspector, /hidden=\{/);

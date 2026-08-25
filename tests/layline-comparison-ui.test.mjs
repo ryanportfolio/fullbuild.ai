@@ -286,7 +286,11 @@ test("invalid, empty, zero, prestart, finished and missing cases expose honest w
   });
   const zero = comparison(race, { from: 8, to: 8 });
   const prestart = comparison(race, { from: race.tMin, to: -0.25 });
-  const finished = comparison(race, { from: race.tMax - 2, to: race.tMax });
+  const finishedFrom = Math.ceil(Math.max(
+    race.results.find((result) => result.boatId === primary).elapsed,
+    race.results.find((result) => result.boatId === rival).elapsed,
+  ) * 2) / 2;
+  const finished = comparison(race, { from: finishedFrom, to: finishedFrom + 1 });
   const missingRace = structuredClone(race);
   missingRace.progress[rival] = [];
   const missing = comparison(missingRace, { from: 2, to: 8 });
@@ -495,6 +499,11 @@ test("analyst comparison is an exact compareRange adapter for all races, referen
           straightMadeGoodDeltaMeters: canonical.straightDeltaMeters,
           maneuverWindowMadeGoodDeltaMeters: canonical.maneuverWindowDeltaMeters,
           residualMeters: canonical.residualMeters,
+          waterMadeGoodDeltaMeters: canonical.waterDeltaMeters,
+          currentMadeGoodDeltaMeters: canonical.currentDeltaMeters,
+          groundMadeGoodGainMeters: canonical.groundGainMeters,
+          componentResidualMeters: canonical.componentResidualMeters,
+          provenance: canonical.componentProvenance,
         });
         const json = JSON.parse(runTool(race, "compare_boats", {
           a: primary,
@@ -569,7 +578,7 @@ test("analyst comparison is an exact compareRange adapter for all races, referen
   t.diagnostic(`${assertions} exact analyst/canonical equalities across all shipped races`);
 });
 
-test("stable point-rail geometry caps first and measured paint at two visible rows", async () => {
+test("stable point-rail geometry reserves two rows and exposes every packed row", async () => {
   const items = Array.from({ length: 6 }, (_, index) => ({ id: `point-${index}`, at: index * 0.01 }));
   const window = { from: 0, to: 1, span: 1 };
   const first = packTimelinePoints(items, window, 0, 0);
@@ -590,10 +599,12 @@ test("stable point-rail geometry caps first and measured paint at two visible ro
     new URL("../src/app/prototype/layline/layline.module.css", import.meta.url),
     "utf8",
   );
-  assert.match(timeline, /"--point-reserved-rows": TIMELINE_POINT_ROW_LIMIT/);
+  assert.match(timeline, /reservedRows = TIMELINE_POINT_ROW_LIMIT/);
+  assert.match(timeline, /"--point-reserved-rows": reservedRows/);
   assert.match(css, /min-height:\s*calc\(var\(--point-reserved-rows, 2\) \* var\(--point-row-pitch\)\)/);
-  assert.match(css, /max-height:\s*calc\(var\(--point-reserved-rows, 2\) \* var\(--point-row-pitch\)\)/);
-  assert.match(css, /overflow-y:\s*auto/);
+  const pointRailCss = css.match(/\.pointRail\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.doesNotMatch(pointRailCss, /max-height/);
+  assert.doesNotMatch(pointRailCss, /overflow-y:\s*(?:auto|scroll)/);
 });
 
 test("semantic, phone, reduced-motion and fallback integration contracts stay present", async () => {
@@ -609,6 +620,10 @@ test("semantic, phone, reduced-motion and fallback integration contracts stay pr
     new URL("../src/components/layline/LaylineApp.tsx", import.meta.url),
     "utf8",
   );
+  const workspacePanel = await readFile(
+    new URL("../src/components/layline/hud/AnalysisWorkspacePanel.tsx", import.meta.url),
+    "utf8",
+  );
   const store = await readFile(
     new URL("../src/components/layline/store.ts", import.meta.url),
     "utf8",
@@ -622,7 +637,8 @@ test("semantic, phone, reduced-motion and fallback integration contracts stay pr
   assert.match(panel, /<select[\s\S]*Fleet median, fixed full fleet/);
   assert.match(panel, /Set IN/);
   assert.match(panel, /Set OUT/);
-  assert.match(panel, /analysisEvidenceTarget/);
+  assert.match(panel, /comparisonRangeEvidence/);
+  assert.doesNotMatch(panel, /analysis\.selectedRange/);
   assert.match(panel, /view\.referenceLabel/);
   assert.match(panel, /view\.referenceMembershipLabel/);
   assert.match(panel, /view\.signConvention/);
@@ -630,8 +646,9 @@ test("semantic, phone, reduced-motion and fallback integration contracts stay pr
   assert.match(timeline, /data-analysis-range=/);
   assert.match(timeline, /aria-label="Timeline focus window"/);
   assert.match(app, /live \|\| comparison/);
-  assert.match(app, /comparison \? <ComparisonPanel/);
-  assert.match(store, /transitionAnalysisOwner/);
+  assert.match(app, /<AnalysisWorkspacePanel/);
+  assert.match(workspacePanel, /<ComparisonPanel race=\{race\} comparison=\{comparison\}/);
+  assert.match(store, /transitionAnalysisWorkspacePatch/);
   assert.doesNotMatch(store, /setAnalysis:[^]*?seek\(/);
 
   const phone = css.split("@media (max-width: 900px) {")[1]

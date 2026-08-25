@@ -139,19 +139,23 @@ test("truth DOM branches compose with 2D and renderer availability", () => {
   const app = source("src/components/layline/LaylineApp.tsx");
   const topBar = source("src/components/layline/hud/TopBar.tsx");
   const inspector = source("src/components/layline/hud/TruthInspector.tsx");
+  const workspacePanel = source("src/components/layline/hud/AnalysisWorkspacePanel.tsx");
   const chart = source("src/components/layline/svg/ChartView.tsx");
   const css = source("src/app/prototype/layline/layline.module.css");
 
-  assert.match(app, /truthMode \? <TruthInspector race=\{race\} \/> : live \? <Instruments/);
-  assert.match(app, /live && chart2d \? <ChartView race=\{race\} \/> : null/);
-  assert.match(app, /truthMode && !live \? \(/);
+  assert.match(app, /truthMode && analysisWorkspace\?\.panel !== "truth-provenance" \? \([^]*<TruthInspector race=\{race\} inspection=\{visibleInspection\}[^]*:\s*live \? \([^]*<Instruments race=\{race\} inspection=\{visibleInspection\}[^]*:\s*null/);
+  assert.match(workspacePanel, /<TruthInspector race=\{race\} inspection=\{inspection\}/);
+  assert.match(app, /live && chart2d \? \([^]*<ChartView race=\{race\} inspection=\{visibleInspection\} layers=\{chartLayers\} \/>/);
+  assert.match(app, /!live && analysisWorkspaceReady && \(analysisWorkspace !== null \|\| truthMode\) \? \(/);
+  assert.match(app, /layers=\{noWebglLayers\}/);
   assert.match(app, /className=\{styles\.truthFallbackLayer\}/);
   assert.match(topBar, /aria-controls=\{truthMode \? "truth-inspector" : undefined\}/);
   assert.match(topBar, /aria-expanded=\{truthMode\}/);
   assert.match(inspector, /live\.followId, live\.t/);
   assert.match(inspector, /sceneUp \? \(chart2d \? "2D TRACK" : "3D SCENE"\)/);
   assert.match(inspector, /"2D TRACK · RENDERER UNAVAILABLE"/);
-  assert.match(chart, /data-truth-fixes=\{followId\}/);
+  assert.match(chart, /data-truth-fixes=\{rawFixEvidence\.kind === "truth-witness" \? followId : undefined\}/);
+  assert.match(chart, /data-raw-fix-boats=\{\s*rawFixEvidence\.kind === "fleet-window" \? rawFixEvidence\.boatCount : undefined\s*\}/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[^]*transition-duration:\s*1ms/);
   assert.doesNotMatch(
     css,
@@ -171,12 +175,19 @@ test("phone top bar uses bounded tracks and keeps essential status visible", () 
     /\.dockTop\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 1fr\)/,
   );
   assert.match(phone, /grid-template-areas:\s*"brand clock"\s*"status status"/);
+  assert.match(phone, /\.dockTopAnalysis > \.wordmarkBlock\s*\{[^}]*grid-area:\s*brand/);
+  assert.match(phone, /\.dockTopAnalysis > \.clockBlock\s*\{[^}]*grid-area:\s*clock/);
+  assert.match(phone, /\.dockTopAnalysis > \.windGroup\s*\{[^}]*grid-area:\s*status/);
   assert.match(
     phone,
     /\.wordmarkBlock,\s*\.clockBlock,\s*\.windGroup\s*\{[^}]*min-width:\s*0/,
   );
   assert.match(phone, /\.clockBlock\s*\{[^}]*flex-wrap:\s*wrap/);
   assert.match(phone, /\.windGroup\s*\{[^}]*flex-wrap:\s*wrap/);
+  assert.match(
+    css,
+    /@media \(max-width: 900px\) \{[\s\S]*?\.stage\[data-analysis-workspace="compare"\] \.dockLeft\s*\{[^}]*width:\s*auto/,
+  );
   assert.match(
     phone,
     /\.truthButton,\s*\.replayStatus\s*\{[^}]*min-height:\s*40px/,
@@ -222,7 +233,7 @@ test("drawer and truth branches keep valid relationships and closed content out 
 
   assert.match(
     racesCss,
-    /grid-template-columns:\s*var\(--library-track\) minmax\(0, 1fr\) var\(--analyst-track\)/,
+    /grid-template-columns:\s*var\(--library-track\)\s+12px\s+minmax\(560px,\s*1fr\)\s+12px\s+var\(--analyst-track\)/,
   );
   assert.match(racesCss, /--library-track:\s*52px/);
   assert.match(racesCss, /--analyst-track:\s*52px/);
@@ -242,8 +253,8 @@ test("timeline and truth add no clock or animation authority and release their l
   const inspector = source("src/components/layline/hud/TruthInspector.tsx");
   const chart = source("src/components/layline/svg/ChartView.tsx");
 
-  assert.equal((scene.match(/replay\.advance\(/g) ?? []).length, 1);
-  for (const text of [app, live, timeline, inspector, chart]) {
+  assert.equal((app.match(/replay\.advance\(/g) ?? []).length, 1);
+  for (const text of [scene, live, timeline, inspector, chart]) {
     assert.doesNotMatch(text, /replay\.advance\(/);
   }
   for (const text of [timeline, inspector, chart]) {
@@ -263,4 +274,19 @@ test("timeline and truth add no clock or animation authority and release their l
   assert.match(scene, /window\.removeEventListener\("pageshow"/);
   assert.match(scene, /canvas\.removeEventListener\("webglcontextlost"/);
   assert.match(scene, /canvas\.removeEventListener\("webglcontextrestored"/);
+});
+
+test("the no-WebGL path proves capability before mounting the scene island", () => {
+  const app = source("src/components/layline/LaylineApp.tsx");
+
+  assert.match(app, /function browserSupportsWebgl\(\): boolean/);
+  assert.match(app, /getContext\("webgl2"[\s\S]*getContext\("webgl"/);
+  assert.match(app, /getExtension\("WEBGL_lose_context"\)\?\.loseContext\(\)/);
+  assert.match(app, /const \[webglCapable, setWebglCapable\] = useState\(false\)/);
+  assert.match(app, /setWebglCapable\(browserSupportsWebgl\(\)\)/);
+  assert.match(app, /\{webglCapable \? \([\s\S]*?<SceneIsland/);
+  assert.match(app, /function useReplayClock\(playing: boolean, frozen: boolean\)/);
+  assert.equal((app.match(/requestAnimationFrame\(/g) ?? []).length, 2);
+  assert.equal((app.match(/cancelAnimationFrame\(/g) ?? []).length, 1);
+  assert.match(app, /\{\(live \|\| comparison\) \? <Transport \/> : null\}/);
 });

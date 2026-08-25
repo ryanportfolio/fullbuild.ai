@@ -1,10 +1,9 @@
 "use client";
 
 import styles from "@/app/prototype/layline/layline.module.css";
-import { analysisEvidenceTarget } from "@/lib/layline/analysis-state";
+import { comparisonRangeEvidence } from "@/lib/layline/analysis-workspace-ui";
 import type { RangeComparison } from "@/lib/layline/comparison";
 import { comparisonViewModel } from "@/lib/layline/comparison-view";
-import { fixStamp } from "@/lib/layline/format";
 import type { RaceData } from "@/lib/layline/types";
 import { useReplay } from "../store";
 
@@ -17,14 +16,14 @@ export function ComparisonPanel({
 }) {
   const analysis = useReplay((state) => state.analysis);
   const view = comparisonViewModel(race, comparison);
+  const rangeEvidence = comparisonRangeEvidence(comparison);
   const primary = race.boats.find((boat) => boat.id === comparison.primaryBoatId);
   const referenceValue =
     analysis.reference.kind === "boat" ? analysis.reference.boatId : "fleet-median";
 
   const seekRangeEdge = (edge: "in" | "out") => {
     const replay = useReplay.getState();
-    const evidence = analysisEvidenceTarget(replay.analysis, edge);
-    replay.seek(evidence.seekTo);
+    replay.seek(rangeEvidence[edge].seekTo);
   };
 
   return (
@@ -75,9 +74,7 @@ export function ComparisonPanel({
 
       <div className={styles.comparisonRangeRow}>
         <span className={styles.comparisonRangeLabel}>Exact replay range</span>
-        <output className={styles.comparisonRangeValue}>
-          {fixStamp(analysis.selectedRange.from)} to {fixStamp(analysis.selectedRange.to)}
-        </output>
+        <output className={styles.comparisonRangeValue}>{rangeEvidence.rangeLabel}</output>
         <div className={styles.comparisonRangeActions} aria-label="Comparison range selection">
           <button
             type="button"
@@ -120,10 +117,10 @@ export function ComparisonPanel({
         </div>
         <div className={styles.comparisonEvidenceActions} aria-label="Range-linked evidence">
           <button type="button" onClick={() => seekRangeEdge("in")}>
-            Seek IN {fixStamp(analysis.selectedRange.from)}
+            {rangeEvidence.in.label}
           </button>
           <button type="button" onClick={() => seekRangeEdge("out")}>
-            Seek OUT {fixStamp(analysis.selectedRange.to)}
+            {rangeEvidence.out.label}
           </button>
         </div>
       </div>

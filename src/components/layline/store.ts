@@ -4,19 +4,23 @@ import { create } from "zustand";
 import { generateRace } from "@/lib/layline/sim";
 import {
   createAnalysisState,
-  reconcileAnalysisState,
-  transitionAnalysisOwner,
-  transitionAnalysisPrimary,
+  reconcileAnalysisWorkspaceSession,
+  sanitizeAnalysisWorkspaceSession,
+  transitionAnalysisWorkspacePatch,
+  transitionAnalysisWorkspacePrimaryPatch,
   type AnalysisAction,
-  type AnalysisState,
+  type AnalysisWorkspaceId,
+  type AnalysisWorkspaceSession,
+  type LayerId,
+  type LayerOverride,
 } from "@/lib/layline/analysis-state";
 import { DEFAULT_RACE_ID, raceMeta } from "@/lib/layline/races";
 import {
   OPEN_AT,
   RACE_REPLAY_DEFAULTS,
   transitionReplay,
+  transitionReplayClock,
 } from "@/lib/layline/replay-transitions";
-import { FIX_HZ } from "@/lib/layline/types";
 import type { RaceData, ReplayMode, RigName } from "@/lib/layline/types";
 import { resetFreeformCamera } from "./scene/interaction";
 
@@ -94,7 +98,7 @@ interface ReplayStore {
   mode: ReplayMode;
   rig: RigName;
   followId: string;
-  analysis: AnalysisState;
+  analysis: AnalysisWorkspaceSession;
   /* The top-down chart in place of the rendered scene, on the same clock. A
    * mode, not a fallback: the renderer stays up behind it, because the clock
    * runs inside its frame loop and a chart with no clock is a picture. */
@@ -135,6 +139,10 @@ interface ReplayStore {
   setTruthMode: (on: boolean) => void;
   follow: (boatId: string) => void;
   setAnalysis: (action: AnalysisAction) => void;
+  selectAnalysisWorkspace: (workspaceId: AnalysisWorkspaceId) => void;
+  setAnalysisLayer: (layerId: LayerId, override: LayerOverride | "default") => void;
+  resetAnalysisWorkspace: () => void;
+  releaseAnalysisCameraIntent: () => void;
   setReducedMotion: (reduced: boolean) => void;
   setWebglOk: (ok: boolean) => void;
   setHudReady: (ready: boolean) => void;
@@ -145,14 +153,6 @@ interface ReplayStore {
   selectRace: (id: string) => void;
 }
 
-function clampTime(t: number): number {
-  const race = raceData();
-  if (!Number.isFinite(t)) return race.tMin;
-  if (t < race.tMin) return race.tMin;
-  if (t > race.tMax) return race.tMax;
-  return t;
-}
-
 export const useReplay = create<ReplayStore>((set, get) => ({
   raceId: DEFAULT_RACE_ID,
   t: RACE_REPLAY_DEFAULTS.t,
@@ -161,9 +161,11 @@ export const useReplay = create<ReplayStore>((set, get) => ({
   mode: "smooth",
   rig: RACE_REPLAY_DEFAULTS.rig,
   followId: RACE_REPLAY_DEFAULTS.followId,
-  analysis: createAnalysisState(
+  analysis: sanitizeAnalysisWorkspaceSession(
+    createAnalysisState(raceData(), RACE_REPLAY_DEFAULTS.t),
     raceData(),
     RACE_REPLAY_DEFAULTS.t,
+    { primaryBoatId: RACE_REPLAY_DEFAULTS.followId },
   ),
   chart2d: RACE_REPLAY_DEFAULTS.chart2d,
   truthMode: false,
@@ -185,44 +187,67 @@ export const useReplay = create<ReplayStore>((set, get) => ({
     if (get().playing) get().pause();
     else get().play();
   },
-  seek: (t) => set({ t: clampTime(t) }),
+  seek: (t) =>
+    set((state) => transitionReplayClock(raceData(), state, { type: "seek", t })),
 
   /* One fix either way, landed on the 1/FIX_HZ grid the sim wrote the fixes
    * on, so the raw lens steps reading to reading at 250 ms. Stepping while
    * playing pauses first: a clock that jumps and runs at once shows neither. */
-  step: (direction) => {
-    const race = raceData();
-    const u = (get().t - race.tMin) * FIX_HZ;
-    const n = direction > 0 ? Math.floor(u + 1e-6) + 1 : Math.ceil(u - 1e-6) - 1;
-    set({ playing: false, t: clampTime(race.tMin + n / FIX_HZ) });
-  },
+  step: (direction) =>
+    set((state) => transitionReplayClock(raceData(), state, { type: "step", direction })),
 
   /* The only thing that moves the clock on its own, and it is called from
    * inside the render loop so a frozen or backgrounded page cannot drift.
    * The clock runs to the end of the feed: the last boat crosses, the fleet
    * luffs out its way and comes to rest. The results stand either way; they
    * come from race.results, not from where the clock stops. */
-  advance: (seconds) => {
-    const state = get();
-    const race = raceData();
-    const next = state.t + seconds;
-    if (next >= race.tMax) {
-      set({ t: race.tMax, playing: false });
-      return;
-    }
-    set({ t: next < race.tMin ? race.tMin : next });
-  },
+  advance: (seconds) =>
+    set((state) => transitionReplayClock(raceData(), state, { type: "advance", seconds })),
 
   setRate: (rate) => set({ rate }),
   setMode: (mode) => set((state) => transitionReplay(state, { type: "set-mode", mode })),
-  setRig: (rig) => set({ rig }),
+  setRig: (rig) => {
+    set({ rig });
+    set((state) =>
+      transitionAnalysisWorkspacePatch(raceData(), state, {
+        type: "acquire-manual-camera",
+      }),
+    );
+  },
   setChart2d: (on) =>
     set((state) => transitionReplay(state, { type: "set-chart-2d", on })),
   setTruthMode: (on) => set((state) => transitionReplay(state, { type: "set-truth", on })),
   follow: (boatId) =>
-    set((state) => transitionAnalysisPrimary(raceData(), state, boatId)),
+    set((state) => transitionAnalysisWorkspacePrimaryPatch(raceData(), state, boatId)),
   setAnalysis: (action) =>
-    set((state) => transitionAnalysisOwner(raceData(), state, action)),
+    set((state) => transitionAnalysisWorkspacePatch(raceData(), state, action)),
+  selectAnalysisWorkspace: (workspaceId) =>
+    set((state) =>
+      transitionAnalysisWorkspacePatch(raceData(), state, {
+        type: "select-workspace",
+        workspaceId,
+      }),
+    ),
+  setAnalysisLayer: (layerId, override) =>
+    set((state) =>
+      transitionAnalysisWorkspacePatch(
+        raceData(),
+        state,
+        override === "default"
+          ? { type: "clear-layer-override", layerId }
+          : { type: "set-layer-override", layerId, override },
+      ),
+    ),
+  resetAnalysisWorkspace: () =>
+    set((state) =>
+      transitionAnalysisWorkspacePatch(raceData(), state, { type: "reset-workspace" }),
+    ),
+  releaseAnalysisCameraIntent: () =>
+    set((state) =>
+      transitionAnalysisWorkspacePatch(raceData(), state, {
+        type: "release-camera-to-preset",
+      }),
+    ),
   setReducedMotion: (reduced) => set({ reducedMotion: reduced }),
   setWebglOk: (ok) => set({ webglOk: ok }),
   setHudReady: (ready) => set({ hudReady: ready }),
@@ -258,7 +283,12 @@ export const useReplay = create<ReplayStore>((set, get) => ({
       const next = transitionReplay(state, { type: "select-race", raceId: id });
       return {
         ...next,
-        analysis: reconcileAnalysisState(raceData(), state.analysis, next.followId),
+        analysis: reconcileAnalysisWorkspaceSession(
+          raceData(),
+          state.analysis,
+          next.t,
+          { primaryBoatId: next.followId },
+        ),
         /* Re-armed with the race, unlike introDone. The brief states this
          * race's wind, line and fleet, so a rail selection gets a new brief. */
         briefDone: false,

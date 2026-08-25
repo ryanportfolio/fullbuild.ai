@@ -5,14 +5,14 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { fixStamp, heading } from "../src/lib/layline/format";
-import { poseAt, telemetryTruthAt, truthFixWindow } from "../src/lib/layline/interpolate";
+import { createPose, poseAt, telemetryTruthAt, truthFixWindow } from "../src/lib/layline/interpolate";
 import { generateRace } from "../src/lib/layline/sim";
 import { RACE_SEED, type Pose, type TelemetryTruth } from "../src/lib/layline/types";
 
 const race = generateRace(RACE_SEED);
 
 function pose(): Pose {
-  return { x: 0, y: 0, sog: 0, cog: 0, hdg: 0, heel: 0, twa: 0, kite: 0 };
+  return createPose();
 }
 
 function truth(): TelemetryTruth {
@@ -130,9 +130,10 @@ test("truth clamps the end to the final measured fix", () => {
 
 test("reconstructed heading crosses north on the same short arc as poseAt", () => {
   const fixes = race.fixes.fra;
-  const a = fixes[76];
-  const b = fixes[77];
-  assert.ok(Math.abs(b.hdg - a.hdg) > 300, "the pinned north-crossing pair moved");
+  const index = fixes.findIndex((fix, at) => at > 0 && Math.abs(fix.hdg - fixes[at - 1].hdg) > 300);
+  assert.ok(index > 0, "the race lost its north-crossing witness");
+  const a = fixes[index - 1];
+  const b = fixes[index];
   const t = (a.t + b.t) / 2;
   const out = telemetryTruthAt(race, "fra", t, truth());
   const expected = pose();
@@ -170,7 +171,7 @@ test("truth stays on both shared evaluators at every fix and midpoint", () => {
     }
   }
 
-  assert.equal(probes, 3416);
+  assert.equal(probes, 3420);
 });
 
 test("truth stamps carry rounded hundredths across minute boundaries", () => {

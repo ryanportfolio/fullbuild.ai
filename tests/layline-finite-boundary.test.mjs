@@ -474,8 +474,10 @@ test("coordinate, speed, VMG, maneuver and subnormal paths share one finite boun
       name: "positive speed accumulator overflow",
       mutate(race, primaryId) {
         for (const fix of race.fixes[primaryId]) {
-          fix.sog = Number.MAX_VALUE;
-          fix.cog = 0;
+          fix.waterX = 0;
+          fix.waterY = Number.MAX_VALUE;
+          fix.currentX = 0;
+          fix.currentY = 0;
           fix.twa = 40;
         }
       },
@@ -485,8 +487,10 @@ test("coordinate, speed, VMG, maneuver and subnormal paths share one finite boun
       name: "negative speed accumulator overflow",
       mutate(race, primaryId) {
         for (const fix of race.fixes[primaryId]) {
-          fix.sog = -Number.MAX_VALUE;
-          fix.cog = 0;
+          fix.waterX = 0;
+          fix.waterY = -Number.MAX_VALUE;
+          fix.currentX = 0;
+          fix.currentY = 0;
           fix.twa = 40;
         }
       },
@@ -497,9 +501,11 @@ test("coordinate, speed, VMG, maneuver and subnormal paths share one finite boun
       mutate(race, primaryId) {
         const fixes = race.fixes[primaryId];
         for (const fix of fixes) {
-          fix.cog = 0;
           fix.twa = fix.t < 9 ? 40 : -40;
-          fix.sog = fix.t < 9 ? Number.MAX_VALUE : -Number.MAX_VALUE;
+          fix.waterX = 0;
+          fix.waterY = fix.t < 9 ? Number.MAX_VALUE : -Number.MAX_VALUE;
+          fix.currentX = 0;
+          fix.currentY = 0;
         }
       },
       status: "invalid",
@@ -508,8 +514,10 @@ test("coordinate, speed, VMG, maneuver and subnormal paths share one finite boun
       name: "subnormal speed",
       mutate(race, primaryId) {
         for (const fix of race.fixes[primaryId]) {
-          fix.sog = Number.MIN_VALUE;
-          fix.cog = 0;
+          fix.waterX = 0;
+          fix.waterY = Number.MIN_VALUE;
+          fix.currentX = 0;
+          fix.currentY = 0;
           fix.twa = 40;
         }
       },
@@ -583,8 +591,10 @@ test("attribution residual overflow becomes null and changes the comparison witn
       const primaryId = race.boats[0].id;
       for (const [index, boat] of race.boats.entries()) {
         for (const fix of race.fixes[boat.id]) {
-          fix.sog = index === 0 ? -Number.MAX_VALUE / 2 : Number.MAX_VALUE / 2;
-          fix.cog = 0;
+          fix.waterX = 0;
+          fix.waterY = index === 0 ? -Number.MAX_VALUE / 2 : Number.MAX_VALUE / 2;
+          fix.currentX = 0;
+          fix.currentY = 0;
           fix.twa = 40;
         }
         setConstantProgress(race, boat.id, 0);

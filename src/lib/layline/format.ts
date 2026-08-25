@@ -40,8 +40,8 @@ export function meters(m: number): string {
 
 /**
  * A short elapsed, two decimals. Margins at a start line live in hundredths:
- * the three shipped races put their first hull across 0.10 s, 0.15 s and
- * 0.23 s after the gun, and clock() rounds all three to 0:00.
+ * the three shipped races put their first hull across 0.11 s, 0.16 s and
+ * 0.24 s after the gun, and clock() rounds all three to 0:00.
  */
 export function seconds(s: number): string {
   if (!Number.isFinite(s)) return MISSING;

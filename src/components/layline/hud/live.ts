@@ -1,6 +1,6 @@
 "use client";
 
-import { legAt, poseAt, standingsAt, windAt } from "@/lib/layline/interpolate";
+import { createPose, legAt, poseAt, standingsAt, windAt } from "@/lib/layline/interpolate";
 import type {
   LegName,
   Pose,
@@ -9,9 +9,15 @@ import type {
   StandingsRow,
   WindSample,
 } from "@/lib/layline/types";
+import { windAxisVmgFromComponents } from "@/lib/layline/velocity";
+import { requestSceneFrame } from "../scene/gate";
+import { setFocusHover } from "../scene/interaction";
 import { useReplay } from "../store";
 
-const DEG = Math.PI / 180;
+/** Shared keyboard/pointer focus seam for every standings row. */
+export function focusLiveBoat(boatId: string | null): void {
+  if (setFocusHover(boatId)) requestSceneFrame();
+}
 
 export interface LiveSample {
   t: number;
@@ -28,7 +34,7 @@ export interface LiveSample {
   rows: StandingsRow[];
 }
 
-const pose: Pose = { x: 0, y: 0, hdg: 0, heel: 0, twa: 0, sog: 0, cog: 0, kite: 0 };
+const pose: Pose = createPose();
 const wind: WindSample = { t: 0, twd: 0, tws: 0 };
 const sample: LiveSample = {
   t: Number.NaN,
@@ -102,8 +108,14 @@ export function setText(node: { textContent: string | null } | null, text: strin
  * does not, so the two readings differ in size as well as in sign and neither
  * can be read off the other.
  */
-export function vmgOf(p: Pose): number {
-  return p.sog * Math.cos(p.twa * DEG);
+export function vmgOf(p: Pose, twd: number): number | null {
+  return windAxisVmgFromComponents(
+    p.waterX,
+    p.waterY,
+    p.currentX,
+    p.currentY,
+    twd,
+  )?.ground ?? null;
 }
 
 /** Starboard tack when the wind is over the starboard side, port otherwise. */

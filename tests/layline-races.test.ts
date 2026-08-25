@@ -15,7 +15,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { generateRace, polarFrac } from "../src/lib/layline/sim";
+import { generateRace } from "../src/lib/layline/sim";
 import { briefFacts, windReading, windReadingAt } from "../src/lib/layline/brief";
 import {
   STEADY_WINDOW,
@@ -25,7 +25,8 @@ import {
   startReadingAt,
   targetSpeed,
 } from "../src/lib/layline/analytics";
-import { legAt, poseAt, windAt } from "../src/lib/layline/interpolate";
+import { createPose, legAt, poseAt, windAt } from "../src/lib/layline/interpolate";
+import { FICTIONAL_ONE_DESIGN_POLAR, polarFraction } from "../src/lib/layline/polar";
 import { startReport } from "../src/lib/layline/analyst/tools";
 import { MISSING, clock, knots, seconds } from "../src/lib/layline/format";
 import { DEFAULT_RACE_ID, RACES, isRaceId, raceMeta } from "../src/lib/layline/races";
@@ -53,11 +54,11 @@ import {
 /* Audit thresholds                                                    */
 
 /* The winner's own elapsed, not race.tMax: tMax is the replay window and runs
- * past the last finisher, 63.25 s on the shipped seed against a 51.52 s win.
- * The registry lands at 47.30, 51.38 and 51.52. */
+ * past the last finisher, 64.50 s on the shipped seed against a 50.16 s win.
+ * The registry lands at 47.65, 50.16 and 50.87. */
 const WIN_MIN_S = 45;
 const WIN_MAX_S = 60;
-/* Registry observed 4.35 to 8.21 s. */
+/* Registry observed 5.35 to 8.49 s. */
 const SPREAD_MIN_S = 2;
 const SPREAD_MAX_S = 35;
 /* Worst continuous loss of ground observed anywhere in the hunt is 1.0 s. */
@@ -452,7 +453,7 @@ test("a start line margin reads in hundredths, not as another 0:00", () => {
     assert.equal(clock(first.t), "0:00", `${meta.id} no longer needs the second decimal`);
     return seconds(first.t);
   });
-  assert.deepEqual(margins, ["0.15", "0.10", "0.23"]);
+  assert.deepEqual(margins, ["0.16", "0.11", "0.24"]);
   /* Negative zero is normalised and a non-finite value is MISSING, the two
      rules every other formatter in that file keeps. */
   assert.equal(seconds(-0.001), "0.00");
@@ -502,7 +503,7 @@ test("a board row's spoken label is a sentence and never ends in a period", asyn
   }
   assert.equal(
     labels[0],
-    "Summer fleet race, Long Beach, 26 Jul 2028, first across the line JPN 18 at plus 0.15 seconds, open in the race library",
+    "Summer fleet race, Long Beach, 26 Jul 2028, first across the line JPN 18 at plus 0.16 seconds, open in the race library",
   );
 });
 
@@ -613,9 +614,9 @@ test("the story page's three questions are the shipped race's three", () => {
  * here. What runs here is the reading it agreed on, pinned so that changing a
  * seed fails this test and sends whoever changed it back through the audit. */
 const FINISH_CLOCKS: Record<string, string[]> = {
-  "long-beach": ["USA 4 0:51", "JPN 18 0:52", "GBR 21 0:55", "NZL 7 0:56", "AUS 33 0:57", "FRA 12 0:57"],
-  "kestrel-sound": ["GBR 21 0:47", "FRA 12 0:51", "USA 4 0:53", "AUS 33 0:53", "JPN 18 0:55", "NZL 7 0:55"],
-  "sable-reach": ["FRA 12 0:51", "AUS 33 0:51", "USA 4 0:52", "NZL 7 0:53", "JPN 18 0:55", "GBR 21 0:55"],
+  "long-beach": ["JPN 18 0:50", "FRA 12 0:53", "NZL 7 0:54", "GBR 21 0:56", "USA 4 0:57", "AUS 33 0:58"],
+  "kestrel-sound": ["GBR 21 0:47", "FRA 12 0:51", "NZL 7 0:53", "AUS 33 0:54", "JPN 18 0:56", "USA 4 0:56"],
+  "sable-reach": ["NZL 7 0:50", "GBR 21 0:53", "FRA 12 0:53", "AUS 33 0:54", "USA 4 0:55", "JPN 18 0:56"],
 };
 
 test("every race finishes in the order the cross engine audit cleared", () => {
@@ -634,9 +635,9 @@ test("every race finishes in the order the cross engine audit cleared", () => {
 /* Lead changes, the input mockLeadChange has to agree with            */
 
 const LEAD_CHANGES: Record<string, { changes: number; sail: string; t: number; leg: LegName }> = {
-  "long-beach": { changes: 5, sail: "USA 4", t: 28, leg: "beat" },
-  "kestrel-sound": { changes: 7, sail: "GBR 21", t: 18, leg: "beat" },
-  "sable-reach": { changes: 3, sail: "FRA 12", t: 36.5, leg: "run" },
+  "long-beach": { changes: 4, sail: "JPN 18", t: 20, leg: "beat" },
+  "kestrel-sound": { changes: 4, sail: "GBR 21", t: 9, leg: "beat" },
+  "sable-reach": { changes: 6, sail: "NZL 7", t: 34.5, leg: "run" },
 };
 
 test("each race's leader timeline holds its pinned changes and decisive pass", () => {
@@ -656,12 +657,12 @@ test("each race's leader timeline holds its pinned changes and decisive pass", (
   }
 });
 
-test("kestrel sound keeps its single sample lead", () => {
+test("kestrel sound keeps its decisive beat pass", () => {
   const segments = leaderSegments(generateRace(raceMeta("kestrel-sound")!.seed));
-  const flicker = segments.find((segment) => segment.from === segment.to);
-  assert.ok(flicker !== undefined, "expected a one sample segment");
-  assert.equal(flicker.sail, "JPN 18");
-  assert.equal(flicker.from, 9);
+  const decisive = segments[segments.length - 1];
+  assert.equal(decisive.sail, "GBR 21");
+  assert.equal(decisive.from, 9);
+  assert.equal(decisive.leg, "beat");
 });
 
 /* ------------------------------------------------------------------ */
@@ -706,14 +707,14 @@ test("the route refuses a raceId that is not a string", async () => {
 test("a request with no raceId still answers about the shipped race", async () => {
   process.env.LAYLINE_ANALYST_MOCK = "1";
   const res = await post({
-    messages: [{ role: "user", content: RACES[0].suggestedQuestions[1] }],
+    messages: [{ role: "user", content: `${RACES[0].suggestedQuestions[1]} with the decisive evidence` }],
   });
   assert.equal(res.status, 200);
   const answer = await answerOf(res);
-  assert.match(answer, /USA 4/);
+  assert.match(answer, /JPN 18/);
   assert.ok(
-    parseChips(answer).some((segment) => segment.kind === "chip" && segment.t === 28),
-    `expected the shipped race's decisive pass at 0:28 in: ${answer}`,
+    parseChips(answer).some((segment) => segment.kind === "chip" && segment.t === 20),
+    `expected the shipped race's decisive pass at 0:20 in: ${answer}`,
   );
 });
 
@@ -1251,7 +1252,7 @@ test("the brief's wind is the replay's wind, and the favored end is the one near
 
     /* Bias in seconds: the line's length across the wind over the speed the
        fleet makes at its own beat angle, off the sim's own polar. */
-    const beatSpeed = polarFrac(facts.beatTwa) * read.tws;
+    const beatSpeed = (polarFraction(FICTIONAL_ONE_DESIGN_POLAR, facts.beatTwa) ?? 0) * read.tws;
     const expected = (facts.lineLength * Math.sin(Math.abs(read.twd) * (Math.PI / 180))) / beatSpeed;
     assert.ok(
       Math.abs(read.biasSeconds - expected) < 1e-9,
@@ -1314,7 +1315,7 @@ test("the brief's performance view measures the fleet against the engine's own p
     const race = generateRace(meta.seed);
     const review = polarReview(race);
     const sample = { t: 0, twd: 0, tws: 0 };
-    const pose = { x: 0, y: 0, hdg: 0, heel: 0, twa: 0, sog: 0, cog: 0, kite: 0 };
+    const pose = createPose();
 
     /* One row per boat, in race.boats order, so the table and the drawing
        beside it are the same six things in the same order. */
@@ -1386,7 +1387,7 @@ test("the brief's performance view measures the fleet against the engine's own p
         assert.ok(Math.abs(point.twa - pose.twa) < 1e-6, "the plot left the published wind angle");
         assert.ok(Math.abs(point.heel - pose.heel) < 1e-6, "the plot left the published heel");
         const target = targetSpeed(Math.abs(point.twa), sample.tws);
-        assert.ok(Math.abs(point.fraction - pose.sog / target) < 1e-9);
+        assert.ok(Math.abs(point.fraction - pose.stw / target) < 1e-9);
         /* Normalizing to the mean breeze must leave the ratio alone: the dot's
            distance past the curve drawn at that breeze is the fraction, which
            is the only reason one curve can stand for a shifting wind. */
@@ -1438,42 +1439,45 @@ test("the brief's performance view measures the fleet against the engine's own p
   }
 });
 
-test("a turn made after the finish is not a racing turn", () => {
-  /* NZL 7 finishes Kestrel Sound at 55.512 s and gybes at 56.13 s, luffing out
-     its way. Counted, that turn made the boat read four turns instead of three,
-     carried its own drawdown into the mean of what a racing turn cost, and took
-     eleven samples of real racing out of the cloud, because the steady window
-     reaches 3 s back from a turn that happened after the boat had finished.
+test("finished boats never contribute a post-finish turn", () => {
+  const expectedTurns: Record<string, number> = {
+    "long-beach": 22,
+    "kestrel-sound": 18,
+    "sable-reach": 20,
+  };
 
-     Pinned by the numbers rather than by the filter, so a rewrite that drops the
-     rule fails here instead of passing a test that restates it. */
-  const meta = raceMeta("kestrel-sound");
-  assert.ok(meta !== undefined, "kestrel sound left the registry");
-  const race = generateRace(meta.seed);
-
-  const stray = maneuversOf(race, "nzl").filter((move) => {
-    const leg = legAt(race, "nzl", move.t);
-    return leg !== "beat" && leg !== "run";
-  });
-  assert.equal(stray.length, 1, "the seed stopped holding the case this guards");
-  assert.equal(stray[0].kind, "gybe");
-  assert.ok(stray[0].t > 55.5, "the stray turn moved back inside the racing");
-
-  const review = polarReview(race);
-  const nzl = review.boats.find((boat) => boat.boatId === "nzl");
-  assert.ok(nzl !== undefined, "NZL 7 left the fleet");
-  assert.equal(nzl.gybes, 1, "the post-finish gybe is being counted again");
-  assert.equal(nzl.tacks + nzl.gybes, 3, "NZL 7 made three racing turns");
-  assert.equal(nzl.steady, 150, "the post-finish gybe is deleting racing samples again");
-  assert.equal(knots(nzl.lossPerTurn), "4.2", "the post-finish gybe is back in the mean turn cost");
-  assert.equal(review.fleet.turns, 18, "the fleet turn count picked the stray turn back up");
+  for (const meta of RACES) {
+    const race = generateRace(meta.seed);
+    const review = polarReview(race);
+    let racingCount = 0;
+    for (const boat of race.boats) {
+      const finish = race.results.find((result) => result.boatId === boat.id);
+      assert.ok(finish !== undefined, `${meta.id} ${boat.id} has no finish`);
+      const moves = maneuversOf(race, boat.id);
+      for (const move of moves) {
+        const leg = legAt(race, boat.id, move.t);
+        assert.ok(leg === "beat" || leg === "run", `${meta.id} ${boat.id} emitted a ${leg} turn`);
+        assert.ok(move.t <= finish.elapsed, `${meta.id} ${boat.id} turned at ${move.t} after ${finish.elapsed}`);
+      }
+      racingCount += moves.length;
+      const row = review.boats.find((entry) => entry.boatId === boat.id);
+      assert.ok(row !== undefined);
+      assert.equal(row.tacks, moves.filter((move) => move.kind === "tack").length);
+      assert.equal(row.gybes, moves.filter((move) => move.kind === "gybe").length);
+    }
+    assert.equal(racingCount, expectedTurns[meta.id], `${meta.id} turn golden moved`);
+    assert.equal(review.fleet.turns, racingCount, `${meta.id} review included a non-racing turn`);
+  }
 });
 
 test("the polar the review measures against is the polar the engine sails", () => {
   const race = generateRace(RACE_SEED);
   const review = polarReview(race);
   for (const twa of [0, 30, 45, 60, 90, 120, 135, 150, 180]) {
-    assert.equal(targetSpeed(twa, review.meanTws), polarFrac(twa) * review.meanTws);
+    assert.equal(
+      targetSpeed(twa, review.meanTws),
+      (polarFraction(FICTIONAL_ONE_DESIGN_POLAR, twa) ?? 0) * review.meanTws,
+    );
   }
   /* Nothing to sail at head to wind, which is the pinch the drawing labels
      "no-go" and the reason the target curve closes through the middle. */
@@ -1545,7 +1549,7 @@ test("the brief's ledger reads each hull's distance off the line the console's o
     const race = generateRace(meta.seed);
     const facts = briefFacts(race);
     const line = startLineOf(race.course);
-    const pose = { x: 0, y: 0, hdg: 0, heel: 0, twa: 0, sog: 0, cog: 0, kite: 0 };
+    const pose = createPose();
     const out = { distance: 0, closing: 0, toLine: 0, early: false };
     for (const boat of facts.boats) {
       poseAt(race, boat.id, 0, "smooth", pose);

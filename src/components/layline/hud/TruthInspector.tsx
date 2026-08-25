@@ -3,14 +3,16 @@
 import clsx from "clsx";
 import { useEffect, useRef } from "react";
 import styles from "@/app/prototype/layline/layline.module.css";
-import { fixStamp, heading } from "@/lib/layline/format";
-import { telemetryTruthAt } from "@/lib/layline/interpolate";
+import { MISSING, deg, fixStamp, heading, knots } from "@/lib/layline/format";
+import { createPose, telemetryTruthAt } from "@/lib/layline/interpolate";
+import type { LaylineInspectionSurface } from "@/lib/layline/surfaces";
 import type { Pose, RaceData, TelemetryTruth } from "@/lib/layline/types";
 import { useReplay } from "../store";
 import { onLive, sampleLive, setText } from "./live";
+import { VectorTriangle } from "./VectorTriangle";
 
 function pose(): Pose {
-  return { x: 0, y: 0, hdg: 0, heel: 0, twa: 0, sog: 0, cog: 0, kite: 0 };
+  return createPose();
 }
 
 function truthBuffer(): TelemetryTruth {
@@ -49,7 +51,32 @@ function phaseLabel(truth: TelemetryTruth): string {
     : `${(truth.u * 100).toFixed(1)}% BETWEEN FIXES`;
 }
 
-export function TruthInspector({ race }: { race: RaceData }) {
+function currentCaption(value: Pose | null): string {
+  if (value === null) return "Current components unavailable";
+  return value.telemetryProvenance === "recorded-fix"
+    ? "Recorded current sample"
+    : "Reconstructed current from recorded fixes";
+}
+
+function velocitySummary(value: Pose | null): string {
+  if (value === null) return "WATER / CURRENT / GROUND UNAVAILABLE";
+  const ctw = value.ctw === null ? MISSING : deg(value.ctw);
+  const set = value.currentSet === null ? MISSING : deg(value.currentSet);
+  const cog = value.cog === null ? MISSING : deg(value.cog);
+  return [
+    `WATER ${value.waterX.toFixed(3)} / ${value.waterY.toFixed(3)} m/s · STW ${knots(value.stw)} kn · CTW ${ctw}° toward`,
+    `CURRENT ${value.currentX.toFixed(3)} / ${value.currentY.toFixed(3)} m/s · DRIFT ${knots(value.currentDrift)} kn · SET ${set}° toward`,
+    `GROUND ${value.groundX.toFixed(3)} / ${value.groundY.toFixed(3)} m/s · SOG ${knots(value.sog)} kn · COG ${cog}° toward`,
+  ].join(" | ");
+}
+
+export function TruthInspector({
+  race,
+  inspection,
+}: {
+  race: RaceData;
+  inspection?: LaylineInspectionSurface | null;
+}) {
   const followId = useReplay((state) => state.followId);
   const chart2d = useReplay((state) => state.chart2d);
   const sceneUp = useReplay((state) => state.webglOk);
@@ -69,6 +96,10 @@ export function TruthInspector({ race }: { race: RaceData }) {
   const rawHeading = useRef<HTMLSpanElement>(null);
   const reconstructedPosition = useRef<HTMLSpanElement>(null);
   const reconstructedHeading = useRef<HTMLSpanElement>(null);
+  const rawCurrentCaption = useRef<HTMLSpanElement>(null);
+  const reconstructedCurrentCaption = useRef<HTMLSpanElement>(null);
+  const rawVelocity = useRef<HTMLSpanElement>(null);
+  const reconstructedVelocity = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     return onLive(race, (live) => {
@@ -91,6 +122,10 @@ export function TruthInspector({ race }: { race: RaceData }) {
       setText(rawHeading.current, poseHeading(truth.raw));
       setText(reconstructedPosition.current, posePosition(truth.reconstructed));
       setText(reconstructedHeading.current, poseHeading(truth.reconstructed));
+      setText(rawCurrentCaption.current, currentCaption(truth.raw));
+      setText(reconstructedCurrentCaption.current, currentCaption(truth.reconstructed));
+      setText(rawVelocity.current, velocitySummary(truth.raw));
+      setText(reconstructedVelocity.current, velocitySummary(truth.reconstructed));
     });
   }, [race]);
 
@@ -160,6 +195,19 @@ export function TruthInspector({ race }: { race: RaceData }) {
           <span role="cell" ref={reconstructedHeading}>{poseHeading(initial.reconstructed)}</span>
         </div>
       </div>
+
+      <div className={styles.truthVectors} aria-label="Recorded and reconstructed velocity components">
+        <div data-provenance="measured">
+          <strong ref={rawCurrentCaption}>{currentCaption(initial.raw)}</strong>
+          <span ref={rawVelocity}>{velocitySummary(initial.raw)}</span>
+        </div>
+        <div data-provenance="reconstructed">
+          <strong ref={reconstructedCurrentCaption}>{currentCaption(initial.reconstructed)}</strong>
+          <span ref={reconstructedVelocity}>{velocitySummary(initial.reconstructed)}</span>
+        </div>
+      </div>
+
+      <VectorTriangle race={race} inspection={inspection} />
     </section>
   );
 }

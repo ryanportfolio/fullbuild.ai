@@ -3,12 +3,25 @@
 import clsx from "clsx";
 import { useEffect, useRef } from "react";
 import styles from "@/app/prototype/layline/layline.module.css";
-import { deg, knots } from "@/lib/layline/format";
+import { MISSING, deg, knots } from "@/lib/layline/format";
 import type { RaceData } from "@/lib/layline/types";
+import type { LaylineInspectionSurface } from "@/lib/layline/surfaces";
 import { useReplay } from "../store";
 import { onLive, sampleLive, setText, tackOf, vmgOf } from "./live";
+import { VectorTriangle } from "./VectorTriangle";
 
-export function Instruments({ race }: { race: RaceData }) {
+function windVmgKnots(pose: Parameters<typeof vmgOf>[0], twd: number): string {
+  const value = vmgOf(pose, twd);
+  return value === null ? MISSING : knots(value);
+}
+
+export function Instruments({
+  race,
+  inspection,
+}: {
+  race: RaceData;
+  inspection?: LaylineInspectionSurface | null;
+}) {
   const followId = useReplay((state) => state.followId);
   const boat = race.boats.find((entry) => entry.id === followId) ?? race.boats[0];
   const sog = useRef<HTMLSpanElement>(null);
@@ -18,18 +31,31 @@ export function Instruments({ race }: { race: RaceData }) {
   const tack = useRef<HTMLSpanElement>(null);
   const tws = useRef<HTMLSpanElement>(null);
   const twd = useRef<HTMLSpanElement>(null);
+  const stw = useRef<HTMLSpanElement>(null);
+  const ctw = useRef<HTMLSpanElement>(null);
+  const drift = useRef<HTMLSpanElement>(null);
+  const currentSet = useRef<HTMLSpanElement>(null);
+  const cog = useRef<HTMLSpanElement>(null);
   const sample = sampleLive(race);
 
   useEffect(
     () =>
       onLive(race, (live) => {
         setText(sog.current, knots(live.pose.sog));
-        setText(vmg.current, knots(vmgOf(live.pose)));
+        setText(vmg.current, windVmgKnots(live.pose, live.wind.twd));
         setText(hdg.current, deg(live.pose.hdg));
         setText(twa.current, deg(Math.abs(live.pose.twa)));
         setText(tack.current, tackOf(live.pose));
         setText(tws.current, knots(live.wind.tws));
         setText(twd.current, deg(live.wind.twd));
+        setText(stw.current, knots(live.pose.stw));
+        setText(ctw.current, live.pose.ctw === null ? MISSING : deg(live.pose.ctw));
+        setText(drift.current, knots(live.pose.currentDrift));
+        setText(
+          currentSet.current,
+          live.pose.currentSet === null ? MISSING : deg(live.pose.currentSet),
+        );
+        setText(cog.current, live.pose.cog === null ? MISSING : deg(live.pose.cog));
       }),
     [race],
   );
@@ -56,7 +82,7 @@ export function Instruments({ race }: { race: RaceData }) {
       <div className={styles.instrGrid}>
         <div className={styles.instrCell}>
           <span className={styles.hudLabel}>
-            SOG <span className={styles.hudUnit}>KN</span>
+            SOG · GROUND <span className={styles.hudUnit}>KN</span>
           </span>
           <span className={styles.instrValue} ref={sog} data-live="sog">
             {knots(sample.pose.sog)}
@@ -70,7 +96,7 @@ export function Instruments({ race }: { race: RaceData }) {
             VMG <span className={styles.hudUnit}>KN</span>
           </span>
           <span className={styles.instrValue} ref={vmg} data-live="vmg">
-            {knots(vmgOf(sample.pose))}
+            {windVmgKnots(sample.pose, sample.wind.twd)}
           </span>
         </div>
 
@@ -114,7 +140,31 @@ export function Instruments({ race }: { race: RaceData }) {
             {deg(sample.wind.twd)}
           </span>
         </div>
+
+        <div className={styles.instrCell}>
+          <span className={styles.hudLabel}>STW · WATER <span className={styles.hudUnit}>KN</span></span>
+          <span className={styles.instrValueRow}>
+            <span className={styles.instrValue} ref={stw} data-live="stw">{knots(sample.pose.stw)}</span>
+            <span className={styles.instrTack}>CTW <span ref={ctw} data-live="ctw">{sample.pose.ctw === null ? MISSING : deg(sample.pose.ctw)}</span>°</span>
+          </span>
+        </div>
+
+        <div className={styles.instrCell}>
+          <span className={styles.hudLabel}>CURRENT · DRIFT <span className={styles.hudUnit}>KN</span></span>
+          <span className={styles.instrValueRow}>
+            <span className={styles.instrValue} ref={drift} data-live="current-drift">{knots(sample.pose.currentDrift)}</span>
+            <span className={styles.instrTack}>SET <span ref={currentSet} data-live="current-set">{sample.pose.currentSet === null ? MISSING : deg(sample.pose.currentSet)}</span>° TOWARD</span>
+          </span>
+        </div>
+
+        <div className={styles.instrCell}>
+          <span className={styles.hudLabel}>COG · GROUND <span className={styles.hudUnit}>DEG TOWARD</span></span>
+          <span className={styles.instrValue} ref={cog} data-live="cog">
+            {sample.pose.cog === null ? MISSING : deg(sample.pose.cog)}
+          </span>
+        </div>
       </div>
+      <VectorTriangle race={race} inspection={inspection} />
     </section>
   );
 }

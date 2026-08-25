@@ -31,6 +31,7 @@ const {
 } = await import("../src/lib/layline/timeline.ts");
 const { generateRace } = await import("../src/lib/layline/sim.ts");
 const { RACES } = await import("../src/lib/layline/races.ts");
+const { createCurrentFieldSpec } = await import("../src/lib/layline/current.ts");
 
 const fixes = [];
 for (let t = -2; t <= 12; t += 0.25) {
@@ -38,19 +39,26 @@ for (let t = -2; t <= 12; t += 0.25) {
   if (t >= 1.25 && t < 5.25) twa = 42;
   if (t >= 4.25 && t < 5.25) twa = 132;
   if (t >= 5.25) twa = -132;
-  fixes.push({ t, x: t, y: t, sog: 4, cog: 0, hdg: 0, heel: 0, twa, kite: 0 });
+  fixes.push({
+    t, x: t, y: t,
+    waterX: 0, waterY: 4, currentX: 0, currentY: 0,
+    hdg: 0, heel: 0, twa, kite: 0,
+  });
 }
+
+const course = {
+  startPin: { x: -1, y: 0 },
+  startBoat: { x: 1, y: 0 },
+  windward: { x: 0, y: 10 },
+  zoneRadius: 2,
+};
 
 const race = {
   seed: 1,
   tMin: -2,
   tMax: 12,
-  course: {
-    startPin: { x: -1, y: 0 },
-    startBoat: { x: 1, y: 0 },
-    windward: { x: 0, y: 10 },
-    zoneRadius: 2,
-  },
+  course,
+  environment: { current: createCurrentFieldSpec(1, course) },
   wind: [],
   boats: [
     { id: "one", nation: "ONE", sail: "ONE 1", name: "One", hue: "#ffffff" },
@@ -292,23 +300,26 @@ test("unmeasured boundary targets keep measured row ownership and defer edge foo
     /\.pointMark\s*\{[\s\S]*?left:\s*clamp\(\s*var\(--point-edge-inset\),\s*var\(--point-position\),\s*calc\(100% - var\(--point-edge-inset\)\)\s*\)/,
   );
   assert.match(css, /\.eventMark\s*\{[\s\S]*?width:\s*24px;[\s\S]*?margin-left:\s*-12px/);
-  assert.match(css, /\.manMark\s*\{[\s\S]*?width:\s*24px;[\s\S]*?margin-left:\s*-12px/);
+  assert.match(css, /\.manMark\s*\{[\s\S]*?width:\s*46px;[\s\S]*?margin-left:\s*-23px/);
   assert.match(css, /\.eventRail\s*\{[\s\S]*?--point-clearance:\s*32px/);
-  assert.match(css, /\.manRail\s*\{[\s\S]*?--point-clearance:\s*32px/);
+  assert.match(css, /\.manRail\s*\{[\s\S]*?--point-clearance:\s*60px/);
 
   const phone = css
     .split("@media (max-width: 900px) {")[1]
     ?.split("@media (max-width: 560px) {")[0] ?? "";
   assert.match(phone, /\.eventRail,\s*\.manRail\s*\{[\s\S]*?--point-clearance:\s*48px/);
   assert.match(phone, /\.eventMark\s*\{[\s\S]*?width:\s*40px;[\s\S]*?margin-left:\s*-20px/);
-  assert.match(phone, /\.manMark\s*\{[\s\S]*?width:\s*40px;[\s\S]*?margin-left:\s*-20px/);
+  assert.match(phone, /\.manMark\s*\{[\s\S]*?width:\s*44px;[\s\S]*?margin-left:\s*-22px/);
+  assert.match(phone, /\.manRail\s*\{[\s\S]*?--point-clearance:\s*52px/);
 
   const focusOutline = 2 + 2;
   for (const { target, clearance } of [
     { target: 24, clearance: 32 },
+    { target: 46, clearance: 60 },
     { target: 40, clearance: 48 },
+    { target: 44, clearance: 52 },
   ]) {
-    assert.equal(clearance / 2, target / 2 + focusOutline);
+    assert.ok(clearance / 2 >= target / 2 + focusOutline);
   }
 });
 
@@ -344,6 +355,10 @@ test("timeline interactions seek the shared replay clock without replacing sampl
     new URL("../src/components/layline/store.ts", import.meta.url),
     "utf8",
   );
+  const transitions = await readFile(
+    new URL("../src/lib/layline/replay-transitions.ts", import.meta.url),
+    "utf8",
+  );
   assert.match(source, /replay\.seek\(at\)/);
   assert.match(source, /const seekEvidence[^]*?replay\.seek\(at\);\s*\};/);
   assert.doesNotMatch(source, /const seekEvidence[^]*?replay\.pause\(\)[^]*?\};/);
@@ -352,7 +367,8 @@ test("timeline interactions seek the shared replay clock without replacing sampl
   assert.match(source, /timelineWindow\.from \+ fraction \* timelineWindow\.span/);
   assert.match(source, /store\.step\(-1\)/);
   assert.match(source, /store\.step\(1\)/);
-  assert.match(store, /race\.tMin \+ n \/ FIX_HZ/);
+  assert.match(store, /transitionReplayClock\(raceData\(\), state, \{ type: "step", direction \}\)/);
+  assert.match(transitions, /race\.tMin \+ n \/ FIX_HZ/);
   assert.doesNotMatch(source, /create\(|useReplay\.setState/);
 });
 

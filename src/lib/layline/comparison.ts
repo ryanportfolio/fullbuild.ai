@@ -1,6 +1,8 @@
-import { maneuversOf, vmgToMark } from "./analytics";
-import { legAt, poseAt } from "./interpolate";
+import { groundMadeGoodToMark, maneuversOf } from "./analytics";
+import { currentFieldSpecValidity } from "./current";
+import { createPose, legAt, poseAt } from "./interpolate";
 import type { Fix, LegName, Pose, ProgressSample, RaceData } from "./types";
+import { projectVelocityComponentsOntoBearing, velocityFromComponents } from "./velocity";
 
 const MICROS_PER_SECOND = 1_000_000;
 
@@ -132,6 +134,9 @@ export interface BoatRangeFacts {
   maneuvers: ManeuverRangeFact[];
   straightMadeGoodMeters: number | null;
   maneuverWindowMadeGoodMeters: number | null;
+  waterMadeGoodMeters: number | null;
+  currentMadeGoodMeters: number | null;
+  groundMadeGoodMeters: number | null;
 }
 
 export interface ReferenceRangeFacts {
@@ -146,12 +151,16 @@ export interface ReferenceRangeFacts {
   maneuverCount: number | null;
   straightMadeGoodMeters: number | null;
   maneuverWindowMadeGoodMeters: number | null;
+  waterMadeGoodMeters: number | null;
+  currentMadeGoodMeters: number | null;
+  groundMadeGoodMeters: number | null;
 }
 
 export type ComparisonStatus =
   | "ok"
   | "invalid-request"
   | "missing-boundary-data"
+  | "insufficient-fleet-coverage"
   | "zero-duration"
   | "no-racing-coverage"
   | "invalid-arithmetic";
@@ -189,6 +198,19 @@ export interface RangeComparison {
   straightDeltaMeters: number | null;
   maneuverWindowDeltaMeters: number | null;
   residualMeters: number | null;
+  componentCoverageMicros: number;
+  componentExcludedMicros: number;
+  waterDeltaMeters: number | null;
+  currentDeltaMeters: number | null;
+  groundGainMeters: number | null;
+  referenceNonlinearityMeters: number | null;
+  progressResidualMeters: number | null;
+  componentResidualMeters: number | null;
+  componentProvenance: {
+    water: "reconstructed-water-from-fixes";
+    current: "reconstructed-current-from-fixes";
+    ground: "derived-water-plus-current";
+  };
 }
 
 interface Timed {
@@ -249,16 +271,7 @@ interface CanonicalTelemetryCell {
   vmgToMps: number | null;
 }
 
-const EMPTY_POSE: Pose = {
-  x: 0,
-  y: 0,
-  hdg: 0,
-  heel: 0,
-  twa: 0,
-  sog: 0,
-  cog: 0,
-  kite: 0,
-};
+const EMPTY_POSE: Pose = createPose();
 
 /**
  * Stage 5 time domain: finite seconds whose rounded microsecond value is a
@@ -336,9 +349,32 @@ function finiteCourseForAnalysis(race: RaceData): boolean {
 function validFixSeries(series: readonly Fix[]): boolean {
   return (
     validSeriesTimes(series) &&
-    series.every((fix) =>
-      [fix.x, fix.y, fix.sog, fix.cog, fix.twa].every((value) => Number.isFinite(value)),
-    )
+    series.every((fix) => {
+      if (![fix.x, fix.y, fix.waterX, fix.waterY, fix.currentX, fix.currentY, fix.twa].every(Number.isFinite)) {
+        return false;
+      }
+      try {
+        const velocity = velocityFromComponents(
+          fix.waterX,
+          fix.waterY,
+          fix.currentX,
+          fix.currentY,
+          {},
+        );
+        return [
+          velocity.stw,
+          velocity.currentDrift,
+          velocity.groundX,
+          velocity.groundY,
+          velocity.sog,
+        ].every(Number.isFinite) &&
+          (velocity.ctw === null || Number.isFinite(velocity.ctw)) &&
+          (velocity.currentSet === null || Number.isFinite(velocity.currentSet)) &&
+          (velocity.cog === null || Number.isFinite(velocity.cog));
+      } catch {
+        return false;
+      }
+    })
   );
 }
 
@@ -557,6 +593,19 @@ export function raceAnalysisValidity(
       boats,
     };
   }
+  const currentValidity = currentFieldSpecValidity(
+    race.environment?.current,
+    race.seed,
+    race.course,
+  );
+  if (currentValidity.status !== "valid") {
+    return {
+      status: "invalid-sample",
+      reason: `analysis requires a valid serialized current field: ${currentValidity.reason}`,
+      raceBounds,
+      boats,
+    };
+  }
   for (const boatId of [...new Set(requiredBoatIds)]) {
     const fixes = race.fixes?.[boatId];
     const progress = race.progress?.[boatId];
@@ -672,17 +721,24 @@ export function dtfAt(race: RaceData, boatId: string, t: number): number | null 
 function poseAtMicros(race: RaceData, boatId: string, atMicros: number): Pose | null {
   if (bracketAt(race.fixes[boatId], atMicros) === null) return null;
   const out = { ...EMPTY_POSE };
-  poseAt(race, boatId, microsToSeconds(atMicros), "smooth", out);
-  return out;
+  try {
+    poseAt(race, boatId, microsToSeconds(atMicros), "smooth", out);
+    return out;
+  } catch {
+    return null;
+  }
 }
 
 function finitePose(pose: Pose | null): pose is Pose {
   return (
     pose !== null &&
-    Number.isFinite(pose.x) &&
-    Number.isFinite(pose.y) &&
-    Number.isFinite(pose.sog) &&
-    Number.isFinite(pose.cog)
+    [
+      pose.x, pose.y, pose.waterX, pose.waterY, pose.currentX, pose.currentY,
+      pose.stw, pose.currentDrift, pose.groundX, pose.groundY, pose.sog,
+    ].every(Number.isFinite) &&
+    (pose.ctw === null || Number.isFinite(pose.ctw)) &&
+    (pose.currentSet === null || Number.isFinite(pose.currentSet)) &&
+    (pose.cog === null || Number.isFinite(pose.cog))
   );
 }
 
@@ -760,8 +816,10 @@ function classifyFixProgressLeg(
         (fix) =>
           !Number.isFinite(fix.x) ||
           !Number.isFinite(fix.y) ||
-          !Number.isFinite(fix.sog) ||
-          !Number.isFinite(fix.cog),
+          !Number.isFinite(fix.waterX) ||
+          !Number.isFinite(fix.waterY) ||
+          !Number.isFinite(fix.currentX) ||
+          !Number.isFinite(fix.currentY),
       ) ||
       !Number.isFinite(progressBracket.before.dtf) ||
       !Number.isFinite(progressBracket.after.dtf) ||
@@ -779,7 +837,7 @@ function classifyFixProgressLeg(
     const markDistance = finiteResult(Math.hypot(dx.value, dy.value));
     if (markDistance.status !== "ok") return "invalid-arithmetic";
     if (markDistance.value <= 0) return "invalid-sample";
-    if (!Number.isFinite(vmgToMark(pose.sog, pose.cog, intervalLeg))) {
+    if (groundMadeGoodToMark(pose, intervalLeg) === null) {
       return "invalid-arithmetic";
     }
   }
@@ -878,6 +936,148 @@ function coverageFor(race: RaceData, boatIds: readonly string[], range: Analysis
   };
 }
 
+interface ComponentMadeGood {
+  status: "ok" | "no-valid-coverage" | "invalid-arithmetic";
+  waterMeters: number | null;
+  currentMeters: number | null;
+  groundMeters: number | null;
+}
+
+interface CanonicalComponentCell {
+  fromMicros: number;
+  toMicros: number;
+  waterFromMps: number;
+  waterToMps: number;
+  currentFromMps: number;
+  currentToMps: number;
+  groundFromMps: number;
+  groundToMps: number;
+}
+
+function projectedComponents(
+  pose: Pick<Pose, "x" | "y" | "waterX" | "waterY" | "currentX" | "currentY">,
+  mark: { x: number; y: number },
+): { water: number; current: number; ground: number } | null {
+  const dx = mark.x - pose.x;
+  const dy = mark.y - pose.y;
+  const distance = Math.hypot(dx, dy);
+  if (!Number.isFinite(distance) || distance <= 0) return null;
+  const bearing = Math.atan2(dx, dy) / (Math.PI / 180);
+  return projectVelocityComponentsOntoBearing(
+    pose.waterX,
+    pose.waterY,
+    pose.currentX,
+    pose.currentY,
+    bearing,
+  );
+}
+
+function canonicalComponentCells(
+  race: RaceData,
+  boatId: string,
+): CanonicalComponentCell[] | null {
+  const fixes = race.fixes[boatId];
+  if (!Array.isArray(fixes) || fixes.length < 2) return null;
+  const cells: CanonicalComponentCell[] = [];
+  for (let index = 0; index + 1 < fixes.length; index++) {
+    const from = fixes[index];
+    const to = fixes[index + 1];
+    const fromMicros = secondsToMicros(from.t);
+    const toMicros = secondsToMicros(to.t);
+    if (fromMicros === null || toMicros === null || toMicros <= fromMicros) return null;
+    const midpoint = fromMicros + Math.floor((toMicros - fromMicros) / 2);
+    const leg = legAt(race, boatId, microsToSeconds(midpoint));
+    const mark = markForLeg(race, leg);
+    if (mark === null) continue;
+    const fromProjection = projectedComponents(from, mark);
+    const toProjection = projectedComponents(to, mark);
+    if (fromProjection === null || toProjection === null) return null;
+    cells.push({
+      fromMicros,
+      toMicros,
+      waterFromMps: fromProjection.water,
+      waterToMps: toProjection.water,
+      currentFromMps: fromProjection.current,
+      currentToMps: toProjection.current,
+      groundFromMps: fromProjection.ground,
+      groundToMps: toProjection.ground,
+    });
+  }
+  return cells;
+}
+
+function integrateComponentMadeGood(
+  race: RaceData,
+  boatId: string,
+  intervals: readonly CoverageBin[],
+): ComponentMadeGood {
+  if (intervals.length === 0) {
+    return { status: "no-valid-coverage", waterMeters: null, currentMeters: null, groundMeters: null };
+  }
+  let waterMeters = 0;
+  let currentMeters = 0;
+  let groundMeters = 0;
+  const cells = canonicalComponentCells(race, boatId);
+  if (cells === null) {
+    return { status: "invalid-arithmetic", waterMeters: null, currentMeters: null, groundMeters: null };
+  }
+  let cellIndex = 0;
+  for (const interval of intervals) {
+    while (cellIndex < cells.length && cells[cellIndex].toMicros <= interval.fromMicros) {
+      cellIndex++;
+    }
+    let visitedMicros = 0;
+    for (let index = cellIndex; index < cells.length; index++) {
+      const cell = cells[index];
+      if (cell.fromMicros >= interval.toMicros) break;
+      const fromMicros = Math.max(interval.fromMicros, cell.fromMicros);
+      const toMicros = Math.min(interval.toMicros, cell.toMicros);
+      if (toMicros <= fromMicros) continue;
+      visitedMicros += toMicros - fromMicros;
+      const water = integrateLinearCell(
+        cell.waterFromMps,
+        cell.waterToMps,
+        cell,
+        fromMicros,
+        toMicros,
+      );
+      const current = integrateLinearCell(
+        cell.currentFromMps,
+        cell.currentToMps,
+        cell,
+        fromMicros,
+        toMicros,
+      );
+      const ground = integrateLinearCell(
+        cell.groundFromMps,
+        cell.groundToMps,
+        cell,
+        fromMicros,
+        toMicros,
+      );
+      if (water === null || current === null || ground === null) {
+        return { status: "invalid-arithmetic", waterMeters: null, currentMeters: null, groundMeters: null };
+      }
+      const waterTotal = addFinite(waterMeters, water);
+      const currentTotal = addFinite(currentMeters, current);
+      const groundTotal = addFinite(groundMeters, ground);
+      if (waterTotal.status !== "ok" || currentTotal.status !== "ok" || groundTotal.status !== "ok") {
+        return { status: "invalid-arithmetic", waterMeters: null, currentMeters: null, groundMeters: null };
+      }
+      waterMeters = waterTotal.value;
+      currentMeters = currentTotal.value;
+      groundMeters = groundTotal.value;
+    }
+    if (visitedMicros !== interval.toMicros - interval.fromMicros) {
+      return { status: "invalid-arithmetic", waterMeters: null, currentMeters: null, groundMeters: null };
+    }
+  }
+  if (Math.abs(groundMeters - waterMeters - currentMeters) > 1e-9) {
+    return { status: "invalid-arithmetic", waterMeters: null, currentMeters: null, groundMeters: null };
+  }
+  return { status: "ok", waterMeters, currentMeters, groundMeters };
+}
+
 function maneuverRanges(race: RaceData, boatId: string, range: AnalysisRange): AnalysisRange[] {
   if (seriesMicros(race.fixes[boatId]) === null) return [];
   const raw = maneuversOf(race, boatId)
@@ -946,8 +1146,8 @@ function canonicalTelemetryCells(race: RaceData, boatId: string): CanonicalTelem
     const from = poseAtMicros(race, boatId, fromMicros) as Pose;
     const to = poseAtMicros(race, boatId, toMicros) as Pose;
     const hasVmg = leg === "beat" || leg === "run";
-    const vmgFromMps = hasVmg ? vmgToMark(from.sog, from.cog, leg) : null;
-    const vmgToMps = hasVmg ? vmgToMark(to.sog, to.cog, leg) : null;
+    const vmgFromMps = hasVmg ? groundMadeGoodToMark(from, leg) : null;
+    const vmgToMps = hasVmg ? groundMadeGoodToMark(to, leg) : null;
     const dx = subtractFinite(to.x, from.x);
     const dy = subtractFinite(to.y, from.y);
     const sailedDistanceMeters =
@@ -990,7 +1190,7 @@ function canonicalTelemetryCells(race: RaceData, boatId: string): CanonicalTelem
 function integrateLinearCell(
   fromValue: number,
   toValue: number,
-  cell: CanonicalTelemetryCell,
+  cell: Pick<CanonicalTelemetryCell, "fromMicros" | "toMicros">,
   fromMicros: number,
   toMicros: number,
 ): number | null {
@@ -1193,34 +1393,60 @@ function boatOrder(race: RaceData, ids: readonly string[]): string[] {
   });
 }
 
-function globallyEligible(race: RaceData, boatId: string): boolean {
-  return (
-    race.boats.some((boat) => boat.id === boatId) &&
-    (race.fixes[boatId]?.length ?? 0) > 0 &&
-    (race.progress[boatId]?.length ?? 0) > 0
-  );
+type ComponentEligibility = "eligible" | "missing-bracket" | "invalid-sample";
+
+function componentEligibilityForRange(
+  race: RaceData,
+  boatId: string,
+  range: AnalysisRange,
+): ComponentEligibility {
+  if (!race.boats.some((boat) => boat.id === boatId)) return "missing-bracket";
+  const fixes = race.fixes[boatId];
+  const progress = race.progress[boatId];
+  if (!Array.isArray(fixes) || fixes.length === 0 || !Array.isArray(progress) || progress.length === 0) {
+    return "missing-bracket";
+  }
+  if (!validSeriesTimes(fixes)) return "invalid-sample";
+  const from = bracketAtValid(fixes, range.fromMicros);
+  const to = bracketAtValid(fixes, range.toMicros);
+  if (from === null || to === null) return "missing-bracket";
+  const requiredFrom = secondsToMicros(from.before.t);
+  const requiredTo = secondsToMicros(to.after.t);
+  if (requiredFrom === null || requiredTo === null) return "invalid-sample";
+  const componentsValid = fixes.every((fix) => {
+    const at = secondsToMicros(fix.t);
+    if (at === null) return false;
+    if (at < requiredFrom || at > requiredTo) return true;
+    return [fix.waterX, fix.waterY, fix.currentX, fix.currentY].every(Number.isFinite);
+  });
+  return componentsValid ? "eligible" : "invalid-sample";
 }
 
-function emptyCoverage(range: AnalysisRange): RangeCoverage {
+function emptyCoverage(
+  range: AnalysisRange,
+  reason: "missing-bracket" | "invalid-sample" = "invalid-sample",
+): RangeCoverage {
+  const missingBracket = reason === "missing-bracket" ? range.durationMicros : 0;
+  const invalidSample = reason === "invalid-sample" ? range.durationMicros : 0;
   return {
     durationMicros: range.durationMicros,
     coverageMicros: 0,
     coverageSeconds: 0,
     excludedByReasonMicros: {
       prestartOrFinished: 0,
-      missingBracket: 0,
-      invalidSample: range.durationMicros,
+      missingBracket,
+      invalidSample,
       invalidArithmetic: 0,
     },
     excludedByReasonSeconds: {
       prestartOrFinished: 0,
-      missingBracket: 0,
-      invalidSample: microsToSeconds(range.durationMicros),
+      missingBracket: microsToSeconds(missingBracket),
+      invalidSample: microsToSeconds(invalidSample),
       invalidArithmetic: 0,
     },
     bins:
       range.durationMicros > 0
-        ? [{ fromMicros: range.fromMicros, toMicros: range.toMicros, reason: "invalid-sample" }]
+        ? [{ fromMicros: range.fromMicros, toMicros: range.toMicros, reason }]
         : [],
   };
 }
@@ -1232,6 +1458,7 @@ function invalidComparison(
   range?: AnalysisRange,
   status: ComparisonStatus = "invalid-request",
   boundaryFactsStatus: BoundaryFactsStatus = "unavailable",
+  referenceState?: RangeComparison["reference"],
 ): RangeComparison {
   const fallbackMicros = raceBoundsMicros(race)?.from ?? 0;
   const safeRange = range ?? rangeFromMicros(fallbackMicros, fallbackMicros);
@@ -1241,14 +1468,17 @@ function invalidComparison(
     invalidReason: reason,
     primaryBoatId: request.primaryBoatId,
     range: safeRange,
-    reference: {
+    reference: referenceState ?? {
       kind: request.reference.kind,
       boatId: request.reference.kind === "boat" ? request.reference.boatId : null,
       requestedCohortIds: request.reference.kind === "fleet-median" ? boatOrder(race, request.reference.boatIds) : [],
       eligibleCohortIds: [],
       ineligibleCohortIds: [],
     },
-    coverage: emptyCoverage(safeRange),
+    coverage: emptyCoverage(
+      safeRange,
+      boundaryFactsStatus === "missing-bracket" ? "missing-bracket" : "invalid-sample",
+    ),
     boats: [],
     primary: null,
     referenceFacts: null,
@@ -1260,6 +1490,19 @@ function invalidComparison(
     straightDeltaMeters: null,
     maneuverWindowDeltaMeters: null,
     residualMeters: null,
+    componentCoverageMicros: 0,
+    componentExcludedMicros: safeRange.durationMicros,
+    waterDeltaMeters: null,
+    currentDeltaMeters: null,
+    groundGainMeters: null,
+    referenceNonlinearityMeters: null,
+    progressResidualMeters: null,
+    componentResidualMeters: null,
+    componentProvenance: {
+      water: "reconstructed-water-from-fixes",
+      current: "reconstructed-current-from-fixes",
+      ground: "derived-water-plus-current",
+    },
   };
 }
 
@@ -1321,7 +1564,10 @@ function referenceFromBoats(boats: readonly BoatRangeFacts[]): ReferenceRangeFac
       boat.meanSogMps !== null &&
       boat.meanVmgMps !== null &&
       boat.straightMadeGoodMeters !== null &&
-      boat.maneuverWindowMadeGoodMeters !== null,
+      boat.maneuverWindowMadeGoodMeters !== null &&
+      boat.waterMadeGoodMeters !== null &&
+      boat.currentMadeGoodMeters !== null &&
+      boat.groundMadeGoodMeters !== null,
   );
   const groundArithmeticInvalid = boats.some(
     (boat) => boat.groundFactsStatus === "invalid-arithmetic",
@@ -1344,6 +1590,15 @@ function referenceFromBoats(boats: readonly BoatRangeFacts[]): ReferenceRangeFac
   const maneuverWindowMadeGoodMeters = groundFactsAvailable
     ? median(boats.map((boat) => boat.maneuverWindowMadeGoodMeters as number))
     : null;
+  const waterMadeGoodMeters = groundFactsAvailable
+    ? median(boats.map((boat) => boat.waterMadeGoodMeters as number))
+    : null;
+  const currentMadeGoodMeters = groundFactsAvailable
+    ? median(boats.map((boat) => boat.currentMadeGoodMeters as number))
+    : null;
+  const groundMadeGoodMeters = groundFactsAvailable
+    ? median(boats.map((boat) => boat.groundMadeGoodMeters as number))
+    : null;
   const referenceArithmeticInvalid =
     groundFactsAvailable &&
     [
@@ -1353,6 +1608,9 @@ function referenceFromBoats(boats: readonly BoatRangeFacts[]): ReferenceRangeFac
       maneuverCount,
       straightMadeGoodMeters,
       maneuverWindowMadeGoodMeters,
+      waterMadeGoodMeters,
+      currentMadeGoodMeters,
+      groundMadeGoodMeters,
     ].some((value) => value === null);
   return {
     groundFactsStatus:
@@ -1374,6 +1632,9 @@ function referenceFromBoats(boats: readonly BoatRangeFacts[]): ReferenceRangeFac
     maneuverCount,
     straightMadeGoodMeters,
     maneuverWindowMadeGoodMeters,
+    waterMadeGoodMeters,
+    currentMadeGoodMeters,
+    groundMadeGoodMeters,
   };
 }
 
@@ -1394,6 +1655,16 @@ export function compareRange(race: RaceData, request: ComparisonRequest): RangeC
   if (!knownIds.has(request.primaryBoatId)) {
     return invalidComparison(race, request, "primary boat ID is not registered");
   }
+  const requestFrom = secondsToMicros(request.range.from);
+  const requestTo = secondsToMicros(request.range.to);
+  if (requestFrom === null || requestTo === null) {
+    return invalidComparison(
+      race,
+      request,
+      "analysis range endpoints must resolve to safe integer microseconds",
+    );
+  }
+  const range = normalizeAnalysisRange(race, request.range.from, request.range.to);
 
   let requestedCohortIds: string[] = [];
   let eligibleCohortIds: string[] = [];
@@ -1413,10 +1684,45 @@ export function compareRange(race: RaceData, request: ComparisonRequest): RangeC
     if (requestedCohortIds.length === 0) {
       return invalidComparison(race, request, "fleet median cohort cannot be empty");
     }
-    eligibleCohortIds = requestedCohortIds.filter((boatId) => globallyEligible(race, boatId));
-    ineligibleCohortIds = requestedCohortIds.filter((boatId) => !globallyEligible(race, boatId));
-    if (eligibleCohortIds.length === 0) {
-      return invalidComparison(race, request, "fleet median cohort has no eligible boats");
+    const eligibility = new Map(
+      requestedCohortIds.map((boatId) => [
+        boatId,
+        componentEligibilityForRange(race, boatId, range),
+      ]),
+    );
+    eligibleCohortIds = requestedCohortIds.filter((boatId) => eligibility.get(boatId) === "eligible");
+    ineligibleCohortIds = requestedCohortIds.filter((boatId) => eligibility.get(boatId) !== "eligible");
+    const referenceState: RangeComparison["reference"] = {
+      kind: "fleet-median",
+      boatId: null,
+      requestedCohortIds,
+      eligibleCohortIds,
+      ineligibleCohortIds,
+    };
+    if (eligibleCohortIds.length < 2) {
+      return invalidComparison(
+        race,
+        request,
+        "fleet median requires at least two boats with complete finite component coverage",
+        range,
+        "insufficient-fleet-coverage",
+        "unavailable",
+        referenceState,
+      );
+    }
+    const selectedEligible =
+      eligibility.get(request.primaryBoatId) ??
+      componentEligibilityForRange(race, request.primaryBoatId, range);
+    if (selectedEligible !== "eligible") {
+      return invalidComparison(
+        race,
+        request,
+        "selected boat lacks complete finite component coverage for the normalized range",
+        range,
+        "missing-boundary-data",
+        selectedEligible,
+        referenceState,
+      );
     }
   }
 
@@ -1435,16 +1741,6 @@ export function compareRange(race: RaceData, request: ComparisonRequest): RangeC
       validity.status === "missing-series" ? "missing-bracket" : "invalid-sample",
     );
   }
-  const requestFrom = secondsToMicros(request.range.from);
-  const requestTo = secondsToMicros(request.range.to);
-  if (requestFrom === null || requestTo === null) {
-    return invalidComparison(
-      race,
-      request,
-      "analysis range endpoints must resolve to safe integer microseconds",
-    );
-  }
-  const range = normalizeAnalysisRange(race, request.range.from, request.range.to);
   const coverage = coverageFor(race, requiredBoatIds, range);
   const coverageSeconds = coverage.coverageSeconds;
   const includedIntervals = coverage.bins.filter((bin) => bin.reason === "included");
@@ -1453,6 +1749,7 @@ export function compareRange(race: RaceData, request: ComparisonRequest): RangeC
     const endDtfMeters = dtfAt(race, boatId, range.to);
     const windows = maneuverRanges(race, boatId, range);
     const integrated = integrateCanonicalIntervals(race, boatId, includedIntervals, windows, true);
+    const componentMadeGood = integrateComponentMadeGood(race, boatId, includedIntervals);
     const groundFactsAvailable =
       coverage.coverageMicros > 0 &&
       integrated.complete &&
@@ -1499,6 +1796,12 @@ export function compareRange(race: RaceData, request: ComparisonRequest): RangeC
       maneuverWindowMadeGoodMeters: finalizedGroundFacts
         ? integrated.maneuverWindowMadeGoodMeters
         : null,
+      waterMadeGoodMeters:
+        componentMadeGood.status === "ok" ? componentMadeGood.waterMeters : null,
+      currentMadeGoodMeters:
+        componentMadeGood.status === "ok" ? componentMadeGood.currentMeters : null,
+      groundMadeGoodMeters:
+        componentMadeGood.status === "ok" ? componentMadeGood.groundMeters : null,
     };
   });
   const primary = boats.find((boat) => boat.boatId === request.primaryBoatId) ?? null;
@@ -1576,6 +1879,12 @@ export function compareRange(race: RaceData, request: ComparisonRequest): RangeC
     boats.some((boat) =>
       boat.maneuvers.some((maneuver) => maneuver.lossStatus === "invalid-arithmetic"),
     ) ||
+    boats.some(
+      (boat) =>
+        boat.waterMadeGoodMeters === null ||
+        boat.currentMadeGoodMeters === null ||
+        boat.groundMadeGoodMeters === null,
+    ) ||
     referenceFacts?.groundFactsStatus === "invalid-arithmetic"
   ) {
     status = "invalid-arithmetic";
@@ -1630,6 +1939,49 @@ export function compareRange(race: RaceData, request: ComparisonRequest): RangeC
     status = "invalid-arithmetic";
   }
 
+  const waterDeltaMeters =
+    status === "ok" && primary?.waterMadeGoodMeters != null && referenceFacts?.waterMadeGoodMeters != null
+      ? finiteDifference(primary.waterMadeGoodMeters, referenceFacts.waterMadeGoodMeters)
+      : null;
+  const currentDeltaMeters =
+    status === "ok" && primary?.currentMadeGoodMeters != null && referenceFacts?.currentMadeGoodMeters != null
+      ? finiteDifference(primary.currentMadeGoodMeters, referenceFacts.currentMadeGoodMeters)
+      : null;
+  const groundGainMeters =
+    status === "ok" && primary?.groundMadeGoodMeters != null && referenceFacts?.groundMadeGoodMeters != null
+      ? finiteDifference(primary.groundMadeGoodMeters, referenceFacts.groundMadeGoodMeters)
+      : null;
+  let referenceNonlinearityMeters: number | null = null;
+  let progressResidualMeters: number | null = null;
+  let componentResidualMeters: number | null = null;
+  if (
+    waterDeltaMeters !== null &&
+    currentDeltaMeters !== null &&
+    groundGainMeters !== null &&
+    progressGainedMeters !== null
+  ) {
+    const groundMinusWater = subtractFinite(groundGainMeters, waterDeltaMeters);
+    referenceNonlinearityMeters = groundMinusWater.status === "ok"
+      ? subtractFinite(groundMinusWater.value, currentDeltaMeters).value
+      : null;
+    progressResidualMeters = subtractFinite(progressGainedMeters, groundGainMeters).value;
+    const progressMinusWater = subtractFinite(progressGainedMeters, waterDeltaMeters);
+    componentResidualMeters = progressMinusWater.status === "ok"
+      ? subtractFinite(progressMinusWater.value, currentDeltaMeters).value
+      : null;
+  }
+  if (
+    status === "ok" &&
+    [
+      waterDeltaMeters,
+      currentDeltaMeters,
+      groundGainMeters,
+      referenceNonlinearityMeters,
+      progressResidualMeters,
+      componentResidualMeters,
+    ].some((value) => value === null)
+  ) status = "invalid-arithmetic";
+
   return {
     status,
     boundaryFactsStatus,
@@ -1655,6 +2007,19 @@ export function compareRange(race: RaceData, request: ComparisonRequest): RangeC
     straightDeltaMeters,
     maneuverWindowDeltaMeters,
     residualMeters,
+    componentCoverageMicros: coverage.coverageMicros,
+    componentExcludedMicros: coverage.durationMicros - coverage.coverageMicros,
+    waterDeltaMeters,
+    currentDeltaMeters,
+    groundGainMeters,
+    referenceNonlinearityMeters,
+    progressResidualMeters,
+    componentResidualMeters,
+    componentProvenance: {
+      water: "reconstructed-water-from-fixes",
+      current: "reconstructed-current-from-fixes",
+      ground: "derived-water-plus-current",
+    },
   };
 }
 

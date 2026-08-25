@@ -80,7 +80,7 @@ export interface RecenteredTimelineWindow {
   recentered: boolean;
 }
 
-/** Fixed visible rail rows. Extra packed rows remain keyboard reachable by scrolling. */
+/** Default reserved rail rows. Every additional packed row remains visible. */
 export const TIMELINE_POINT_ROW_LIMIT = 2;
 
 /**
@@ -295,6 +295,7 @@ export function packTimelinePoints<TItem extends { at: number; id?: string }>(
   window: TimelineWindow,
   laneWidth: number,
   clearance: number,
+  ownershipClearance = TIMELINE_POINT_OWNERSHIP_CLEARANCE,
 ): PackedTimelinePoints<TItem> {
   const visible = items
     .map((item, index) => ({ item, index, placed: placeTimelinePoint(item.at, window) }))
@@ -311,8 +312,11 @@ export function packTimelinePoints<TItem extends { at: number; id?: string }>(
   const safeClearance = Number.isFinite(clearance) && clearance > 0 ? clearance : 0;
   const minimumFraction = safeWidth > 0 ? safeClearance / safeWidth : Number.POSITIVE_INFINITY;
   const edgeInset = safeWidth > 0 ? Math.min(0.5, minimumFraction / 2) : 0;
-  const ownershipFraction =
-    TIMELINE_POINT_OWNERSHIP_CLEARANCE / TIMELINE_POINT_OWNERSHIP_WIDTH;
+  const safeOwnershipClearance =
+    Number.isFinite(ownershipClearance) && ownershipClearance > 0
+      ? ownershipClearance
+      : TIMELINE_POINT_OWNERSHIP_CLEARANCE;
+  const ownershipFraction = safeOwnershipClearance / TIMELINE_POINT_OWNERSHIP_WIDTH;
   const ownershipInset = ownershipFraction / 2;
   const rowEnds: number[] = [];
   const packed = visible.map((entry) => {

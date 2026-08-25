@@ -22,6 +22,8 @@ export interface ComparisonViewModel {
   witness: string;
   metrics: ComparisonMetricView[];
   equation: string;
+  componentEquation: string;
+  componentProvenance: string;
   maneuverObservations: string[];
   maneuverCostWitness: string;
 }
@@ -62,6 +64,9 @@ function coverageWitness(result: RangeComparison): string {
   }
   if (result.status === "missing-boundary-data") {
     return `Comparison unavailable: ${unavailableBoundaryText(result.boundaryFactsStatus)}.`;
+  }
+  if (result.status === "insufficient-fleet-coverage") {
+    return `Comparison unavailable: ${result.invalidReason ?? "fewer than two fleet boats have complete component coverage"}.`;
   }
   if (result.status === "zero-duration") {
     const boundaryFactsAvailable =
@@ -109,6 +114,16 @@ function equationOf(result: RangeComparison): string {
     return "Ground-progress equation unavailable for this range.";
   }
   return `${signedMeters(result.progressGainedMeters)} m gained = ${signedMeters(result.straightDeltaMeters)} m straight + ${signedMeters(result.maneuverWindowDeltaMeters)} m during detected maneuver windows + ${signedMeters(result.residualMeters)} m residual.`;
+}
+
+function componentEquationOf(result: RangeComparison): string {
+  if (
+    !finiteNumber(result.progressGainedMeters) ||
+    !finiteNumber(result.waterDeltaMeters) ||
+    !finiteNumber(result.currentDeltaMeters) ||
+    !finiteNumber(result.componentResidualMeters)
+  ) return "Water/current equation unavailable for this range.";
+  return `${signedMeters(result.progressGainedMeters)} m gained = ${signedMeters(result.waterDeltaMeters)} m water made good + ${signedMeters(result.currentDeltaMeters)} m current made good + ${signedMeters(result.componentResidualMeters)} m residual.`;
 }
 
 /** Deterministic display adapter. All comparison arithmetic stays in compareRange. */
@@ -177,6 +192,9 @@ export function comparisonViewModel(
       },
     ],
     equation: equationOf(result),
+    componentEquation: componentEquationOf(result),
+    componentProvenance:
+      "Water and current use reconstructed fix components. Ground is derived from their exact component sum. Current contribution is descriptive, not a tactical cause.",
     maneuverObservations: counted.map(
       (maneuver) =>
         `${fixStamp(maneuver.t)} ${maneuver.kind}: ${finiteNumber(maneuver.lossMps) ? knots(maneuver.lossMps) : MISSING} kn observed speed drop versus the fastest reading in the prior 4 s.`,
