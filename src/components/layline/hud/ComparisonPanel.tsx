@@ -29,11 +29,14 @@ export function ComparisonPanel({
 
   /* One number leads: ground progress gained over the exact range. The rest
    * of the facts read as support, and a metric with no value leaves the panel
-   * instead of holding a dash cell. */
+   * instead of holding a dash cell. MISSING is the bare "-", so the test is
+   * against whole value segments, never substring: "-0.1" is a reading. */
+  const metricUnavailable = (value: string) =>
+    value.split(" / ").some((part) => part.trim() === MISSING);
   const leadMetric = view.metrics.find((metric) => metric.id === "gain");
-  const leadAvailable = leadMetric !== undefined && !leadMetric.value.includes(MISSING);
+  const leadAvailable = leadMetric !== undefined && !metricUnavailable(leadMetric.value);
   const supportMetrics = view.metrics.filter(
-    (metric) => metric.id !== "gain" && !metric.value.includes(MISSING),
+    (metric) => metric.id !== "gain" && !metricUnavailable(metric.value),
   );
   const equationAvailable =
     comparison.progressGainedMeters !== null &&

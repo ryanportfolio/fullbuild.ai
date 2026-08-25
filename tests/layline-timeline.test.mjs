@@ -438,7 +438,7 @@ test("timeline buttons and scrub keep usable source-sized targets through phone 
   assert.match(source, /styles\.pointMark} \$\{styles\.manMark/);
   assert.doesNotMatch(source, /role="button"/);
 
-  assert.match(css, /\.rangeButton\s*\{[\s\S]*?min-height:\s*24px/);
+  assert.match(css, /\.rangeButton\s*\{[\s\S]*?min-height:\s*28px/);
   assert.match(css, /\.track\s*\{[\s\S]*?height:\s*24px/);
   assert.match(css, /\.phaseBand\s*\{[\s\S]*?min-width:\s*24px/);
   assert.match(css, /\.eventMark\s*\{[\s\S]*?width:\s*24px;[\s\S]*?height:\s*24px/);

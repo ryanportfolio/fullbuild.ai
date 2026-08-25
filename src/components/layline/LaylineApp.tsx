@@ -45,6 +45,7 @@ import { Timeline } from "./hud/Timeline";
 import { TopBar } from "./hud/TopBar";
 import { Transport } from "./hud/Transport";
 import { TruthInspector } from "./hud/TruthInspector";
+import { VectorTriangle } from "./hud/VectorTriangle";
 import { VmgStrip } from "./hud/VmgStrip";
 import { ChartView } from "./svg/ChartView";
 import { RaceBrief } from "./RaceBrief";
@@ -526,6 +527,15 @@ export function LaylineApp({
   const analysisPanelDock = analysisWorkspace === null
     ? null
     : analysisWorkspacePanelDock(analysisWorkspace.panel);
+  /* The velocity triangle leaves the busy right column and takes the open
+   * water beside the transport, everywhere that corner is actually open:
+   * Compare owns the bottom-left with its own panel, so there the triangle
+   * stays inline with the inspector it belongs to. */
+  const vectorDocked =
+    analysisWorkspaceReady &&
+    analysisWorkspace !== null &&
+    analysisWorkspace.workspaceId !== "compare" &&
+    (analysisPanelDock === "right" || truthMode || live);
   const selectWorkspace = (workspaceId: AnalysisWorkspaceId) => {
     useReplay.getState().selectAnalysisWorkspace(workspaceId);
   };
@@ -545,6 +555,7 @@ export function LaylineApp({
       session={analysis}
       comparison={rangeComparison}
       inspection={visibleInspection}
+      vector={!vectorDocked}
       onLayerChange={setLayer}
       onReset={() => useReplay.getState().resetAnalysisWorkspace()}
     />
@@ -558,6 +569,7 @@ export function LaylineApp({
       data-analysis-ready={analysisWorkspace !== null && analysisWorkspaceReady ? "true" : undefined}
       data-analysis-workspace={analysisWorkspaceReady ? analysisWorkspace?.workspaceId : undefined}
       data-analysis-panel-dock={analysisWorkspaceReady ? analysisPanelDock ?? undefined : undefined}
+      data-vector-dock={vectorDocked ? "true" : undefined}
       data-analysis-flow="viewer"
     >
       <div
@@ -639,9 +651,19 @@ export function LaylineApp({
         {analysisWorkspaceReady && analysisPanelDock === "right" ? (
           analysisPanel
         ) : truthMode && analysisWorkspace?.panel !== "truth-provenance" ? (
-          <TruthInspector race={race} inspection={visibleInspection} />
+          <TruthInspector race={race} inspection={visibleInspection} vector={!vectorDocked} />
         ) : analysisWorkspace?.panel === "comparison" ? null : live ? (
-          <Instruments race={race} inspection={visibleInspection} />
+          <Instruments race={race} inspection={visibleInspection} vector={!vectorDocked} />
+        ) : null}
+      </div>
+      {/* The velocity triangle on its own plate in the open bottom-left water,
+          whenever the right column would otherwise carry it. Same surface,
+          same inspection, one mounted instance either way. */}
+      <div className={styles.dockVector} data-dock="vector">
+        {vectorDocked ? (
+          <section className={styles.panel} aria-label="Water current and ground vectors">
+            <VectorTriangle race={race} inspection={visibleInspection} />
+          </section>
         ) : null}
       </div>
       <div className={styles.dockBottom} data-dock="transport">

@@ -25,9 +25,12 @@ function setPresent(node: HTMLElement | null, present: boolean) {
 export function Instruments({
   race,
   inspection,
+  vector = true,
 }: {
   race: RaceData;
   inspection?: LaylineInspectionSurface | null;
+  /* False when the app docks the velocity triangle on its own plate. */
+  vector?: boolean;
 }) {
   const followId = useReplay((state) => state.followId);
   const boat = race.boats.find((entry) => entry.id === followId) ?? race.boats[0];
@@ -194,7 +197,7 @@ export function Instruments({
           </span>
         </div>
       </div>
-      <VectorTriangle race={race} inspection={inspection} />
+      {vector ? <VectorTriangle race={race} inspection={inspection} /> : null}
     </section>
   );
 }

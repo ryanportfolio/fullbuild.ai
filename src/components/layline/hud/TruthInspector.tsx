@@ -73,9 +73,12 @@ function velocitySummary(value: Pose | null): string {
 export function TruthInspector({
   race,
   inspection,
+  vector = true,
 }: {
   race: RaceData;
   inspection?: LaylineInspectionSurface | null;
+  /* False when the app docks the velocity triangle on its own plate. */
+  vector?: boolean;
 }) {
   const followId = useReplay((state) => state.followId);
   const chart2d = useReplay((state) => state.chart2d);
@@ -218,7 +221,7 @@ export function TruthInspector({
         </div>
       </div>
 
-      <VectorTriangle race={race} inspection={inspection} />
+      {vector ? <VectorTriangle race={race} inspection={inspection} /> : null}
     </section>
   );
 }

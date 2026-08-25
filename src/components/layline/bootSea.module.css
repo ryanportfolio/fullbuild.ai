@@ -537,6 +537,23 @@
   margin-top: auto;
 }
 
+/* The fleet plate never clips its own gun line. A short window takes the row
+   padding down first; a window shorter still lets the plate scroll in the
+   layer's own bar instead of cutting the foot off mid-plate. */
+[data-brief-view="panels"] .panelMain .panel:first-child {
+  overflow-y: auto;
+}
+
+@media (max-height: 840px) {
+  .brief {
+    gap: 1.2cqw;
+  }
+
+  [data-brief-view="panels"] .fleetRow {
+    padding: 0.25cqw 0;
+  }
+}
+
 .dialWrap {
   display: grid;
   flex: 1;

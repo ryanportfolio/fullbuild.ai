@@ -27,6 +27,7 @@ export function AnalysisWorkspacePanel({
   session,
   comparison,
   inspection,
+  vector = true,
   onLayerChange,
   onReset,
 }: {
@@ -35,6 +36,9 @@ export function AnalysisWorkspacePanel({
   session: AnalysisWorkspaceSession;
   comparison: RangeComparison;
   inspection?: LaylineInspectionSurface | null;
+  /* Forwarded to the embedded truth inspector: false while the app docks the
+   * velocity triangle on its own plate. */
+  vector?: boolean;
   onLayerChange: (layerId: LayerId, override: LayerOverride | "default") => void;
   onReset: () => void;
 }) {
@@ -53,7 +57,7 @@ export function AnalysisWorkspacePanel({
   } else if (model.surface === "comparison") {
     surface = <ComparisonPanel race={race} comparison={comparison} />;
   } else if (model.surface === "truth-inspector") {
-    surface = <TruthInspector race={race} inspection={inspection} />;
+    surface = <TruthInspector race={race} inspection={inspection} vector={vector} />;
   } else {
     surface = (
       <section className={styles.analysisWorkspaceUnavailable} aria-label={model.title}>
