@@ -386,7 +386,10 @@ test("both point rails use one measured packing and rendering path", async () =>
   assert.equal((source.match(/<PackedPointRail/g) ?? []).length, 2);
   assert.equal((source.match(/packTimelinePoints\(/g) ?? []).length, 1);
   assert.match(source, /new ResizeObserver\(measure\)/);
-  assert.match(source, /recenterTimelineWindow\(race, timelineWindow, live\.t, focusSpan\)/);
+  /* The zoomed focus lenses are gone: the timeline always addresses the whole
+     race, so nothing recenters and the window is pure in the race. */
+  assert.match(source, /clampTimelineWindow\(race, 0, null\)/);
+  assert.doesNotMatch(source, /recenterTimelineWindow\(/);
   assert.match(source, /--point-rows/);
   assert.match(source, /--point-row/);
   assert.match(css, /\.pointRail\s*\{[\s\S]*?height:\s*calc\(var\(--point-rows/);

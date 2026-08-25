@@ -146,7 +146,12 @@ test("truth DOM branches compose with 2D and renderer availability", () => {
   assert.match(app, /truthMode && analysisWorkspace\?\.panel !== "truth-provenance" \? \([^]*<TruthInspector race=\{race\} inspection=\{visibleInspection\}[^]*:\s*live \? \([^]*<Instruments race=\{race\} inspection=\{visibleInspection\}[^]*:\s*null/);
   assert.match(workspacePanel, /<TruthInspector race=\{race\} inspection=\{inspection\}/);
   assert.match(app, /live && chart2d \? \([^]*<ChartView race=\{race\} inspection=\{visibleInspection\} layers=\{chartLayers\} \/>/);
-  assert.match(app, /!live && analysisWorkspaceReady && \(analysisWorkspace !== null \|\| truthMode\) \? \(/);
+  /* The replay-aware SVG fallback and the static server chart are mutually
+     exclusive: without WebGL, chartGone can never latch, so the static layer
+     must yield whenever the truth fallback is up. */
+  assert.match(app, /const truthFallbackUp =\s*!live && analysisWorkspaceReady && \(analysisWorkspace !== null \|\| truthMode\);/);
+  assert.match(app, /\{chartGone \|\| truthFallbackUp \? null : \(/);
+  assert.match(app, /\{truthFallbackUp \? \(/);
   assert.match(app, /layers=\{noWebglLayers\}/);
   assert.match(app, /className=\{styles\.truthFallbackLayer\}/);
   assert.match(topBar, /aria-controls=\{truthMode \? "truth-inspector" : undefined\}/);

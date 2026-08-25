@@ -11,10 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import styles from "@/app/prototype/layline/layline.module.css";
-import {
-  analysisFocusWindow,
-  type AnalysisTimelineLaneId,
-} from "@/lib/layline/analysis-state";
+import { type AnalysisTimelineLaneId } from "@/lib/layline/analysis-state";
 import {
   analysisRangeEvidenceTarget,
   analysisTimelineLayout,
@@ -22,11 +19,11 @@ import {
 import type { AnalysisRange, RangeComparison } from "@/lib/layline/comparison";
 import { clock, signedMeters } from "@/lib/layline/format";
 import {
+  clampTimelineWindow,
   clipTimelineInterval,
   deriveEvidenceTimeline,
   packTimelinePoints,
   placeTimelinePoint,
-  recenterTimelineWindow,
   TIMELINE_POINT_OWNERSHIP_CLEARANCE,
   TIMELINE_POINT_ROW_LIMIT,
   type TimelineIntervalEvidence,
@@ -45,11 +42,6 @@ const GYBE_GLYPH = "M1.5 3.1 L5 7.3 L8.5 3.1";
 const RAW_WINDOW = 10;
 const FIX_STEP = 1 / FIX_HZ;
 const RAW_TICKS = Math.round(RAW_WINDOW / FIX_STEP) + 1;
-const RANGE_OPTIONS: { label: string; seconds: number | null }[] = [
-  { label: "Whole", seconds: null },
-  { label: "30 s", seconds: 30 },
-  { label: "10 s", seconds: 10 },
-];
 
 type TimelineStyle = CSSProperties & {
   "--point-position"?: string;
@@ -181,7 +173,6 @@ export function Timeline({
   const raw = useReplay((state) => state.mode === "raw");
   const analysis = useReplay((state) => state.analysis);
   const activeSelectedRange = selectedRange ?? analysis.selectedRange;
-  const focusSpan = analysis.focusSpanSeconds;
 
   const evidence = useMemo(() => deriveEvidenceTimeline(race, followId), [race, followId]);
   const phaseLane = evidence.lanes.find((lane) => lane.id === "phases");
@@ -192,19 +183,36 @@ export function Timeline({
   const maneuvers = pointItems(maneuverLane?.items ?? []);
   const defaultLaneIds = useMemo<readonly AnalysisTimelineLaneId[]>(
     () => comparison === undefined
-      ? ["phase", "event", "maneuver"]
-      : ["phase", "event", "maneuver", "gain-loss"],
+      ? ["event", "maneuver"]
+      : ["event", "maneuver", "gain-loss"],
     [comparison],
   );
+  /* The race-events lane opens on request and starts closed: the transport
+   * belongs to the race, and a wall of packed event chips took almost half
+   * the viewport away from it. Phases stopped being a lane at all; they are
+   * the scrubber's own background now, so the one row that must always be up
+   * carries them for free. */
+  const [eventsOpen, setEventsOpen] = useState(false);
+  const requestedLaneIds = visibleLaneIds ?? defaultLaneIds;
+  const eventLaneRequested = requestedLaneIds.includes("event");
+  const laneIds = useMemo(
+    () => requestedLaneIds.filter(
+      (id) => id !== "phase" && (eventsOpen || id !== "event"),
+    ),
+    [eventsOpen, requestedLaneIds],
+  );
   const layout = useMemo(
-    () => analysisTimelineLayout(visibleLaneIds ?? defaultLaneIds, comparison !== undefined),
-    [comparison, defaultLaneIds, visibleLaneIds],
+    () => analysisTimelineLayout(laneIds, comparison !== undefined),
+    [comparison, laneIds],
   );
   const laneRow = (laneId: Exclude<AnalysisTimelineLaneId, "raw-fix">) =>
     layout.rows.find((row) => row.id === laneId);
+  /* One window, the whole race. The zoomed focus lenses are gone: every
+   * evidence mark, phase band and the scrub itself always address the same
+   * full tMin..tMax axis. */
   const timelineWindow = useMemo(
-    () => analysisFocusWindow(race, analysis),
-    [race, analysis],
+    () => clampTimelineWindow(race, 0, null),
+    [race],
   );
   const startPlacement = useMemo(
     () => clipTimelineInterval(
@@ -234,17 +242,6 @@ export function Timeline({
   const dragging = useRef(false);
   const timelineHelpId = useId();
   const evidenceDetailPrefix = useId();
-  const [activeEvidence, setActiveEvidence] = useState<string | null>(null);
-
-  const evidenceDisclosureProps = (descriptionId: string, detail: string) => ({
-    "aria-describedby": descriptionId,
-    onPointerEnter: () => setActiveEvidence(detail),
-    onPointerLeave: (event: ReactPointerEvent<HTMLButtonElement>) => {
-      if (document.activeElement !== event.currentTarget) setActiveEvidence(null);
-    },
-    onFocus: () => setActiveEvidence(detail),
-    onBlur: () => setActiveEvidence(null),
-  });
 
   /* React may render when the range or followed boat changes. Keep the latest
    * listener-owned clock here so that render cannot restore mount-time ARIA. */
@@ -258,11 +255,7 @@ export function Timeline({
     let stamp = "";
     return onLive(race, (live) => {
       liveTimeRef.current = live.t;
-      const resolvedWindow = recenterTimelineWindow(race, timelineWindow, live.t, focusSpan);
-      const liveWindow = resolvedWindow.window;
-      if (resolvedWindow.recentered) {
-        useReplay.getState().setAnalysis({ type: "recenter-focus", centerSeconds: live.t });
-      }
+      const liveWindow = timelineWindow;
 
       const head = headRef.current;
       if (head !== null) {
@@ -311,7 +304,7 @@ export function Timeline({
         node.style.left = pct(placed.fraction);
       }
     });
-  }, [focusSpan, layout.showRawFixes, race, raw, timelineWindow]);
+  }, [layout.showRawFixes, race, raw, timelineWindow]);
 
   const seekFromPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
     const track = trackRef.current;
@@ -339,49 +332,28 @@ export function Timeline({
     return styles.bandMid;
   };
 
-  const rangeText =
-    focusSpan === null
-      ? `Whole race ${clock(race.tMin)} to ${clock(race.tMax)}`
-      : `${clock(timelineWindow.from)} to ${clock(timelineWindow.to)}`;
-
   return (
     <div
       className={`${styles.timelineRow} ${laneRow("gain-loss") === undefined ? styles.timelineRowBasic : ""}`}
       data-analysis-flow="timeline"
       style={{ "--timeline-height-budget": `${layout.heightBudgetPx}px` } as TimelineStyle}
     >
-      <div className={styles.timelineTools}>
-        <span className={styles.timelineTitle}>Evidence timeline</span>
-        <div className={styles.rangeGroup} role="group" aria-label="Timeline focus window">
-          {RANGE_OPTIONS.map((option) => (
-            <button
-              key={option.label}
-              type="button"
-              className={`${styles.rangeButton} ${focusSpan === option.seconds ? styles.rangeButtonOn : ""}`}
-              aria-pressed={focusSpan === option.seconds}
-              onClick={() => {
-                useReplay.getState().setAnalysis({
-                  type: "set-focus",
-                  spanSeconds: option.seconds,
-                  centerSeconds: useReplay.getState().t,
-                });
-              }}
-            >
-              {option.label}
-            </button>
-          ))}
+      {eventLaneRequested ? (
+        <div className={styles.timelineHeader}>
+          <button
+            type="button"
+            className={styles.eventsToggle}
+            aria-expanded={eventsOpen}
+            data-events={eventsOpen ? "open" : "closed"}
+            onClick={() => setEventsOpen((open) => !open)}
+          >
+            <svg className={styles.eventsToggleGlyph} viewBox="0 0 10 10" aria-hidden="true">
+              <path d={eventsOpen ? "M1.5 6.9 L5 2.7 L8.5 6.9" : "M1.5 3.1 L5 7.3 L8.5 3.1"} />
+            </svg>
+            <span>{`Race events ${raceEvents.length}`}</span>
+          </button>
         </div>
-        <span className={styles.rangeReadout}>{rangeText}</span>
-        <span
-          className={styles.evidenceDisclosure}
-          data-evidence-disclosure={activeEvidence === null ? "idle" : "active"}
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          {activeEvidence ?? "Hover or focus an evidence mark for time, detail, and source"}
-        </span>
-      </div>
+      ) : null}
 
       {laneRow("start") === undefined ? null : (
         <>
@@ -408,44 +380,6 @@ export function Timeline({
                 <span className={styles.bandLabel}>Last 10 seconds</span>
               </button>
             )}
-          </div>
-        </>
-      )}
-
-      {laneRow("phase") === undefined ? null : (
-        <>
-          <span
-            className={styles.evidenceLaneLabel}
-            style={{ gridRow: laneRow("phase")?.labelGridRow }}
-          >
-            {phaseLane?.label ?? "Phases"}
-          </span>
-          <div
-            className={styles.phaseRail}
-            role="group"
-            aria-label={phaseLane?.label ?? "Race phases"}
-            style={{ gridRow: laneRow("phase")?.railGridRow }}
-          >
-            {phases.map((phase, index) => {
-              const placed = clipTimelineInterval(phase.from, phase.to, timelineWindow);
-              if (placed === null) return null;
-              const descriptionId = `${evidenceDetailPrefix}-phase-${index}`;
-              const detail = `${phase.label} · ${clock(phase.from)} to ${clock(phase.to)} · Source ${phase.provenance.source}`;
-              return (
-                <button
-                  key={phase.id}
-                  type="button"
-                  className={`${styles.phaseBand} ${phaseWeight(phase.id)}`}
-                  style={{ left: pct(placed.left), width: pct(placed.width) }}
-                  aria-label={`Go to ${phase.label} start at ${clock(phase.from)}`}
-                  {...evidenceDisclosureProps(descriptionId, detail)}
-                  onClick={() => seekEvidence(phase.from)}
-                >
-                  <span className={styles.bandLabel}>{phase.label}</span>
-                  <span id={descriptionId} className={styles.srOnly}>{detail}</span>
-                </button>
-              );
-            })}
           </div>
         </>
       )}
@@ -479,7 +413,7 @@ export function Timeline({
                   }}
                   data-event={item.eventKind}
                   aria-label={`Go to ${item.label} at ${clock(item.at)}`}
-                  {...evidenceDisclosureProps(descriptionId, detail)}
+                  aria-describedby={descriptionId}
                   onClick={() => seekEvidence(item.at)}
                 >
                   <span>{item.shortLabel}</span>
@@ -519,7 +453,7 @@ export function Timeline({
                   data-maneuver={maneuver.maneuverKind}
                   data-at={maneuver.at}
                   aria-label={`Go to the ${maneuver.label.toLowerCase()} at ${clock(maneuver.at)}`}
-                  {...evidenceDisclosureProps(descriptionId, detail)}
+                  aria-describedby={descriptionId}
                   onClick={() => seekEvidence(maneuver.at)}
                 >
                   <svg className={styles.manGlyph} viewBox="0 0 10 10" aria-hidden="true">
@@ -624,6 +558,26 @@ export function Timeline({
           event.preventDefault();
         }}
       >
+        {/* The phases live inside the scrubber as its background: the same
+            clipTimelineInterval placement the old lane used, painted under the
+            playhead. Decorative here; the sr-only summary below carries the
+            spans for a reader, and clicking a band is just seeking. */}
+        <div className={styles.trackPhases} aria-hidden="true">
+          {phases.map((phase) => {
+            const placed = clipTimelineInterval(phase.from, phase.to, timelineWindow);
+            if (placed === null) return null;
+            return (
+              <span
+                key={phase.id}
+                className={`${styles.trackPhaseBand} ${phaseWeight(phase.id)}`}
+                data-phase={phase.id}
+                style={{ left: pct(placed.left), width: pct(placed.width) }}
+              >
+                <span className={styles.trackPhaseLabel}>{phase.label}</span>
+              </span>
+            );
+          })}
+        </div>
         {comparison === undefined || laneRow("gain-loss") === undefined || selectedRangePlacement === null ? null : (
           <div
             className={styles.selectedRangeHighlight}
@@ -664,6 +618,11 @@ export function Timeline({
       <span id={timelineHelpId} className={styles.timelineHelp}>
         Arrow keys move one 0.25 second telemetry sample. Home and End move to the visible range
         limits.
+      </span>
+      <span className={styles.srOnly}>
+        {`Race phases: ${phases
+          .map((phase) => `${phase.label} ${clock(phase.from)} to ${clock(phase.to)}`)
+          .join(", ")}`}
       </span>
       <span
         className={styles.timeClockNow}

@@ -142,7 +142,11 @@ test('truth control swaps inspector and instruments while preserving the no-WebG
   assert.match(topBar, /aria-controls=\{truthMode \? "truth-inspector" : undefined\}/);
   assert.match(topBar, /aria-pressed=\{truthMode\}/);
   assert.doesNotMatch(topBar, /aria-controls="truth-inspector"/);
-  assert.match(app, /truthMode && analysisWorkspace\?\.panel !== "truth-provenance" \? \([\s\S]*?<TruthInspector race=\{race\} inspection=\{visibleInspection\} \/>[\s\S]*?\) : live \? \([\s\S]*?<Instruments race=\{race\} inspection=\{visibleInspection\} \/>[\s\S]*?\) : null/);
+  /* The truth branch outranks Compare's empty instrument dock so that the
+     TopBar's aria-controls="truth-inspector" target can exist in every
+     workspace; only the Evidence panel, which embeds the same inspector,
+     still supersedes it. */
+  assert.match(app, /truthMode && analysisWorkspace\?\.panel !== "truth-provenance" \? \([\s\S]*?<TruthInspector race=\{race\} inspection=\{visibleInspection\} \/>[\s\S]*?\) : analysisWorkspace\?\.panel === "comparison" \? null : live \? \([\s\S]*?<Instruments race=\{race\} inspection=\{visibleInspection\} \/>[\s\S]*?\) : null/);
   assert.match(workspacePanel, /<TruthInspector race=\{race\} inspection=\{inspection\} \/>/);
   assert.doesNotMatch(app, /<TruthInspector[^>]+hidden=/);
   assert.match(inspector, /id="truth-inspector"/);

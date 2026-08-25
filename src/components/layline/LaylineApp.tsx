@@ -521,6 +521,8 @@ export function LaylineApp({
   useSpaceToggle();
 
   const analysisWorkspaceReady = !briefed || briefDone;
+  const truthFallbackUp =
+    !live && analysisWorkspaceReady && (analysisWorkspace !== null || truthMode);
   const analysisPanelDock = analysisWorkspace === null
     ? null
     : analysisWorkspacePanelDock(analysisWorkspace.panel);
@@ -628,12 +630,17 @@ export function LaylineApp({
         {live && analysisWorkspace === null ? <Standings race={race} /> : null}
         {analysisWorkspaceReady && analysisPanelDock === "left" ? analysisPanel : null}
       </div>
+      {/* The truth branch outranks Compare's otherwise-empty dock: the TopBar
+          toggle advertises aria-controls="truth-inspector" in every workspace,
+          so the inspector must be able to exist in every workspace. Only the
+          Evidence panel, which contains the same inspector, still supersedes
+          it. */}
       <div className={styles.dockRight} data-dock="instruments">
         {analysisWorkspaceReady && analysisPanelDock === "right" ? (
           analysisPanel
-        ) : analysisWorkspace?.panel === "comparison" ? null : truthMode && analysisWorkspace?.panel !== "truth-provenance" ? (
+        ) : truthMode && analysisWorkspace?.panel !== "truth-provenance" ? (
           <TruthInspector race={race} inspection={visibleInspection} />
-        ) : live ? (
+        ) : analysisWorkspace?.panel === "comparison" ? null : live ? (
           <Instruments race={race} inspection={visibleInspection} />
         ) : null}
       </div>
@@ -656,16 +663,20 @@ export function LaylineApp({
         ) : null}
       </div>
 
-      {chartGone ? null : (
+      {/* Once client task controls exist, no-WebGL uses the same replay-aware
+          SVG, selected boat, inspection and layer visibility as explicit 2D.
+          The server chart remains the honest first paint and no-JS still.
+          While this layer is up the static chart below unmounts: chartGone
+          only ever latches off a live renderer, so without WebGL the two
+          fallbacks would otherwise stay mounted together, duplicating the
+          content and sizing the stage twice on mobile. */}
+      {chartGone || truthFallbackUp ? null : (
         <div className={live ? `${styles.fallbackLayer} ${styles.fallbackOut}` : styles.fallbackLayer}>
           {children}
         </div>
       )}
 
-      {/* Once client task controls exist, no-WebGL uses the same replay-aware
-          SVG, selected boat, inspection and layer visibility as explicit 2D.
-          The server chart remains the honest first paint and no-JS still. */}
-      {!live && analysisWorkspaceReady && (analysisWorkspace !== null || truthMode) ? (
+      {truthFallbackUp ? (
         <div className={styles.truthFallbackLayer}>
           <ChartView race={race} inspection={visibleInspection} layers={noWebglLayers} />
         </div>

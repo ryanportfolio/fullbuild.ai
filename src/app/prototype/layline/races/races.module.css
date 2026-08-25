@@ -1021,9 +1021,10 @@
   }
 }
 
+/* The race rail keeps its 220px floor as the default on every viewport; only
+   the analyst pane grows with the room. A wider rail is a stored preference. */
 @media (min-width: 1600px) {
   .workspace {
-    --rail-width: 280px;
     --analyst-width: 380px;
 
     padding: 16px;

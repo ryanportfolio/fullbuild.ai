@@ -53,15 +53,21 @@ test("Compare compacts full-label turn targets below its narrowest adjacent cent
   );
 });
 
-test("phase event and maneuver controls use immediate pointer and focus disclosure", () => {
+test("event and maneuver controls carry described evidence without a hover status line", () => {
   assert.doesNotMatch(timeline, /\btitle=/);
-  assert.match(timeline, /"aria-describedby": descriptionId/);
-  assert.equal((timeline.match(/evidenceDisclosureProps\(/g) ?? []).length >= 3, true);
-  assert.match(timeline, /onPointerEnter:/);
-  assert.match(timeline, /onFocus:/);
-  assert.match(timeline, /data-evidence-disclosure/);
+  assert.match(timeline, /aria-describedby=\{descriptionId\}/);
   assert.match(timeline, /Source \$\{/);
-  assert.match(block(laylineCss, ".evidenceDisclosure"), /min-height/);
+  /* The visible hover-disclosure strip is gone by owner direction; the
+     description spans stay wired through aria-describedby. */
+  assert.doesNotMatch(timeline, /data-evidence-disclosure/);
+  assert.doesNotMatch(laylineCss, /\.evidenceDisclosure/);
+});
+
+test("the race-events lane is collapsible and starts closed", () => {
+  assert.match(timeline, /const \[eventsOpen, setEventsOpen\] = useState\(false\)/);
+  assert.match(timeline, /aria-expanded=\{eventsOpen\}/);
+  assert.match(timeline, /eventsOpen \|\| id !== "event"/);
+  assert.match(timeline, /Race events \$\{raceEvents\.length\}/);
 });
 
 test("Analysis Layers is one readable control column with compact unavailable rows", () => {

@@ -80,9 +80,11 @@ export function TruthInspector({
   const followId = useReplay((state) => state.followId);
   const chart2d = useReplay((state) => state.chart2d);
   const sceneUp = useReplay((state) => state.webglOk);
+  const rawMode = useReplay((state) => state.mode === "raw");
   const boat = race.boats.find((entry) => entry.id === followId) ?? race.boats[0];
   const buffer = useRef(truthBuffer());
   const initial = telemetryTruthAt(race, boat.id, sampleLive(race).t, buffer.current);
+  const initialVelocityPose = rawMode ? initial.raw : initial.reconstructed;
 
   const replayTime = useRef<HTMLSpanElement>(null);
   const beforeId = useRef<HTMLSpanElement>(null);
@@ -96,10 +98,9 @@ export function TruthInspector({
   const rawHeading = useRef<HTMLSpanElement>(null);
   const reconstructedPosition = useRef<HTMLSpanElement>(null);
   const reconstructedHeading = useRef<HTMLSpanElement>(null);
-  const rawCurrentCaption = useRef<HTMLSpanElement>(null);
-  const reconstructedCurrentCaption = useRef<HTMLSpanElement>(null);
-  const rawVelocity = useRef<HTMLSpanElement>(null);
-  const reconstructedVelocity = useRef<HTMLSpanElement>(null);
+  const velocityBlock = useRef<HTMLDivElement>(null);
+  const velocityCaption = useRef<HTMLElement>(null);
+  const velocityValues = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     return onLive(race, (live) => {
@@ -122,10 +123,17 @@ export function TruthInspector({
       setText(rawHeading.current, poseHeading(truth.raw));
       setText(reconstructedPosition.current, posePosition(truth.reconstructed));
       setText(reconstructedHeading.current, poseHeading(truth.reconstructed));
-      setText(rawCurrentCaption.current, currentCaption(truth.raw));
-      setText(reconstructedCurrentCaption.current, currentCaption(truth.reconstructed));
-      setText(rawVelocity.current, velocitySummary(truth.raw));
-      setText(reconstructedVelocity.current, velocitySummary(truth.reconstructed));
+      /* One velocity block, following the active lens. The recorded and the
+       * reconstructed readouts repeated the same three component lines, so the
+       * pair collapsed into the pose the viewer is actually watching, with its
+       * provenance stated on the block. */
+      const velocityPose = live.mode === "raw" ? truth.raw : truth.reconstructed;
+      setText(velocityCaption.current, currentCaption(velocityPose));
+      setText(velocityValues.current, velocitySummary(velocityPose));
+      velocityBlock.current?.setAttribute(
+        "data-provenance",
+        velocityPose?.telemetryProvenance === "recorded-fix" ? "measured" : "reconstructed",
+      );
     });
   }, [race]);
 
@@ -196,14 +204,17 @@ export function TruthInspector({
         </div>
       </div>
 
-      <div className={styles.truthVectors} aria-label="Recorded and reconstructed velocity components">
-        <div data-provenance="measured">
-          <strong ref={rawCurrentCaption}>{currentCaption(initial.raw)}</strong>
-          <span ref={rawVelocity}>{velocitySummary(initial.raw)}</span>
-        </div>
-        <div data-provenance="reconstructed">
-          <strong ref={reconstructedCurrentCaption}>{currentCaption(initial.reconstructed)}</strong>
-          <span ref={reconstructedVelocity}>{velocitySummary(initial.reconstructed)}</span>
+      <div className={styles.truthVectors} aria-label="Velocity components with provenance">
+        <div
+          ref={velocityBlock}
+          data-provenance={
+            initialVelocityPose?.telemetryProvenance === "recorded-fix"
+              ? "measured"
+              : "reconstructed"
+          }
+        >
+          <strong ref={velocityCaption}>{currentCaption(initialVelocityPose)}</strong>
+          <span ref={velocityValues}>{velocitySummary(initialVelocityPose)}</span>
         </div>
       </div>
 

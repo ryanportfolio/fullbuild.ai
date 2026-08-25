@@ -644,7 +644,10 @@ test("semantic, phone, reduced-motion and fallback integration contracts stay pr
   assert.match(panel, /view\.signConvention/);
   assert.doesNotMatch(panel, /replay\.pause\(\)/);
   assert.match(timeline, /data-analysis-range=/);
-  assert.match(timeline, /aria-label="Timeline focus window"/);
+  /* The focus-window zoom group left with the Evidence timeline tools row;
+     the race-events disclosure is the one control on the header line. */
+  assert.doesNotMatch(timeline, /aria-label="Timeline focus window"/);
+  assert.match(timeline, /aria-expanded=\{eventsOpen\}/);
   assert.match(app, /live \|\| comparison/);
   assert.match(app, /<AnalysisWorkspacePanel/);
   assert.match(workspacePanel, /<ComparisonPanel race=\{race\} comparison=\{comparison\}/);
@@ -654,7 +657,7 @@ test("semantic, phone, reduced-motion and fallback integration contracts stay pr
   const phone = css.split("@media (max-width: 900px) {")[1]
     ?.split("@media (max-width: 560px) {")[0] ?? "";
   assert.match(phone, /\.comparisonMetrics\s*\{[^}]*repeat\(2, minmax\(0, 1fr\)\)/);
-  assert.match(phone, /\.comparisonRangeActions \.rangeButton,[\s\S]*?min-height:\s*40px/);
+  assert.match(phone, /\.comparisonRangeControl \.rangeButton\s*\{[\s\S]*?min-height:\s*40px/);
   assert.match(phone, /\.comparisonRail\s*\{[^}]*height:\s*40px/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[^]*transition-duration:\s*1ms/);
   assert.doesNotMatch(

@@ -4,6 +4,7 @@ import styles from "@/app/prototype/layline/layline.module.css";
 import { comparisonRangeEvidence } from "@/lib/layline/analysis-workspace-ui";
 import type { RangeComparison } from "@/lib/layline/comparison";
 import { comparisonViewModel } from "@/lib/layline/comparison-view";
+import { MISSING } from "@/lib/layline/format";
 import type { RaceData } from "@/lib/layline/types";
 import { useReplay } from "../store";
 
@@ -26,6 +27,18 @@ export function ComparisonPanel({
     replay.seek(rangeEvidence[edge].seekTo);
   };
 
+  /* One number leads: ground progress gained over the exact range. The rest
+   * of the facts read as support, and a metric with no value leaves the panel
+   * instead of holding a dash cell. */
+  const leadMetric = view.metrics.find((metric) => metric.id === "gain");
+  const leadAvailable = leadMetric !== undefined && !leadMetric.value.includes(MISSING);
+  const supportMetrics = view.metrics.filter(
+    (metric) => metric.id !== "gain" && !metric.value.includes(MISSING),
+  );
+  const equationAvailable =
+    comparison.progressGainedMeters !== null &&
+    Number.isFinite(comparison.progressGainedMeters);
+
   return (
     <section
       className={styles.comparisonPanel}
@@ -41,9 +54,6 @@ export function ComparisonPanel({
             Primary {primary?.sail ?? comparison.primaryBoatId}. Select another primary in
             standings or on the water.
           </p>
-          <p className={styles.comparisonPrimary}>{view.referenceLabel}</p>
-          <p className={styles.comparisonPrimary}>{view.referenceMembershipLabel}</p>
-          <p className={styles.comparisonPrimary}>{view.signConvention}</p>
         </div>
         <label className={styles.referenceField}>
           <span>Rival / ground reference</span>
@@ -72,10 +82,21 @@ export function ComparisonPanel({
         </label>
       </div>
 
-      <div className={styles.comparisonRangeRow}>
+      {leadAvailable ? (
+        <div className={styles.comparisonLead} data-metric="gain">
+          <span className={styles.comparisonLeadLabel}>{leadMetric.label}</span>
+          <strong className={styles.comparisonLeadValue}>
+            {leadMetric.value} <span>{leadMetric.unit}</span>
+          </strong>
+        </div>
+      ) : null}
+
+      {/* One range control: mark the edges off the playhead, reset to the
+          whole race, and seek either recorded edge. */}
+      <div className={styles.comparisonRangeRow} role="group" aria-label="Exact replay range">
         <span className={styles.comparisonRangeLabel}>Exact replay range</span>
         <output className={styles.comparisonRangeValue}>{rangeEvidence.rangeLabel}</output>
-        <div className={styles.comparisonRangeActions} aria-label="Comparison range selection">
+        <div className={styles.comparisonRangeControl}>
           <button
             type="button"
             className={styles.rangeButton}
@@ -103,45 +124,47 @@ export function ComparisonPanel({
           <button
             type="button"
             className={styles.rangeButton}
-            onClick={() => useReplay.getState().setAnalysis({ type: "use-focus" })}
-          >
-            Use focus
-          </button>
-          <button
-            type="button"
-            className={styles.rangeButton}
             onClick={() => useReplay.getState().setAnalysis({ type: "reset-range" })}
           >
-            Whole range
+            Whole race
           </button>
-        </div>
-        <div className={styles.comparisonEvidenceActions} aria-label="Range-linked evidence">
-          <button type="button" onClick={() => seekRangeEdge("in")}>
+          <span className={styles.comparisonRangeDivider} aria-hidden="true" />
+          <button type="button" className={styles.rangeButton} onClick={() => seekRangeEdge("in")}>
             {rangeEvidence.in.label}
           </button>
-          <button type="button" onClick={() => seekRangeEdge("out")}>
+          <button type="button" className={styles.rangeButton} onClick={() => seekRangeEdge("out")}>
             {rangeEvidence.out.label}
           </button>
         </div>
       </div>
 
-      <dl className={styles.comparisonMetrics}>
-        {view.metrics.map((metric) => (
-          <div key={metric.id} className={styles.comparisonMetric} data-metric={metric.id}>
-            <dt>{metric.label}</dt>
-            <dd>
-              {metric.value} <span>{metric.unit}</span>
-            </dd>
-          </div>
-        ))}
-      </dl>
+      {supportMetrics.length === 0 ? null : (
+        <dl className={styles.comparisonMetrics}>
+          {supportMetrics.map((metric) => (
+            <div key={metric.id} className={styles.comparisonMetric} data-metric={metric.id}>
+              <dt>{metric.label}</dt>
+              <dd>
+                {metric.value} <span>{metric.unit}</span>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
 
       <div className={styles.comparisonProof}>
         <p className={styles.comparisonWitness} role="status">
           {view.witness}
         </p>
-        <p className={styles.comparisonEquation}>{view.equation}</p>
-        <p className={styles.comparisonCost}>{view.maneuverCostWitness}</p>
+        {equationAvailable ? (
+          <p className={styles.comparisonEquation}>{view.equation}</p>
+        ) : null}
+        <details className={styles.comparisonObservations}>
+          <summary>Method and reference cohort</summary>
+          <p>{view.referenceLabel}</p>
+          <p>{view.referenceMembershipLabel}</p>
+          <p>{view.signConvention}</p>
+          <p>{view.componentProvenance}</p>
+        </details>
         {view.maneuverObservations.length === 0 ? (
           <p className={styles.comparisonObservation}>No selected-boat maneuver observed in this exact range.</p>
         ) : (
@@ -152,6 +175,7 @@ export function ComparisonPanel({
                 <li key={observation}>{observation}</li>
               ))}
             </ul>
+            <p className={styles.comparisonCost}>{view.maneuverCostWitness}</p>
           </details>
         )}
       </div>

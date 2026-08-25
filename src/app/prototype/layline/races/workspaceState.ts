@@ -125,8 +125,10 @@ export function toggleLibraryPreference(
   };
 }
 
+/* The race list opens at its floor on every viewport: the replay owns the
+   width, and a wider rail is a stored choice, never a default. */
 export function defaultPaneWidth(pane: "rail" | "analyst", viewportWidth: number): number {
-  if (pane === "rail") return viewportWidth >= 1600 ? 280 : 220;
+  if (pane === "rail") return RAIL_MIN;
   return viewportWidth >= 1600 ? 380 : 340;
 }
 
