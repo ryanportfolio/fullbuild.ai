@@ -266,6 +266,12 @@ const INDEX_ICONS: Record<string, number[][][]> = {
     [[10, 2], [13, 2], [13, 14], [10, 14]],
     [[6.5, 8], [9.5, 8]],
   ],
+  // the two laylines converging on the windward mark
+  layline: [
+    [[1.5, 14.5], [6.6, 5.2]],
+    [[14.5, 14.5], [9.4, 5.2]],
+    [[8, 1.2], [10, 3.2], [8, 5.2], [6, 3.2], [8, 1.2]],
+  ],
   // the set's keystone
   'fullbuild-ai': [
     [[8, 2], [13, 8], [8, 14], [3, 8], [8, 2]],
