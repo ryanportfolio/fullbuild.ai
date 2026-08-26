@@ -769,3 +769,66 @@ test('the boot cover keeps the house rules while it briefs the race', async () =
     assert.ok(!line.endsWith('.'), `${line} ends in a period`);
   }
 });
+
+test('the key names every value the water is drawn in, and names it once', async () => {
+  const [page, key, keyCss, css, course, surfaces, field] = await Promise.all([
+    read('src/app/prototype/layline/page.tsx'),
+    read('src/components/layline/SceneKey.tsx'),
+    read('src/components/layline/SceneKey.module.css'),
+    read('src/app/prototype/layline/layline.module.css'),
+    read('src/components/layline/scene/course.ts'),
+    read('src/lib/layline/surfaces.ts'),
+    read('src/components/layline/scene/CurrentField.tsx'),
+  ]);
+
+  /* The key sits between the console and the debrief: the console is a
+     viewport tall, so anywhere later is a key found after the thing it
+     explains. */
+  const keyAt = page.indexOf('<SceneKey race={race} />');
+  assert.ok(keyAt > 0, 'the story page stopped rendering the key');
+  assert.ok(keyAt > page.indexOf('id="replay-console"'));
+  assert.ok(keyAt < page.indexOf('<AnalystSection />'));
+  /* And there is a way to it from the console, which is above it. */
+  assert.match(page, /href="#scene-key"/);
+  assert.match(key, /id="scene-key"/);
+
+  /* One entry per thing the water draws. Eight, and every one of them carries
+     a drawing rather than a colour named in prose. */
+  const terms = key.match(/<span>([A-Z][a-z][^<]*)<\/span>/g) ?? [];
+  assert.equal((key.match(/className=\{key\.entry\}/g) ?? []).length, 8);
+  assert.ok(terms.length >= 8, 'an entry lost its term');
+
+  /* The fades are the scene's own, so the swatch a reader matches against the
+     water is drawn at the strength the water draws it. */
+  const sceneFade = (name) => {
+    const found = course.match(new RegExp(`export const ${name}_FADE = ([0-9.]+);`));
+    assert.ok(found, `${name}_FADE left scene/course.ts`);
+    return Math.round(Number(found[1]) * 100);
+  };
+  for (const name of ['LAYLINE', 'RUNG', 'ZONE', 'START']) {
+    const stated = key.match(new RegExp(`const ${name}_FADE = ([0-9]+);`));
+    assert.ok(stated, `the key stopped stating ${name}_FADE`);
+    assert.equal(Number(stated[1]), sceneFade(name), `${name} fade drifted from the scene`);
+  }
+
+  /* The current field's cyan is stated once for the GL material and once for
+     the stylesheet, and the key reads the first of those rather than adding a
+     third copy of the hex. */
+  assert.match(surfaces, /export const CURRENT_FIELD_INK = "#7dd9e8";/);
+  assert.match(css, /--current: #7dd9e8;/);
+  assert.match(field, /color: CURRENT_FIELD_INK,/);
+  assert.match(key, /import \{ CURRENT_FIELD_INK \}/);
+  assert.doesNotMatch(key, /#7dd9e8/);
+  assert.doesNotMatch(css, /color: #7dd9e8/);
+
+  /* Measured values keep the mono face inside a sentence, and the key states
+     the fix rate from the engine constant rather than typing a 4. */
+  assert.match(key, /\{FIX_HZ\} Hz/);
+  assert.match(key, /race\.course\.zoneRadius/);
+  assert.match(keyCss, /\.figure \{[^}]*--font-martian/s);
+
+  /* Display text carries no periods, here as everywhere else on the page. */
+  for (const line of key.match(/<dd className=\{key\.meaning\}>([\s\S]*?)<\/dd>/g) ?? []) {
+    assert.ok(!/\.\s*<\/dd>/.test(line), `a key meaning ends in a period: ${line.slice(0, 60)}`);
+  }
+});
