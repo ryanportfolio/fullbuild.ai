@@ -145,10 +145,15 @@ export function TruthInspector({
       setText(currentToward.current, velocityToward(velocityPose, "currentSet"));
       setText(groundSpeed.current, velocitySpeed(velocityPose, "sog"));
       setText(groundToward.current, velocityToward(velocityPose, "cog"));
-      velocityBlock.current?.setAttribute(
-        "data-provenance",
-        velocityPose?.telemetryProvenance === "recorded-fix" ? "measured" : "reconstructed",
-      );
+      /* Compared first: the value flips at fix cadence, not frame cadence, and
+       * [data-provenance] is a styled attribute, so a repeated setAttribute is
+       * a real style invalidation sixty times a second. */
+      const provenance =
+        velocityPose?.telemetryProvenance === "recorded-fix" ? "measured" : "reconstructed";
+      const block = velocityBlock.current;
+      if (block !== null && block.getAttribute("data-provenance") !== provenance) {
+        block.setAttribute("data-provenance", provenance);
+      }
     });
   }, [race]);
 

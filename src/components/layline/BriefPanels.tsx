@@ -56,8 +56,19 @@ export function signed(value: number, digits: number): string {
   return value >= 0 && !text.startsWith("-") ? `+${text}` : text;
 }
 
-export function setText(node: { textContent: string | null } | null, text: string): void {
-  if (node !== null && node.textContent !== text) node.textContent = text;
+/* In-place text-node mutation, same body as the HUD's setText in hud/live.ts
+ * and for the same reason: `textContent =` is a structural remove-and-insert,
+ * and the route's root-anchored :has() scrollbar gate makes every insertion a
+ * document-wide restyle. CharacterData.data is non-structural. */
+export function setText(node: Node | null, text: string): void {
+  if (node === null) return;
+  const first = node.firstChild;
+  if (first !== null && first === node.lastChild && first.nodeType === 3) {
+    const data = first as CharacterData;
+    if (data.data !== text) data.data = text;
+    return;
+  }
+  if (node.textContent !== text) node.textContent = text;
 }
 
 function setAttr(node: Element | null, name: string, value: string): void {

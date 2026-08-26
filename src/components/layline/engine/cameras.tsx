@@ -106,8 +106,19 @@ function write(node: Element | null, name: string, value: string): void {
   if (node !== null && node.getAttribute(name) !== value) node.setAttribute(name, value);
 }
 
+/* And a changed reading mutates the text node it already has: `textContent =`
+ * removes and re-inserts the node, which the route's root-anchored :has()
+ * scrollbar gate answers with a document-wide restyle. Same body as the HUD's
+ * setText in hud/live.ts. */
 function print(node: HTMLElement | null, value: string): void {
-  if (node !== null && node.textContent !== value) node.textContent = value;
+  if (node === null) return;
+  const first = node.firstChild;
+  if (first !== null && first === node.lastChild && first.nodeType === 3) {
+    const data = first as CharacterData;
+    if (data.data !== value) data.data = value;
+    return;
+  }
+  if (node.textContent !== value) node.textContent = value;
 }
 
 function place(node: SVGGElement | null, frame: Frame, pose: Pose): void {
@@ -368,7 +379,7 @@ export function CameraTwo() {
           `M0 0H${fmt1(reach)}M${fmt1(reach)} 0L${fmt1(reach - 9)} -4L${fmt1(reach - 9)} 4Z`,
         );
       }
-      if (cogRef.current !== null) cogRef.current.textContent = pose.cog === null ? "-" : fmt1(pose.cog);
+      print(cogRef.current, pose.cog === null ? "-" : fmt1(pose.cog));
     });
   }, [clock, race, bench, frame]);
 

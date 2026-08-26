@@ -92,9 +92,25 @@ export function onLive(race: RaceData, listener: (live: LiveSample) => void): ()
   return useReplay.subscribe(() => listener(sampleLive(race)));
 }
 
-/* Text goes in through here so an unchanged reading never touches the DOM. */
-export function setText(node: { textContent: string | null } | null, text: string): void {
-  if (node !== null && node.textContent !== text) node.textContent = text;
+/* Text goes in through here so an unchanged reading never touches the DOM, and
+ * a changed one mutates the text node it already has rather than replacing it.
+ * `textContent =` is a structural edit: the old text node leaves the tree and a
+ * new one is inserted, and this route carries a root-anchored :has() (the
+ * scrollbar gate on <html> in scrollbar.css), which Blink re-evaluates on every
+ * insertion by restyling from the root. Measured on the Evidence workspace,
+ * whose inspector changes the most readings per frame: ~4 insertions per frame
+ * put a 459-element restyle on every frame, ~2.8 ms, and camera drags stacked
+ * on top of that were the owner's visible drops. Writing CharacterData.data is
+ * a non-structural mutation, so the :has() never re-enters it. */
+export function setText(node: Node | null, text: string): void {
+  if (node === null) return;
+  const first = node.firstChild;
+  if (first !== null && first === node.lastChild && first.nodeType === 3) {
+    const data = first as CharacterData;
+    if (data.data !== text) data.data = text;
+    return;
+  }
+  if (node.textContent !== text) node.textContent = text;
 }
 
 /**
