@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { briefFacts, type BriefFacts } from "@/lib/layline/brief";
 import type { RaceData } from "@/lib/layline/types";
-import { BriefPanels } from "./BriefPanels";
+import { BriefPanels, setText, signed } from "./BriefPanels";
 import { BriefPerformance } from "./BriefPerformance";
 import styles from "./bootSea.module.css";
 import { AUTOPLAY_FROM, OPEN_AT, useReplay } from "./store";
@@ -70,6 +70,7 @@ export function RaceBrief({
   const root = useRef<HTMLDivElement>(null);
   const title = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
+  const gunIn = useRef<HTMLSpanElement>(null);
 
   /* The race name is capped at two lines: measured, then stepped down a pixel
    * at a time until it fits. Container units alone cannot do it, because what
@@ -109,6 +110,25 @@ export function RaceBrief({
   useEffect(() => {
     button.current?.focus({ preventScroll: true });
   }, []);
+
+  /* The countdown on the header rule, written straight onto the element off
+   * the replay clock, the same way the views write their readings and the
+   * button writes its band. It moved up here from the fleet plate's foot, so
+   * the shell owns it now: it must keep counting while the reader is on the
+   * Performance tab and the fleet plate is unmounted. Reduced motion holds the
+   * top of the prestart, matching the readings the views hold. */
+  useEffect(() => {
+    const write = (t: number): void =>
+      setText(gunIn.current, `gun in ${Math.max(0, -t).toFixed(1)} s`);
+    if (reduced) {
+      write(race.tMin);
+      return;
+    }
+    write(useReplay.getState().t);
+    return useReplay.subscribe((state) => {
+      if (!state.briefDone) write(state.t);
+    });
+  }, [race, reduced]);
 
   /**
    * The prestart, run on the replay's own clock.
@@ -261,6 +281,18 @@ export function RaceBrief({
               Performance
             </button>
           </div>
+          {/* The start facts, stated once for both views on the rule that
+              already carries the race's own meta line. The countdown span is
+              written by the shell's clock subscription above. */}
+          <p className={styles.headFacts}>
+            <span ref={gunIn}>{`gun in ${Math.max(0, -race.tMin).toFixed(1)} s`}</span>
+            <span>
+              {facts.first === null
+                ? "no boat crossed"
+                : `${facts.first.sail} ${signed(facts.first.t, 2)} s first cross`}
+            </span>
+            <span>{`line ${Math.round(facts.lineLength)} m`}</span>
+          </p>
         </div>
       </header>
 

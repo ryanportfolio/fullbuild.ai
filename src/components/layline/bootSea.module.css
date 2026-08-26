@@ -275,6 +275,22 @@
   color: var(--brief-head-dim);
 }
 
+/* The start facts, on the header rule rather than in the fleet plate's foot:
+   the rule had the spare width and the plate keeps its height for rows. Mono,
+   because all three are measured. */
+.headFacts {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  color: var(--brief-head-dim);
+  font-family: var(--brief-mono);
+  font-size: 10px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
 /* The console's transport already carries this control: a segmented pair, the
    selected one filled at 14% of the ink it is set in. Repeated here in the
    header's own two inks, because the switch sits on the sky rather than on a
@@ -443,22 +459,6 @@
   width: 64px;
 }
 
-.fleetFoot {
-  display: flex;
-  flex: none;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 4px 16px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--brief-hair);
-  color: var(--brief-dim);
-  font-family: var(--brief-mono);
-  font-size: 10px;
-  line-height: 16px;
-  white-space: nowrap;
-}
-
 /* ---- the readings ---- */
 
 .readCell {
@@ -511,9 +511,7 @@
   padding: 1.5cqw 1.6cqw;
 }
 
-/* Six rows on their own plate, ruled, rather than six lines under a drawing.
-   Nothing is stretching above them, so the foot sits under the last boat
-   instead of at the bottom of a plate taller than its rows. */
+/* Six rows on their own plate, ruled, rather than six lines under a drawing. */
 [data-brief-view="panels"] .fleetRow {
   padding: 0.78cqw 0;
   border-bottom: 1px solid var(--brief-hair);
@@ -532,13 +530,9 @@
   text-align: right;
 }
 
-[data-brief-view="panels"] .fleetFoot {
-  margin-top: auto;
-}
-
-/* The fleet plate never clips its own gun line. A short window takes the row
+/* The fleet plate never clips its own rows. A short window takes the row
    padding down first; a window shorter still lets the plate scroll in the
-   layer's own bar instead of cutting the foot off mid-plate. */
+   layer's own bar instead of cutting a boat off mid-plate. */
 [data-brief-view="panels"] .panelMain .panel:first-child {
   overflow-y: auto;
 }
@@ -564,12 +558,6 @@
   [data-brief-view="panels"] .panel {
     padding-top: 1cqw;
     padding-bottom: 1cqw;
-  }
-
-  /* margin-top stays auto from the panels rule above, so the gun line keeps
-     riding the plate's foot when there is room to spare. */
-  [data-brief-view="panels"] .fleetFoot {
-    padding-top: 4px;
   }
 }
 
@@ -1115,10 +1103,6 @@
 
   [data-brief-view="panels"] .fleetRow {
     padding: 7px 0;
-  }
-
-  [data-brief-view="panels"] .fleetFoot {
-    margin-top: 8px;
   }
 
   .twsRow {

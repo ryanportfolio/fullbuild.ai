@@ -122,6 +122,10 @@ export interface Livery {
 /* Hull family per nation, trim second. Two hulls in this fleet cannot carry a
  * white stripe: the white boat and the black one both take the red. */
 const COCKPIT = "#252c33";
+/* The footwell floor, a step lighter than its walls. A recess drawn in one
+ * value has no floor in it from above: the near black sat within a few percent
+ * of the shaded sea and the well read as a hole through the hull. */
+const SOLE = "#39424c";
 /* Blue enough to stay blue. The netting is the largest flat panel on the boat
  * in a wide, so whatever it returns is what a reviewer reads the rack as. */
 const TRAMP = "#1c242d";
@@ -572,6 +576,7 @@ export function matteGeometry(livery: Livery): BufferGeometry {
   const s = shell();
   const tramp = new Color(livery.tramp);
   const cockpit = new Color(livery.cockpit);
+  const sole = new Color(SOLE);
   const panel = new Color(livery.panel);
 
   /* Deck in three surfaces rather than one sheet across the beam: side decks
@@ -637,7 +642,7 @@ export function matteGeometry(livery: Livery): BufferGeometry {
     const open = wellAt(st);
     for (let k = 0; k <= SOLE_SPAN; k++) {
       const across = WELL_HALF * open * ((k / SOLE_SPAN) * 2 - 1);
-      put(s, across * half, y + camber(across) - WELL_DROP * open, z, cockpit);
+      put(s, across * half, y + camber(across) - WELL_DROP * open, z, sole);
     }
   }
   for (let j = 0; j < STATIONS - 1; j++) {
