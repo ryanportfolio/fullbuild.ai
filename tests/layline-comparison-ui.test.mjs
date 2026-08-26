@@ -307,7 +307,9 @@ test("invalid, empty, zero, prestart, finished and missing cases expose honest w
   assert.match(comparisonViewModel(race, finished).witness, /prestart or finished/);
   assert.equal(missing.status, "missing-boundary-data");
   assert.match(comparisonViewModel(missingRace, missing).witness, /boundary progress telemetry is missing/);
-  assert.match(comparisonViewModel(race, prestart).equation, /unavailable/);
+  /* The equation is terms now, not a sentence: unavailable is null and the
+     panel draws nothing rather than an apology line. */
+  assert.equal(comparisonViewModel(race, prestart).equation, null);
   assert.match(comparisonViewModel(race, zero).maneuverCostWitness, /no counterfactual path/);
 });
 

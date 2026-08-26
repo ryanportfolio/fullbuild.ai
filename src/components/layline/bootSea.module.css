@@ -6,8 +6,8 @@
    one place that draws them in CSS, and it draws them in the console's own
    closed palette: every stop below is a mix of the four sky and water tokens,
    placed against a profile read off the rendered canvas at the prestart. Sky
-   to the bright band at the horizon around a fifth of the way down, then water
-   falling away to deep.
+   to the bright band at the horizon, held until the header rule has cleared it,
+   then water falling away to deep.
 
    The brief is one chart and the readings that hang off it: the last ten
    seconds before the gun seen from above at true scale, then the fleet in the
@@ -36,12 +36,25 @@
      bar and the docks share this level and come later in the DOM, so they stay
      above it. */
   z-index: 3;
+  /* How far down the bright horizon band holds before the water starts. It was
+     a percentage of height (20 to 26%), and the header rule is placed by width:
+     at 1600x950 the meta line landed at 27%, which is already the first water
+     mix, and the header's dark ink measured 2.85:1 there against a sampled
+     composite of 66,89,106. Against the horizon token itself the same ink reads
+     8.4:1. So the band is stated in the same axis the header is placed in, and
+     it clears the rule at every width: the header's bottom edge runs about
+     0.185 of the box, and 21vw sits above that from a handset to 1600 while the
+     clamp keeps a tall thin window from washing out and a short wide one from
+     losing its water. */
+  --brief-sky-hold: clamp(200px, 21vw, 380px);
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--sky-horizon) 76%, var(--sky-zenith)) 0%,
-    var(--sky-horizon) 20%,
-    color-mix(in srgb, var(--sky-horizon) 55%, var(--water-mid)) 26%,
-    color-mix(in srgb, var(--sky-horizon) 40%, var(--water-mid)) 38%,
+    var(--sky-horizon) var(--brief-sky-hold),
+    color-mix(in srgb, var(--sky-horizon) 55%, var(--water-mid))
+      calc(var(--brief-sky-hold) + 6%),
+    color-mix(in srgb, var(--sky-horizon) 40%, var(--water-mid))
+      calc(var(--brief-sky-hold) + 18%),
     color-mix(in srgb, var(--water-mid) 78%, var(--water-deep)) 62%,
     color-mix(in srgb, var(--water-mid) 60%, var(--water-deep)) 100%
   );
@@ -97,11 +110,12 @@
      measures the token's WCAG luminance after hydration and writes the white
      branch over these two if the sky came out dark. */
   --brief-head-ink: color-mix(in srgb, var(--water-deep) 88%, var(--sky-horizon));
-  /* Stated, never an opacity, for the same reason as --brief-dim. 88 and not
-     the 78 this started at: the meta line is 10px, so it owes 4.5:1 against
-     the sky it sits on, and 78 measured 4.44:1 at 1440 and 4.36:1 at 606,
-     sampled off a screenshot. At 88 it reads 5.76:1 and 4.95:1. */
-  --brief-head-dim: color-mix(in srgb, var(--brief-head-ink) 88%, var(--sky-horizon));
+  /* There is no dimmer header tier any more. Every text role on this rule is
+     11px or smaller and all of it is fact, so all of it takes the full head
+     ink. The tier this replaced was a second colour-mix at 88% of the ink,
+     which measured 5.76:1 at 1440 and 4.95:1 at 606: over the 4.5 that small
+     text owes, and still unreadable to the owner on a bright sky. Weight and
+     size carry the hierarchy instead. */
   --brief-head-line: color-mix(in srgb, var(--water-deep) 30%, transparent);
 
   /* Nothing is pinned over the brief at this width, so the footer sits on the
@@ -236,11 +250,10 @@
 }
 
 /* The label size, and there is one of it: 10px Archivo on a 16px box with the
-   console's own 0.14em of dock tracking, uppercase. Every label on the layer
-   takes this rule rather than a size of its own, which is what holds the whole
-   layer to three sizes: 22 for a reading, 10 for a label, 9 inside the
-   drawing. */
-.raceMeta,
+   console's own 0.14em of dock tracking, uppercase. Every label that sits on a
+   plate takes this rule rather than a size of its own, which is what holds the
+   whole layer to three sizes: 22 for a reading, 10 for a label, 9 inside the
+   drawing. The header rule is the one exception and says why at .raceMeta. */
 .panelLabel,
 .readLabel,
 .viewBtn,
@@ -263,16 +276,27 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1cqw 2cqw;
+  gap: 1cqw 1.5cqw;
 }
 
 /* Given the row's spare width rather than its own intrinsic one: it is the
    longest thing in the header and the only part of it that may wrap, and left
    at flex: none it ran under the switch and off the layer at handset widths. */
+/* A size and a tracking of its own, off the plate label tier. This line sits on
+   the sky rather than on a 0.86 plate, and at 10px with 0.14em of tracking the
+   owner could not read it there. 11px at 0.1em, on the full head ink. */
 .raceMeta {
   flex: 1 1 auto;
   min-width: 0;
-  color: var(--brief-head-dim);
+  color: var(--brief-head-ink);
+  font-family: var(--brief-sans);
+  font-size: 11px;
+  font-weight: 600;
+  /* 0.08em rather than the label tier's 0.14: the extra pixel of size has to
+     come out of the tracking or the rule wraps to two lines at 1280. */
+  letter-spacing: 0.08em;
+  line-height: 16px;
+  text-transform: uppercase;
 }
 
 /* The start facts, on the header rule rather than in the fleet plate's foot:
@@ -282,11 +306,12 @@
   display: flex;
   flex: none;
   flex-wrap: wrap;
-  gap: 4px 16px;
+  gap: 4px 12px;
   margin: 0;
-  color: var(--brief-head-dim);
+  color: var(--brief-head-ink);
   font-family: var(--brief-mono);
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 500;
   line-height: 16px;
   white-space: nowrap;
 }
@@ -305,7 +330,7 @@
   padding: 5px 10px;
   border: 0;
   background: transparent;
-  color: var(--brief-head-dim);
+  color: var(--brief-head-ink);
   cursor: var(--house-cursor);
   transition: background 160ms var(--ease), color 160ms var(--ease);
 }
@@ -1067,7 +1092,7 @@
   }
 
   .raceMeta {
-    font-size: 9px;
+    font-size: 10px;
   }
 
   /* Stacked, each block is as tall as what is in it and the column scrolls.

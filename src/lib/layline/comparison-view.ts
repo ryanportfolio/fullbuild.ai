@@ -12,6 +12,20 @@ export interface ComparisonMetricView {
   unit: string;
 }
 
+export interface ComparisonEquationTerm {
+  id: "straight" | "maneuver" | "residual";
+  label: string;
+  value: string;
+}
+
+/** The ground-progress equation as its terms, so the panel can rule them into
+ *  rows instead of setting one mono sentence that wraps mid-value. */
+export interface ComparisonEquationView {
+  totalLabel: string;
+  total: string;
+  terms: ComparisonEquationTerm[];
+}
+
 export interface ComparisonViewModel {
   primaryLabel: string;
   referenceLabel: string;
@@ -21,7 +35,7 @@ export interface ComparisonViewModel {
   status: RangeComparison["status"];
   witness: string;
   metrics: ComparisonMetricView[];
-  equation: string;
+  equation: ComparisonEquationView | null;
   componentEquation: string;
   componentProvenance: string;
   maneuverObservations: string[];
@@ -104,16 +118,40 @@ function coverageWitness(result: RangeComparison): string {
   return `${result.coverage.coverageSeconds.toFixed(2)} s shared ground-referenced racing coverage${excludedText.length > 0 ? `; excluded ${excludedText.join(", ")}` : ""}.`;
 }
 
-function equationOf(result: RangeComparison): string {
+/* Null rather than an apology sentence when a term is missing: the panel draws
+ * the block or it draws nothing. Terms rather than prose because the sentence
+ * this replaced ran past the panel's column and broke mid-value, leaving a
+ * bare "m" on a line of its own. */
+function equationOf(result: RangeComparison): ComparisonEquationView | null {
   if (
     !finiteNumber(result.progressGainedMeters) ||
     !finiteNumber(result.straightDeltaMeters) ||
     !finiteNumber(result.maneuverWindowDeltaMeters) ||
     !finiteNumber(result.residualMeters)
   ) {
-    return "Ground-progress equation unavailable for this range.";
+    return null;
   }
-  return `${signedMeters(result.progressGainedMeters)} m gained = ${signedMeters(result.straightDeltaMeters)} m straight + ${signedMeters(result.maneuverWindowDeltaMeters)} m during detected maneuver windows + ${signedMeters(result.residualMeters)} m residual.`;
+  return {
+    totalLabel: "Gained",
+    total: `${signedMeters(result.progressGainedMeters)} m`,
+    terms: [
+      {
+        id: "straight",
+        label: "Straight sailing",
+        value: `${signedMeters(result.straightDeltaMeters)} m`,
+      },
+      {
+        id: "maneuver",
+        label: "Detected maneuver windows",
+        value: `${signedMeters(result.maneuverWindowDeltaMeters)} m`,
+      },
+      {
+        id: "residual",
+        label: "Residual",
+        value: `${signedMeters(result.residualMeters)} m`,
+      },
+    ],
+  };
 }
 
 function componentEquationOf(result: RangeComparison): string {

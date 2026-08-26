@@ -1,5 +1,6 @@
 "use client";
 
+import clsx from "clsx";
 import styles from "@/app/prototype/layline/layline.module.css";
 import { comparisonRangeEvidence } from "@/lib/layline/analysis-workspace-ui";
 import type { RangeComparison } from "@/lib/layline/comparison";
@@ -38,9 +39,6 @@ export function ComparisonPanel({
   const supportMetrics = view.metrics.filter(
     (metric) => metric.id !== "gain" && !metricUnavailable(metric.value),
   );
-  const equationAvailable =
-    comparison.progressGainedMeters !== null &&
-    Number.isFinite(comparison.progressGainedMeters);
 
   return (
     <section
@@ -53,9 +51,21 @@ export function ComparisonPanel({
           <h2 id="range-comparison-heading" className={styles.comparisonTitle}>
             Ground-reference comparison
           </h2>
+          {/* Whose numbers these are, read as a boat rather than as a sentence:
+              the standings chip in the boat's own hue, then the sail. The line
+              that told the reader they could pick another primary is gone; the
+              standings and the water are where that happens and both already
+              say so. */}
           <p className={styles.comparisonPrimary}>
-            Primary {primary?.sail ?? comparison.primaryBoatId}. Select another primary in
-            standings or on the water.
+            <span className={styles.comparisonPrimaryLabel}>Primary</span>
+            {primary === undefined ? null : (
+              <span
+                className={clsx(styles.standingChip, primary.dark === true && styles.chipOutlined)}
+                style={{ background: primary.hue }}
+                aria-hidden="true"
+              />
+            )}
+            <strong>{primary?.sail ?? comparison.primaryBoatId}</strong>
           </p>
         </div>
         <label className={styles.referenceField}>
@@ -158,9 +168,20 @@ export function ComparisonPanel({
         <p className={styles.comparisonWitness} role="status">
           {view.witness}
         </p>
-        {equationAvailable ? (
-          <p className={styles.comparisonEquation}>{view.equation}</p>
-        ) : null}
+        {view.equation === null ? null : (
+          <dl className={styles.comparisonEquation} aria-label="Ground-progress attribution">
+            {view.equation.terms.map((term) => (
+              <div key={term.id} className={styles.comparisonTerm} data-term={term.id}>
+                <dt>{term.label}</dt>
+                <dd>{term.value}</dd>
+              </div>
+            ))}
+            <div className={styles.comparisonTermSum} data-term="gained">
+              <dt>{view.equation.totalLabel}</dt>
+              <dd>{view.equation.total}</dd>
+            </div>
+          </dl>
+        )}
         <details className={styles.comparisonObservations}>
           <summary>Method and reference cohort</summary>
           <p>{view.referenceLabel}</p>

@@ -611,7 +611,7 @@ test("attribution residual overflow becomes null and changes the comparison witn
       assert.equal(comparison.residualMeters, null);
       assert.equal(comparison.status, "invalid-arithmetic");
       assert.match(view.witness, /ground-track arithmetic is invalid/);
-      assert.match(view.equation, /unavailable/);
+      assert.equal(view.equation, null);
       assertCoverageClosure(comparison);
     }
   }
