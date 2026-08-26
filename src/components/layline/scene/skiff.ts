@@ -688,6 +688,39 @@ export function matteGeometry(livery: Livery): BufferGeometry {
         else quad(s, a, a + 1, b + 1, b);
       }
     }
+    /* The same sheet wound the other way, so the tramp is there from below:
+     * a heeled boat shows its windward rack's underside to a low leeward
+     * camera, and a single-sided sheet vanished from that view. Its own
+     * vertex copies, not the grid above: finish() averages normals over
+     * shared vertices, and a vertex on both faces would sum to zero. The
+     * copies are coplanar on purpose; the material culls back faces, so
+     * exactly one of the pair draws from any camera and they cannot fight. */
+    const under = s.pos.length / 3;
+    for (let j = 0; j <= RACK_STEPS; j++) {
+      const st = RACK_FROM + (RACK_TO - RACK_FROM) * (j / RACK_STEPS);
+      const z = stationZ(st);
+      const y = deckY(st);
+      const inner = curveAt(SHEER_HALF, st);
+      const outer = SKIFF.rack - 0.06;
+      for (let c = 0; c <= RACK_COLS; c++) {
+        const w = c / RACK_COLS;
+        put(
+          s,
+          side * (inner + (outer - inner) * w),
+          y - 0.005 + 0.011 * w - 0.035 * Math.sin(Math.PI * w),
+          z,
+          tramp,
+        );
+      }
+    }
+    for (let j = 0; j < RACK_STEPS; j++) {
+      for (let c = 0; c < RACK_COLS; c++) {
+        const a = under + j * (RACK_COLS + 1) + c;
+        const b = a + RACK_COLS + 1;
+        if (side > 0) quad(s, a, a + 1, b + 1, b);
+        else quad(s, a, b, b + 1, a + 1);
+      }
+    }
   }
   return finish(s);
 }

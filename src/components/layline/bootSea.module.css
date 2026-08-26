@@ -585,6 +585,39 @@
     padding: 0.25cqw 0;
   }
 
+  /* Short AND narrow, the 1024x768 class of window: the container is small
+     enough that the cqw sizes above stop paying for themselves, and the fleet
+     plate came up 43px short of its six rows. The title gives back the bulk:
+     8cqw still fills the width edge to edge at these sizes, and a name that
+     fits one line at 9.4 fits at 8. */
+  @media (max-width: 1120px) {
+    .raceName {
+      font-size: calc(7.6 * 1cqw);
+    }
+
+    .brief {
+      gap: 0.6cqw;
+      padding-top: 1.2cqw;
+    }
+
+    .briefHead {
+      padding-bottom: 1cqw;
+    }
+
+    .briefFoot {
+      --go-pad: 0.8cqw;
+    }
+
+    [data-brief-view="panels"] .panel {
+      padding-top: 0.8cqw;
+      padding-bottom: 0.8cqw;
+    }
+
+    [data-brief-view="panels"] .fleetRow {
+      padding: 0.15cqw 0;
+    }
+  }
+
   [data-brief-view="panels"] .panel {
     padding-top: 1cqw;
     padding-bottom: 1cqw;

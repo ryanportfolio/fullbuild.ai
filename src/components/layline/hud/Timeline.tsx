@@ -332,8 +332,36 @@ export function Timeline({
     return styles.bandMid;
   };
 
+  /* A band label either fits whole or leaves: half a word inside a narrow band
+   * (PRESTART clipped to PRESTA at 1280) reads as a defect, not a label. Band
+   * widths are percentages of the track, so this settles at mount and moves
+   * only with the row's own size: one ResizeObserver, reads batched before the
+   * writes, nothing at frame cadence. */
+  const rowRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const node = rowRef.current;
+    if (node === null) return;
+    const fit = () => {
+      const bands = node.querySelectorAll<HTMLElement>("[data-band]");
+      const clipped: boolean[] = [];
+      bands.forEach((band, index) => {
+        const label = band.querySelector<HTMLElement>("[data-band-label]");
+        clipped[index] = label !== null && label.scrollWidth > band.clientWidth - 2;
+      });
+      bands.forEach((band, index) => {
+        if (clipped[index]) band.setAttribute("data-clipped", "");
+        else band.removeAttribute("data-clipped");
+      });
+    };
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [race, layout]);
+
   return (
     <div
+      ref={rowRef}
       className={`${styles.timelineRow} ${laneRow("gain-loss") === undefined ? styles.timelineRowBasic : ""}`}
       data-analysis-flow="timeline"
       style={{ "--timeline-height-budget": `${layout.heightBudgetPx}px` } as TimelineStyle}
@@ -373,11 +401,12 @@ export function Timeline({
               <button
                 type="button"
                 className={`${styles.phaseBand} ${styles.bandQuiet}`}
+                data-band=""
                 style={{ left: pct(startPlacement.left), width: pct(startPlacement.width) }}
                 aria-label={`Go to start window at ${clock(Math.max(race.tMin, -10))}`}
                 onClick={() => seekEvidence(Math.max(race.tMin, -10))}
               >
-                <span className={styles.bandLabel}>Last 10 seconds</span>
+                <span className={styles.bandLabel} data-band-label="">Last 10 seconds</span>
               </button>
             )}
           </div>
@@ -571,9 +600,10 @@ export function Timeline({
                 key={phase.id}
                 className={`${styles.trackPhaseBand} ${phaseWeight(phase.id)}`}
                 data-phase={phase.id}
+                data-band=""
                 style={{ left: pct(placed.left), width: pct(placed.width) }}
               >
-                <span className={styles.trackPhaseLabel}>{phase.label}</span>
+                <span className={styles.trackPhaseLabel} data-band-label="">{phase.label}</span>
               </span>
             );
           })}

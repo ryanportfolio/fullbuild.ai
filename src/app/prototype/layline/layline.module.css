@@ -2694,25 +2694,8 @@
   width: var(--gutter-left);
 }
 
-.phaseLaneLabel {
-  grid-row: 2;
-}
-
-.eventLaneLabel {
-  grid-row: 3;
-}
-
-.maneuverLaneLabel {
-  grid-row: 4;
-}
-
-.comparisonLaneLabel {
-  grid-row: 5;
-}
-
-.replayLaneLabel {
-  grid-row: 6;
-}
+/* The per-lane label classes that used to sit here left with the fixed lane
+   rows: Timeline places its labels by inline gridRow off the layout model. */
 
 .timeClockNow,
 .timeClockTotal {
@@ -2783,6 +2766,14 @@
   line-height: 10px;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+/* A label that does not fit its band whole leaves whole: Timeline measures
+   each band at mount and resize and stamps data-clipped where the label
+   overflows. Visibility, not display, so hiding one never moves another. */
+.trackPhaseBand[data-clipped] .trackPhaseLabel,
+.phaseBand[data-clipped] .bandLabel {
+  visibility: hidden;
 }
 
 .phaseRail,
@@ -3026,7 +3017,6 @@
   pointer-events: none;
 }
 
-.timelineRowBasic .replayLaneLabel,
 .timelineRowBasic .track {
   grid-row: 5;
 }
@@ -3733,10 +3723,6 @@
     width: auto;
   }
 
-  .phaseLaneLabel {
-    grid-row: 2;
-  }
-
   .phaseRail {
     grid-row: 3;
     grid-column: 1 / -1;
@@ -3745,10 +3731,6 @@
 
   .phaseBand {
     min-width: 40px;
-  }
-
-  .eventLaneLabel {
-    grid-row: 4;
   }
 
   .eventRail {
@@ -3767,10 +3749,6 @@
     width: 40px;
     height: 40px;
     margin-left: -20px;
-  }
-
-  .maneuverLaneLabel {
-    grid-row: 6;
   }
 
   /* The same 40px floor the rate and rig cells take above. The glyph stays at
@@ -3792,10 +3770,6 @@
     --point-clearance: 52px;
   }
 
-  .comparisonLaneLabel {
-    grid-row: 8;
-  }
-
   .comparisonRail {
     grid-row: 9;
     grid-column: 1 / -1;
@@ -3805,10 +3779,6 @@
   .comparisonRangeBand {
     min-width: 40px;
     line-height: 34px;
-  }
-
-  .replayLaneLabel {
-    grid-row: 10;
   }
 
   .track {
@@ -3830,10 +3800,6 @@
     grid-column: 2;
     width: auto;
     text-align: right;
-  }
-
-  .timelineRowBasic .replayLaneLabel {
-    grid-row: 8;
   }
 
   .timelineRowBasic .track {
