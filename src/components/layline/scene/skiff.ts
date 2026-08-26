@@ -78,7 +78,12 @@ const WELL_FROM = 0.34;
 const WELL_TO = 0.9;
 const WELL_RAMP = 0.045;
 const WELL_HALF = 0.42;
-const WELL_DROP = 0.24;
+/* Shallow enough that the sole clears the sea at every sailing heel. At 0.24
+ * the floor sat ~0.15 m over the resting waterline and the Gerstner field
+ * broke through it past ~12 degrees of heel, so the well showed open water
+ * where its floor should be. 0.18 keeps +0.039 m of clearance at the 14
+ * degree hiking cap and clears every heel to 20 degrees. */
+const WELL_DROP = 0.18;
 /* Where the chine falls in the section parameter. Below it the bottom panel,
  * above it the topside, and the crease between them is the chine itself. */
 const CHINE_U = 0.55;
