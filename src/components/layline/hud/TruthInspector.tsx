@@ -206,6 +206,14 @@ export function TruthInspector({
           label and value wrapped mid-word, and the fix cards above already set
           the label-then-reading pattern this panel scans by. */}
       <div className={styles.truthCompare} role="table" aria-label="Raw and reconstructed selected boat state">
+        {/* The visual head row left with the column layout, but the cells are
+            still a semantic table: without headers a screen reader announces
+            the position and heading as bare numbers. Codex review finding. */}
+        <div className={styles.srOnly} role="row">
+          <span role="columnheader">State and source</span>
+          <span role="columnheader">X / Y position</span>
+          <span role="columnheader">Heading</span>
+        </div>
         <div className={styles.truthCompareRow} role="row" data-provenance="measured">
           <span role="cell" className={styles.truthSource}>RAW HOLD · MEASURED</span>
           <span role="cell" ref={rawPosition}>{posePosition(initial.raw)}</span>
