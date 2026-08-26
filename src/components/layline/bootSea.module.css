@@ -304,7 +304,12 @@
    because all three are measured. */
 .headFacts {
   display: flex;
-  flex: none;
+  /* Shrinkable, never stretched: at handset widths the row's max-content is
+     wider than the header, and flex: none held it there while the brief's
+     overflow: hidden clipped the last fact. Allowed to shrink, the wrap below
+     stacks the facts instead. Codex review finding. */
+  flex: 0 1 auto;
+  min-width: 0;
   flex-wrap: wrap;
   gap: 4px 12px;
   margin: 0;
