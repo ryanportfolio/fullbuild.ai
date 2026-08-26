@@ -11,6 +11,7 @@ import type {
 import type { RangeComparison } from "@/lib/layline/comparison";
 import type { LaylineInspectionSurface } from "@/lib/layline/surfaces";
 import type { RaceData } from "@/lib/layline/types";
+import { useReplay } from "../store";
 import { ComparisonPanel } from "./ComparisonPanel";
 import { StartLine } from "./StartLine";
 import { TruthInspector } from "./TruthInspector";
@@ -52,6 +53,16 @@ export function AnalysisWorkspacePanel({
       <div className={styles.analysisWorkspacePanelSurface}>
         <p className={styles.analysisWorkspacePanelNote}>{model.description}</p>
         <StartLine race={race} />
+        {/* After the gun the readings above take themselves off the panel, so
+            this is the way back: one seek to the head of the prestart. */}
+        <button
+          type="button"
+          className={styles.startSeek}
+          data-control="seek-start"
+          onClick={() => useReplay.getState().seek(race.tMin)}
+        >
+          Go to the start
+        </button>
       </div>
     );
   } else if (model.surface === "comparison") {

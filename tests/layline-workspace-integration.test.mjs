@@ -244,7 +244,10 @@ test("drawer and truth branches keep valid relationships and closed content out 
   assert.match(racesCss, /--analyst-track:\s*52px/);
   assert.doesNotMatch(racesCss, /grid-template-columns:\s*220px[^;]*340px/);
   assert.match(racesCss, /\.console\s*\{[^}]*min-width:\s*0/);
-  assert.match(consoleCss, /\.truthFixes\s*\{[^}]*repeat\(2, minmax\(0, 1fr\)\)/);
+  /* One fix card per row: side by side at the dock's 264px every reading
+     wrapped mid-value, and the full-height inspector has the rows to spend. */
+  assert.match(consoleCss, /\.truthFixes\s*\{[^}]*minmax\(0, 1fr\)/);
+  assert.doesNotMatch(consoleCss, /\.truthFixes\s*\{[^}]*repeat\(2,/);
   assert.match(consoleCss, /\.truthFix\s*\{[^}]*min-width:\s*0/);
   assert.match(consoleCss, /\.transportRow\s*\{[^}]*flex-wrap:\s*wrap/);
   assert.match(consoleCss, /\.timelineRow\s*\{[^}]*minmax\(0, 1fr\)/);

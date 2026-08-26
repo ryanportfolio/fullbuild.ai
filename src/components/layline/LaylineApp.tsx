@@ -623,7 +623,6 @@ export function LaylineApp({
               name={bootBrief.name}
               venue={bootBrief.venue}
               dateLabel={bootBrief.dateLabel}
-              live={live}
               reduced={reducedMotion}
             />
           ) : null}

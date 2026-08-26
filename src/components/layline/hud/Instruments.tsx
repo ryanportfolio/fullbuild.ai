@@ -86,7 +86,8 @@ export function Instruments({
           style={{ background: boat.hue }}
           aria-hidden="true"
         />
-        <span className={styles.instrNation}>{boat.nation}</span>
+        {/* The sail number already leads with the nation code, so the header
+            states it once. */}
         <span className={styles.instrSail} data-live="sail">
           {boat.sail}
         </span>

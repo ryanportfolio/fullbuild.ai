@@ -1128,16 +1128,14 @@ test("the sea cover briefs the race it is loading", () => {
     "the cover stopped publishing the capture hold",
   );
   assert.match(cover, /\[data-brief-still\] \.panel,\s*\[data-brief-still\] \.briefFoot \{\s*animation: none;/);
-  /* The footer's three moving parts stop too. They are the one part of this
-     layer driven by wall time rather than by the replay clock, so left easing
-     they caught two captures of the same stated time at two points of one
-     crossfade and differed by 1,510 pixels. */
-  for (const part of [".statusFill", ".statusBar", ".statusStack span"]) {
-    assert.ok(
-      cover.includes(`[data-brief-still] ${part}`),
-      `${part} kept easing under the capture hold`,
-    );
-  }
+  /* The renderer status line left the footer at the owner's direction. It was
+     the one part of this layer driven by wall time rather than by the replay
+     clock, so its whole apparatus (sentence, crossfade, hairline) must stay
+     gone rather than come back as a new capture-hold hazard. */
+  assert.ok(
+    !cover.includes(".statusFill") && !cover.includes(".statusBar") && !cover.includes(".statusStack"),
+    "the wall-time status apparatus came back to the footer",
+  );
 
   /* Hairlines stay hairlines through the stretch, which is what
      non-scaling-stroke is for and what the console's own VMG strip already
@@ -1734,11 +1732,10 @@ test("the way through is the widest thing on the footer, and it moves on the rac
   const cover = source("src/components/layline/bootSea.module.css");
   const goBtn = cover.slice(cover.indexOf(".goBtn {"), cover.indexOf(".goBtn::before"));
 
-  /* It takes the footer's spare width. The sentence beside it is a stated
-     length; everything that sentence does not need belongs to the button. */
+  /* It takes the footer's whole width: the status sentence that used to sit
+     beside it left at the owner's direction, and the way through owns the row. */
   assert.ok(goBtn.includes("flex: 1;"), "the way through stopped taking the footer's spare width");
-  const status = cover.slice(cover.indexOf(".status {\n  flex"), cover.indexOf(".statusStack {"));
-  assert.ok(!status.includes("flex: 1;"), "the status line went back to eating the footer");
+  assert.ok(!cover.includes(".status {"), "the status line came back to the footer");
 
   /* At the reading size, not the label size, so the layer still holds to three:
      22 for a reading, 10 for a label, 9 inside the drawing. */

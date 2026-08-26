@@ -58,16 +58,18 @@ function currentCaption(value: Pose | null): string {
     : "Reconstructed current from recorded fixes";
 }
 
-function velocitySummary(value: Pose | null): string {
-  if (value === null) return "WATER / CURRENT / GROUND UNAVAILABLE";
-  const ctw = value.ctw === null ? MISSING : deg(value.ctw);
-  const set = value.currentSet === null ? MISSING : deg(value.currentSet);
-  const cog = value.cog === null ? MISSING : deg(value.cog);
-  return [
-    `WATER ${value.waterX.toFixed(3)} / ${value.waterY.toFixed(3)} m/s · STW ${knots(value.stw)} kn · CTW ${ctw}° toward`,
-    `CURRENT ${value.currentX.toFixed(3)} / ${value.currentY.toFixed(3)} m/s · DRIFT ${knots(value.currentDrift)} kn · SET ${set}° toward`,
-    `GROUND ${value.groundX.toFixed(3)} / ${value.groundY.toFixed(3)} m/s · SOG ${knots(value.sog)} kn · COG ${cog}° toward`,
-  ].join(" | ");
+/* The three velocities as a scannable table rather than the joined mono wall
+ * the panel used to carry: one row per frame of reference, speed and bearing
+ * as the readings. The x/y component pairs stayed in the sampled pose but left
+ * the display; the vector triangle already draws that geometry. */
+function velocitySpeed(value: Pose | null, key: "stw" | "currentDrift" | "sog"): string {
+  return value === null ? MISSING : knots(value[key]);
+}
+
+function velocityToward(value: Pose | null, key: "ctw" | "currentSet" | "cog"): string {
+  if (value === null) return MISSING;
+  const bearing = value[key];
+  return bearing === null ? MISSING : `${deg(bearing)}°`;
 }
 
 export function TruthInspector({
@@ -103,7 +105,12 @@ export function TruthInspector({
   const reconstructedHeading = useRef<HTMLSpanElement>(null);
   const velocityBlock = useRef<HTMLDivElement>(null);
   const velocityCaption = useRef<HTMLElement>(null);
-  const velocityValues = useRef<HTMLSpanElement>(null);
+  const waterSpeed = useRef<HTMLSpanElement>(null);
+  const waterToward = useRef<HTMLSpanElement>(null);
+  const currentSpeed = useRef<HTMLSpanElement>(null);
+  const currentToward = useRef<HTMLSpanElement>(null);
+  const groundSpeed = useRef<HTMLSpanElement>(null);
+  const groundToward = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     return onLive(race, (live) => {
@@ -132,7 +139,12 @@ export function TruthInspector({
        * provenance stated on the block. */
       const velocityPose = live.mode === "raw" ? truth.raw : truth.reconstructed;
       setText(velocityCaption.current, currentCaption(velocityPose));
-      setText(velocityValues.current, velocitySummary(velocityPose));
+      setText(waterSpeed.current, velocitySpeed(velocityPose, "stw"));
+      setText(waterToward.current, velocityToward(velocityPose, "ctw"));
+      setText(currentSpeed.current, velocitySpeed(velocityPose, "currentDrift"));
+      setText(currentToward.current, velocityToward(velocityPose, "currentSet"));
+      setText(groundSpeed.current, velocitySpeed(velocityPose, "sog"));
+      setText(groundToward.current, velocityToward(velocityPose, "cog"));
       velocityBlock.current?.setAttribute(
         "data-provenance",
         velocityPose?.telemetryProvenance === "recorded-fix" ? "measured" : "reconstructed",
@@ -157,6 +169,7 @@ export function TruthInspector({
           aria-hidden="true"
         />
         <strong>{boat.sail}</strong>
+        <span className={styles.truthBoatName}>{boat.name}</span>
         <span className={styles.truthView}>{view}</span>
       </div>
 
@@ -189,19 +202,17 @@ export function TruthInspector({
         <strong ref={phase}>{phaseLabel(initial)}</strong>
       </div>
 
+      {/* Two cards rather than a three-column table: at the dock's width every
+          label and value wrapped mid-word, and the fix cards above already set
+          the label-then-reading pattern this panel scans by. */}
       <div className={styles.truthCompare} role="table" aria-label="Raw and reconstructed selected boat state">
-        <div className={styles.truthCompareHead} role="row">
-          <span role="columnheader">STATE / SOURCE</span>
-          <span role="columnheader">X / Y</span>
-          <span role="columnheader">HDG</span>
-        </div>
         <div className={styles.truthCompareRow} role="row" data-provenance="measured">
-          <span role="cell">RAW HOLD · MEASURED</span>
+          <span role="cell" className={styles.truthSource}>RAW HOLD · MEASURED</span>
           <span role="cell" ref={rawPosition}>{posePosition(initial.raw)}</span>
           <span role="cell" ref={rawHeading}>{poseHeading(initial.raw)}</span>
         </div>
         <div className={styles.truthCompareRow} role="row" data-provenance="reconstructed">
-          <span role="cell">SMOOTH · RECONSTRUCTED</span>
+          <span role="cell" className={styles.truthSource}>SMOOTH · RECONSTRUCTED</span>
           <span role="cell" ref={reconstructedPosition}>{posePosition(initial.reconstructed)}</span>
           <span role="cell" ref={reconstructedHeading}>{poseHeading(initial.reconstructed)}</span>
         </div>
@@ -217,7 +228,36 @@ export function TruthInspector({
           }
         >
           <strong ref={velocityCaption}>{currentCaption(initialVelocityPose)}</strong>
-          <span ref={velocityValues}>{velocitySummary(initialVelocityPose)}</span>
+          <div
+            className={styles.truthVelocityTable}
+            role="table"
+            aria-label="Velocity by frame of reference"
+          >
+            <div className={styles.truthVelocityHead} role="row">
+              <span role="columnheader">FRAME</span>
+              <span role="columnheader">KN</span>
+              <span role="columnheader">TOWARD</span>
+            </div>
+            <div className={styles.truthVelocityRow} role="row">
+              <span role="cell">WATER · STW</span>
+              <span role="cell" ref={waterSpeed}>{velocitySpeed(initialVelocityPose, "stw")}</span>
+              <span role="cell" ref={waterToward}>{velocityToward(initialVelocityPose, "ctw")}</span>
+            </div>
+            <div className={styles.truthVelocityRow} role="row">
+              <span role="cell">CURRENT · DRIFT</span>
+              <span role="cell" ref={currentSpeed}>
+                {velocitySpeed(initialVelocityPose, "currentDrift")}
+              </span>
+              <span role="cell" ref={currentToward}>
+                {velocityToward(initialVelocityPose, "currentSet")}
+              </span>
+            </div>
+            <div className={styles.truthVelocityRow} role="row">
+              <span role="cell">GROUND · SOG</span>
+              <span role="cell" ref={groundSpeed}>{velocitySpeed(initialVelocityPose, "sog")}</span>
+              <span role="cell" ref={groundToward}>{velocityToward(initialVelocityPose, "cog")}</span>
+            </div>
+          </div>
         </div>
       </div>
 
