@@ -127,7 +127,7 @@ export default function LaylinePage() {
             viewport tall, so without this the key is something a reader finds
             after scrolling past the thing it explains. */}
         <a className={styles.bannerKeyLink} href="#scene-key">
-          What the colours mean
+          What the colors mean
         </a>
       </div>
 
