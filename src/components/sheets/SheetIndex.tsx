@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 import gsap from 'gsap';
-import { PROJECTS } from '@/lib/projects';
+import { PROJECTS, type Project } from '@/lib/projects';
 import { useWorkingSet, isUp } from '@/lib/store';
 import { buildIcon, buildName, keystoneIcon, LETTERING, type NameGeometry } from '@/lib/letterStrokes';
 import x from './index.module.css';
@@ -23,6 +23,10 @@ import x from './index.module.css';
  * so the cover keeps one working hand at a time. Dash values are SVG
  * ATTRIBUTES in user units, never CSS px (the truncated-building bug).
  */
+/** The shipped drawing pulled out of the grid onto the register foot, beside
+    the prototypes link — half width each, so neither sits on a row alone. */
+const FOOT_ROW_ID = 'layline';
+
 export default function SheetIndex() {
   const health = useWorkingSet((s) => s.health);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -247,99 +251,111 @@ export default function SheetIndex() {
     };
   }, [geoms]);
 
+  // One stamp card. Shared by the grid and the register foot so the foot's
+  // Layline card is pixel-identical to a grid card — same lettering rig
+  // (data-idx), same probe-licensed status ink, same hover title block.
+  const renderCard = (p: Project, i: number) => {
+    const live = p.live && isUp(health, p.href);
+    const href = p.href ?? p.repo ?? '#';
+    const g = geoms[i];
+    return (
+      <a
+        className={x.card}
+        key={p.id}
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={p.title}
+        data-idx={i}
+      >
+        <span className={x.cardTop}>
+          <span className={x.no}>{p.sheet}</span>
+          {icons[i] ? (
+            <svg
+              className={x.icon}
+              viewBox={icons[i].viewBox}
+              /* inline size: .drawing's global svg{width:100%} must not
+                 inflate the mark (same trap as the lettering svg) */
+              style={{ width: '1.05rem', height: '1.05rem' }}
+              data-live={live ? 'true' : 'false'}
+              role="img"
+              aria-label={live ? 'live in production' : 'repository only'}
+              focusable="false"
+              data-status=""
+            >
+              {icons[i].ds.map((d, si) => (
+                <path key={si} d={d} data-draw-hold="" />
+              ))}
+            </svg>
+          ) : null}
+        </span>
+        <span className={x.cardDraw}>
+          <svg
+            viewBox={g.viewBox}
+            style={{ width: `${g.width}px`, maxWidth: '100%' }}
+            aria-hidden="true"
+            focusable="false"
+            data-lettering=""
+          >
+            <path className={x.ink} d={g.base.boxD} data-draw-hold="" />
+            {g.base.strokeDs.map((d, si) => (
+              <path className={x.ink} key={`s${si}`} d={d} data-draw-hold="" />
+            ))}
+            {g.base.overDs.map((d, si) => (
+              <path className={`${x.ink} ${x.over}`} key={`o${si}`} d={d} data-draw-hold="" />
+            ))}
+          </svg>
+        </span>
+        <span className={x.cardMeta}>
+          <span className={x.cardNote}>{p.note}</span>
+          <span className={x.cardStack}>{p.stack.join(' · ')}</span>
+        </span>
+      </a>
+    );
+  };
+
+  const footProject = PROJECTS.find((p) => p.id === FOOT_ROW_ID);
+
   return (
     <div className={x.index} ref={rootRef}>
       <div className={x.head}>
         <span>Sheet index</span>
       </div>
       <div className={x.grid}>
-        {PROJECTS.map((p, i) => {
-          const live = p.live && isUp(health, p.href);
-          const href = p.href ?? p.repo ?? '#';
-          const g = geoms[i];
-          return (
-            <a
-              className={x.card}
-              key={p.id}
-              href={href}
-              target="_blank"
-              rel="noreferrer"
-              aria-label={p.title}
-              data-idx={i}
-            >
-              <span className={x.cardTop}>
-                <span className={x.no}>{p.sheet}</span>
-                {icons[i] ? (
-                  <svg
-                    className={x.icon}
-                    viewBox={icons[i].viewBox}
-                    /* inline size: .drawing's global svg{width:100%} must not
-                       inflate the mark (same trap as the lettering svg) */
-                    style={{ width: '1.05rem', height: '1.05rem' }}
-                    data-live={live ? 'true' : 'false'}
-                    role="img"
-                    aria-label={live ? 'live in production' : 'repository only'}
-                    focusable="false"
-                    data-status=""
-                  >
-                    {icons[i].ds.map((d, si) => (
-                      <path key={si} d={d} data-draw-hold="" />
-                    ))}
-                  </svg>
-                ) : null}
-              </span>
-              <span className={x.cardDraw}>
-                <svg
-                  viewBox={g.viewBox}
-                  style={{ width: `${g.width}px`, maxWidth: '100%' }}
-                  aria-hidden="true"
-                  focusable="false"
-                  data-lettering=""
-                >
-                  <path className={x.ink} d={g.base.boxD} data-draw-hold="" />
-                  {g.base.strokeDs.map((d, si) => (
-                    <path className={x.ink} key={`s${si}`} d={d} data-draw-hold="" />
-                  ))}
-                  {g.base.overDs.map((d, si) => (
-                    <path className={`${x.ink} ${x.over}`} key={`o${si}`} d={d} data-draw-hold="" />
-                  ))}
-                </svg>
-              </span>
-              <span className={x.cardMeta}>
-                <span className={x.cardNote}>{p.note}</span>
-                <span className={x.cardStack}>{p.stack.join(' · ')}</span>
-              </span>
-            </a>
-          );
-        })}
+        {PROJECTS.map((p, i) => (p.id === FOOT_ROW_ID ? null : renderCard(p, i)))}
       </div>
-      {/* Not a shipped drawing — a link off the cover to the draft designs.
-          Internal nav, so no status mark; an arrow marks it as a page. Full
-          register width, and the only stamp whose hand SEARCHES as it writes
-          (the seed sweeps the whole range across its draw). */}
-      <a className={x.protoCard} href="/prototype" aria-label="Prototypes" data-idx={PROJECTS.length}>
-        <span className={x.cardTop}>
-          <span className={x.no}>P-01</span>
-          <span className={x.arrow} aria-hidden="true">→</span>
-        </span>
-        <span className={x.cardDraw}>
-          <svg
-            viewBox={proto.viewBox}
-            style={{ width: `${proto.width}px`, maxWidth: '100%' }}
-            aria-hidden="true"
-            focusable="false"
-            data-lettering=""
-          >
-            <path className={x.ink} d={proto.base.boxD} data-draw-hold="" />
-            {proto.base.strokeDs.map((d, si) => (
-              <path className={x.ink} key={`s${si}`} d={d} data-draw-hold="" />
-            ))}
-            {proto.base.overDs.map((d, si) => (
-              <path className={`${x.ink} ${x.over}`} key={`o${si}`} d={d} data-draw-hold="" />
-            ))}
-          </svg>
-        </span>
-      </a>
+      {/* Register foot — two half-width cards on one row. Left: Layline, a
+          shipped drawing kept out of the grid so it never sits on a row of
+          its own. Right: the prototypes link off the cover to the draft
+          designs. Internal nav, so no status mark; an arrow marks it as a
+          page — and the only stamp whose hand SEARCHES as it writes (the
+          seed sweeps the whole range across its draw). */}
+      <div className={x.protoRow}>
+        {footProject && renderCard(footProject, PROJECTS.indexOf(footProject))}
+        <a className={x.protoCard} href="/prototype" aria-label="Prototypes" data-idx={PROJECTS.length}>
+          <span className={x.cardTop}>
+            <span className={x.no}>P-01</span>
+            <span className={x.arrow} aria-hidden="true">→</span>
+          </span>
+          <span className={x.cardDraw}>
+            <svg
+              viewBox={proto.viewBox}
+              style={{ width: `${proto.width}px`, maxWidth: '100%' }}
+              aria-hidden="true"
+              focusable="false"
+              data-lettering=""
+            >
+              <path className={x.ink} d={proto.base.boxD} data-draw-hold="" />
+              {proto.base.strokeDs.map((d, si) => (
+                <path className={x.ink} key={`s${si}`} d={d} data-draw-hold="" />
+              ))}
+              {proto.base.overDs.map((d, si) => (
+                <path className={`${x.ink} ${x.over}`} key={`o${si}`} d={d} data-draw-hold="" />
+              ))}
+            </svg>
+          </span>
+        </a>
+      </div>
       <p className={x.legend}>
         <svg
           className={x.legendMark}

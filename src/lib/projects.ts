@@ -330,10 +330,31 @@ export const PROJECTS: Project[] = [
     note: 'Claude Code hook that clamps oversized Read results into line-numbered outlines: an 84KB source file lands as about 2KB. RTK kills tokens per command, STK per session.',
   },
   {
+    id: 'layline',
+    sheet: 'S-04.15',
+    title: 'Layline',
+    href: 'https://layline.site/',
+    repo: 'https://github.com/ryanportfolio/layline',
+    live: true,
+    role: 'solo build · seeded sim, 3D replay, debrief analyst',
+    year: "'26",
+    stack: ['Next.js', 'React Three Fiber', 'GLSL', 'Zustand'],
+    langs: ['TypeScript', 'GLSL'],
+    metrics: [
+      {
+        label: 'races in library',
+        value: '3',
+        source: 'src/lib/layline/races.ts: RACES registry — long-beach, kestrel-sound, sable-reach',
+      },
+      { label: 'commits', value: '51', source: 'git rev-list --count main, ryanportfolio/layline, 2026-08-26' },
+    ],
+    note: 'Six-boat sailing race replayed in the browser: one seeded sim runs on server and client, 4 GPS samples a second rebuilt into continuous 3D motion, a debrief analyst reading the same race data.',
+  },
+  {
     // The self-referential anchor, drawn last: this drawing set is itself a
     // shipped artifact. Red is earned. Its REV field is the real deployed commit.
     id: 'fullbuild-ai',
-    sheet: 'S-04.15',
+    sheet: 'S-04.16',
     title: 'fullbuild.ai',
     href: 'https://fullbuild.ai',
     repo: null,
