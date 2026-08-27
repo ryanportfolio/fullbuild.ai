@@ -62,13 +62,59 @@ test("Compare compacts full-label turn targets below its narrowest adjacent cent
 });
 
 test("event and maneuver controls carry described evidence without a hover status line", () => {
+  /* Not the native title attribute: it waits about a second before it appears,
+     which is the complaint that put a tooltip on the marks in the first place. */
   assert.doesNotMatch(timeline, /\btitle=/);
   assert.match(timeline, /aria-describedby=\{descriptionId\}/);
   assert.match(timeline, /Source \$\{/);
   /* The visible hover-disclosure strip is gone by owner direction; the
-     description spans stay wired through aria-describedby. */
+     description spans stay wired through aria-describedby. A tooltip on the
+     mark itself is not that strip: it is the same description, shown where the
+     pointer already is, instead of in a status line elsewhere on the page. */
   assert.doesNotMatch(timeline, /data-evidence-disclosure/);
   assert.doesNotMatch(laylineCss, /\.evidenceDisclosure/);
+});
+
+test("a race-event mark says what the event is on hover and on keyboard focus", () => {
+  /* One span, not two: the tooltip is the aria-describedby target, so what a
+     pointer reads and what a screen reader reads cannot drift apart. */
+  assert.match(
+    timeline,
+    /<span id=\{descriptionId\} role="tooltip" className=\{styles\.pointTip\}>/,
+  );
+  assert.equal((timeline.match(/styles\.pointTip/g) ?? []).length, 1);
+  assert.match(laylineCss, /\.pointMark:hover \.pointTip,\s*\r?\n\.pointMark:focus-visible \.pointTip \{/);
+  const tip = ownRule(laylineCss, ".pointTip");
+  /* Hidden by opacity alone. visibility and display would take the span out of
+     the accessibility tree and the description with it. */
+  assert.match(tip, /opacity:\s*0/);
+  assert.doesNotMatch(tip, /visibility:\s*hidden|display:\s*none/);
+  /* It must not eat the hover that summoned it, which would flicker the
+     tooltip against its own mark. */
+  assert.match(tip, /pointer-events:\s*none/);
+  /* Immediate: a fade short enough to read as instant, and none at all for a
+     reader who asked for less motion. */
+  const fade = Number(tip.match(/transition:\s*opacity\s+(\d+)ms/)?.[1]);
+  assert.ok(fade <= 80, `tooltip fade is ${fade}ms, which reads as a delay`);
+  assert.match(
+    laylineCss,
+    /@media \(prefers-reduced-motion: reduce\) \{\s*\r?\n\s*\.pointTip \{\s*\r?\n\s*transition: none;/,
+  );
+  /* A mark can sit hard against either end of the rail, and a tooltip centred
+     on it then runs past the viewport and loses the end of its own text with
+     nothing to scroll. Measured at 390px before the clamp: 37px past the right
+     edge. CSS cannot do this on its own, because the offset is the tooltip's
+     width against the viewport and a percentage inside the mark resolves
+     against a 24px box. Measured on arrival, never per frame. */
+  assert.match(tip, /transform:\s*translateX\(calc\(-50% \+ var\(--tip-shift, 0px\)\)\)/);
+  assert.match(timeline, /onPointerEnter=\{clampTipToViewport\}/);
+  assert.match(timeline, /onFocus=\{clampTipToViewport\}/);
+  assert.match(timeline, /const past = box\.right - \(document\.documentElement\.clientWidth - TIP_MARGIN\)/);
+  assert.match(timeline, /const short = TIP_MARGIN - box\.left/);
+  /* The reset before the measure: without it a second hover measures a box
+     that is already shifted and walks the tooltip off the other edge. */
+  assert.match(timeline, /tip\.style\.setProperty\("--tip-shift", "0px"\);\s*\r?\n\s*const box = tip\.getBoundingClientRect\(\)/);
+  assert.doesNotMatch(timeline, /useFrame|requestAnimationFrame[\s\S]{0,80}--tip-shift/);
 });
 
 test("the race-events lane is collapsible and starts closed", () => {
