@@ -111,16 +111,50 @@ test("one live store session drives tabs, panel, range, lanes and layers", () =>
 
 test("manual layer controls expose default/on/off and scoped reset", () => {
   const panel = source("src/components/layline/hud/AnalysisWorkspacePanel.tsx");
+  const css = source("src/app/prototype/layline/layline.module.css");
   assert.match(panel, /<details className=\{styles\.analysisLayerDisclosure\}>/);
   assert.match(panel, /<summary>Analysis layers<\/summary>/);
   assert.match(panel, /<fieldset/);
-  assert.match(panel, /<select/);
-  assert.match(panel, /<option value="default">/);
-  assert.match(panel, /<option value="on">On<\/option>/);
-  assert.match(panel, /<option value="off">Off<\/option>/);
+  /* All three states on the panel at once, not behind a select: the state a
+     layer is in is legible without opening anything, and changing it costs one
+     click rather than two. */
+  assert.doesNotMatch(panel, /<select|<option/);
+  assert.match(panel, /\{ value: "on", label: "On" \}/);
+  assert.match(panel, /\{ value: "off", label: "Off" \}/);
+  /* The preset's own call has no segment. It is not a third thing a layer can
+     be doing, it is where the current state came from, so the segments read
+     the resolved visibility and the row marks itself when an override is what
+     put it there. Reset range and layers is the way back to the preset. */
+  assert.doesNotMatch(panel, /label: "Default"/);
+  assert.match(panel, /checked=\{layer\.resolvedVisible === \(choice\.value === "on"\)\}/);
+  assert.match(panel, /role="radiogroup"/);
+  assert.match(panel, /type="radio"/);
+  assert.match(panel, /name=\{`analysis-layer-\$\{layer\.id\}`\}/);
+  assert.match(panel, /onChange=\{\(\) => onLayerChange\(layer\.id, choice\.value\)\}/);
+  /* The radio is the state and the keyboard, the segment is the paint. Hidden
+     with display: none it would leave the group unreachable by tab. */
+  const hidden = css.slice(
+    css.indexOf(".analysisLayerChoice input {"),
+    css.indexOf(".analysisLayerChoice > span {"),
+  );
+  assert.doesNotMatch(hidden, /display:\s*none|visibility:\s*hidden/);
+  assert.match(hidden, /clip-path: inset\(50%\)/);
+  /* Which one is selected has to be visible without reading a legend. */
+  assert.match(
+    panel,
+    /data-selected=\{\s*layer\.resolvedVisible === \(choice\.value === "on"\) \? "yes" : "no"\s*\}/,
+  );
+  assert.match(css, /\.analysisLayerChoice\[data-selected="yes"\] \{/);
   assert.match(panel, /Reset range and layers/);
+  /* An override is why a workspace can be showing something other than what
+     its preset says, so the row states that separately from which segment is
+     lit: the two agree when the preset is being followed. */
   assert.match(panel, /data-layer-override=/);
   assert.match(panel, /data-layer-resolved=/);
+  assert.match(
+    css,
+    /\.analysisLayerControl\[data-layer-override="on"\] \.analysisLayerChoices,\s*\r?\n\.analysisLayerControl\[data-layer-override="off"\] \.analysisLayerChoices \{/,
+  );
 });
 
 test("interactive no-WebGL uses the replay-aware chart while static first paint stays honest", () => {
