@@ -26,22 +26,17 @@ test("the selected route race owns the server render and first client hydration"
   assert.match(workspace, /typeof window !== "undefined"\) pointAtRace\(initialRace\.id\)/);
 });
 
-test("the 390px task tablist fits five full labels without nested overflow", () => {
+test("the 390px Analyze picker uses two task columns without nested overflow", () => {
   const css = source("src/app/prototype/layline/layline.module.css");
-  const phone = css.split("@media (max-width: 560px) {")[1] ?? "";
+  const phone = css.split("@media (max-width: 479px) {")[1] ?? "";
 
   assert.match(
     phone,
-    /\.dockTopAnalysis \.analysisWorkspaceTabs\s*\{[\s\S]*grid-template-columns:\s*repeat\(5,\s*minmax\(0,\s*1fr\)\)/,
+    /\.analysisWorkspaceTabs\s*\{[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/,
   );
-  assert.match(
-    phone,
-    /\.dockTopAnalysis \.analysisWorkspaceTabs\s*\{[\s\S]*overflow:\s*hidden/,
-  );
-  assert.match(
-    phone,
-    /\.dockTopAnalysis \.analysisWorkspaceTab\s*\{[\s\S]*min-width:\s*0[\s\S]*white-space:\s*nowrap/,
-  );
-  assert.match(css, /\.analysisWorkspaceTab:focus-visible\s*\{[\s\S]*outline:\s*2px solid/);
-  assert.match(css, /@media \(max-width: 900px\)[\s\S]*\.analysisWorkspaceTab\s*\{[\s\S]*min-height:\s*40px/);
+  assert.match(phone, /\.analysisTaskPicker\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
+  assert.doesNotMatch(css, /\.analysisWorkspaceTabs[^}]*overflow-x:\s*auto/);
+  assert.match(css, /\.analysisWorkspaceTab[^}]*min-width:\s*0[^}]*white-space:\s*nowrap/);
+  assert.match(css, /\.analysisWorkspaceTab:focus-visible,[\s\S]*?outline:\s*2px solid/);
+  assert.match(css, /@media \(max-width: 900px\)[\s\S]*\.analysisWorkspaceTab\s*\{[\s\S]*min-height:\s*44px/);
 });

@@ -120,7 +120,7 @@ test("preset IDs, labels, lanes, ranges, layers, capabilities and controls are e
       on: ["tracks", "laylines"],
     },
     start: {
-      label: "Start",
+      label: "Start review",
       panel: "start-line",
       lanes: ["start", "phase", "event"],
       rangePolicy: "start-window",
@@ -157,7 +157,7 @@ test("preset IDs, labels, lanes, ranges, layers, capabilities and controls are e
       capability: "available",
       defaultReference: null,
       controls: ["truth-mode", "replay-mode"],
-      on: [],
+      on: ["raw-fixes"],
     },
   };
 

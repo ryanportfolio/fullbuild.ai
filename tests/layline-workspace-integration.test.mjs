@@ -143,7 +143,7 @@ test("truth DOM branches compose with 2D and renderer availability", () => {
   const chart = source("src/components/layline/svg/ChartView.tsx");
   const css = source("src/app/prototype/layline/layline.module.css");
 
-  assert.match(app, /truthMode && analysisWorkspace\?\.panel !== "truth-provenance" \? \([^]*<TruthInspector race=\{race\} inspection=\{visibleInspection\}[^]*:\s*live \? \([^]*<Instruments race=\{race\} inspection=\{visibleInspection\}[^]*:\s*null/);
+  assert.match(app, /truthMode && analysisWorkspace\?\.panel !== "truth-provenance" \? \([^]*<TruthInspector[^]*vector=\{analysisWorkspace === null\}[^]*:\s*live && !analysisActive \? \([^]*<Instruments race=\{race\}[^]*:\s*null/);
   assert.match(workspacePanel, /<TruthInspector race=\{race\} inspection=\{inspection\}/);
   assert.match(app, /live && chart2d \? \([^]*<ChartView race=\{race\} inspection=\{visibleInspection\} layers=\{chartLayers\} \/>/);
   /* The replay-aware SVG fallback and the static server chart are mutually
@@ -195,14 +195,14 @@ test("phone top bar uses bounded tracks and keeps essential status visible", () 
   );
   assert.match(
     phone,
-    /\.truthButton,\s*\.replayStatus\s*\{[^}]*min-height:\s*40px/,
+    /\.truthButton,\s*\.replayStatus\s*\{[^}]*min-height:\s*44px/,
   );
   for (const essential of ["truthButton", "replayStatus", "raceClock", "windGroup"]) {
     assert.doesNotMatch(phone, new RegExp(`\\.${essential}\\s*\\{[^}]*display:\\s*none`));
   }
 
-  assert.match(topBar, /data-chip="replay-status"/);
-  assert.match(topBar, /raw \? "RAW 4 HZ" : "SMOOTH"/);
+  assert.match(topBar, /raw \? \([\s\S]*data-chip="replay-status"[\s\S]*RAW 4 HZ[\s\S]*\) : null/);
+  assert.doesNotMatch(topBar, />SMOOTH</);
   assert.match(topBar, /className=\{styles\.raceClock\}/);
   assert.match(topBar, /className=\{styles\.legChip\}/);
   assert.match(topBar, /<WindDial race=\{race\} \/>/);

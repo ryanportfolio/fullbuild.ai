@@ -19,6 +19,7 @@ const ownRule = (css, selector) => {
 
 const timeline = source("src/components/layline/hud/Timeline.tsx");
 const panel = source("src/components/layline/hud/AnalysisWorkspacePanel.tsx");
+const disclosure = source("src/components/layline/hud/AnalysisLayerDisclosure.tsx");
 const vector = source("src/components/layline/hud/VectorTriangle.tsx");
 const laylineCss = source("src/app/prototype/layline/layline.module.css");
 const racesCss = source("src/app/prototype/layline/races/races.module.css");
@@ -138,9 +139,9 @@ test("Analysis Layers is one readable control column with compact unavailable ro
     /grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/,
   );
   assert.match(block(laylineCss, ".analysisLayerUnavailable"), /grid-template-columns:\s*auto\s+minmax\(0,\s*1fr\)/);
-  assert.match(panel, /\{ value: "on", label: "On" \}/);
-  assert.match(panel, /\{ value: "off", label: "Off" \}/);
-  assert.match(panel, /Reset range and layers/);
+  assert.match(disclosure, /\{ value: "on", label: "On" \}/);
+  assert.match(disclosure, /\{ value: "off", label: "Off" \}/);
+  assert.match(disclosure, /Reset range and layers/);
 });
 
 test("Analysis Layers draws its own segments, so no theme depends on a native menu", () => {
@@ -149,7 +150,7 @@ test("Analysis Layers draws its own segments, so no theme depends on a native me
      segments are painted by the page in the theme's own tokens, so contrast
      follows the ground the panel already sits on and every theme is covered by
      one rule instead of a list that a fifth theme could fall off. */
-  assert.doesNotMatch(panel, /<select|<option/);
+  assert.doesNotMatch(disclosure, /<select|<option/);
   assert.doesNotMatch(laylineCss, /\.analysisLayerControl select/);
   assert.doesNotMatch(ownRule(laylineCss, ".analysisLayerChoices"), /color-scheme/);
   assert.match(ownRule(laylineCss, ".analysisLayerChoices"), /background:\s*color-mix\(in srgb, var\(--ink\)/);

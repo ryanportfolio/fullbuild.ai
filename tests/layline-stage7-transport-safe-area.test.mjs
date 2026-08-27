@@ -34,7 +34,7 @@ test("desktop side reservation keeps phone docks in normal document flow", () =>
   const phone = css.slice(css.indexOf("@media (max-width: 900px)"));
   assert.match(
     phone,
-    /\.dockLeft,\s*\n\s*\.dockRight,\s*\n\s*\.dockVector,\s*\n\s*\.dockBottom\s*\{[\s\S]*?position:\s*static;[\s\S]*?width:\s*auto;/,
+    /\.dockLeft,\s*\n\s*\.dockRight,\s*\n\s*\.dockBottom\s*\{[\s\S]*?position:\s*static;[\s\S]*?width:\s*auto;/,
   );
   assert.match(rule(".analysisLayerReset"), /min-height:\s*32px/);
   assert.match(css, /\.analysisLayerReset\s*\{\s*align-self:\s*flex-start;\s*cursor:\s*var\(--house-cursor\);/);

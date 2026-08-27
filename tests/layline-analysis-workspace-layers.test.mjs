@@ -90,6 +90,7 @@ test("one live store session drives tabs, panel, range, lanes and layers", () =>
   const app = source("src/components/layline/LaylineApp.tsx");
   const workspace = source("src/app/prototype/layline/races/RaceWorkspace.tsx");
   const panel = source("src/components/layline/hud/AnalysisWorkspacePanel.tsx");
+  const disclosure = source("src/components/layline/hud/AnalysisLayerDisclosure.tsx");
   assert.match(workspace, /analysisWorkspaces/);
   assert.match(app, /useReplay\(\(state\) => state\.analysis\)/);
   assert.match(app, /analysisWorkspaces && !state\.analysis\.rangePinned[\s\S]*analysisReplayCadenceKey\(state\.t\)/);
@@ -98,19 +99,22 @@ test("one live store session drives tabs, panel, range, lanes and layers", () =>
   )?.[0] ?? "";
   assert.doesNotMatch(cadenceSubscription, /requestAnimationFrame|setInterval|setTimeout|\.advance\(/);
   assert.match(app, /selectAnalysisWorkspace\(workspaceId\)/);
-  assert.match(app, /resolveAnalysisWorkspace\(\s*analysis,/);
+  assert.match(app, /resolveAnalysisWorkspace\(\s*visibleAnalysis,/);
+  assert.match(app, /performanceUnavailableRequested[\s\S]*active: "overview" as const/);
   assert.match(app, /visibleLaneIds=\{analysisWorkspace\?\.timelineLaneIds\}/);
   assert.match(app, /layers=\{sceneLayers\}/);
   assert.match(app, /layers=\{chartLayers\}/);
   assert.match(app, /layers=\{noWebglLayers\}/);
-  assert.match(panel, /setAnalysisLayer|onLayerChange|onReset/);
+  assert.match(disclosure, /onLayerChange|onReset/);
+  assert.doesNotMatch(panel, /Analysis layers|onLayerChange|onReset/);
   assert.equal((app.match(/<AnalysisWorkspacePanel\b/g) ?? []).length, 1);
+  assert.equal((app.match(/<AnalysisLayerDisclosure\b/g) ?? []).length, 1);
   assert.doesNotMatch(app, /useState\([^\n]*analysisWorkspace/i);
   assert.doesNotMatch(workspace, /useState\([^\n]*analysisWorkspace/i);
 });
 
 test("manual layer controls expose default/on/off and scoped reset", () => {
-  const panel = source("src/components/layline/hud/AnalysisWorkspacePanel.tsx");
+  const panel = source("src/components/layline/hud/AnalysisLayerDisclosure.tsx");
   const css = source("src/app/prototype/layline/layline.module.css");
   assert.match(panel, /<details className=\{styles\.analysisLayerDisclosure\}>/);
   assert.match(panel, /<summary>Analysis layers<\/summary>/);
@@ -155,6 +159,23 @@ test("manual layer controls expose default/on/off and scoped reset", () => {
     css,
     /\.analysisLayerControl\[data-layer-override="on"\] \.analysisLayerChoices,\s*\r?\n\.analysisLayerControl\[data-layer-override="off"\] \.analysisLayerChoices \{/,
   );
+});
+
+test("layers persist outside Analyze tasks and contextual Start follows replay time", () => {
+  const app = source("src/components/layline/LaylineApp.tsx");
+  assert.match(
+    app,
+    /analysisWorkspaces && beforeGun && analysis\.active === "overview"[\s\S]*active: "start" as const/,
+  );
+  assert.match(app, /session=\{visibleAnalysis\}/);
+  assert.match(
+    app,
+    /<div className=\{styles\.dockLeft\}[\s\S]*analysisWorkspaceReady \? analysisLayers : null[\s\S]*showStandingsDock && live && !analysisActive/,
+  );
+  const layersDefinition = app.match(
+    /const analysisLayers = analysisWorkspace === null \? null : \([\s\S]*?\n  \);/,
+  )?.[0] ?? "";
+  assert.doesNotMatch(layersDefinition, /analysisActive/);
 });
 
 test("interactive no-WebGL uses the replay-aware chart while static first paint stays honest", () => {

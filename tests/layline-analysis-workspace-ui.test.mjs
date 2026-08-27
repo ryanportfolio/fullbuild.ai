@@ -39,26 +39,43 @@ function source(path) {
 
 test("workspace tab model is labelled, roving and keyboard-complete", () => {
   assert.ok(ui, "production workspace UI model is missing");
-  const ids = [...analysisState.ANALYSIS_WORKSPACE_IDS];
-  for (const active of ids) {
+  const workspaceIds = [...analysisState.ANALYSIS_WORKSPACE_IDS];
+  const taskIds = [...ui.ANALYSIS_AVAILABLE_TASK_IDS];
+  assert.deepEqual(taskIds, ["start", "compare", "evidence"]);
+  for (const active of workspaceIds) {
     const model = ui.analysisWorkspaceTabModel(active);
-    assert.deepEqual(model.map((tab) => tab.id), ids);
+    assert.deepEqual(model.map((tab) => tab.id), taskIds);
     assert.deepEqual(
       model.map((tab) => tab.label),
-      ids.map((id) => analysisState.ANALYSIS_WORKSPACE_PRESETS[id].label),
+      taskIds.map((id) => analysisState.ANALYSIS_WORKSPACE_PRESETS[id].label),
     );
-    assert.equal(model.filter((tab) => tab.selected).length, 1);
+    assert.equal(model.filter((tab) => tab.selected).length, taskIds.includes(active) ? 1 : 0);
     assert.equal(model.filter((tab) => tab.tabIndex === 0).length, 1);
-    assert.equal(model.find((tab) => tab.id === active).role, "tab");
-    assert.equal(model.find((tab) => tab.id === active).controls, "analysis-workspace-panel");
+    assert.ok(model.every((tab) => tab.role === "tab"));
+    assert.ok(model.every((tab) => tab.controls === "analysis-workspace-panel"));
   }
 
   assert.equal(ui.nextAnalysisWorkspaceTabId("overview", "ArrowRight"), "start");
   assert.equal(ui.nextAnalysisWorkspaceTabId("overview", "ArrowLeft"), "evidence");
-  assert.equal(ui.nextAnalysisWorkspaceTabId("evidence", "ArrowRight"), "overview");
-  assert.equal(ui.nextAnalysisWorkspaceTabId("performance", "Home"), "overview");
+  assert.equal(ui.nextAnalysisWorkspaceTabId("evidence", "ArrowRight"), "start");
+  assert.equal(ui.nextAnalysisWorkspaceTabId("performance", "Home"), "start");
   assert.equal(ui.nextAnalysisWorkspaceTabId("start", "End"), "evidence");
   assert.equal(ui.nextAnalysisWorkspaceTabId("compare", "PageDown"), null);
+
+  const poststartIds = [...ui.ANALYSIS_POSTSTART_TASK_IDS];
+  assert.deepEqual(poststartIds, ["compare", "evidence"]);
+  assert.deepEqual(
+    ui.analysisWorkspaceTabModel("overview", poststartIds).map((tab) => tab.id),
+    poststartIds,
+  );
+  assert.equal(
+    ui.nextAnalysisWorkspaceTabId("compare", "ArrowLeft", poststartIds),
+    "evidence",
+  );
+  assert.equal(
+    ui.nextAnalysisWorkspaceTabId("evidence", "ArrowRight", poststartIds),
+    "compare",
+  );
 });
 
 test("selection intent is controlled and owner state changes only through Stage 7A", () => {
@@ -103,11 +120,12 @@ test("mounted tabs require one callback and route click and keyboard selection t
   ui.selectAnalysisWorkspaceTab("compare", onSelect);
   const intent = ui.workspaceTabSelectionIntent("compare", "ArrowRight");
   ui.selectAnalysisWorkspaceTab(intent.workspaceId, onSelect);
-  assert.deepEqual(selected, ["compare", "performance"]);
+  assert.deepEqual(selected, ["compare", "evidence"]);
 
   const tabs = source("src/components/layline/hud/AnalysisWorkspaceTabs.tsx");
   const app = source("src/components/layline/LaylineApp.tsx");
   assert.match(tabs, /onSelect:\s*\(workspaceId: AnalysisWorkspaceId\) => void/);
+  assert.match(tabs, /availableTaskIds:\s*readonly AnalysisWorkspaceId\[\]/);
   assert.doesNotMatch(tabs, /onSelect\?|onSelect\?\./);
   assert.match(tabs, /onClick=\{\(\) => selectAnalysisWorkspaceTab\(tab\.id, onSelect\)\}/);
   assert.match(tabs, /selectAnalysisWorkspaceTab\(intent\.workspaceId, onSelect\)/);
@@ -120,6 +138,9 @@ test("mounted tabs require one callback and route click and keyboard selection t
     /useReplay\.getState\(\)\.selectAnalysisWorkspace\(workspaceId\)/,
   );
   assert.match(app, /return stage;/);
+  assert.match(app, /const beforeGun = useReplay\(\(state\) => !analysisWorkspaces \|\| state\.t < 0\)/);
+  assert.match(app, /analysis\.active === "start" && !beforeGun/);
+  assert.match(app, /availableTaskIds=\{analysisTaskIds\}/);
 });
 
 test("Compare facts, timeline range and evidence targets share one controlled range", () => {
@@ -329,11 +350,11 @@ test("Stage 7 layer controls expose four real capabilities and replace unavailab
     assert.match(control.unavailableWitness, /not available yet/i);
   }
 
-  const panelSource = source("src/components/layline/hud/AnalysisWorkspacePanel.tsx");
-  assert.match(panelSource, /layer\.available \? \(/);
-  assert.match(panelSource, /data-layer-capability="unavailable"/);
-  assert.match(panelSource, /layer\.unavailableWitness/);
-  assert.match(panelSource, /disabled/);
+  const disclosureSource = source("src/components/layline/hud/AnalysisLayerDisclosure.tsx");
+  assert.match(disclosureSource, /layer\.available \? \(/);
+  assert.match(disclosureSource, /data-layer-capability="unavailable"/);
+  assert.match(disclosureSource, /layer\.unavailableWitness/);
+  assert.match(disclosureSource, /disabled/);
 });
 
 test("timeline consumes only resolved lane intent, preserves order and stays bounded", () => {
@@ -414,6 +435,7 @@ test("dock ownership preserves one viewer and analyst", () => {
   const app = source("src/components/layline/LaylineApp.tsx");
   const tabs = source("src/components/layline/hud/AnalysisWorkspaceTabs.tsx");
   const panel = source("src/components/layline/hud/AnalysisWorkspacePanel.tsx");
+  const disclosure = source("src/components/layline/hud/AnalysisLayerDisclosure.tsx");
   const timeline = source("src/components/layline/hud/Timeline.tsx");
 
   assert.equal((workspace.match(/<LaylineApp\b/g) ?? []).length, 1);
@@ -426,12 +448,18 @@ test("dock ownership preserves one viewer and analyst", () => {
   assert.match(tabs, /role="tab"/);
   assert.match(tabs, /aria-selected=\{tab\.selected\}/);
   assert.match(tabs, /tabIndex=\{tab\.tabIndex\}/);
-  assert.doesNotMatch(tabs, /useState|localStorage|document\.cookie|URLSearchParams/);
+  assert.match(tabs, /useState\(false\)/);
+  assert.doesNotMatch(tabs, /localStorage|document\.cookie|URLSearchParams/);
+  assert.match(tabs, />\s*Analyze\s*<\/button>/);
+  assert.match(tabs, /Back to replay/);
   assert.match(app, /data-analysis-flow="viewer"/);
   assert.match(app, /const analysisWorkspaceReady = !briefed \|\| briefDone/);
   assert.match(app, /analysisNavigation=\{analysisWorkspaceReady \? analysisTabs : undefined\}/);
   assert.match(app, /analysisPanelDock === "left"/);
   assert.match(app, /analysisPanelDock === "right"/);
+  assert.match(app, /analysisWorkspaceReady \? analysisLayers : null/);
+  assert.match(disclosure, /<details className=\{styles\.analysisLayerDisclosure\}>/);
+  assert.doesNotMatch(panel, /analysisLayerDisclosure/);
   assert.doesNotMatch(app, /className=\{styles\.analysisWorkspaceShell\}/);
   assert.match(timeline, /data-analysis-flow="timeline"/);
   assert.match(panel, /data-analysis-flow="panel"/);
@@ -441,10 +469,11 @@ test("dock ownership preserves one viewer and analyst", () => {
 
 test("responsive CSS keeps task chrome inside stage docks", () => {
   const css = source("src/app/prototype/layline/layline.module.css");
-  assert.match(css, /\.analysisWorkspaceTabs[^}]*overflow-x:\s*auto/);
+  assert.doesNotMatch(css, /\.analysisWorkspaceTabs[^}]*overflow-x:\s*auto/);
+  assert.match(css, /\.analysisWorkspaceTabs[^}]*grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.analysisWorkspaceTab:focus-visible/);
-  assert.match(css, /\.dockTopAnalysis[^}]*grid-template-rows:\s*48px 40px/);
-  assert.match(css, /\.stage\[data-analysis-ready="true"\] \.dockLeft[^}]*top:\s*96px/);
+  assert.match(css, /\.dockTopAnalysis:has\(\.analysisTaskPicker\)[^}]*grid-template-rows:\s*48px 52px/);
+  assert.match(css, /\.stage:has\(\.analysisTaskPicker\) \.dockLeft[^}]*top:\s*108px/);
   assert.match(css, /\.analysisLayerDisclosure/);
   assert.doesNotMatch(css, /\.analysisWorkspacePanel[^}]*max-height:\s*min\(30vh, 320px\)/);
   assert.doesNotMatch(css, /\.analysisWorkspacePanel[^}]*overflow-y:\s*auto/);

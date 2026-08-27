@@ -659,8 +659,8 @@ test("semantic, phone, reduced-motion and fallback integration contracts stay pr
   const phone = css.split("@media (max-width: 900px) {")[1]
     ?.split("@media (max-width: 560px) {")[0] ?? "";
   assert.match(phone, /\.comparisonMetrics\s*\{[^}]*repeat\(2, minmax\(0, 1fr\)\)/);
-  assert.match(phone, /\.comparisonRangeControl \.rangeButton\s*\{[\s\S]*?min-height:\s*40px/);
-  assert.match(phone, /\.comparisonRail\s*\{[^}]*height:\s*40px/);
+  assert.match(phone, /\.comparisonRangeControl \.rangeButton\s*\{[\s\S]*?min-height:\s*44px/);
+  assert.match(phone, /\.comparisonRail\s*\{[^}]*height:\s*44px/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[^]*transition-duration:\s*1ms/);
   assert.doesNotMatch(
     css,

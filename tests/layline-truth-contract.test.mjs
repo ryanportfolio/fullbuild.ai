@@ -41,17 +41,20 @@ test('truth mode is explicit state and does not replace the playback lens', asyn
 });
 
 test('inspector states provenance and reads one shared derivation helper', async () => {
-  const inspector = await read('src/components/layline/hud/TruthInspector.tsx');
+  const [inspector, vector] = await Promise.all([
+    read('src/components/layline/hud/TruthInspector.tsx'),
+    read('src/components/layline/hud/VectorTriangle.tsx'),
+  ]);
 
   assert.match(inspector, /import \{[^}]*fixStamp[^}]*heading[^}]*\} from "@\/lib\/layline\/format"/);
   assert.doesNotMatch(inspector, /function (?:fixStamp|heading)\(/);
   assert.match(inspector, /telemetryTruthAt\(race, live\.followId, live\.t, buffer\.current\)/);
-  assert.match(inspector, /Recorded current sample/);
-  assert.match(inspector, /Reconstructed current from recorded fixes/);
+  assert.match(vector, /Recorded current sample/);
+  assert.match(vector, /Reconstructed current from recorded fixes/);
   assert.match(inspector, /<VectorTriangle race=\{race\} inspection=\{inspection\} \/>/);
   assert.match(inspector, /MEASURED · BEFORE \/ CURRENT/);
   assert.match(inspector, /MEASURED · AFTER \/ CURRENT/);
-  assert.match(inspector, /DERIVED · CLOCK POSITION/);
+  assert.match(inspector, /INTERPOLATION POSITION/);
   assert.match(inspector, /RAW HOLD · MEASURED/);
   assert.match(inspector, /SMOOTH · RECONSTRUCTED/);
   assert.match(inspector, /SHARED REPLAY TIME/);
@@ -146,8 +149,9 @@ test('truth control swaps inspector and instruments while preserving the no-WebG
      TopBar's aria-controls="truth-inspector" target can exist in every
      workspace; only the Evidence panel, which embeds the same inspector,
      still supersedes it. */
-  assert.match(app, /truthMode && analysisWorkspace\?\.panel !== "truth-provenance" \? \([\s\S]*?<TruthInspector race=\{race\} inspection=\{visibleInspection\} vector=\{!vectorDocked\} \/>[\s\S]*?\) : analysisWorkspace\?\.panel === "comparison" \? null : live \? \([\s\S]*?<Instruments race=\{race\} inspection=\{visibleInspection\} vector=\{!vectorDocked\} \/>[\s\S]*?\) : null/);
-  assert.match(workspacePanel, /<TruthInspector race=\{race\} inspection=\{inspection\} vector=\{vector\} \/>/);
+  assert.match(app, /truthMode && analysisWorkspace\?\.panel !== "truth-provenance" \? \([\s\S]*?<TruthInspector[\s\S]*?vector=\{analysisWorkspace === null\}[\s\S]*?\/>[\s\S]*?\) : analysisWorkspace\?\.panel === "comparison" \? null : live && !analysisActive \? \([\s\S]*?<Instruments race=\{race\} \/>[\s\S]*?\) : null/);
+  assert.match(workspacePanel, /<TruthInspector race=\{race\} inspection=\{inspection\} \/>/);
+  assert.doesNotMatch(app, /dockVector|data-vector-dock/);
   assert.doesNotMatch(app, /<TruthInspector[^>]+hidden=/);
   assert.match(inspector, /id="truth-inspector"/);
   assert.doesNotMatch(inspector, /hidden=\{/);

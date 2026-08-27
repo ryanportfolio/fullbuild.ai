@@ -307,8 +307,8 @@ test("unmeasured boundary targets keep measured row ownership and defer edge foo
   const phone = css
     .split("@media (max-width: 900px) {")[1]
     ?.split("@media (max-width: 560px) {")[0] ?? "";
-  assert.match(phone, /\.eventRail,\s*\.manRail\s*\{[\s\S]*?--point-clearance:\s*48px/);
-  assert.match(phone, /\.eventMark\s*\{[\s\S]*?width:\s*40px;[\s\S]*?margin-left:\s*-20px/);
+  assert.match(phone, /\.eventRail,\s*\.manRail\s*\{[\s\S]*?--point-clearance:\s*52px/);
+  assert.match(phone, /\.eventMark\s*\{[\s\S]*?width:\s*44px;[\s\S]*?margin-left:\s*-22px/);
   assert.match(phone, /\.manMark\s*\{[\s\S]*?width:\s*44px;[\s\S]*?margin-left:\s*-22px/);
   assert.match(phone, /\.manRail\s*\{[\s\S]*?--point-clearance:\s*52px/);
 
@@ -316,7 +316,6 @@ test("unmeasured boundary targets keep measured row ownership and defer edge foo
   for (const { target, clearance } of [
     { target: 24, clearance: 32 },
     { target: 46, clearance: 60 },
-    { target: 40, clearance: 48 },
     { target: 44, clearance: 52 },
   ]) {
     assert.ok(clearance / 2 >= target / 2 + focusOutline);
@@ -446,16 +445,16 @@ test("timeline buttons and scrub keep usable source-sized targets through phone 
   const phone = css
     .split("@media (max-width: 900px) {")[1]
     ?.split("@media (max-width: 560px) {")[0] ?? "";
-  assert.match(phone, /\.rangeButton\s*\{[\s\S]*?min-height:\s*40px/);
-  assert.match(phone, /\.phaseRail\s*\{[\s\S]*?height:\s*40px/);
-  assert.match(phone, /\.phaseBand\s*\{[\s\S]*?min-width:\s*40px/);
+  assert.match(phone, /\.rangeButton\s*\{[\s\S]*?min-height:\s*44px/);
+  assert.match(phone, /\.phaseRail\s*\{[\s\S]*?height:\s*44px/);
+  assert.match(phone, /\.phaseBand\s*\{[\s\S]*?min-width:\s*44px/);
   assert.match(
     phone,
-    /\.eventRail,\s*\.manRail\s*\{[\s\S]*?--point-clearance:\s*48px;[\s\S]*?--point-row-pitch:\s*48px/,
+    /\.eventRail,\s*\.manRail\s*\{[\s\S]*?--point-clearance:\s*52px;[\s\S]*?--point-row-pitch:\s*52px/,
   );
-  assert.match(phone, /\.eventMark\s*\{[\s\S]*?width:\s*40px;[\s\S]*?height:\s*40px/);
-  assert.match(phone, /\.manMark\s*\{[\s\S]*?width:\s*40px;[\s\S]*?height:\s*40px/);
-  assert.match(phone, /\.track\s*\{[\s\S]*?height:\s*40px/);
+  assert.match(phone, /\.eventMark\s*\{[\s\S]*?width:\s*44px;[\s\S]*?height:\s*44px/);
+  assert.match(phone, /\.manMark\s*\{[\s\S]*?width:\s*44px;[\s\S]*?height:\s*44px/);
+  assert.match(phone, /\.track\s*\{[\s\S]*?height:\s*44px/);
 });
 
 test("timeline focus and reduced-motion rules preserve a complete visible control", async () => {
