@@ -148,7 +148,7 @@
   color: var(--ink-witness);
 }
 
-/* -------------------------------- P-01 register card (full width) + legend */
+/* ------------------------- register foot (Layline + P-01 card) + legend */
 
 .no {
   color: var(--ink-witness);
@@ -158,13 +158,26 @@
   white-space: nowrap;
 }
 
-/* The prototypes card spans the whole register below the grid. */
+/* The register foot below the grid: the Layline stamp and the prototypes
+   card share one row, half width each. Stacks with the grid's narrowest
+   breakpoint so neither card squeezes below a readable measure. */
+.protoRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-top: 0.8rem;
+}
+@container (max-width: 380px) {
+  .protoRow {
+    grid-template-columns: 1fr;
+  }
+}
+
 .protoCard {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  margin-top: 0.8rem;
   padding: 0.5rem 0.6rem 0.45rem;
   border: 1px solid var(--rule-strong);
   color: var(--ink-graphite);

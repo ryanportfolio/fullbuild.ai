@@ -5,6 +5,7 @@ import RailLogo from "@/components/chrome/RailLogo";
 import { TrackChart } from "@/components/layline/svg/TrackChart";
 import { raceFor } from "@/lib/layline/analyst/data";
 import { MISSING, clock } from "@/lib/layline/format";
+import { montserrat } from "@/lib/layline/fonts";
 import { DEFAULT_RACE_ID, RACES, isRaceId } from "@/lib/layline/races";
 import { RaceWorkspace, ThemePicker, type LaylineTheme, type RaceRow } from "./RaceWorkspace";
 import {
@@ -94,16 +95,16 @@ export default async function LaylineRacesPage({
 
   return (
     <div
-      className={`${layline.shell} ${styles.page}`}
+      className={`${layline.shell} ${styles.page} ${montserrat.variable}`}
       data-layline-page
       data-layline-theme={initialTheme}
       suppressHydrationWarning
     >
       <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
-      {/* Pangram is declared font-display: block, and the boot cover names the
-          race in it while the renderer starts. Without this the title card
-          holds unpainted for the whole block period, which is the wait it
-          exists to fill. */}
+      {/* Pangram is declared font-display: block, and the Debrief's heading is
+          set in it. Without this the pane holds unpainted for the whole block
+          period the first time a reader opens it. The title card names the
+          race in Montserrat instead, which next/font preloads on its own. */}
       <link
         rel="preload"
         href="/assets/fonts/pangram-display.woff2"

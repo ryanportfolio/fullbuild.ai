@@ -90,6 +90,7 @@ test("one live store session drives tabs, panel, range, lanes and layers", () =>
   const app = source("src/components/layline/LaylineApp.tsx");
   const workspace = source("src/app/prototype/layline/races/RaceWorkspace.tsx");
   const panel = source("src/components/layline/hud/AnalysisWorkspacePanel.tsx");
+  const disclosure = source("src/components/layline/hud/AnalysisLayerDisclosure.tsx");
   assert.match(workspace, /analysisWorkspaces/);
   assert.match(app, /useReplay\(\(state\) => state\.analysis\)/);
   assert.match(app, /analysisWorkspaces && !state\.analysis\.rangePinned[\s\S]*analysisReplayCadenceKey\(state\.t\)/);
@@ -98,29 +99,83 @@ test("one live store session drives tabs, panel, range, lanes and layers", () =>
   )?.[0] ?? "";
   assert.doesNotMatch(cadenceSubscription, /requestAnimationFrame|setInterval|setTimeout|\.advance\(/);
   assert.match(app, /selectAnalysisWorkspace\(workspaceId\)/);
-  assert.match(app, /resolveAnalysisWorkspace\(\s*analysis,/);
+  assert.match(app, /resolveAnalysisWorkspace\(\s*visibleAnalysis,/);
+  assert.match(app, /performanceUnavailableRequested[\s\S]*active: "overview" as const/);
   assert.match(app, /visibleLaneIds=\{analysisWorkspace\?\.timelineLaneIds\}/);
   assert.match(app, /layers=\{sceneLayers\}/);
   assert.match(app, /layers=\{chartLayers\}/);
   assert.match(app, /layers=\{noWebglLayers\}/);
-  assert.match(panel, /setAnalysisLayer|onLayerChange|onReset/);
+  assert.match(disclosure, /onLayerChange|onReset/);
+  assert.doesNotMatch(panel, /Analysis layers|onLayerChange|onReset/);
   assert.equal((app.match(/<AnalysisWorkspacePanel\b/g) ?? []).length, 1);
+  assert.equal((app.match(/<AnalysisLayerDisclosure\b/g) ?? []).length, 1);
   assert.doesNotMatch(app, /useState\([^\n]*analysisWorkspace/i);
   assert.doesNotMatch(workspace, /useState\([^\n]*analysisWorkspace/i);
 });
 
 test("manual layer controls expose default/on/off and scoped reset", () => {
-  const panel = source("src/components/layline/hud/AnalysisWorkspacePanel.tsx");
+  const panel = source("src/components/layline/hud/AnalysisLayerDisclosure.tsx");
+  const css = source("src/app/prototype/layline/layline.module.css");
   assert.match(panel, /<details className=\{styles\.analysisLayerDisclosure\}>/);
   assert.match(panel, /<summary>Analysis layers<\/summary>/);
   assert.match(panel, /<fieldset/);
-  assert.match(panel, /<select/);
-  assert.match(panel, /<option value="default">/);
-  assert.match(panel, /<option value="on">On<\/option>/);
-  assert.match(panel, /<option value="off">Off<\/option>/);
+  /* All three states on the panel at once, not behind a select: the state a
+     layer is in is legible without opening anything, and changing it costs one
+     click rather than two. */
+  assert.doesNotMatch(panel, /<select|<option/);
+  assert.match(panel, /\{ value: "on", label: "On" \}/);
+  assert.match(panel, /\{ value: "off", label: "Off" \}/);
+  /* The preset's own call has no segment. It is not a third thing a layer can
+     be doing, it is where the current state came from, so the segments read
+     the resolved visibility and the row marks itself when an override is what
+     put it there. Reset range and layers is the way back to the preset. */
+  assert.doesNotMatch(panel, /label: "Default"/);
+  assert.match(panel, /checked=\{layer\.resolvedVisible === \(choice\.value === "on"\)\}/);
+  assert.match(panel, /role="radiogroup"/);
+  assert.match(panel, /type="radio"/);
+  assert.match(panel, /name=\{`analysis-layer-\$\{layer\.id\}`\}/);
+  assert.match(panel, /onChange=\{\(\) => onLayerChange\(layer\.id, choice\.value\)\}/);
+  /* The radio is the state and the keyboard, the segment is the paint. Hidden
+     with display: none it would leave the group unreachable by tab. */
+  const hidden = css.slice(
+    css.indexOf(".analysisLayerChoice input {"),
+    css.indexOf(".analysisLayerChoice > span {"),
+  );
+  assert.doesNotMatch(hidden, /display:\s*none|visibility:\s*hidden/);
+  assert.match(hidden, /clip-path: inset\(50%\)/);
+  /* Which one is selected has to be visible without reading a legend. */
+  assert.match(
+    panel,
+    /data-selected=\{\s*layer\.resolvedVisible === \(choice\.value === "on"\) \? "yes" : "no"\s*\}/,
+  );
+  assert.match(css, /\.analysisLayerChoice\[data-selected="yes"\] \{/);
   assert.match(panel, /Reset range and layers/);
+  /* An override is why a workspace can be showing something other than what
+     its preset says, so the row states that separately from which segment is
+     lit: the two agree when the preset is being followed. */
   assert.match(panel, /data-layer-override=/);
   assert.match(panel, /data-layer-resolved=/);
+  assert.match(
+    css,
+    /\.analysisLayerControl\[data-layer-override="on"\] \.analysisLayerChoices,\s*\r?\n\.analysisLayerControl\[data-layer-override="off"\] \.analysisLayerChoices \{/,
+  );
+});
+
+test("layers persist outside Analyze tasks and contextual Start follows replay time", () => {
+  const app = source("src/components/layline/LaylineApp.tsx");
+  assert.match(
+    app,
+    /analysisWorkspaces && beforeGun && analysis\.active === "overview"[\s\S]*active: "start" as const/,
+  );
+  assert.match(app, /session=\{visibleAnalysis\}/);
+  assert.match(
+    app,
+    /<div className=\{styles\.dockLeft\}[\s\S]*analysisWorkspaceReady \? analysisLayers : null[\s\S]*showStandingsDock && live && !analysisActive/,
+  );
+  const layersDefinition = app.match(
+    /const analysisLayers = analysisWorkspace === null \? null : \([\s\S]*?\n  \);/,
+  )?.[0] ?? "";
+  assert.doesNotMatch(layersDefinition, /analysisActive/);
 });
 
 test("interactive no-WebGL uses the replay-aware chart while static first paint stays honest", () => {

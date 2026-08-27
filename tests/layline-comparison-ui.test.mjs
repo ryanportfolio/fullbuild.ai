@@ -36,7 +36,7 @@ const { generateRace } = await import("../src/lib/layline/sim.ts");
 const { DEFAULT_WORKSPACE_PREFERENCES } = await import(
   "../src/app/prototype/layline/races/workspaceState.ts"
 );
-const { ANALYST_TOOLS, compareBoats, compareRangeForAnalyst, runTool } = await import(
+const { ANALYST_TOOLS, compareBoats, compareRangeForAnalyst, compareWireView, runTool } = await import(
   "../src/lib/layline/analyst/tools.ts"
 );
 const { TIMELINE_POINT_ROW_LIMIT, packTimelinePoints } = await import(
@@ -467,7 +467,7 @@ test("extreme boundary arithmetic stays identical in kernel, UI and analyst outp
           t1: 8,
         });
         assert.doesNotMatch(toolText, /Infinity|NaN/);
-        assert.deepEqual(JSON.parse(toolText).comparison, canonical);
+        assert.deepEqual(JSON.parse(toolText), compareWireView(analyst));
         probes++;
       }
     }
@@ -515,11 +515,11 @@ test("analyst comparison is an exact compareRange adapter for all races, referen
           t0: range.from,
           t1: range.to,
         }));
-        assert.deepEqual(json.comparison, canonical);
+        assert.deepEqual(json, compareWireView(direct));
         assert.deepEqual(json.equation, direct.equation);
         assert.deepEqual(json.comparison.reference.requestedCohortIds, canonical.reference.requestedCohortIds);
         assert.deepEqual(json.comparison.reference.eligibleCohortIds, canonical.reference.eligibleCohortIds);
-        for (const maneuver of json.comparison.primary.maneuvers) {
+        for (const maneuver of json.comparison.primaryManeuvers) {
           assert.equal(maneuver.costMeters, null);
           assert.equal(maneuver.costSeconds, null);
         }
@@ -659,8 +659,8 @@ test("semantic, phone, reduced-motion and fallback integration contracts stay pr
   const phone = css.split("@media (max-width: 900px) {")[1]
     ?.split("@media (max-width: 560px) {")[0] ?? "";
   assert.match(phone, /\.comparisonMetrics\s*\{[^}]*repeat\(2, minmax\(0, 1fr\)\)/);
-  assert.match(phone, /\.comparisonRangeControl \.rangeButton\s*\{[\s\S]*?min-height:\s*40px/);
-  assert.match(phone, /\.comparisonRail\s*\{[^}]*height:\s*40px/);
+  assert.match(phone, /\.comparisonRangeControl \.rangeButton\s*\{[\s\S]*?min-height:\s*44px/);
+  assert.match(phone, /\.comparisonRail\s*\{[^}]*height:\s*44px/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[^]*transition-duration:\s*1ms/);
   assert.doesNotMatch(
     css,

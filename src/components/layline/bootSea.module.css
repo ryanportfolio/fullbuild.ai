@@ -100,13 +100,26 @@
      .shell and no theme restates it, so it holds on all five. */
   --brief-accent: var(--wind);
 
-  /* The three faces, and the console's own division of labour between them.
-     Pangram carries the race name. Martian is quarantined to measured values,
-     because "a number set in Archivo is a number nobody measured". Archivo
-     carries the labels and the button, because "a button set in mono is a lie
-     about where the data is". */
+  /* The console's own division of labour between its faces. Martian is
+     quarantined to measured values, because "a number set in Archivo is a
+     number nobody measured". Archivo carries the labels and the button,
+     because "a button set in mono is a lie about where the data is". */
   --brief-mono: var(--font-martian), monospace;
   --brief-sans: var(--font-archivo), sans-serif;
+
+  /* Montserrat, and the two jobs it has on this layer: the race name at the
+     top of the title card and the three section heads over the panels under
+     it. It is what the sailing-instrument brands set their headings in, and
+     the brief is the one layer here that speaks in a client's voice rather
+     than the console's, so it is the one layer that borrows theirs.
+
+     Two tokens rather than one because the fallbacks differ, and a fallback is
+     what a capture harness rendering this component outside the two layline
+     shells actually gets. A missed title should land on the other display
+     face; a missed label should land on the face every other label already
+     uses. Pangram keeps the wordmark and the section headings elsewhere. */
+  --brief-title: var(--font-montserrat), var(--font-pangram), sans-serif;
+  --brief-display: var(--font-montserrat), var(--font-archivo), sans-serif;
 
   /* The header sits on the gradient's top band, which is the sky-horizon token
      nearly neat, so its ink has to follow that token rather than the plates'.
@@ -124,10 +137,6 @@
      size carry the hierarchy instead. */
   --brief-head-line: color-mix(in srgb, var(--water-deep) 30%, transparent);
 
-  /* Nothing is pinned over the brief at this width, so the footer sits on the
-     padding it was drawn with. The narrow branch below hands this the height
-     of the analyst's composer. */
-  --brief-foot-gap: 0px;
 }
 
 .out {
@@ -152,7 +161,7 @@
   flex-direction: column;
   gap: 1.8cqw;
   height: 100%;
-  padding: 3cqw 3.2cqw calc(2.2cqw + var(--brief-foot-gap));
+  padding: 3cqw 3.2cqw 2.2cqw;
   overflow: hidden;
   color: var(--brief-ink);
   font-family: var(--brief-sans);
@@ -313,21 +322,24 @@
 }
 
 .raceName {
-  /* Pangram, the face this page spends on the wordmark and on a section
-     heading, at the size that makes the race a title card rather than a status
-     line. Capped at two line boxes; RaceBrief measures and steps the size down
-     until the name fits inside them. */
-  font-family: var(--font-pangram);
-  font-weight: 400;
-  /* 9.4, not the 11 this started at, because 11 does not fit. Measured: the
-     largest size that holds each of the three shipped names inside two line
-     boxes lands between 9.41 and 10.40 cqw across nine viewport widths, and the
-     binding case is "Winter series race 2" at 9.41. A stated size above the
-     binding case is a size the measured fit has to correct after hydration, in
-     full view of the reader. Below it, the fit never fires and the server's
-     first paint is the final one. The fit stays as the net for a name longer
-     than any in the registry today. */
-  font-size: calc(9.4 * 1cqw);
+  /* The title card's face, at the size that makes the race a title card rather
+     than a status line. Capped at two line boxes; RaceBrief measures and steps
+     the size down until the name fits inside them. */
+  font-family: var(--brief-title);
+  font-weight: 700;
+  /* 9.3, re-measured for Montserrat 700. The largest size that holds each of
+     the three shipped names inside two line boxes lands between 9.33 and 10.13
+     cqw across nine viewport widths from 1920 down to 960, and the binding
+     case is "Autumn invitational" at 9.33. Pangram 400 bound at 9.41 on
+     "Winter series race 2", so this stepped down a tenth when the face
+     changed. A stated size above the binding case is a size the measured fit
+     has to correct after hydration, in full view of the reader. Below it, the
+     fit never fires and the server's first paint is the final one. The fit
+     stays as the net for a name longer than any in the registry today. The
+     measurement is RaceBrief's own fits() replayed against the rendered node
+     per name per width, in headed Chrome; redo it whenever this face, its
+     weight or its tracking changes. */
+  font-size: calc(9.3 * 1cqw);
   line-height: 1.02;
   letter-spacing: -0.025em;
   text-wrap: balance;
@@ -470,6 +482,20 @@
   flex: none;
   justify-content: space-between;
   color: var(--brief-dim);
+}
+
+/* The start view's three section heads, and nothing else on the layer. They
+   keep the 10px label size so the layer still holds to three sizes; only the
+   face, the weight and the tracking move. 600 Archivo at this size reads as a
+   dock label, which is the console's voice and the wrong one for a panel the
+   reader meets before the race starts. The performance view's labels stay on
+   the Archivo rule: they head a table of mono numbers and have to carry weight
+   against it. Ordered after the shared rule so it wins on source order at the
+   same specificity. */
+.panelLabelHead {
+  font-family: var(--brief-display);
+  font-weight: 400;
+  letter-spacing: 0.15em;
 }
 
 /* A measured value, so it leaves the label's face for the mono. */
@@ -658,7 +684,7 @@
   .brief {
     gap: 0.8cqw;
     padding-top: 2cqw;
-    padding-bottom: calc(1.2cqw + var(--brief-foot-gap));
+    padding-bottom: 1.2cqw;
   }
 
   /* The footer's way through gives its slack padding back to the plates: with
@@ -675,8 +701,8 @@
   /* Short AND narrow, the 1024x768 class of window: the container is small
      enough that the cqw sizes above stop paying for themselves, and the fleet
      plate came up 43px short of its six rows. The title gives back the bulk:
-     8cqw still fills the width edge to edge at these sizes, and a name that
-     fits one line at 9.4 fits at 8. */
+     7.6cqw still fills the width edge to edge at these sizes, and it sits well
+     under the 9.33 the binding name measures at, so the fit never fires. */
   @media (max-width: 1120px) {
     .raceName {
       font-size: calc(7.6 * 1cqw);
@@ -927,15 +953,6 @@
   transition: opacity 180ms var(--ease);
 }
 
-.polarCap {
-  flex: none;
-  margin: 0;
-  color: var(--brief-dim);
-  font-family: var(--brief-mono);
-  font-size: 9px;
-  line-height: 14px;
-}
-
 .perfTable {
   display: flex;
   flex-direction: column;
@@ -1066,15 +1083,41 @@
   transition: opacity 180ms var(--ease);
 }
 
-/* What the figures rest on, stated under them rather than in a legend nobody
-   reads. Spans both columns: it describes the plate and the table equally. */
-.perfNote {
+/* The plots and figures stay visible. Their existing scaling, channel and
+   sampling notes share one native disclosure under both columns. */
+.perfMethod {
   grid-column: 1 / -1;
-  margin: 0;
+  background: color-mix(in srgb, var(--brief-ink) 4%, transparent);
+  border: 1px solid var(--brief-hair);
   color: var(--brief-dim);
+}
+
+.perfMethod > summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 12px;
+  color: var(--brief-ink);
+  font-family: var(--brief-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  line-height: 16px;
+  text-transform: uppercase;
+  cursor: var(--house-cursor);
+}
+
+.perfMethodBody {
+  display: grid;
+  gap: 6px;
+  padding: 0 12px 12px;
   font-family: var(--brief-mono);
   font-size: 9px;
   line-height: 14px;
+}
+
+.perfMethodBody p {
+  margin: 0;
 }
 
 /* ---- footer ---- */
@@ -1178,32 +1221,28 @@
    top of one, the blocks scroll inside the brief and the footer stays where a
    thumb can reach it.
 
-   The screen it is held to ends where the analyst's composer begins: below
-   this same width the composer leaves the flow and pins to the foot of the
-   viewport at z-index 12 (analyst.module.css), and the page already gives it
-   that much back as bottom padding. A brief measured against the whole svh
-   would put Continue underneath it, unclickable. */
+   With the Debrief composer back in panel flow, the brief can use the complete
+   small viewport without reserving an overlay band. */
 @media (max-width: 1199px) {
   .brief {
     position: sticky;
     top: 0;
-    max-height: calc(100svh - var(--composer-bar, 59px) - env(safe-area-inset-bottom));
+    max-height: 100svh;
   }
+}
 
-  /* The composer's band, given back as padding so Continue is never drawn into
-     it. The cap above only holds while the brief is pinned; scrolled to where
-     the gate is simply fully in view, the gate's own bottom edge lands on the
-     viewport foot, and a footer flush with that edge lands under the composer.
-     Holding the footer this far off the edge clears it at both positions. */
-  .cover {
-    --brief-foot-gap: calc(var(--composer-bar, 59px) + env(safe-area-inset-bottom));
+/* These are the two ways through the brief's content, so they use the same
+   touch floor as Method and Start the race on tablet and phone layouts. */
+@media (max-width: 900px) {
+  .viewBtn {
+    min-height: 44px;
   }
 }
 
 @container (max-width: 760px) {
   .brief {
     gap: 12px;
-    padding: 16px 16px calc(16px + var(--brief-foot-gap));
+    padding: 16px;
   }
 
   .briefHead {

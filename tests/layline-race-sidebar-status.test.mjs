@@ -24,27 +24,31 @@ function source(path) {
   return existsSync(url) ? readFileSync(url, "utf8") : "";
 }
 
-test("the selected race owns one released-only status module in every list group", () => {
+test("one standings view follows the race-list rail", () => {
   const workspace = source("src/app/prototype/layline/races/RaceWorkspace.tsx");
+  const app = source("src/components/layline/LaylineApp.tsx");
 
-  assert.match(workspace, /const briefDone = useReplay\(\(state\) => state\.briefDone\)/);
-  assert.match(workspace, /status=\{[^}]*current[^}]*briefDone/);
+  assert.match(workspace, /status\??:\s*ReactNode/);
+  assert.match(workspace, /\{status\}/);
+  assert.match(workspace, /current &&\s*libraryOpen &&\s*briefDone/);
   assert.match(workspace, /<RaceSidebarStatus race=\{raceData\(\)\}/);
   assert.equal((workspace.match(/<RaceSidebarStatus/g) ?? []).length, 1);
-  assert.match(workspace, /{status}/);
+  assert.match(workspace, /showStandingsDock=\{!libraryOpen\}/);
+  assert.match(app, /showStandingsDock && live && !analysisActive/);
   assert.match(workspace, /pinnedRows\.map\(\(row\) => renderRow\(row\)\)/);
   assert.match(workspace, /regularRows\.map\(\(row\) => renderRow\(row\)\)/);
   assert.match(workspace, /archivedRows\.map\(\(row\) => renderRow\(row, true\)\)/);
 });
 
-test("race switching immediately removes status while the existing brief authority re-arms", () => {
+test("race switching keeps one route and store authority", () => {
   const workspace = source("src/app/prototype/layline/races/RaceWorkspace.tsx");
   const store = source("src/components/layline/store.ts");
 
+  assert.match(workspace, /const raceId = mounted \? storeRaceId : initialRaceId/);
   assert.match(workspace, /const \[pendingRaceId, setPendingRaceId\] = useState<string \| null>\(null\)/);
   assert.match(workspace, /setPendingRaceId\(id\)/);
   assert.match(workspace, /pendingRaceId === null/);
-  assert.match(workspace, /storeRaceId === initialRaceId/);
+  assert.match(workspace, /router\.replace\(`\$\{pathname\}\?race=\$\{id\}`, \{ scroll: false \}\)/);
   assert.match(store, /selectRace:[\s\S]*briefDone: false/);
 });
 
@@ -120,9 +124,10 @@ test("the 220 pixel rail module stays inset, readable, focused and non-scrolling
   assert.match(css, /\.raceStatusSail\s*\{[^}]*min-width:\s*0/s);
   assert.match(css, /\.raceStatusReading\s*\{[^}]*white-space:\s*nowrap/s);
   assert.match(css, /\.raceStatusRow:focus-visible\s*\{/);
-  assert.match(css, /\.archive:has\(\.raceStatus\) \.archiveRows\s*\{[^}]*max-height:\s*none[^}]*overflow-y:\s*visible/s);
   assert.doesNotMatch(
     css.match(/\.raceStatus\s*\{([^}]*)\}/)?.[1] ?? "",
     /overflow-y:\s*(?:auto|scroll)/,
   );
+  assert.match(css, /\.rowShell:has\(\.raceStatus\)/);
+  assert.match(css, /\.raceStatusRows\s*\{[^}]*grid-template-columns:\s*repeat\(2,/s);
 });

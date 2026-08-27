@@ -26,7 +26,7 @@ const {
   raceAnalysisValidity,
 } = await import("../src/lib/layline/comparison.ts");
 const { comparisonViewModel } = await import("../src/lib/layline/comparison-view.ts");
-const { compareRangeForAnalyst, runTool } = await import(
+const { compareRangeForAnalyst, compareWireView, runTool } = await import(
   "../src/lib/layline/analyst/tools.ts"
 );
 const { maneuversOf, polarReview } = await import("../src/lib/layline/analytics.ts");
@@ -119,7 +119,7 @@ function assertPreflightRejection(
   assert.equal(track.vmgCoverageMicros, 0);
   const analyst = compareRangeForAnalyst(race, request);
   assert.ok("error" in analyst);
-  assert.deepEqual(JSON.parse(runTool(race, "compare_boats", toolInput(request))), analyst);
+  assert.deepEqual(JSON.parse(runTool(race, "compare_boats", toolInput(request))), compareWireView(analyst));
   const view = comparisonViewModel(race, comparison);
   assert.equal(view.status, comparison.status);
   assertFiniteOrNullTree(validity, "validity");
@@ -152,7 +152,7 @@ function assertPreflightAcceptance(race, request) {
   assert.equal(track.status, "ok");
   const analyst = compareRangeForAnalyst(race, request);
   assert.ok(!("error" in analyst));
-  assert.deepEqual(JSON.parse(runTool(race, "compare_boats", toolInput(request))), analyst);
+  assert.deepEqual(JSON.parse(runTool(race, "compare_boats", toolInput(request))), compareWireView(analyst));
   const view = comparisonViewModel(race, comparison);
   assert.equal(view.status, comparison.status);
   assertFiniteOrNullTree(validity, "validity");

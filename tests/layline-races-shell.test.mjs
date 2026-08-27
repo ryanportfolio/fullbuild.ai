@@ -58,18 +58,13 @@ test("the shell gives desktop width to replay and stacks its drawers around it o
   assert.match(stacked, /\.console\s*\{[\s\S]*height:\s*70vh/);
 });
 
-test("the selected live race stays a wide compact phone card so replay remains in the first viewport", () => {
+test("phone gives only the live selected card room for two standings columns", () => {
   const css = source("src/app/prototype/layline/races/races.module.css");
   const stacked = css.match(/@media \(max-width: 1199px\) \{([\s\S]*?)\n\}/)?.[1] ?? "";
 
-  assert.match(
-    stacked,
-    /\.rowShell\[data-current="true"\]\s*\{[\s\S]*width:\s*min\(316px,\s*calc\(100vw - 48px\)\)/,
-  );
-  assert.match(
-    stacked,
-    /\.raceStatusRows\s*\{[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/,
-  );
+  assert.match(stacked, /\.rowShell\s*\{[\s\S]*width:\s*168px/);
+  assert.match(stacked, /\.rowShell:has\(\.raceStatus\)\s*\{[\s\S]*width:\s*min\(316px/);
+  assert.match(stacked, /\.raceStatusRows\s*\{[\s\S]*grid-template-columns:\s*repeat\(2/);
   assert.match(stacked, /\.raceStatusRow\s*\{[\s\S]*min-height:\s*36px/);
 });
 

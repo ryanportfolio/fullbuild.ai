@@ -34,7 +34,7 @@ const {
   signedMeters,
   signedMetersPerSecond,
 } = await import("../src/lib/layline/format.ts");
-const { compareBoats, compareRangeForAnalyst, runTool } = await import(
+const { compareBoats, compareRangeForAnalyst, compareWireView, runTool } = await import(
   "../src/lib/layline/analyst/tools.ts"
 );
 const { RACES } = await import("../src/lib/layline/races.ts");
@@ -88,7 +88,7 @@ function assertAdapterBoundary(race, request) {
   const direct = compareRangeForAnalyst(race, request);
   assert.ok(!("error" in direct));
   const serialized = JSON.parse(runTool(race, "compare_boats", toolInput(request)));
-  assert.deepEqual(serialized, direct);
+  assert.deepEqual(serialized, compareWireView(direct));
   assert.deepEqual(direct.comparison, comparison);
   assertFiniteOrNullTree(comparison, "comparison");
   assertFiniteOrNullTree(view, "view");
@@ -100,7 +100,7 @@ function assertInvalidAdapterBoundary(race, request) {
   const comparison = compareRange(race, request);
   const direct = compareRangeForAnalyst(race, request);
   const serialized = JSON.parse(runTool(race, "compare_boats", toolInput(request)));
-  assert.deepEqual(serialized, direct);
+  assert.deepEqual(serialized, compareWireView(direct));
   assertFiniteOrNullTree(comparison, "comparison");
   assertFiniteOrNullTree(direct, "analyst");
   return { comparison, direct };

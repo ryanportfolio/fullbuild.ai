@@ -373,8 +373,8 @@ test("trace ownership stays out of physics and phone/reduced-motion surfaces ret
   const workspace = readFileSync(new URL("../src/app/prototype/layline/races/RaceWorkspace.tsx", import.meta.url), "utf8");
   assert.doesNotMatch(simulator, /traceLaylineInspection|cachedTraceLaylineInspection/);
   assert.match(app, /buildLaylineInspectionSurface/);
-  assert.match(app, /<Instruments race=\{race\} inspection=\{visibleInspection\}/);
-  assert.doesNotMatch(app, /live \? <Instruments/);
+  assert.match(app, /<Instruments race=\{race\} \/>/);
+  assert.match(app, /live && !analysisActive \? \(\s*<Instruments/);
   assert.match(workspace, /key=\{raceId\}/);
   assert.match(workspace, /inspectionCadenceBudget=\{inspectionCadenceBudget\}/);
   assert.match(app, /createInspectionCadence\(budget\)/);
