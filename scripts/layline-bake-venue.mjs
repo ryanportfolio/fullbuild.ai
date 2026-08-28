@@ -20,11 +20,12 @@
  * matters: interior seams between the cap, the relief grid and the walls are
  * invisible by construction. That is what lets this stay one draw call.
  *
- * LVN1 layout, little endian, after gunzip:
- *   u32 magic 0x314e564c  ("LVN1")
+ * LVN2 layout, little endian, after gunzip:
+ *   u32 magic 0x324e564c  ("LVN2")
  *   u32 vertCount, u32 indexCount, u32 flags (bit 0: 32-bit indices)
  *   i16 pos[vertCount*3]   world x (m), y (0.1 m units), z (m)
  *   u8  fade[vertCount]    0..255, the aFade the shore shader already takes
+ *   u8  shade[vertCount]   hillshade, 128 = flat colour, /128 multiplies it
  *   pad to 4 bytes
  *   u16|u32 idx[indexCount]
  *
@@ -58,8 +59,7 @@ const BASE_Y = -4; // wall foot, below every Gerstner trough
 const MIN_SHORE_H = 2.5; // a coast that reaches 0 anywhere cuts into islands
 const SIMPLIFY_NEAR = 10; // m tolerance inside 3 km
 const SIMPLIFY_FAR = 45; // m tolerance beyond 6 km
-const RELIEF_CELL = 140; // m, hill backdrop grid pitch
-const RELIEF_MIN_H = 7; // cells lower than this add nothing over the cap
+const RELIEF_CELL = 120; // m, terrain lattice pitch
 const DEM_ZOOM = 11;
 const ARC_STEP = (2 * Math.PI) / 180;
 
@@ -581,8 +581,32 @@ function earcut(ring) {
 
 const positions = [];
 const fades = [];
+const shades = [];
 const indices = [];
 const vertexIndex = new Map();
+
+/* The scene's one sun (sky.ts: elevation 22, azimuth 305 in the course frame),
+ * expressed in bake space (x, up, courseY). Form is baked as a per-vertex
+ * lambert against it: unlit flat colour reads as cardboard from any camera
+ * above the horizon, and the freeform rig goes there. */
+const SUN_EL = 22 * DEG;
+const SUN_AZ = 305 * DEG;
+const SUN = {
+  x: Math.cos(SUN_EL) * Math.sin(SUN_AZ),
+  h: Math.sin(SUN_EL),
+  y: Math.cos(SUN_EL) * Math.cos(SUN_AZ),
+};
+
+/** Shade byte for a surface normal: 128 = the flat colour, below is shadow
+ * side, above is sun side. The runtime multiplies the shore colour by
+ * shade/128. */
+function shadeOf(nx, nh, ny) {
+  const len = Math.hypot(nx, nh, ny) || 1;
+  const lambert = Math.max((nx * SUN.x + nh * SUN.h + ny * SUN.y) / len, 0);
+  return Math.max(0, Math.min(255, Math.round((0.62 + 0.55 * lambert) * 128)));
+}
+
+const SHADE_FLAT = shadeOf(0, 1, 0);
 
 function fadeAt(x, y) {
   const d = Math.hypot(x, y);
@@ -591,17 +615,18 @@ function fadeAt(x, y) {
   return s;
 }
 
-function vertex(x, h, y) {
+function vertex(x, h, y, shade = SHADE_FLAT) {
   /* quantise here so dedup sees the shipped coordinates */
   const qx = Math.round(x);
   const qh = Math.round(h * 10);
   const qz = Math.round(-y);
-  const key = `${qx},${qh},${qz}`;
+  const key = `${qx},${qh},${qz},${shade}`;
   let index = vertexIndex.get(key);
   if (index === undefined) {
     index = positions.length / 3;
     positions.push(qx, qh, qz);
     fades.push(Math.round(fadeAt(x, y) * 255));
+    shades.push(shade);
     vertexIndex.set(key, index);
   }
   return index;
@@ -611,29 +636,60 @@ function triangle(a, b, c) {
   if (a !== b && b !== c && a !== c) indices.push(a, b, c);
 }
 
+/** DEM with a little lateral smoothing, so one noisy sample cannot put a spike
+ * or a pit into the surface. */
+function smoothGround(x, y) {
+  const r = 75;
+  return (
+    (2 * groundAt(x, y) +
+      groundAt(x + r, y) +
+      groundAt(x - r, y) +
+      groundAt(x, y + r) +
+      groundAt(x, y - r)) /
+    6
+  );
+}
+
 /** Shore height at a ring vertex: the higher of the ground right there and a
- * short distance inland, so a bluff behind a beach still shapes the skyline.
- * Inland is the left side of the boundary direction. */
+ * short distance inland, so a bluff behind a beach still shapes the coast
+ * wall. Clamped well below the hills: the wall is the waterline face, the
+ * relief surface behind it owns the skyline. Inland is the left side of the
+ * boundary direction. */
 function shoreHeight(ring, i) {
   const a = ring[i];
   const b = ring[(i + 1) % ring.length];
   const dx = b.x - a.x;
   const dy = b.y - a.y;
   const len = Math.hypot(dx, dy) || 1;
-  const nx = (-dy / len) * 1;
-  const ny = (dx / len) * 1;
+  const nx = -dy / len;
+  const ny = dx / len;
   let h = groundAt(a.x, a.y);
-  for (const off of [60, 150]) {
+  for (const off of [40, 100]) {
     h = Math.max(h, groundAt(a.x + nx * off, a.y + ny * off));
   }
-  return Math.min(Math.max(h, MIN_SHORE_H), 500);
+  return Math.min(Math.max(h, MIN_SHORE_H), 90);
 }
 
+/**
+ * The land, as one surface in two parts that never fight:
+ *
+ * - a low cap per ring, its heights taken from the shoreline only and clamped
+ *   to 25 m, sealing every polygon so land is never hollow from above;
+ * - a continuous relief lattice over the interior, smoothed DEM heights, one
+ *   quad per cell whose four corners all sit on land, no skirts. Hills rise
+ *   out of the cap; where the terrain is lower than the coast bluff the cap
+ *   simply stays on top. A cell is emitted only above the seal band, so the
+ *   flats do not pay for a second surface.
+ *
+ * Both carry baked hillshade. The old build gave every relief cell a skirt to
+ * below the waterline and dropped low neighbours, which is where the hollow
+ * pyramid tents in the first review pass came from.
+ */
 function buildLand(rings) {
   let capTris = 0;
   let wallTris = 0;
   for (const ring of rings) {
-    const heights = ring.map((_, i) => shoreHeight(ring, i));
+    const heights = ring.map((_, i) => Math.min(shoreHeight(ring, i), 25));
     /* cap */
     const tris = earcut(ring);
     for (let t = 0; t < tris.length; t += 3) {
@@ -644,15 +700,20 @@ function buildLand(rings) {
       );
     }
     capTris += tris.length / 3;
-    /* wall down to below the waterline */
+    /* wall down to below the waterline, shaded by its outward face; land is on
+     * the left of the boundary direction, so outward is on the right */
     for (let i = 0; i < ring.length; i++) {
       const j = (i + 1) % ring.length;
       const a = ring[i];
       const b = ring[j];
-      const topA = vertex(a.x, heights[i], a.y);
-      const topB = vertex(b.x, heights[j], b.y);
-      const botA = vertex(a.x, BASE_Y, a.y);
-      const botB = vertex(b.x, BASE_Y, b.y);
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const shade = shadeOf(dy / len, 0, -dx / len);
+      const topA = vertex(a.x, heights[i], a.y, shade);
+      const topB = vertex(b.x, heights[j], b.y, shade);
+      const botA = vertex(a.x, BASE_Y, a.y, shade);
+      const botB = vertex(b.x, BASE_Y, b.y, shade);
       triangle(botA, botB, topB);
       triangle(botA, topB, topA);
       wallTris += 2;
@@ -662,26 +723,55 @@ function buildLand(rings) {
 }
 
 function buildRelief(rings) {
+  /* corner lattice over the whole fade disc */
+  const half = Math.ceil(FADE_END / RELIEF_CELL);
+  const N = 2 * half + 1;
+  const at = (i, j) => j * N + i;
+  const cornerX = (i) => (i - half) * RELIEF_CELL;
+  const cornerY = (j) => (j - half) * RELIEF_CELL;
+
+  const land = new Uint8Array(N * N);
+  const height = new Float32Array(N * N);
+  for (let j = 0; j < N; j++) {
+    for (let i = 0; i < N; i++) {
+      const x = cornerX(i);
+      const y = cornerY(j);
+      if (Math.hypot(x, y) > FADE_END + RELIEF_CELL) continue;
+      if (!insideLand(rings, x, y)) continue;
+      land[at(i, j)] = 1;
+      height[at(i, j)] = Math.min(Math.max(smoothGround(x, y), MIN_SHORE_H), 500);
+    }
+  }
+
+  /* per-corner shade from the lattice gradient; a water neighbour reads as
+   * height 0, which steepens the coastal slope a little, in the right
+   * direction */
+  const cornerShade = (i, j) => {
+    const sample = (ii, jj) =>
+      ii < 0 || jj < 0 || ii >= N || jj >= N ? 0 : height[at(ii, jj)];
+    const sx = (sample(i - 1, j) - sample(i + 1, j)) / (2 * RELIEF_CELL);
+    const sy = (sample(i, j - 1) - sample(i, j + 1)) / (2 * RELIEF_CELL);
+    return shadeOf(-sx, 1, -sy);
+  };
+
   let cells = 0;
-  const half = Math.ceil(CLIP_R / RELIEF_CELL);
-  for (let gy = -half; gy < half; gy++) {
-    for (let gx = -half; gx < half; gx++) {
-      const x0 = gx * RELIEF_CELL;
-      const y0 = gy * RELIEF_CELL;
-      const cx = x0 + RELIEF_CELL / 2;
-      const cy = y0 + RELIEF_CELL / 2;
+  for (let j = 0; j < N - 1; j++) {
+    for (let i = 0; i < N - 1; i++) {
+      const c00 = at(i, j);
+      const c10 = at(i + 1, j);
+      const c01 = at(i, j + 1);
+      const c11 = at(i + 1, j + 1);
+      if (!land[c00] || !land[c10] || !land[c01] || !land[c11]) continue;
+      const top = Math.max(height[c00], height[c10], height[c01], height[c11]);
+      /* under the cap's seal band everywhere: the cap already draws it */
+      if (top <= 4) continue;
+      const cx = cornerX(i) + RELIEF_CELL / 2;
+      const cy = cornerY(j) + RELIEF_CELL / 2;
       if (Math.hypot(cx, cy) > FADE_END) continue;
-      if (!insideLand(rings, cx, cy)) continue;
-      if (groundAt(cx, cy) < RELIEF_MIN_H) continue;
-      const corner = (x, y) => {
-        const land = insideLand(rings, x, y);
-        const h = land ? Math.max(groundAt(x, y), MIN_SHORE_H) : BASE_Y;
-        return vertex(x, Math.min(h, 500), y);
-      };
-      const v00 = corner(x0, y0);
-      const v10 = corner(x0 + RELIEF_CELL, y0);
-      const v01 = corner(x0, y0 + RELIEF_CELL);
-      const v11 = corner(x0 + RELIEF_CELL, y0 + RELIEF_CELL);
+      const v00 = vertex(cornerX(i), height[c00], cornerY(j), cornerShade(i, j));
+      const v10 = vertex(cornerX(i + 1), height[c10], cornerY(j), cornerShade(i + 1, j));
+      const v01 = vertex(cornerX(i), height[c01], cornerY(j + 1), cornerShade(i, j + 1));
+      const v11 = vertex(cornerX(i + 1), height[c11], cornerY(j + 1), cornerShade(i + 1, j + 1));
       triangle(v00, v10, v11);
       triangle(v00, v11, v01);
       cells += 1;
@@ -707,15 +797,17 @@ function buildBreakwaters(ways, coastlineIds) {
       const len = Math.hypot(dx, dy) || 1;
       const nx = (-dy / len) * HALF_W;
       const ny = (dx / len) * HALF_W;
-      const quad = (p, q, hp, hq) => {
-        const p0 = vertex(p.x, hp, p.y);
-        const q0 = vertex(q.x, hq, q.y);
-        triangle(p0, q0, vertex(q.x, BASE_Y, q.y));
-        triangle(p0, vertex(q.x, BASE_Y, q.y), vertex(p.x, BASE_Y, p.y));
+      const quad = (p, q, hp, hq, shade) => {
+        const p0 = vertex(p.x, hp, p.y, shade);
+        const q0 = vertex(q.x, hq, q.y, shade);
+        triangle(p0, q0, vertex(q.x, BASE_Y, q.y, shade));
+        triangle(p0, vertex(q.x, BASE_Y, q.y, shade), vertex(p.x, BASE_Y, p.y, shade));
       };
-      /* two side walls and a crest */
-      quad({ x: a.x + nx, y: a.y + ny }, { x: b.x + nx, y: b.y + ny }, HEIGHT, HEIGHT);
-      quad({ x: b.x - nx, y: b.y - ny }, { x: a.x - nx, y: a.y - ny }, HEIGHT, HEIGHT);
+      /* two side walls, each shaded by its own outward face, and a crest */
+      const sidePlus = shadeOf(-dy / len, 0, dx / len);
+      const sideMinus = shadeOf(dy / len, 0, -dx / len);
+      quad({ x: a.x + nx, y: a.y + ny }, { x: b.x + nx, y: b.y + ny }, HEIGHT, HEIGHT, sidePlus);
+      quad({ x: b.x - nx, y: b.y - ny }, { x: a.x - nx, y: a.y - ny }, HEIGHT, HEIGHT, sideMinus);
       const c0 = vertex(a.x + nx, HEIGHT, a.y + ny);
       const c1 = vertex(b.x + nx, HEIGHT, b.y + ny);
       const c2 = vertex(b.x - nx, HEIGHT, b.y - ny);
@@ -816,11 +908,12 @@ function writeAsset() {
   const vertCount = positions.length / 3;
   const use32 = vertCount > 65535;
   const posBytes = vertCount * 6;
-  const fadeBytes = vertCount;
-  const pad = (16 + posBytes + fadeBytes) % 4 === 0 ? 0 : 4 - ((16 + posBytes + fadeBytes) % 4);
+  const channelBytes = vertCount * 2; // fade + shade
+  const head = 16 + posBytes + channelBytes;
+  const pad = head % 4 === 0 ? 0 : 4 - (head % 4);
   const idxBytes = indices.length * (use32 ? 4 : 2);
-  const buffer = Buffer.alloc(16 + posBytes + fadeBytes + pad + idxBytes);
-  buffer.writeUInt32LE(0x314e564c, 0);
+  const buffer = Buffer.alloc(head + pad + idxBytes);
+  buffer.writeUInt32LE(0x324e564c, 0); // "LVN2"
   buffer.writeUInt32LE(vertCount, 4);
   buffer.writeUInt32LE(indices.length, 8);
   buffer.writeUInt32LE(use32 ? 1 : 0, 12);
@@ -831,6 +924,10 @@ function writeAsset() {
   }
   for (let i = 0; i < fades.length; i++) {
     buffer.writeUInt8(fades[i], at);
+    at += 1;
+  }
+  for (let i = 0; i < shades.length; i++) {
+    buffer.writeUInt8(shades[i], at);
     at += 1;
   }
   at += pad;
