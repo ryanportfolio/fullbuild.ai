@@ -56,10 +56,27 @@ const CLIP_R = 10500;
 const FADE_START = 6000;
 const FADE_END = 10000;
 const BASE_Y = -4; // wall foot, below every Gerstner trough
-const MIN_SHORE_H = 2.5; // a coast that reaches 0 anywhere cuts into islands
+/* z11 Terrarium is 64 m per sample and reads the whole working harbour as sea
+ * level: the profile out to the oil islands on bearing 30 is 0.0 m at every
+ * 100 m step. Wharf decks and island revetments here stand 4 to 7 m over MLLW,
+ * so the floor is the deck, not the water; at 2.5 m the near islands rendered
+ * as oil slicks lying on the surface. */
+const MIN_SHORE_H = 6;
 const SIMPLIFY_NEAR = 10; // m tolerance inside 3 km
 const SIMPLIFY_FAR = 45; // m tolerance beyond 6 km
-const RELIEF_CELL = 120; // m, terrain lattice pitch
+/* Fine lattice pitch, matched to the DEM's own 64 m sampling: at 120 m the
+ * bake threw away half of what the source knows, which is where the isolated
+ * cones came from. Flat blocks fall back to 2x pitch, see buildRelief. */
+const RELIEF_CELL = 60;
+const RELIEF_DETAIL = 3; // m of height range in a 2x2 block that earns fine cells
+const RELIEF_NEAR = 3200; // m, blocks nearer than this stay fine regardless
+const SPIKE_TOL = 40; // m a corner may stand over its neighbours' median
+const MIN_FEATURE_W = 34; // m; fingers thinner than this are pinched off
+const MIN_RING_AREA = 6000; // m^2
+const MIN_RING_ANGLE = 0.0035; // rad of mean width from the origin, about 6 px
+const MIN_RING_W = 14; // m, the floor that angle test relaxes to up close
+const BATTER_MIN = 8; // m of horizontal run on the shore face
+const BATTER_MAX = 18;
 const DEM_ZOOM = 11;
 const ARC_STEP = (2 * Math.PI) / 180;
 
@@ -498,10 +515,107 @@ function simplify(ring) {
   return out;
 }
 
-/** Even-odd point in polygon over a set of rings. */
-function insideLand(rings, x, y) {
+function perimeter(ring) {
+  let p = 0;
+  for (let i = 0; i < ring.length; i++) {
+    const a = ring[i];
+    const b = ring[(i + 1) % ring.length];
+    p += Math.hypot(b.x - a.x, b.y - a.y);
+  }
+  return p;
+}
+
+/** Distance from p to segment a->b. */
+function pointSegDist(p, a, b) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy;
+  const t = len2 > 0 ? Math.min(Math.max(((p.x - a.x) * dx + (p.y - a.y) * dy) / len2, 0), 1) : 0;
+  return Math.hypot(p.x - (a.x + dx * t), p.y - (a.y + dy * t));
+}
+
+/** The narrowest feature worth keeping at this range, on the same distance
+ * schedule the simplify tolerance already uses: what is a readable spit at
+ * 700 m is a torn hairline at 5 km. */
+function featureWidth(x, y) {
+  const t = Math.min(Math.max((Math.hypot(x, y) - 700) / 4300, 0), 1);
+  return MIN_FEATURE_W * (0.55 + 0.95 * t);
+}
+
+/** Cut a ring at every pinch narrower than the local feature width. Both halves
+ * keep the pinch pair, so a split where both halves survive is invisible; the
+ * point is that a finger hanging off a body by a hair becomes its own ring and
+ * can then be measured and dropped on its own merits. */
+function splitPinches(ring, depth = 0) {
+  const n = ring.length;
+  if (n < 5 || depth > 16) return [ring];
+  let best = null;
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 2; j < n; j++) {
+      if (n - (j - i) < 3) continue;
+      const a = ring[i];
+      const b = ring[j];
+      const d = Math.hypot(a.x - b.x, a.y - b.y);
+      const limit = featureWidth((a.x + b.x) / 2, (a.y + b.y) / 2);
+      if (d < limit && (best === null || d / limit < best.score)) {
+        best = { i, j, score: d / limit };
+      }
+    }
+  }
+  if (best === null) return [ring];
+  const head = ring.slice(best.i, best.j + 1);
+  const tail = ring.slice(best.j).concat(ring.slice(0, best.i + 1));
+  return splitPinches(head, depth + 1).concat(splitPinches(tail, depth + 1));
+}
+
+/** A ring worth drawing: real area, and a mean width (2A/P) that still spans
+ * pixels at its own range.
+ *
+ * The width test is angular rather than metric on purpose. A metric floor
+ * cannot tell a 20 m wide, 1.9 km long training wall at 4.4 km, which is a
+ * structure and reads as one, from a 14 m wide flake at 7.1 km, which is three
+ * pixels; measured earlier, a metric filter threw away the first and with it
+ * the only land on the up-course bearing. */
+function substantial(ring) {
+  if (ring.length < 3) return false;
+  /* Splitting at a pinch also cuts the mouth off an inlet narrower than the
+   * feature width. That lobe comes back wound clockwise, because it is water,
+   * and the land ring keeps the chord across the mouth. */
+  const area = signedArea(ring);
+  if (area < MIN_RING_AREA) return false;
+  let cx = 0;
+  let cy = 0;
+  for (const p of ring) {
+    cx += p.x / ring.length;
+    cy += p.y / ring.length;
+  }
+  const width = (2 * area) / (perimeter(ring) || 1);
+  return width >= Math.max(MIN_RING_W, MIN_RING_ANGLE * Math.hypot(cx, cy));
+}
+
+/** Even-odd point in polygon over a set of rings, each carrying a bounding box
+ * so the relief lattice's hundred thousand corner tests skip most rings. */
+function ringBoxes(rings) {
+  return rings.map((ring) => {
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (const p of ring) {
+      if (p.x < minX) minX = p.x;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.y > maxY) maxY = p.y;
+    }
+    return { ring, minX, maxX, minY, maxY };
+  });
+}
+
+function insideLand(boxes, x, y) {
   let hit = false;
-  for (const ring of rings) {
+  for (const box of boxes) {
+    if (y < box.minY || y > box.maxY || x > box.maxX) continue;
+    const ring = box.ring;
     for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
       const a = ring[i];
       const b = ring[j];
@@ -636,20 +750,6 @@ function triangle(a, b, c) {
   if (a !== b && b !== c && a !== c) indices.push(a, b, c);
 }
 
-/** DEM with a little lateral smoothing, so one noisy sample cannot put a spike
- * or a pit into the surface. */
-function smoothGround(x, y) {
-  const r = 75;
-  return (
-    (2 * groundAt(x, y) +
-      groundAt(x + r, y) +
-      groundAt(x - r, y) +
-      groundAt(x, y + r) +
-      groundAt(x, y - r)) /
-    6
-  );
-}
-
 /** Shore height at a ring vertex: the higher of the ground right there and a
  * short distance inland, so a bluff behind a beach still shapes the coast
  * wall. Clamped well below the hills: the wall is the waterline face, the
@@ -671,59 +771,143 @@ function shoreHeight(ring, i) {
 }
 
 /**
- * The land, as one surface in two parts that never fight:
+ * Pull a ring inward along its own angle bisectors, by `want` metres or by as
+ * much as the local feature width allows, whichever is less. The offset ring is
+ * where the land surface starts; the original ring stays put as the waterline,
+ * so the batter between them is a slope carved out of the land rather than any
+ * new ground pushed into the sea.
+ */
+function insetRing(ring, wants) {
+  const n = ring.length;
+  const out = [];
+  const runs = [];
+  for (let i = 0; i < n; i++) {
+    const p = ring[i];
+    const a = ring[(i - 1 + n) % n];
+    const b = ring[(i + 1) % n];
+    const l0 = Math.hypot(p.x - a.x, p.y - a.y) || 1;
+    const l1 = Math.hypot(b.x - p.x, b.y - p.y) || 1;
+    /* land is on the left of the boundary direction, so inward is the left
+     * normal; the bisector is the two incident edge normals summed */
+    let nx = -(p.y - a.y) / l0 - (b.y - p.y) / l1;
+    let ny = (p.x - a.x) / l0 + (b.x - p.x) / l1;
+    const nl = Math.hypot(nx, ny);
+    if (nl < 1e-6) {
+      out.push({ x: p.x, y: p.y });
+      runs.push(0);
+      continue;
+    }
+    nx /= nl;
+    ny /= nl;
+    let clearance = Infinity;
+    for (let j = 0; j < n; j++) {
+      const k = (j + 1) % n;
+      if (j === i || k === i) continue; // the two edges that meet at p
+      clearance = Math.min(clearance, pointSegDist(p, ring[j], ring[k]));
+    }
+    const run = Math.min(wants[i], 0.3 * clearance, 0.4 * Math.min(l0, l1));
+    out.push({ x: p.x + nx * run, y: p.y + ny * run });
+    runs.push(run);
+  }
+  return { ring: out, runs };
+}
+
+/**
+ * The land, as one surface in three parts that never fight:
  *
- * - a low cap per ring, its heights taken from the shoreline only and clamped
- *   to 25 m, sealing every polygon so land is never hollow from above;
- * - a continuous relief lattice over the interior, smoothed DEM heights, one
- *   quad per cell whose four corners all sit on land, no skirts. Hills rise
- *   out of the cap; where the terrain is lower than the coast bluff the cap
- *   simply stays on top. A cell is emitted only above the seal band, so the
- *   flats do not pay for a second surface.
+ * - the waterline: the OSM ring itself, held at y = 0, with a skirt dropped to
+ *   BASE_Y so the sea never sees under the coast;
+ * - the batter: a sloped face from that waterline up and inward to the crest,
+ *   carrying its own lambert, which is what puts an edge and a value break
+ *   where land meets water instead of a cut-out sitting on a plate;
+ * - a cap over the inset crest ring, heights from the shoreline only and
+ *   clamped to 25 m, sealing every polygon so land is never hollow from above.
  *
- * Both carry baked hillshade. The old build gave every relief cell a skirt to
- * below the waterline and dropped low neighbours, which is where the hollow
- * pyramid tents in the first review pass came from.
+ * The relief lattice (buildRelief) rises out of the cap. All of it carries
+ * baked hillshade. The old build gave every relief cell a skirt to below the
+ * waterline and dropped low neighbours, which is where the hollow pyramid tents
+ * in the first review pass came from; this one has no skirts below the crest.
  */
 function buildLand(rings) {
   let capTris = 0;
   let wallTris = 0;
+  let flat = 0;
   for (const ring of rings) {
+    const n = ring.length;
     const heights = ring.map((_, i) => Math.min(shoreHeight(ring, i), 25));
-    /* cap */
-    const tris = earcut(ring);
+    /* a low shore gets a wide gentle run, a bluff a short steep one */
+    const wants = heights.map((h) => Math.min(Math.max(1.5 * h, BATTER_MIN), BATTER_MAX));
+    let crest = insetRing(ring, wants);
+    const area = signedArea(ring);
+    if (signedArea(crest.ring) < 0.25 * area) {
+      /* the offset folded through itself; this ring keeps a vertical face */
+      crest = { ring: ring.map((p) => ({ x: p.x, y: p.y })), runs: new Array(n).fill(0) };
+      flat += 1;
+    }
+    /* cap over the crest ring */
+    const tris = earcut(crest.ring);
     for (let t = 0; t < tris.length; t += 3) {
       triangle(
-        vertex(ring[tris[t]].x, heights[tris[t]], ring[tris[t]].y),
-        vertex(ring[tris[t + 1]].x, heights[tris[t + 1]], ring[tris[t + 1]].y),
-        vertex(ring[tris[t + 2]].x, heights[tris[t + 2]], ring[tris[t + 2]].y),
+        vertex(crest.ring[tris[t]].x, heights[tris[t]], crest.ring[tris[t]].y),
+        vertex(crest.ring[tris[t + 1]].x, heights[tris[t + 1]], crest.ring[tris[t + 1]].y),
+        vertex(crest.ring[tris[t + 2]].x, heights[tris[t + 2]], crest.ring[tris[t + 2]].y),
       );
     }
     capTris += tris.length / 3;
-    /* wall down to below the waterline, shaded by its outward face; land is on
-     * the left of the boundary direction, so outward is on the right */
-    for (let i = 0; i < ring.length; i++) {
-      const j = (i + 1) % ring.length;
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
       const a = ring[i];
       const b = ring[j];
       const dx = b.x - a.x;
       const dy = b.y - a.y;
       const len = Math.hypot(dx, dy) || 1;
-      const shade = shadeOf(dy / len, 0, -dx / len);
-      const topA = vertex(a.x, heights[i], a.y, shade);
-      const topB = vertex(b.x, heights[j], b.y, shade);
-      const botA = vertex(a.x, BASE_Y, a.y, shade);
-      const botB = vertex(b.x, BASE_Y, b.y, shade);
-      triangle(botA, botB, topB);
-      triangle(botA, topB, topA);
-      wallTris += 2;
+      /* outward horizontal is the right normal of the boundary direction */
+      const ox = dy / len;
+      const oy = -dx / len;
+      /* batter: the face spans the along-shore edge and the up-and-inward run,
+       * so its normal leans out by the run and up by the rise */
+      const rise = (heights[i] + heights[j]) / 2;
+      const run = (crest.runs[i] + crest.runs[j]) / 2;
+      const faceShade = shadeOf(ox * rise, run, oy * rise);
+      const wetShade = shadeOf(ox, 0, oy);
+      const capA = vertex(crest.ring[i].x, heights[i], crest.ring[i].y, faceShade);
+      const capB = vertex(crest.ring[j].x, heights[j], crest.ring[j].y, faceShade);
+      const seaA = vertex(a.x, 0, a.y, faceShade);
+      const seaB = vertex(b.x, 0, b.y, faceShade);
+      triangle(seaA, seaB, capB);
+      triangle(seaA, capB, capA);
+      /* skirt, only ever seen through a wave trough */
+      const botA = vertex(a.x, BASE_Y, a.y, wetShade);
+      const botB = vertex(b.x, BASE_Y, b.y, wetShade);
+      triangle(botA, botB, vertex(b.x, 0, b.y, wetShade));
+      triangle(botA, vertex(b.x, 0, b.y, wetShade), vertex(a.x, 0, a.y, wetShade));
+      wallTris += 4;
     }
   }
-  console.log(`land: ${rings.length} rings, ${capTris} cap tris, ${wallTris} wall tris`);
+  console.log(
+    `land: ${rings.length} rings, ${capTris} cap tris, ${wallTris} shore tris, ${flat} rings kept vertical`,
+  );
 }
 
-function buildRelief(rings) {
-  /* corner lattice over the whole fade disc */
+/**
+ * The terrain surface, as a restricted quadtree over two pitches.
+ *
+ * The lattice is built at RELIEF_CELL, the DEM's own resolution, then 2x2
+ * blocks of it collapse back to one quad wherever the block is entirely on
+ * land and its nine corners span less than RELIEF_DETAIL of height. A coarse
+ * block that borders a fine one is emitted as a fan through its centre that
+ * picks up the shared edge midpoints, so the two pitches meet without a
+ * T-junction and no cell ever shows sky through a crack.
+ *
+ * Heights are filtered in lattice space rather than by sampling the DEM five
+ * times per corner. z11 Terrarium carries buildings and bridge decks as single
+ * -sample spikes; unfiltered, one of those becomes a 140 m cone standing alone
+ * on flat ground, which is what the round0 skyline was made of. Each corner is
+ * first clamped to its neighbours' median plus SPIKE_TOL, then two binomial
+ * passes run over land corners only, so a coastal height is never dragged down
+ * by the sea on the other side of the shoreline.
+ */
+function buildRelief(boxes) {
   const half = Math.ceil(FADE_END / RELIEF_CELL);
   const N = 2 * half + 1;
   const at = (i, j) => j * N + i;
@@ -737,85 +921,306 @@ function buildRelief(rings) {
       const x = cornerX(i);
       const y = cornerY(j);
       if (Math.hypot(x, y) > FADE_END + RELIEF_CELL) continue;
-      if (!insideLand(rings, x, y)) continue;
+      if (!insideLand(boxes, x, y)) continue;
       land[at(i, j)] = 1;
-      height[at(i, j)] = Math.min(Math.max(smoothGround(x, y), MIN_SHORE_H), 500);
+      height[at(i, j)] = Math.min(Math.max(groundAt(x, y), 0), 500);
     }
   }
 
-  /* per-corner shade from the lattice gradient; a water neighbour reads as
-   * height 0, which steepens the coastal slope a little, in the right
-   * direction */
-  const cornerShade = (i, j) => {
-    const sample = (ii, jj) =>
-      ii < 0 || jj < 0 || ii >= N || jj >= N ? 0 : height[at(ii, jj)];
-    const sx = (sample(i - 1, j) - sample(i + 1, j)) / (2 * RELIEF_CELL);
-    const sy = (sample(i, j - 1) - sample(i, j + 1)) / (2 * RELIEF_CELL);
-    return shadeOf(-sx, 1, -sy);
+  const OFF = [
+    [-1, -1], [0, -1], [1, -1],
+    [-1, 0], [1, 0],
+    [-1, 1], [0, 1], [1, 1],
+  ];
+  const neighbours = (i, j, into) => {
+    into.length = 0;
+    for (const [di, dj] of OFF) {
+      const ii = i + di;
+      const jj = j + dj;
+      if (ii < 0 || jj < 0 || ii >= N || jj >= N) continue;
+      const c = at(ii, jj);
+      if (land[c]) into.push(height[c]);
+    }
+    return into;
   };
 
-  let cells = 0;
-  for (let j = 0; j < N - 1; j++) {
-    for (let i = 0; i < N - 1; i++) {
-      const c00 = at(i, j);
-      const c10 = at(i + 1, j);
-      const c01 = at(i, j + 1);
-      const c11 = at(i + 1, j + 1);
-      if (!land[c00] || !land[c10] || !land[c01] || !land[c11]) continue;
-      const top = Math.max(height[c00], height[c10], height[c01], height[c11]);
-      /* under the cap's seal band everywhere: the cap already draws it */
-      if (top <= 4) continue;
-      const cx = cornerX(i) + RELIEF_CELL / 2;
-      const cy = cornerY(j) + RELIEF_CELL / 2;
-      if (Math.hypot(cx, cy) > FADE_END) continue;
-      const v00 = vertex(cornerX(i), height[c00], cornerY(j), cornerShade(i, j));
-      const v10 = vertex(cornerX(i + 1), height[c10], cornerY(j), cornerShade(i + 1, j));
-      const v01 = vertex(cornerX(i), height[c01], cornerY(j + 1), cornerShade(i, j + 1));
-      const v11 = vertex(cornerX(i + 1), height[c11], cornerY(j + 1), cornerShade(i + 1, j + 1));
-      triangle(v00, v10, v11);
-      triangle(v00, v11, v01);
-      cells += 1;
+  let spikes = 0;
+  const bag = [];
+  const raw = height.slice();
+  for (let j = 0; j < N; j++) {
+    for (let i = 0; i < N; i++) {
+      const c = at(i, j);
+      if (!land[c]) continue;
+      const ns = neighbours(i, j, bag);
+      if (ns.length < 5) continue;
+      ns.sort((a, b) => a - b);
+      const med = ns[ns.length >> 1];
+      if (raw[c] - med > SPIKE_TOL) {
+        height[c] = med + SPIKE_TOL;
+        spikes += 1;
+      } else if (med - raw[c] > SPIKE_TOL) {
+        height[c] = med - SPIKE_TOL;
+        spikes += 1;
+      }
     }
   }
-  console.log(`relief: ${cells} cells`);
+  for (let pass = 0; pass < 2; pass++) {
+    const src = height.slice();
+    for (let j = 0; j < N; j++) {
+      for (let i = 0; i < N; i++) {
+        const c = at(i, j);
+        if (!land[c]) continue;
+        let sum = 4 * src[c];
+        let weight = 4;
+        for (const [di, dj, w] of [
+          [-1, 0, 2], [1, 0, 2], [0, -1, 2], [0, 1, 2],
+          [-1, -1, 1], [1, -1, 1], [-1, 1, 1], [1, 1, 1],
+        ]) {
+          const ii = i + di;
+          const jj = j + dj;
+          if (ii < 0 || jj < 0 || ii >= N || jj >= N) continue;
+          const n = at(ii, jj);
+          if (!land[n]) continue;
+          sum += w * src[n];
+          weight += w;
+        }
+        height[c] = sum / weight;
+      }
+    }
+  }
+  for (let c = 0; c < height.length; c++) {
+    if (land[c] && height[c] < MIN_SHORE_H) height[c] = MIN_SHORE_H;
+  }
+
+  /* per-corner shade from the filtered lattice gradient; a water neighbour
+   * reads as height 0, which steepens the coastal slope a little, in the right
+   * direction */
+  const shadeCache = new Int16Array(N * N).fill(-1);
+  const cornerShade = (i, j) => {
+    const c = at(i, j);
+    if (shadeCache[c] >= 0) return shadeCache[c];
+    const sample = (ii, jj) => (ii < 0 || jj < 0 || ii >= N || jj >= N ? 0 : height[at(ii, jj)]);
+    const sx = (sample(i - 1, j) - sample(i + 1, j)) / (2 * RELIEF_CELL);
+    const sy = (sample(i, j - 1) - sample(i, j + 1)) / (2 * RELIEF_CELL);
+    const s = shadeOf(-sx, 1, -sy);
+    shadeCache[c] = s;
+    return s;
+  };
+
+  const corner = (i, j) => vertex(cornerX(i), height[at(i, j)], cornerY(j), cornerShade(i, j));
+
+  /* Blocks are 2x2 fine cells. A block only exists where all nine of its
+   * corners are land, which is also the only place a coarse quad could be
+   * legal; everything else is left to the fine cells, whose own four-corner
+   * test resolves the coastline at RELIEF_CELL. */
+  const B = (N - 1) >> 1;
+  const blockAt = (bi, bj) => bj * B + bi;
+  const blockFine = new Uint8Array(B * B);
+  const blockDraw = new Uint8Array(B * B);
+  for (let bj = 0; bj < B; bj++) {
+    for (let bi = 0; bi < B; bi++) {
+      const i0 = bi * 2;
+      const j0 = bj * 2;
+      let all = true;
+      let lo = Infinity;
+      let hi = -Infinity;
+      for (let dj = 0; dj <= 2 && all; dj++) {
+        for (let di = 0; di <= 2; di++) {
+          const c = at(i0 + di, j0 + dj);
+          if (!land[c]) {
+            all = false;
+            break;
+          }
+          if (height[c] < lo) lo = height[c];
+          if (height[c] > hi) hi = height[c];
+        }
+      }
+      const b = blockAt(bi, bj);
+      const cx = cornerX(i0 + 1);
+      const cy = cornerY(j0 + 1);
+      const r = Math.hypot(cx, cy);
+      if (r > FADE_END) continue;
+      blockDraw[b] = 1;
+      /* the cap already seals everything at or under the crest band, so a
+       * block that never rises above it draws nothing at all */
+      if (all && hi <= MIN_SHORE_H + 1.5) {
+        blockDraw[b] = 0;
+        continue;
+      }
+      blockFine[b] = !all || hi - lo > RELIEF_DETAIL || r < RELIEF_NEAR ? 1 : 0;
+    }
+  }
+  const fineNeighbour = (bi, bj) => {
+    if (bi < 0 || bj < 0 || bi >= B || bj >= B) return false;
+    const b = blockAt(bi, bj);
+    return blockDraw[b] === 1 && blockFine[b] === 1;
+  };
+
+  let coarse = 0;
+  let fine = 0;
+  let fans = 0;
+  for (let bj = 0; bj < B; bj++) {
+    for (let bi = 0; bi < B; bi++) {
+      const b = blockAt(bi, bj);
+      if (!blockDraw[b]) continue;
+      const i0 = bi * 2;
+      const j0 = bj * 2;
+      if (blockFine[b]) {
+        for (let dj = 0; dj < 2; dj++) {
+          for (let di = 0; di < 2; di++) {
+            const i = i0 + di;
+            const j = j0 + dj;
+            const c00 = at(i, j);
+            const c10 = at(i + 1, j);
+            const c01 = at(i, j + 1);
+            const c11 = at(i + 1, j + 1);
+            if (!land[c00] || !land[c10] || !land[c01] || !land[c11]) continue;
+            const hi = Math.max(height[c00], height[c10], height[c01], height[c11]);
+            if (hi <= MIN_SHORE_H + 1.5) continue;
+            const v00 = corner(i, j);
+            const v10 = corner(i + 1, j);
+            const v01 = corner(i, j + 1);
+            const v11 = corner(i + 1, j + 1);
+            triangle(v00, v10, v11);
+            triangle(v00, v11, v01);
+            fine += 1;
+          }
+        }
+        continue;
+      }
+      /* coarse: one quad, unless a finer neighbour has put a vertex on a
+       * shared edge, in which case fan through the centre and pick it up */
+      const edges = [
+        fineNeighbour(bi, bj - 1),
+        fineNeighbour(bi + 1, bj),
+        fineNeighbour(bi, bj + 1),
+        fineNeighbour(bi - 1, bj),
+      ];
+      if (!edges[0] && !edges[1] && !edges[2] && !edges[3]) {
+        const v00 = corner(i0, j0);
+        const v20 = corner(i0 + 2, j0);
+        const v02 = corner(i0, j0 + 2);
+        const v22 = corner(i0 + 2, j0 + 2);
+        triangle(v00, v20, v22);
+        triangle(v00, v22, v02);
+        coarse += 1;
+        continue;
+      }
+      const loop = [];
+      loop.push(corner(i0, j0));
+      if (edges[0]) loop.push(corner(i0 + 1, j0));
+      loop.push(corner(i0 + 2, j0));
+      if (edges[1]) loop.push(corner(i0 + 2, j0 + 1));
+      loop.push(corner(i0 + 2, j0 + 2));
+      if (edges[2]) loop.push(corner(i0 + 1, j0 + 2));
+      loop.push(corner(i0, j0 + 2));
+      if (edges[3]) loop.push(corner(i0, j0 + 1));
+      const mid = corner(i0 + 1, j0 + 1);
+      for (let k = 0; k < loop.length; k++) {
+        triangle(mid, loop[k], loop[(k + 1) % loop.length]);
+      }
+      fans += 1;
+    }
+  }
+  console.log(
+    `relief: ${fine} fine cells (${RELIEF_CELL} m), ${coarse} coarse + ${fans} stitched blocks (${
+      2 * RELIEF_CELL
+    } m), ${spikes} DEM spikes clamped`,
+  );
 }
 
-/** Breakwater ways that are not part of the coastline: a low prism per way. */
+/**
+ * Breakwater ways that are not part of the coastline, as rubble mounds rather
+ * than flat ribbons.
+ *
+ * The old build extruded a box 36 m wide and 4 m tall with two vertical sides
+ * and a flat lid. Seen from a kilometre up-course that is a paper strip lying
+ * on the water beside the land it belongs to, which is most of what the round0
+ * pass read as detached slivers. A mound has two battered flanks that take
+ * their own lambert, so the sunward flank, the crest and the shaded flank are
+ * three values, and its foot sits in the shader's waterline band the way a
+ * structure the sea breaks over should.
+ */
 function buildBreakwaters(ways, coastlineIds) {
-  const HEIGHT = 4;
-  const HALF_W = 18;
+  const HEIGHT = 5;
+  const BASE_HALF = 30;
+  const CREST_HALF = 9;
   let built = 0;
   for (const way of ways) {
     if (coastlineIds.has(way.id)) continue;
     const line = way.geometry.map((g) => project(g.lat, g.lon)).filter(inside);
     if (line.length < 2) continue;
-    for (let i = 0; i < line.length - 1; i++) {
-      const a = line[i];
-      const b = line[i + 1];
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
+    /* per-vertex normal, averaged over the incident segments, so a bend in the
+     * mole does not open a notch in the flank */
+    const normals = line.map((_, i) => {
+      let nx = 0;
+      let ny = 0;
+      for (const [p, q] of [
+        [line[i - 1], line[i]],
+        [line[i], line[i + 1]],
+      ]) {
+        if (!p || !q) continue;
+        const dx = q.x - p.x;
+        const dy = q.y - p.y;
+        const len = Math.hypot(dx, dy) || 1;
+        nx += -dy / len;
+        ny += dx / len;
+      }
+      const len = Math.hypot(nx, ny) || 1;
+      return { x: nx / len, y: ny / len };
+    });
+    const strip = (halfA, hA, halfB, hB, side, shade) => {
+      for (let i = 0; i < line.length - 1; i++) {
+        const p = line[i];
+        const q = line[i + 1];
+        const np = normals[i];
+        const nq = normals[i + 1];
+        const a0 = vertex(p.x + np.x * halfA * side, hA, p.y + np.y * halfA * side, shade(i));
+        const b0 = vertex(q.x + nq.x * halfA * side, hA, q.y + nq.y * halfA * side, shade(i));
+        const a1 = vertex(p.x + np.x * halfB * side, hB, p.y + np.y * halfB * side, shade(i));
+        const b1 = vertex(q.x + nq.x * halfB * side, hB, q.y + nq.y * halfB * side, shade(i));
+        triangle(a0, b0, b1);
+        triangle(a0, b1, a1);
+      }
+    };
+    /* a flank normal leans out by the rise and up by the run */
+    const flankShade = (i, side) => {
+      const p = line[Math.min(i, line.length - 2)];
+      const q = line[Math.min(i, line.length - 2) + 1];
+      const dx = q.x - p.x;
+      const dy = q.y - p.y;
       const len = Math.hypot(dx, dy) || 1;
-      const nx = (-dy / len) * HALF_W;
-      const ny = (dx / len) * HALF_W;
-      const quad = (p, q, hp, hq, shade) => {
-        const p0 = vertex(p.x, hp, p.y, shade);
-        const q0 = vertex(q.x, hq, q.y, shade);
-        triangle(p0, q0, vertex(q.x, BASE_Y, q.y, shade));
-        triangle(p0, vertex(q.x, BASE_Y, q.y, shade), vertex(p.x, BASE_Y, p.y, shade));
-      };
-      /* two side walls, each shaded by its own outward face, and a crest */
-      const sidePlus = shadeOf(-dy / len, 0, dx / len);
-      const sideMinus = shadeOf(dy / len, 0, -dx / len);
-      quad({ x: a.x + nx, y: a.y + ny }, { x: b.x + nx, y: b.y + ny }, HEIGHT, HEIGHT, sidePlus);
-      quad({ x: b.x - nx, y: b.y - ny }, { x: a.x - nx, y: a.y - ny }, HEIGHT, HEIGHT, sideMinus);
-      const c0 = vertex(a.x + nx, HEIGHT, a.y + ny);
-      const c1 = vertex(b.x + nx, HEIGHT, b.y + ny);
-      const c2 = vertex(b.x - nx, HEIGHT, b.y - ny);
-      const c3 = vertex(a.x - nx, HEIGHT, a.y - ny);
-      triangle(c0, c1, c2);
-      triangle(c0, c2, c3);
+      const ox = ((-dy / len) * side) / 1;
+      const oy = ((dx / len) * side) / 1;
+      return shadeOf(ox * HEIGHT, BASE_HALF - CREST_HALF, oy * HEIGHT);
+    };
+    for (const side of [1, -1]) {
+      /* skirt below the waterline, then the flank up to the crest */
+      strip(BASE_HALF, BASE_Y, BASE_HALF, 0, side, (i) => flankShade(i, side));
+      strip(BASE_HALF, 0, CREST_HALF, HEIGHT, side, (i) => flankShade(i, side));
+    }
+    strip(CREST_HALF, HEIGHT, -CREST_HALF, HEIGHT, 1, () => SHADE_FLAT);
+    /* close both ends so the mound is never seen through */
+    for (const at of [0, line.length - 1]) {
+      const p = line[at];
+      const n = normals[at];
+      const cap = (half, h) => vertex(p.x + n.x * half, h, p.y + n.y * half, SHADE_FLAT);
+      const b0 = cap(BASE_HALF, 0);
+      const b1 = cap(-BASE_HALF, 0);
+      const c0 = cap(CREST_HALF, HEIGHT);
+      const c1 = cap(-CREST_HALF, HEIGHT);
+      triangle(b0, b1, c1);
+      triangle(b0, c1, c0);
     }
     built += 1;
+    if (process.env.BAKE_DEBUG) {
+      const mid = line[line.length >> 1];
+      console.log(
+        `  breakwater ${line.length} pts, mid r=${Math.round(Math.hypot(mid.x, mid.y))} (${Math.round(
+          mid.x,
+        )},${Math.round(mid.y)})`,
+      );
+    }
   }
   console.log(`breakwaters: ${built} ways`);
 }
@@ -1044,8 +1449,32 @@ rings = rings
   .filter(Boolean)
   .map(simplify)
   .filter((ring) => ring.length >= 3 && Math.abs(signedArea(ring)) > 400);
+const beforeSlivers = rings.length;
+/* Douglas-Peucker on a spit pulls its two sides together, so the sliver filter
+ * has to run after simplification, not before it. */
+rings = rings.flatMap((ring) => splitPinches(ring));
+if (process.env.BAKE_DEBUG) {
+  for (const ring of rings) {
+    if (substantial(ring)) continue;
+    const area = signedArea(ring);
+    let cx = 0;
+    let cy = 0;
+    for (const p of ring) {
+      cx += p.x / ring.length;
+      cy += p.y / ring.length;
+    }
+    console.log(
+      `  dropped n=${ring.length} area=${Math.round(area)} width=${(
+        (2 * area) / perimeter(ring)
+      ).toFixed(1)} at r=${Math.round(Math.hypot(cx, cy))} (${Math.round(cx)},${Math.round(cy)})`,
+    );
+  }
+}
+rings = rings.filter(substantial);
 const totalVerts = rings.reduce((s, r) => s + r.length, 0);
-console.log(`rings: ${rings.length} land rings, ${totalVerts} verts after simplify`);
+console.log(
+  `rings: ${rings.length} land rings, ${totalVerts} verts after simplify and sliver filter (${beforeSlivers} before)`,
+);
 
 /* coast distance by bearing, to sanity-check the course window */
 const report = [];
@@ -1073,7 +1502,7 @@ console.log(`coast distance by course bearing (m): ${report.join(" ")}`);
 
 writeDebugSvg(rings);
 buildLand(rings);
-buildRelief(rings);
+buildRelief(ringBoxes(rings));
 buildBreakwaters(breakwaterWays, coastlineIds);
 buildCranes(craneNodes.concat(craneWays), rings);
 writeAsset();
