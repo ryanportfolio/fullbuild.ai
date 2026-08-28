@@ -322,10 +322,16 @@ function shorelineGeometry(): BufferGeometry {
  * is a background rather than an object: nothing has to be sorted against it
  * and the water can run out past it without punching a hole.
  */
-export function SkyDome() {
+export function SkyDome({ proceduralShore = true }: { proceduralShore?: boolean }) {
   const sun = useMemo(sunDirection, []);
-  const shore = useMemo(shorelineGeometry, []);
-  useEffect(() => () => shore.dispose(), [shore]);
+  /* Venue races carry a baked real coast instead (VenueShore); the invented
+   * arc would stand in front of it. Building it is skipped, not just hidden,
+   * so the geometry never exists on those races. */
+  const shore = useMemo(
+    () => (proceduralShore ? shorelineGeometry() : null),
+    [proceduralShore],
+  );
+  useEffect(() => () => shore?.dispose(), [shore]);
 
   return (
     <>
@@ -334,9 +340,11 @@ export function SkyDome() {
         <laylineSkyMaterial side={BackSide} depthWrite={false} />
       </mesh>
 
-      <mesh geometry={shore} frustumCulled={false}>
-        <laylineShoreMaterial side={DoubleSide} />
-      </mesh>
+      {shore !== null && (
+        <mesh geometry={shore} frustumCulled={false}>
+          <laylineShoreMaterial side={DoubleSide} />
+        </mesh>
+      )}
 
       {/* One sun. Everything that catches a highlight catches it from here, so
           the glint on the water and the lit side of a hull cannot disagree. The

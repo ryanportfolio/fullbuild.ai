@@ -872,6 +872,13 @@ export function RaceWorkspace({
             </ul>
           )}
         </details>
+        {/* The shore geometry is baked from OSM coastline data, and ODbL asks
+            for credit anywhere that data is shown. */}
+        <p className={styles.dataCredit}>
+          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
+            Scenery data © OpenStreetMap contributors
+          </a>
+        </p>
       </section>
       </aside>
 

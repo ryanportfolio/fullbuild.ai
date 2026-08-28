@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { NeutralToneMapping } from "three";
 import type { RaceData } from "@/lib/layline/types";
+import { RACES } from "@/lib/layline/races";
 import type { LayerVisibility } from "@/lib/layline/analysis-state";
 import { renderStats, resetRenderStats, useReplay } from "../store";
 import {
@@ -22,6 +23,7 @@ import { Fleet } from "./Fleet";
 import { SKY_HORIZON } from "./sky";
 import { Water } from "./Water";
 import { SkyDome } from "./SkyDome";
+import { VenueShore } from "./VenueShore";
 import { WakeTrails } from "./WakeTrails";
 
 /* The shared replay clock lives above the optional renderer so the SVG path
@@ -362,6 +364,10 @@ export function LaylineScene({
   layers: LayerVisibility;
 }) {
   const frozen = useReplay((state) => state.frozen);
+  /* Which venue this race sails in, by the seed the data itself carries: the
+   * viewer is not remounted on a race switch, so the shore has to follow the
+   * race prop rather than anything read once at mount. */
+  const scenery = RACES.find((meta) => meta.seed === race.seed)?.scenery;
 
   /* The gate is one per document and outlives every canvas mounted into it,
    * same as the ready flag below. A lost context or a scrolled-away observer
@@ -408,7 +414,8 @@ export function LaylineScene({
       style={{ width: "100%", height: "100%" }}
     >
       <color attach="background" args={[SKY_HORIZON]} />
-      <SkyDome />
+      <SkyDome proceduralShore={scenery === undefined} />
+      {scenery !== undefined && <VenueShore asset={scenery.asset} />}
       <Water race={race} />
       <CurrentField race={race} visible={layers.current} />
       <CourseGraphics race={race} showLaylines={layers.laylines} />

@@ -209,6 +209,12 @@ export default function LaylinePage() {
           <strong>View source</strong>
         </Link>
         <span aria-hidden="true">·</span>
+        {/* The shore geometry is baked from OSM coastline data, and ODbL asks
+            for credit anywhere that data is shown. */}
+        <Link href="https://www.openstreetmap.org/copyright">
+          <span>Scenery data © OpenStreetMap contributors</span>
+        </Link>
+        <span aria-hidden="true">·</span>
         <Link className={styles.homeLink} href="/">
           <RailLogo className={styles.footerHouseMark} />
           <span>fullbuild.ai</span>

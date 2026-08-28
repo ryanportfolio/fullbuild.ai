@@ -1,0 +1,23 @@
+{
+  "id": "long-beach",
+  "origin": {
+    "lat": 33.742,
+    "lon": -118.155
+  },
+  "bearing": 215,
+  "clipRadius": 10500,
+  "dataVersion": "2026-08-28",
+  "sources": {
+    "coastline": "OpenStreetMap via Overpass API",
+    "elevation": "Mapzen Terrarium z11 (AWS Open Data)"
+  },
+  "attribution": [
+    "Map data (c) OpenStreetMap contributors, ODbL",
+    "Elevation: Mapzen Terrarium tiles via AWS Open Data"
+  ],
+  "stats": {
+    "vertices": 8237,
+    "triangles": 10533,
+    "bytes": 90508
+  }
+}
