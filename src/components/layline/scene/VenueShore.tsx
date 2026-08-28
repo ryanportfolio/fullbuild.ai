@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { BufferAttribute, BufferGeometry, DoubleSide } from "three";
+import { useReplay } from "../store";
 import { requestSceneFrame } from "./gate";
 
 /* Real-coastline venues carry more sky between the camera and the far hills
@@ -61,6 +62,11 @@ export function VenueShore({ asset }: { asset: string }) {
   useEffect(() => {
     let live = true;
     let loaded: BufferGeometry | null = null;
+    /* The capture contract: ready excludes loading states, and this fetch is
+     * the scene's one load. Down before the first frame can be drawn, up when
+     * the coast is in or the fetch has failed, and up again on unmount so the
+     * next race never inherits a lowered flag. */
+    useReplay.getState().setSceneryOk(false);
     (async () => {
       const response = await fetch(asset);
       if (!response.ok) return;
@@ -78,15 +84,20 @@ export function VenueShore({ asset }: { asset: string }) {
       loaded = parseVenueMesh(buffer);
       setGeometry(loaded);
       requestSceneFrame();
-    })().catch((error) => {
-      /* No coast is a working scene: the sky and the water hold the horizon,
-       * which is exactly what the venues without baked assets already show. */
-      console.warn("venue shore failed to load", error);
-    });
+    })()
+      .catch((error) => {
+        /* No coast is a working scene: the sky and the water hold the horizon,
+         * which is exactly what the venues without baked assets already show. */
+        console.warn("venue shore failed to load", error);
+      })
+      .finally(() => {
+        if (live) useReplay.getState().setSceneryOk(true);
+      });
     return () => {
       live = false;
       loaded?.dispose();
       setGeometry(null);
+      useReplay.getState().setSceneryOk(true);
     };
   }, [asset]);
 

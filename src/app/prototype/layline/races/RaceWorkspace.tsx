@@ -872,11 +872,20 @@ export function RaceWorkspace({
             </ul>
           )}
         </details>
-        {/* The shore geometry is baked from OSM coastline data, and ODbL asks
-            for credit anywhere that data is shown. */}
+        {/* The shore geometry is baked from OSM coastline data and Mapzen
+            terrain tiles; ODbL and the terrain tiles' own terms both ask for
+            credit anywhere that data is shown. */}
         <p className={styles.dataCredit}>
           <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
             Scenery data © OpenStreetMap contributors
+          </a>
+          {" · "}
+          <a
+            href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Elevation from Mapzen terrain tiles
           </a>
         </p>
       </section>

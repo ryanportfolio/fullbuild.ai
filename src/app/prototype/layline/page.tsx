@@ -209,10 +209,15 @@ export default function LaylinePage() {
           <strong>View source</strong>
         </Link>
         <span aria-hidden="true">·</span>
-        {/* The shore geometry is baked from OSM coastline data, and ODbL asks
-            for credit anywhere that data is shown. */}
+        {/* The shore geometry is baked from OSM coastline data and Mapzen
+            terrain tiles; ODbL and the terrain tiles' own terms both ask for
+            credit anywhere that data is shown. */}
         <Link href="https://www.openstreetmap.org/copyright">
           <span>Scenery data © OpenStreetMap contributors</span>
+        </Link>
+        <span aria-hidden="true">·</span>
+        <Link href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md">
+          <span>Elevation from Mapzen terrain tiles</span>
         </Link>
         <span aria-hidden="true">·</span>
         <Link className={styles.homeLink} href="/">

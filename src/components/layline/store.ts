@@ -121,6 +121,14 @@ interface ReplayStore {
    * canvas element exists: the fallback chart stays up until there is an
    * actual image to replace it with. */
   webglOk: boolean;
+  /* False only while a venue's baked coast is still in flight. The capture
+   * contract says ready excludes loading states, and the shore mesh is the one
+   * asynchronous load in the scene: without this, ready would rise on the
+   * first drawn frame and a capture could catch a coastless Long Beach or not,
+   * by network timing. Races without a baked venue never lower it, and a
+   * failed fetch raises it again: a coastless scene is a working scene, not a
+   * loading state. */
+  sceneryOk: boolean;
   hudReady: boolean;
   /* True once the page-load intro has let go of the viewport. Autoplay waits
    * on it: the prestart is five seconds long and spending it behind a cover
@@ -156,6 +164,7 @@ interface ReplayStore {
   releaseAnalysisCameraIntent: () => void;
   setReducedMotion: (reduced: boolean) => void;
   setWebglOk: (ok: boolean) => void;
+  setSceneryOk: (ok: boolean) => void;
   setHudReady: (ready: boolean) => void;
   setIntroDone: (done: boolean) => void;
   releaseBrief: () => void;
@@ -183,6 +192,7 @@ export const useReplay = create<ReplayStore>((set, get) => ({
   inspectionHeld: null,
   reducedMotion: false,
   webglOk: false,
+  sceneryOk: true,
   hudReady: false,
   introDone: false,
   briefDone: false,
@@ -265,6 +275,7 @@ export const useReplay = create<ReplayStore>((set, get) => ({
     ),
   setReducedMotion: (reduced) => set({ reducedMotion: reduced }),
   setWebglOk: (ok) => set({ webglOk: ok }),
+  setSceneryOk: (ok) => set({ sceneryOk: ok }),
   setHudReady: (ready) => set({ hudReady: ready }),
   setIntroDone: (done) => set({ introDone: done }),
 

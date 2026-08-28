@@ -20,8 +20,9 @@ export interface CaptureInfo {
 }
 
 export interface LaylineCapture {
-  /* False until the renderer has actually put a frame up. A capture that
-   * starts before this is a screenshot of a loading state. */
+  /* False until the renderer has actually put a frame up and the venue's
+   * baked coast, if the race has one, has landed. A capture that starts
+   * before this is a screenshot of a loading state. */
   ready: boolean;
   freeze: () => void;
   thaw: () => void;
@@ -53,7 +54,10 @@ export function CaptureBridge() {
   useEffect(() => {
     const store = useReplay;
     const api: LaylineCapture = {
-      ready: store.getState().webglOk,
+      /* A frame on screen AND the venue coast in, if the race has one: ready
+       * promises the picture is not a loading state, and the shore mesh is the
+       * scene's one asynchronous load. */
+      ready: store.getState().webglOk && store.getState().sceneryOk,
       freeze: () => store.getState().freeze(),
       thaw: () => store.getState().thaw(),
       step: (ms) => {
@@ -74,7 +78,7 @@ export function CaptureBridge() {
     };
     window.__layline = api;
     const unsubscribe = store.subscribe((state) => {
-      api.ready = state.webglOk;
+      api.ready = state.webglOk && state.sceneryOk;
     });
     return () => {
       unsubscribe();
