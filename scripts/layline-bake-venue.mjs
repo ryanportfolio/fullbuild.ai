@@ -23,8 +23,8 @@
  * The output carries semantic layers (design doc 2.1), one merged mesh and one
  * draw call each: L1 near terrain, L2 urban massing, L3 port infrastructure,
  * L4 hero landmarks, L5 far horizon curtain. Layers exist so the runtime can
- * vary the material per class (L2 and L3 run with the ground grain off, L4
- * carries a material index per vertex, L5 runs its own shader) and so a later
+ * vary the material per class (L2 runs with the ground grain off, L3 and L4
+ * carry a material index per vertex, L5 runs its own shader) and so a later
  * round can skip a class per rig.
  *
  * LVN3 layout, little endian, after gunzip:
@@ -37,7 +37,7 @@
  *     u8  drawOrder  ascending
  *     u8  attrMask   bit0 aFade, bit1 aShade, bit2 aDist (i16), bit3 aBase (u8;
  *                    bit0 base vertex, bit1 far band), bit4 aMat (u8; 0 = take
- *                    the layer's own height ramp, 1..5 = a hero substance)
+ *                    the layer's own height ramp, 1..6 = a named substance)
  *     u8  yUnit      y quantisation denominator; 10 means 0.1 m
  *     u8  idx32      1 if this layer's indices are u32
  *     u8  pad
@@ -50,7 +50,7 @@
  *     u8  shade[vertCount]   hillshade, 128 = flat colour, /128 multiplies it
  *     i16 dist[vertCount]    true horizontal range in 4 m units (curtain only)
  *     u8  base[vertCount]    0 ridge / 255 base vertex (curtain only)
- *     u8  mat[vertCount]     hero substance index (heroes only)
+ *     u8  mat[vertCount]     named substance index (port and heroes)
  *     pad to 4 bytes
  *     u16|u32 idx[indexCount]
  *
@@ -72,9 +72,15 @@ const VENUES = {
      * working port wrapped around it, open toward Queens Gate up the course. */
     origin: { lat: 33.742, lon: -118.155 },
     bearing: 215, // deg true, direction of the course axis (+y, toward windward)
+    /* Mapzen is the tile set, not the survey. Over the continental US
+     * Terrarium composites USGS 3DEP from zoom 10 and NASA SRTM from zoom 7,
+     * and tilezen/joerd's attribution page asks for the US sources by name,
+     * courtesy of the U.S. Geological Survey. Both the story colophon and the
+     * races library foot carry the same three lines. */
     attribution: [
       "Map data (c) OpenStreetMap contributors, ODbL",
       "Elevation: Mapzen Terrarium tiles via AWS Open Data",
+      "Terrain: USGS 3DEP and NASA SRTM, courtesy of the U.S. Geological Survey",
     ],
     /* L4 hero anchors (design doc 9). A hero is curated, so its footprint and
      * its orientation are pinned to named OSM elements rather than searched
@@ -276,11 +282,14 @@ const ATTR_DIST = 4; // i16, 4 m units
 const ATTR_BASE = 8;
 const COLUMN_BASE = 1;
 const COLUMN_FAR = 2;
-/* u8 hero substance index. 0 means "no hero material here, use the layer's own
- * height ramp", which is what every other layer's vertices carry, so the byte
- * only ever ships on L4. The five substances are the ones design doc 9 and the
- * round-4d colour research between them actually name; VenueShore.tsx holds the
- * matching reflectances and the same numbering. */
+/* u8 substance index. 0 means "no named substance here, use the layer's own
+ * height ramp", which is what most vertices carry, so the byte only ships on
+ * the two layers that hold a substance a height ramp cannot separate: L4, where
+ * a rock rim, a planted mass and a screen tower sit inside twenty metres, and
+ * L3, where a 6 to 25 m storage tank sits inside the container yard's band.
+ * The substances are the ones design doc 9 and the colour research between them
+ * actually name; VenueShore.tsx holds the matching reflectances and the same
+ * numbering. */
 const ATTR_MAT = 16;
 const MAT_RAMP = 0;
 const MAT_ROCK = 1; // island rock rim, Catalina boulder armour
@@ -288,6 +297,7 @@ const MAT_VEG = 2; // island planting, palms and shrub mass
 const MAT_PALE = 3; // screen towers, the dome, lighthouses, ship upperworks
 const MAT_DARK = 4; // ship hull, derrick and bridge steel
 const MAT_ACCENT = 5; // Cunard funnel red
+const MAT_TANK = 6; // storage-tank paint, chalky off-white for solar reflectance
 const ATTR_BYTES = {
   [ATTR_FADE]: 1,
   [ATTR_SHADE]: 1,
@@ -1017,6 +1027,36 @@ function mergeSplitChords(rings) {
     out.splice(pair.b.ri, 1);
     merges += 1;
   }
+  /* The bound on the assumption above: one shared chord per pair.
+   *
+   * The search only pairs edges in DIFFERENT rings, so a second chord shared by
+   * the same two rings survives the merge as a reversed duplicate edge INSIDE
+   * the merged ring, where nothing looks for it again. buildLand reads every
+   * ring edge as coastline, so that leftover would run a batter face, a skirt
+   * and the shader's surf band straight through the middle of a land neck: the
+   * round-2b defect, one merge later. It cannot happen on this venue's data and
+   * it is not detectable downstream, so it is asserted here rather than trusted.
+   * (Round-2b latent, closed in round 6.) */
+  for (let ri = 0; ri < out.length; ri++) {
+    const ring = out[ri];
+    const seen = new Set();
+    for (let i = 0; i < ring.length; i++) {
+      const a = ring[i];
+      const b = ring[(i + 1) % ring.length];
+      seen.add(key(a, b));
+    }
+    for (let i = 0; i < ring.length; i++) {
+      const a = ring[i];
+      const b = ring[(i + 1) % ring.length];
+      if (seen.has(key(b, a))) {
+        throw new Error(
+          `ring ${ri} carries its own edge in both directions at (${a.x.toFixed(1)}, ${a.y.toFixed(
+            1,
+          )}): mergeSplitChords left a chord behind, so a land neck would be drawn as coast`,
+        );
+      }
+    }
+  }
   return { rings: out, merges };
 }
 
@@ -1157,13 +1197,14 @@ function newLayer(classId, name, drawOrder, material = 0) {
     /* Which channels this layer's block carries, in the container's fixed
      * order. The shore layers pay for fade and shade; the curtain pays for a
      * true range and a base flag instead and would waste a byte per vertex on
-     * either of the other two. Heroes pay one byte more for the substance
-     * index, because a height ramp cannot tell a rock rim from the planting
-     * standing on it (round-4d residual 6.1). */
+     * either of the other two. Port and heroes pay one byte more for the
+     * substance index, because a height ramp cannot tell a rock rim from the
+     * planting standing on it (round-4d residual 6.1), nor a storage tank from
+     * the container stack beside it at the same 12 m. */
     attrMask:
       material === 1
         ? ATTR_DIST | ATTR_BASE
-        : ATTR_FADE | ATTR_SHADE | (classId === 4 ? ATTR_MAT : 0),
+        : ATTR_FADE | ATTR_SHADE | (classId === 3 || classId === 4 ? ATTR_MAT : 0),
     positions: [],
     fades: [],
     shades: [],
@@ -1315,7 +1356,21 @@ function triangle(a, b, c) {
  * neighbours the clamp had already flattened to 6.0 m. Capping the result by
  * the vertex's own region fixes that without moving any ground outside a ring:
  * every other coast vertex is metres clear of every clamp ring, so its cap is
- * Infinity. */
+ * Infinity.
+ *
+ * The samples come from the filtered relief lattice, not from a raw `groundAt`.
+ * That is one rule with two consequences, and both of them are the harbour
+ * entrance. A z11 Terrarium sample is 64 m across and this basin's carries the
+ * structures standing in it: the texels beside the Queens Gate training wall
+ * read 30, 34, 74, 82, 88 and 97 m against open water at -0.4. The lattice
+ * already refuses those, because it clamps every corner to its neighbours'
+ * median plus SPIKE_TOL and then smooths twice; the crest ring did not, so it
+ * drew a 25 m cap (the buildLand ceiling, off a 75 m read) 21 m from the Long
+ * Beach Light, whose 19 m top then sat 6 m under the terrain beside it. And a
+ * lattice corner only exists on land, so a feature the 60 m lattice cannot
+ * resolve at all, and that training wall is 19.7 m wide over 1.8 km, has no
+ * corner to read and takes MIN_SHORE_H, which is what a rubble mound crest is.
+ * A DEM that cannot see a feature cannot be asked how tall it is. */
 function shoreHeight(ring, i) {
   const a = ring[i];
   const b = ring[(i + 1) % ring.length];
@@ -1324,10 +1379,12 @@ function shoreHeight(ring, i) {
   const len = Math.hypot(dx, dy) || 1;
   const nx = -dy / len;
   const ny = dx / len;
-  let h = groundAt(a.x, a.y);
-  for (const off of [40, 100]) {
-    h = Math.max(h, groundAt(a.x + nx * off, a.y + ny * off));
+  let h = null;
+  for (const off of [0, 40, 100]) {
+    const s = reliefHeightAt(a.x + nx * off, a.y + ny * off);
+    if (s !== null && (h === null || s > h)) h = s;
   }
+  if (h === null) h = MIN_SHORE_H;
   return Math.min(Math.max(Math.min(h, clampCapAt(a.x, a.y)), MIN_SHORE_H), 90);
 }
 
@@ -1487,9 +1544,44 @@ function buildLand(rings) {
  * passes run over land corners only, so a coastal height is never dragged down
  * by the sea on the other side of the shoreline.
  */
-/* The filtered relief lattice, published by buildRelief for the layers that
- * have to stand on it. Null until L1 has been built. */
+/* The filtered relief lattice. `buildReliefField` fills it before any geometry
+ * is emitted, so the shore crest, the relief and every structure that stands on
+ * them read one surface; null only while the coast rings are being assembled. */
 let reliefField = null;
+
+/**
+ * The filtered height of the land under one course-frame point, or null where
+ * the lattice does not resolve land there.
+ *
+ * All four corners of the containing cell must be land, which is the same test
+ * buildRelief uses before it draws a cell: where the answer is a height, the
+ * relief really does draw a surface at it. A coastal cell with one land corner
+ * is not a height of anything. Its lone corner may be a hill 85 m inland or a
+ * harbour spike the despike only halved, and reading either onto a waterline
+ * vertex puts a bluff on a wharf. Read bilinearly for the same reason: it is
+ * what the emitted quad interpolates, so a crest cannot rise above the relief
+ * that grows out of it.
+ */
+function reliefHeightAt(x, y) {
+  if (reliefField === null) return null;
+  const { N, half, cell, land, height } = reliefField;
+  const i0 = Math.floor(x / cell) + half;
+  const j0 = Math.floor(y / cell) + half;
+  if (i0 < 0 || j0 < 0 || i0 + 1 >= N || j0 + 1 >= N) return null;
+  const c00 = j0 * N + i0;
+  const c10 = c00 + 1;
+  const c01 = c00 + N;
+  const c11 = c01 + 1;
+  if (!land[c00] || !land[c10] || !land[c01] || !land[c11]) return null;
+  const u = x / cell + half - i0;
+  const v = y / cell + half - j0;
+  return (
+    height[c00] * (1 - u) * (1 - v) +
+    height[c10] * u * (1 - v) +
+    height[c01] * (1 - u) * v +
+    height[c11] * u * v
+  );
+}
 
 /**
  * The lowest lattice corner within `reach` metres of (x, y), or null where the
@@ -1658,7 +1750,16 @@ function footOnTerrain(x, y, rail) {
   return low - FOOT_EMBED;
 }
 
-function buildRelief(boxes) {
+/**
+ * The filtered height field, built before any geometry so the shore crest and
+ * the relief that rises out of it read the same surface.
+ *
+ * It used to be computed inside buildRelief, which ran after buildLand, so the
+ * crest ring took raw `groundAt` reads while the lattice 60 m away took
+ * despiked and smoothed ones. That is the whole of the harbour-entrance defect:
+ * see shoreHeight.
+ */
+function buildReliefField(boxes) {
   const half = Math.ceil(FADE_END / RELIEF_CELL);
   const N = 2 * half + 1;
   const at = (i, j) => j * N + i;
@@ -1748,6 +1849,21 @@ function buildRelief(boxes) {
     if (land[c] && height[c] < MIN_SHORE_H) height[c] = MIN_SHORE_H;
   }
 
+  /* Publish the filtered field so the structure layers can stand on the same
+   * surface L1 actually draws. `groundAt` is a raw DEM read; this has been
+   * despiked, twice smoothed and floored at MIN_SHORE_H, and the two differ by
+   * metres, which is what left five round-4a assemblies hanging 1 to 4 m over
+   * their own ground. */
+  reliefField = { N, half, cell: RELIEF_CELL, land, height };
+  console.log(`relief field: ${N}x${N} corners at ${RELIEF_CELL} m, ${spikes} DEM spikes clamped`);
+}
+
+function buildRelief() {
+  const { N, half, land, height } = reliefField;
+  const at = (i, j) => j * N + i;
+  const cornerX = (i) => (i - half) * RELIEF_CELL;
+  const cornerY = (j) => (j - half) * RELIEF_CELL;
+
   /* per-corner shade from the filtered lattice gradient; a water neighbour
    * reads as height 0, which steepens the coastal slope a little, in the right
    * direction */
@@ -1762,13 +1878,6 @@ function buildRelief(boxes) {
     shadeCache[c] = s;
     return s;
   };
-
-  /* Publish the filtered field so the structure layers can stand on the same
-   * surface L1 actually draws. `groundAt` is a raw DEM read; this has been
-   * despiked, twice smoothed and floored at MIN_SHORE_H, and the two differ by
-   * metres, which is what left five round-4a assemblies hanging 1 to 4 m over
-   * their own ground. */
-  reliefField = { N, half, cell: RELIEF_CELL, land, height };
 
   const corner = (i, j) => vertex(cornerX(i), height[at(i, j)], cornerY(j), cornerShade(i, j));
 
@@ -1888,7 +1997,7 @@ function buildRelief(boxes) {
   console.log(
     `relief: ${fine} fine cells (${RELIEF_CELL} m), ${coarse} coarse + ${fans} stitched blocks (${
       2 * RELIEF_CELL
-    } m), ${spikes} DEM spikes clamped`,
+    } m)`,
   );
 }
 
@@ -2495,38 +2604,55 @@ function buildPort(cranePoints, infra, rings, boxes) {
   /* rank by the silhouette each one actually presents, not by footprint alone */
   tanks.sort((a, b) => (b.radius * b.height) / b.d ** 2 - (a.radius * a.height) / a.d ** 2);
   const drawnTanks = tanks.slice(0, TANK_MAX);
-  for (const tank of drawnTanks) {
-    const ground = clampGround(tank.centre.x, tank.centre.y, MIN_SHORE_H, TANK_MAX_H);
-    /* into the lattice, never floating over it */
-    const base = footBelow(tank.centre.x, tank.centre.y, ground - 2, tank.radius);
-    const top = ground + tank.height;
-    const ring = [];
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
-      ring.push({
-        x: tank.centre.x + Math.cos(a) * tank.radius,
-        y: tank.centre.y + Math.sin(a) * tank.radius,
-      });
+  /* The one substance in this layer that the height ramp gets wrong. A tank is
+   * 6 to 25 m, the same band the container blocks 12 m over the apron occupy,
+   * so the ramp paints it VENUE_YARD: a stack of boxes, when the real thing is
+   * painted chalky off-white for solar reflectance. One byte per L3 vertex is
+   * what separates them. */
+  let shellArea = 0;
+  let lidArea = 0;
+  withMat(MAT_TANK, () => {
+    for (const tank of drawnTanks) {
+      const ground = clampGround(tank.centre.x, tank.centre.y, MIN_SHORE_H, TANK_MAX_H);
+      /* into the lattice, never floating over it */
+      const base = footBelow(tank.centre.x, tank.centre.y, ground - 2, tank.radius);
+      const top = ground + tank.height;
+      const ring = [];
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
+        ring.push({
+          x: tank.centre.x + Math.cos(a) * tank.radius,
+          y: tank.centre.y + Math.sin(a) * tank.radius,
+        });
+      }
+      for (let i = 0; i < 8; i++) {
+        const a = ring[i];
+        const b = ring[(i + 1) % 8];
+        const mx = (a.x + b.x) / 2 - tank.centre.x;
+        const my = (a.y + b.y) / 2 - tank.centre.y;
+        const len = Math.hypot(mx, my) || 1;
+        face(
+          v3(a.x, base, a.y),
+          v3(b.x, base, b.y),
+          v3(b.x, top, b.y),
+          v3(a.x, top, a.y),
+          v3(mx / len, 0, my / len),
+        );
+        shellArea += Math.hypot(b.x - a.x, b.y - a.y) * (top - base);
+      }
+      const lid = earcut(ring);
+      const rim = ring.map((p) => vertex(p.x, top, p.y, SHADE_FLAT));
+      for (let i = 0; i < lid.length; i += 3) {
+        triangle(rim[lid[i]], rim[lid[i + 1]], rim[lid[i + 2]]);
+      }
+      lidArea += 2 * Math.SQRT2 * tank.radius ** 2;
     }
-    for (let i = 0; i < 8; i++) {
-      const a = ring[i];
-      const b = ring[(i + 1) % 8];
-      const mx = (a.x + b.x) / 2 - tank.centre.x;
-      const my = (a.y + b.y) / 2 - tank.centre.y;
-      const len = Math.hypot(mx, my) || 1;
-      face(
-        v3(a.x, base, a.y),
-        v3(b.x, base, b.y),
-        v3(b.x, top, b.y),
-        v3(a.x, top, a.y),
-        v3(mx / len, 0, my / len),
-      );
-    }
-    const lid = earcut(ring);
-    const rim = ring.map((p) => vertex(p.x, top, p.y, SHADE_FLAT));
-    for (let i = 0; i < lid.length; i += 3) triangle(rim[lid[i]], rim[lid[i + 1]], rim[lid[i + 2]]);
-  }
-  console.log(`tanks: ${drawnTanks.length} of ${tanks.length} inside ${MASS_NEAR} m`);
+  });
+  console.log(
+    `tanks: ${drawnTanks.length} of ${tanks.length} inside ${MASS_NEAR} m, ` +
+      `${Math.round(shellArea)} m2 of shell over ${Math.round(lidArea)} m2 of lid ` +
+      `(${((100 * shellArea) / (shellArea + lidArea)).toFixed(1)} per cent shell)`,
+  );
 
   /* decks: the longest pier lines first, simplified in the same pass the coast
    * uses, drawn as a slab so the pier reads as a structure standing over the
@@ -3512,8 +3638,20 @@ rings = rings.filter(substantial);
 const rejoined = mergeSplitChords(rings);
 rings = rejoined.rings;
 const totalVerts = rings.reduce((s, r) => s + r.length, 0);
+/* The other half of the round-2b latent: buildLand unfolds a self-crossing
+ * CREST and has never checked the ring the crest is offset from. earcut wants a
+ * simple ring and returns overlapping triangles for one that is not, which is a
+ * cap folded over itself: invisible in plan, a value break at a grazing camera.
+ * Simplification and the pinch split both run before this, so a crossing here
+ * is theirs and belongs at the top of the log rather than in the geometry. */
+const crossing = rings.filter((ring) => selfCrossingVerts(ring).size > 0);
+if (crossing.length > 0) {
+  throw new Error(
+    `${crossing.length} of ${rings.length} land rings cross themselves after simplify and the pinch split; earcut would fold their caps`,
+  );
+}
 console.log(
-  `rings: ${rings.length} land rings, ${totalVerts} verts after simplify and sliver filter (${beforeSlivers} before), ${rejoined.merges} pinch splits rejoined`,
+  `rings: ${rings.length} land rings, ${totalVerts} verts after simplify and sliver filter (${beforeSlivers} before), ${rejoined.merges} pinch splits rejoined, all simple`,
 );
 
 /* coast distance by bearing, to sanity-check the course window */
@@ -3542,9 +3680,12 @@ console.log(`coast distance by course bearing (m): ${report.join(" ")}`);
 
 writeDebugSvg(rings);
 const boxes = ringBoxes(rings);
+/* The height field first, then the geometry: the crest ring reads the same
+ * filtered lattice the relief is drawn from, so the two cannot disagree. */
+buildReliefField(boxes);
 into(L_TERRAIN, () => {
   buildLand(rings);
-  buildRelief(boxes);
+  buildRelief();
   buildBreakwaters(breakwaterWays, coastlineIds);
 });
 /* L1 is complete here and nothing after this adds to it, so the surface every

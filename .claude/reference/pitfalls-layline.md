@@ -92,3 +92,21 @@ playback, on a boat it selects (`pressOutcome`). `__layline.ui(false)` bares
 the scene (visibility, no reflow) for environment crops. The animated dither
 advances per drawn frame: hash-compare only captures with identical scripted
 frame counts; pixel-diff otherwise.
+
+## Ready follows the drawn venue frame; tactical never settles frozen (2026-08-29)
+
+Round 6 rewired readiness: `window.__layline.ready` = webglOk plus a venue
+tri-state (absent/loading/rendered/failed), and `rendered` is written only by
+the last venue layer's `onAfterRender`. On a venue race, ready flips exactly
+when `info().drawCalls` reaches 53 and is never true at 48: a capture behind
+ready genuinely contains the coast. Two sharp edges. (1) On the failure path
+ready is true with no baked coast, and for one frame before even the
+procedural fallback draws; a capture that needs the real coast must check
+draw calls, not just ready. (2) The settled tactical rig drops the venue
+(49 draws / 81,962 tris live, keyed on the composed shot reaching mix >= 1),
+but a FROZEN page never completes the hand-over: `rig("tactical")` after
+`freeze()` holds all five venue draws indefinitely. A capture wanting the
+settled tactical framing must thaw, wait at least 2.5 s, then re-freeze.
+Also: `npm run build` tears the running dev server's `.next` (document 200,
+stylesheets/chunks 404 or 500); restart the server and re-run the server
+gate before any capture that follows a build.

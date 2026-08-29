@@ -15,12 +15,13 @@
   },
   "attribution": [
     "Map data (c) OpenStreetMap contributors, ODbL",
-    "Elevation: Mapzen Terrarium tiles via AWS Open Data"
+    "Elevation: Mapzen Terrarium tiles via AWS Open Data",
+    "Terrain: USGS 3DEP and NASA SRTM, courtesy of the U.S. Geological Survey"
   ],
   "stats": {
-    "vertices": 41115,
+    "vertices": 41117,
     "triangles": 40360,
-    "bytes": 350218,
+    "bytes": 350302,
     "layers": [
       {
         "classId": 5,
@@ -31,7 +32,7 @@
       {
         "classId": 1,
         "name": "terrain",
-        "vertices": 19142,
+        "vertices": 19144,
         "triangles": 24930
       },
       {

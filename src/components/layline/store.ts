@@ -88,6 +88,9 @@ export const AUTOPLAY_FROM = -5;
 
 export type PlayRate = 1 | 2 | 4;
 
+/** The four states a venue's baked coast can be in; see `venueAsset` below. */
+export type VenueAssetState = "absent" | "loading" | "rendered" | "failed";
+
 interface ReplayStore {
   /* The registry id of the loaded race. Bumping it remounts the viewer, so a
    * clock, a camera or a half-drawn chart from the previous race cannot survive
@@ -121,14 +124,29 @@ interface ReplayStore {
    * canvas element exists: the fallback chart stays up until there is an
    * actual image to replace it with. */
   webglOk: boolean;
-  /* False only while a venue's baked coast is still in flight. The capture
-   * contract says ready excludes loading states, and the shore mesh is the one
-   * asynchronous load in the scene: without this, ready would rise on the
-   * first drawn frame and a capture could catch a coastless Long Beach or not,
-   * by network timing. Races without a baked venue never lower it, and a
-   * failed fetch raises it again: a coastless scene is a working scene, not a
-   * loading state. */
-  sceneryOk: boolean;
+  /* What the venue's baked coast is doing, as four named states rather than one
+   * flag. The capture contract says ready excludes loading states and the shore
+   * mesh is the scene's one asynchronous load, so a boolean had to mean both
+   * "no venue on this race" and "the venue failed" and "the venue is in", and
+   * the scene could not tell those apart well enough to put a fallback coast up
+   * for the middle one.
+   *
+   *   absent    this race has no baked venue; SkyDome draws the procedural arc
+   *   loading   the fetch is in flight, or it landed and the mesh has not yet
+   *             drawn a frame. The only state that holds `ready` down
+   *   rendered  the venue mesh has been through onAfterRender at least once,
+   *             so `ready` promises a picture that actually contains the coast
+   *   failed    the fetch, the gunzip or the parse threw; the procedural arc
+   *             comes back and the scene carries on
+   */
+  venueAsset: VenueAssetState;
+  /* False only while the composed camera cannot see the venue at all, which is
+   * the settled tactical rig: 160 m up at 72 degrees of pitch it sees about
+   * 250 m of water and the nearest real land is 715 m away (design doc 2.1,
+   * "tactical drops L1 through L5"). Written by CameraRigs off the composed
+   * shot rather than off the rig name, because the rig flips at the START of a
+   * 1.2 s hand-over the coast is still in frame for. */
+  venueInFrame: boolean;
   hudReady: boolean;
   /* True once the page-load intro has let go of the viewport. Autoplay waits
    * on it: the prestart is five seconds long and spending it behind a cover
@@ -164,7 +182,8 @@ interface ReplayStore {
   releaseAnalysisCameraIntent: () => void;
   setReducedMotion: (reduced: boolean) => void;
   setWebglOk: (ok: boolean) => void;
-  setSceneryOk: (ok: boolean) => void;
+  setVenueAsset: (state: VenueAssetState) => void;
+  setVenueInFrame: (inFrame: boolean) => void;
   setHudReady: (ready: boolean) => void;
   setIntroDone: (done: boolean) => void;
   releaseBrief: () => void;
@@ -192,7 +211,8 @@ export const useReplay = create<ReplayStore>((set, get) => ({
   inspectionHeld: null,
   reducedMotion: false,
   webglOk: false,
-  sceneryOk: true,
+  venueAsset: "absent",
+  venueInFrame: true,
   hudReady: false,
   introDone: false,
   briefDone: false,
@@ -275,7 +295,8 @@ export const useReplay = create<ReplayStore>((set, get) => ({
     ),
   setReducedMotion: (reduced) => set({ reducedMotion: reduced }),
   setWebglOk: (ok) => set({ webglOk: ok }),
-  setSceneryOk: (ok) => set({ sceneryOk: ok }),
+  setVenueAsset: (venueAsset) => set({ venueAsset }),
+  setVenueInFrame: (venueInFrame) => set({ venueInFrame }),
   setHudReady: (ready) => set({ hudReady: ready }),
   setIntroDone: (done) => set({ introDone: done }),
 

@@ -11,7 +11,24 @@ import {
   freeform,
 } from "./scene/interaction";
 import { requestSceneFrame } from "./scene/gate";
+import type { VenueAssetState } from "./store";
 import type { ReplayMode, RigName } from "@/lib/layline/types";
+
+/**
+ * What `ready` means, in one place two call sites share.
+ *
+ * A frame on screen AND the venue coast drawn, if the race has one. `loading`
+ * is the only venue state that holds it down, and it covers a fetched asset
+ * that has not yet been through a draw as well as one still in flight: a
+ * capture taken between the parse and the first venue frame is a screenshot of
+ * a coastless Long Beach that claims to be ready. `failed` does not hold it
+ * down, because the procedural arc goes up in the venue's place and that is a
+ * finished picture; neither does `absent`, which is every race with no baked
+ * coast at all.
+ */
+export function captureReady(state: { webglOk: boolean; venueAsset: VenueAssetState }): boolean {
+  return state.webglOk && state.venueAsset !== "loading";
+}
 
 export interface CaptureInfo {
   t: number;
@@ -41,8 +58,8 @@ export interface CameraPose {
 
 export interface LaylineCapture {
   /* False until the renderer has actually put a frame up and the venue's
-   * baked coast, if the race has one, has landed. A capture that starts
-   * before this is a screenshot of a loading state. */
+   * baked coast, if the race has one, has drawn one of its own. A capture that
+   * starts before this is a screenshot of a loading state. */
   ready: boolean;
   freeze: () => void;
   thaw: () => void;
@@ -83,10 +100,7 @@ export function CaptureBridge() {
   useEffect(() => {
     const store = useReplay;
     const api: LaylineCapture = {
-      /* A frame on screen AND the venue coast in, if the race has one: ready
-       * promises the picture is not a loading state, and the shore mesh is the
-       * scene's one asynchronous load. */
-      ready: store.getState().webglOk && store.getState().sceneryOk,
+      ready: captureReady(store.getState()),
       freeze: () => store.getState().freeze(),
       thaw: () => store.getState().thaw(),
       step: (ms) => {
@@ -150,7 +164,7 @@ export function CaptureBridge() {
     };
     window.__layline = api;
     const unsubscribe = store.subscribe((state) => {
-      api.ready = state.webglOk && state.sceneryOk;
+      api.ready = captureReady(state);
     });
     return () => {
       unsubscribe();

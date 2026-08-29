@@ -152,8 +152,12 @@ function ease(u: number): number {
  * cannot read boat speed without something fixed to measure it against. The
  * chase and the wide both cut it against the sky; the tactical rig is pitched 72
  * degrees down and frames no horizon at all, so none of this reaches it. The
- * seed is fixed so the skyline is the same in every capture. */
-function shorelineGeometry(): BufferGeometry {
+ * seed is fixed so the skyline is the same in every capture.
+ *
+ * Exported because it is also the venue's fallback: a race whose baked coast
+ * fails to load falls back to this arc rather than to open water, and it is
+ * VenueShore that knows the fetch failed. */
+export function shorelineGeometry(): BufferGeometry {
   const count = Math.round((SHORE_TO - SHORE_FROM) / SHORE_STEP);
   const random = mulberry32(hashString("layline shoreline"));
   const span = SHORE_TO - SHORE_FROM;

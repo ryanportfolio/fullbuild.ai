@@ -57,21 +57,25 @@ export const VENUE_STEEL = "#727575"; // POLB gantry cranes, the mixed liveries 
 export const VENUE_BLOCK = "#939293"; // industrial massing, tilt-up and sheet metal
 export const VENUE_TOWER = "#77787b"; // downtown Long Beach, precast and blue-green glass
 
-/* Hero substances, San Pedro Bay (round 5). Same rule and the same derivation
- * as the seven above: REFLECTANCES, inverted out of measured photograph pixels
- * through the render chain by .tmp/venue-audit/round5/mix-heroes.mjs, sources
- * in .tmp/venue-audit/round5/provenance.md.
+/* Named substances, San Pedro Bay (rounds 5 and 6). Same rule and the same
+ * derivation as the seven above: REFLECTANCES, inverted out of measured
+ * photograph pixels through the render chain by
+ * .tmp/venue-audit/round5/mix-heroes.mjs and .tmp/venue-audit/round6/
+ * mix-tank.mjs, sources in each round's provenance.md.
  *
  * These exist because a height ramp cannot separate them. A THUMS island puts
  * a rock rim, a planted mass and a screen tower inside the same twenty metres,
  * and the round-4d grade consequently painted all four islands the harbour-fill
- * reflectance and they read as tan slabs. The hero layer carries a substance
- * index per vertex instead, which is what these five index into. */
+ * reflectance and they read as tan slabs. A storage tank is 6 to 25 m, the same
+ * band as a container stack 12 m over the apron, so the port ramp painted 57
+ * tanks as boxes. The asset carries a substance index per vertex on those two
+ * layers instead, which is what these six index into. */
 export const VENUE_ISLE_ROCK = "#7c7b70"; // Catalina boulder armour on the island rims
 export const VENUE_ISLE_VEG = "#454e3c"; // THUMS palms, shrub mass and irrigated slope
 export const VENUE_HERO_PALE = "#7e898e"; // screen towers, the dome, lighthouses, upperworks
 export const VENUE_HERO_HULL = "#333338"; // Queen Mary hull plating, well masts
 export const VENUE_HERO_FUNNEL = "#753c31"; // Cunard funnel red under its black top band
+export const VENUE_TANK = "#80868b"; // tank paint, chalky off-white, with its rust and grime
 
 /* The far horizon curtain has no lighting model: it draws a ridge as a fraction
  * of the way from the sky toward a tint, so these three are APPEARANCES rather

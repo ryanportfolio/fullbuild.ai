@@ -1,11 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { shaderMaterial } from "@react-three/drei";
 import { extend, type ThreeElement } from "@react-three/fiber";
-import { BufferAttribute, BufferGeometry, Color, DoubleSide, Vector2 } from "three";
+import { Color, DoubleSide, Vector2 } from "three";
 import { useReplay } from "../store";
 import { requestSceneFrame } from "./gate";
+import { shorelineGeometry } from "./SkyDome";
+import {
+  CLASS_HEROES,
+  CLASS_MASSING,
+  CLASS_PORT,
+  CLASS_TERRAIN,
+  MATERIAL_CURTAIN,
+  parseVenueMesh,
+  type VenueLayer,
+} from "./venue-asset";
 import {
   SKY_GLSL,
   SKY_HORIZON,
@@ -25,6 +35,7 @@ import {
   VENUE_SCRUB,
   VENUE_SKY_FILL,
   VENUE_STEEL,
+  VENUE_TANK,
   VENUE_TOWER,
   VENUE_YARD,
   WHITECAP,
@@ -125,15 +136,6 @@ const WET_TOP = 4.2;
 const WET_DARKEN = 0.5;
 const SURF_MIX = 0.5;
 
-const MAGIC_LVN2 = 0x324e564c; // "LVN2", the single-layer asset round 2 shipped
-const MAGIC_LVN3 = 0x334e564c; // "LVN3", the layered container
-
-/* Layer class ids, from the baker's layer table. */
-const CLASS_TERRAIN = 1;
-const CLASS_MASSING = 2;
-const CLASS_PORT = 3;
-const CLASS_HEROES = 4;
-
 /* What each layer is made of, and where inside itself it changes material.
  *
  * A layer is one draw call and one material, so a class that holds two
@@ -147,14 +149,13 @@ const CLASS_HEROES = 4;
  * 80 m plus downtown, crane rails on the apron with the portal beam at 0.42 of
  * a 72 to 80 m apex.
  *
- * The one substance this cannot separate is the tank farm: storage tanks are
- * 6 to 25 m and share that band with the container blocks, so they take the
- * yard's colour instead of white. Separating them needs a per-vertex material
- * byte and a rebake; round 4d chose not to spend that, and round 5 spends it
- * only on the hero layer, which needs it for a different reason: a rock rim, a
- * planted mass and a screen tower all live inside twenty metres on a THUMS
- * island, so height cannot tell them apart at all. The tank farm keeps the
- * yard's colour, still. */
+ * Height cannot separate everything, and where it cannot the asset carries a
+ * substance byte per vertex instead. Two layers pay for it. On a THUMS island a
+ * rock rim, a planted mass and a screen tower all sit inside twenty metres. In
+ * the port a storage tank is 6 to 25 m, exactly the band the container blocks
+ * 12 m over the apron occupy, so the ramp painted all 57 of them as stacks of
+ * boxes when the real thing is painted chalky off-white for solar reflectance:
+ * 0.235 reflectance against the yard's 0.182, and a different hue. */
 const MATERIALS: Record<number, { lo: Color; hi: Color; ramp: Vector2; grain: Vector2 }> = {
   [CLASS_TERRAIN]: {
     lo: new Color(VENUE_APRON),
@@ -187,19 +188,21 @@ const MATERIALS: Record<number, { lo: Color; hi: Color; ramp: Vector2; grain: Ve
 };
 const MATERIAL_FALLBACK = MATERIALS[CLASS_TERRAIN];
 
-/* The hero substances, indexed by the `aMat` byte the baker writes. Index 0 is
- * "no hero material, use the layer's height ramp", which is what every vertex
- * outside the hero layer carries, so the five below are 1 to 5 and the shader
- * selects between them without an array lookup or a branch.
+/* The named substances, indexed by the `aMat` byte the baker writes. Index 0 is
+ * "no named substance, use the layer's height ramp", which is what every vertex
+ * outside L3 and L4 carries, so the six below are 1 to 6 and the shader selects
+ * between them without an array lookup or a branch.
  *
  * Every one is a reflectance derived the round-4d way, measured appearance
- * inverted through the render chain: .tmp/venue-audit/round5/mix-heroes.mjs
- * prints the derivation and provenance.md holds the sources. */
+ * inverted through the render chain: .tmp/venue-audit/round5/mix-heroes.mjs and
+ * .tmp/venue-audit/round6/mix-tank.mjs print the derivations and each round's
+ * provenance.md holds the sources. */
 const HERO_ROCK = new Color(VENUE_ISLE_ROCK);
 const HERO_VEG = new Color(VENUE_ISLE_VEG);
 const HERO_PALE = new Color(VENUE_HERO_PALE);
 const HERO_HULL = new Color(VENUE_HERO_HULL);
 const HERO_FUNNEL = new Color(VENUE_HERO_FUNNEL);
+const SUBSTANCE_TANK = new Color(VENUE_TANK);
 
 /* Both lights reach the shader normalised to luminance 1, so the two gains
  * above read as an irradiance ratio and can be checked against a clear sky
@@ -213,17 +216,6 @@ function light(hex: string, gain: number): Color {
 }
 const SUN_LIGHT = light(SUN_TINT, SUN_GAIN);
 const SKY_FILL = light(VENUE_SKY_FILL, AMB_GAIN);
-
-/* Which shader a layer's `material` byte asks for. */
-const MATERIAL_SHORE = 0;
-const MATERIAL_CURTAIN = 1;
-
-/* Channel bits in a layer's attrMask, in the order the body lays them out. */
-const ATTR_FADE = 1;
-const ATTR_SHADE = 2;
-const ATTR_DIST = 4;
-const ATTR_BASE = 8;
-const ATTR_MAT = 16;
 
 /* The curtain's own constants, and every one of them is load-bearing.
  *
@@ -328,6 +320,7 @@ const VenueShoreMaterial = shaderMaterial(
     uHeroPale: HERO_PALE,
     uHeroHull: HERO_HULL,
     uHeroFunnel: HERO_FUNNEL,
+    uTank: SUBSTANCE_TANK,
     uHaze: HAZE_NEAR,
     uHazeFar: HAZE_FAR,
     uHazeMix: HAZE_NEAR_WEIGHT,
@@ -365,6 +358,7 @@ uniform vec3 uHeroVeg;
 uniform vec3 uHeroPale;
 uniform vec3 uHeroHull;
 uniform vec3 uHeroFunnel;
+uniform vec3 uTank;
 uniform vec2 uRamp;
 uniform vec2 uGrain;
 uniform float uHaze;
@@ -411,19 +405,22 @@ void main() {
      gantry steel. It works there because those pairs really do sit at
      different heights.
 
-     It fails completely on a hero. A THUMS island puts a boulder rim, a dark
-     green planted mass and a pale screen tower inside the same twenty metres,
-     which is why the round-4d grade painted the islands harbour-fill tan and
-     they read as slabs. So the hero layer carries one byte per vertex saying
-     what the surface is made of, and 0 means "no hero substance here, use the
-     ramp", which is what every vertex in every other layer carries. The select
-     is four mixes rather than a branch or an array lookup: both of those are
-     portability traps in GLSL ES 1.00 and this costs three cycles. */
+     It fails on anything that does not. A THUMS island puts a boulder rim, a
+     dark green planted mass and a pale screen tower inside the same twenty
+     metres, which is why the round-4d grade painted the islands harbour-fill
+     tan and they read as slabs; a storage tank stands 6 to 25 m, inside the
+     container yard's own band, so the port ramp painted 57 tanks as stacks of
+     boxes. Both layers carry one byte per vertex saying what the surface is
+     made of, and 0 means "no named substance here, use the ramp", which is
+     what every vertex in every other layer carries. The select is five mixes
+     rather than a branch or an array lookup: both of those are portability
+     traps in GLSL ES 1.00 and this costs four cycles. */
   float band = smoothstep(uRamp.x, uRamp.y, vWorld.y);
   vec3 heroLow = mix(uHeroRock, uHeroVeg, step(1.5, vMat));
   vec3 heroMid = mix(uHeroPale, uHeroHull, step(3.5, vMat));
-  vec3 hero = mix(mix(heroLow, heroMid, step(2.5, vMat)), uHeroFunnel, step(4.5, vMat));
-  vec3 albedo = mix(mix(uAlbedoLo, uAlbedoHi, band), hero, step(0.5, vMat));
+  vec3 named = mix(mix(heroLow, heroMid, step(2.5, vMat)), uHeroFunnel, step(4.5, vMat));
+  named = mix(named, uTank, step(5.5, vMat));
+  vec3 albedo = mix(mix(uAlbedoLo, uAlbedoHi, band), named, step(0.5, vMat));
 
   /* The bake writes 0.62 for a face turned fully away from the sun and 1.17
    * for one square on, so this recovers N.L and the grain rides on it. */
@@ -431,9 +428,9 @@ void main() {
     shoreNoise(vWorld.xz * 0.009) * 0.62 + shoreNoise(vWorld.xz * 0.027) * 0.38;
   float grainFall = 1.0 - smoothstep(3000.0, 9000.0, dist);
   /* Ground grain is a terrain texture. Rock and planting are ground and take
-     it; painted concrete, hull plate and a funnel are not, and a two-octave
-     world noise across them draws the horizontal banding design doc 2.3 warned
-     about. Substances 3 and up switch it off. */
+     it; painted concrete, hull plate, a funnel and a tank shell are not, and a
+     two-octave world noise across them draws the horizontal banding design doc
+     2.3 warned about. Substances 3 and up switch it off. */
   float grainWeight = mix(uGrain.x, uGrain.y, band) * grainFall * (1.0 - step(2.5, vMat));
   float lit = clamp((vShade - 0.62) * 1.818 + (grain - 0.5) * grainWeight, 0.0, 1.0);
 
@@ -612,132 +609,45 @@ declare module "@react-three/fiber" {
   }
 }
 
-type VenueLayer = {
-  classId: number;
-  material: number;
-  drawOrder: number;
-  geometry: BufferGeometry;
-};
-
-/** One layer's body, in the byte order the LVN2 asset already shipped:
- * quantised world-frame positions, then whichever of the four channels the
- * layer's `attrMask` claims, then an index. Positions are Int16 metres
- * (y in `yUnit` steps) so the wire stays small; dequantised here once, at
- * load. The curtain reads its position slots as a direction and a summit
- * height instead, which is what its `material` byte tells the runtime. */
-function parseLayer(
-  buffer: ArrayBuffer,
-  vertAt: number,
-  indexAt: number,
-  vertCount: number,
-  indexCount: number,
-  yUnit: number,
-  wideIndex: boolean,
-  attrMask: number,
-): BufferGeometry {
-  const view = new DataView(buffer);
-  const positions = new Float32Array(vertCount * 3);
-  let at = vertAt;
-  for (let i = 0; i < vertCount; i++) {
-    positions[i * 3] = view.getInt16(at, true);
-    positions[i * 3 + 1] = view.getInt16(at + 2, true) / yUnit;
-    positions[i * 3 + 2] = view.getInt16(at + 4, true);
-    at += 6;
-  }
-  const geometry = new BufferGeometry();
-  geometry.setAttribute("position", new BufferAttribute(positions, 3));
-  if (attrMask & ATTR_FADE) {
-    geometry.setAttribute("aFade", new BufferAttribute(new Uint8Array(buffer, at, vertCount).slice(), 1, true));
-    at += vertCount;
-  }
-  if (attrMask & ATTR_SHADE) {
-    geometry.setAttribute("aShade", new BufferAttribute(new Uint8Array(buffer, at, vertCount).slice(), 1, true));
-    at += vertCount;
-  }
-  if (attrMask & ATTR_DIST) {
-    /* unnormalised: the shader wants the count of 4 m steps, not a fraction */
-    const dists = new Int16Array(vertCount);
-    for (let i = 0; i < vertCount; i++) dists[i] = view.getInt16(at + i * 2, true);
-    geometry.setAttribute("aDist", new BufferAttribute(dists, 1));
-    at += vertCount * 2;
-  }
-  if (attrMask & ATTR_BASE) {
-    geometry.setAttribute("aBase", new BufferAttribute(new Uint8Array(buffer, at, vertCount).slice(), 1));
-    at += vertCount;
-  }
-  /* The shore shader declares `aMat` and every shore layer therefore has to
-   * supply it, whether or not its block carries the channel. An unbound
-   * attribute reads back whatever the driver left in the default vertex
-   * attribute, which is not a value this code gets to define, so the layers
-   * without the channel get an explicit run of zeros: "no hero substance,
-   * use the height ramp". One byte per vertex on the client, none on the
-   * wire. */
-  if (attrMask & ATTR_MAT) {
-    geometry.setAttribute("aMat", new BufferAttribute(new Uint8Array(buffer, at, vertCount).slice(), 1));
-    at += vertCount;
-  } else if (attrMask & ATTR_SHADE) {
-    geometry.setAttribute("aMat", new BufferAttribute(new Uint8Array(vertCount), 1));
-  }
-  const indices = wideIndex
-    ? new Uint32Array(buffer, indexAt, indexCount)
-    : new Uint16Array(buffer, indexAt, indexCount);
-  geometry.setIndex(new BufferAttribute(indices.slice(), 1));
-  geometry.computeBoundingSphere();
-  return geometry;
+/**
+ * Whether this runtime knows what a layer is made of.
+ *
+ * The container reserves class ids this build has never seen (6 is vegetation,
+ * which the design doc considered and did not build), and an asset newer than
+ * the code that reads it will carry one. Falling back to the terrain ramp is
+ * the wrong answer twice over: it paints an unknown substance harbour-fill tan,
+ * which is precisely the round-4d defect the substance byte exists to fix, and
+ * it does so silently, so nobody finds out until a capture looks wrong. Skip
+ * the layer and say so instead. The curtain is exempt: it carries its own
+ * shader and reads no material table.
+ */
+function drawable(layer: VenueLayer): boolean {
+  if (layer.material === MATERIAL_CURTAIN) return true;
+  if (MATERIALS[layer.classId] !== undefined) return true;
+  console.warn(
+    `venue asset carries layer class ${layer.classId}, which this build has no material for; skipping it`,
+  );
+  return false;
 }
 
-/** Parse what `scripts/layline-bake-venue.mjs` writes. LVN3 carries a layer
- * table, one semantic class per entry, so each class can take its own material
- * and its own draw. LVN2, the single-layer asset round 2 shipped, is read as
- * one terrain layer; keeping that branch is what lets a fallback asset stay
- * usable. */
-function parseVenueMesh(buffer: ArrayBuffer): VenueLayer[] {
-  const view = new DataView(buffer);
-  const magic = view.getUint32(0, true);
-  if (magic === MAGIC_LVN2) {
-    const vertCount = view.getUint32(4, true);
-    const channels = 16 + vertCount * 8; // header + pos + fade + shade
-    return [
-      {
-        classId: CLASS_TERRAIN,
-        material: MATERIAL_SHORE,
-        drawOrder: 10,
-        geometry: parseLayer(
-          buffer,
-          16,
-          channels + ((4 - (channels % 4)) % 4),
-          vertCount,
-          view.getUint32(8, true),
-          10,
-          (view.getUint32(12, true) & 1) === 1,
-          ATTR_FADE | ATTR_SHADE,
-        ),
-      },
-    ];
-  }
-  if (magic !== MAGIC_LVN3) throw new Error("not a LVN2 or LVN3 mesh");
-  const layerCount = view.getUint32(4, true);
-  const bodyOffset = view.getUint32(12, true);
-  const layers: VenueLayer[] = [];
-  for (let i = 0; i < layerCount; i++) {
-    const record = 16 + i * 24;
-    layers.push({
-      classId: view.getUint16(record, true),
-      material: view.getUint8(record + 2),
-      drawOrder: view.getUint8(record + 3),
-      geometry: parseLayer(
-        buffer,
-        bodyOffset + view.getUint32(record + 16, true),
-        bodyOffset + view.getUint32(record + 20, true),
-        view.getUint32(record + 8, true),
-        view.getUint32(record + 12, true),
-        view.getUint8(record + 5),
-        view.getUint8(record + 6) === 1,
-        view.getUint8(record + 4),
-      ),
-    });
-  }
-  return layers.sort((a, b) => a.drawOrder - b.drawOrder);
+/**
+ * The coast a venue race falls back to when its baked asset does not arrive.
+ *
+ * The procedural arc predates the venue and is still what every race without a
+ * baked coast draws, so this is the scene's own fallback rather than a new one:
+ * a silhouette of bluffs, terminals and cranes at a fixed seed, one draw, no
+ * fetch. It is a scale reference and not San Pedro Bay, which is the honest
+ * thing to show when the real coast could not be loaded. Open water would read
+ * as a deliberate choice; this reads as a coast.
+ */
+function FallbackShore() {
+  const geometry = useMemo(shorelineGeometry, []);
+  useEffect(() => () => geometry.dispose(), [geometry]);
+  return (
+    <mesh geometry={geometry} frustumCulled={false}>
+      <laylineShoreMaterial side={DoubleSide} />
+    </mesh>
+  );
 }
 
 /**
@@ -756,18 +666,31 @@ function parseVenueMesh(buffer: ArrayBuffer): VenueLayer[] {
  */
 export function VenueShore({ asset }: { asset: string }) {
   const [layers, setLayers] = useState<VenueLayer[] | null>(null);
+  const status = useReplay((state) => state.venueAsset);
+  const inFrame = useReplay((state) => state.venueInFrame);
+  /* One transition per load, and it belongs to the load that asked for it: a
+   * ref rather than a read of `status`, so a race switch back to the same asset
+   * cannot inherit the previous mesh's answer. */
+  const drawn = useRef(false);
 
   useEffect(() => {
-    let live = true;
+    /* The abort is what keeps a slow fetch from installing over a newer venue.
+     * The store is one per document and both loads write to it, so a Long Beach
+     * request still in flight when the viewer switches races would otherwise
+     * report ITS outcome for whatever venue is on screen by then, and hand its
+     * mesh to a scene that has moved on. Aborting on cleanup ends that fetch and
+     * every store write below is gated on the same signal. */
+    const controller = new AbortController();
     let loaded: VenueLayer[] | null = null;
+    drawn.current = false;
     /* The capture contract: ready excludes loading states, and this fetch is
-     * the scene's one load. Down before the first frame can be drawn, up when
-     * the coast is in or the fetch has failed, and up again on unmount so the
-     * next race never inherits a lowered flag. */
-    useReplay.getState().setSceneryOk(false);
+     * the scene's one load. `rendered` is raised by the mesh itself, on its
+     * first drawn frame; nothing here can raise it, because a parsed asset is
+     * not yet a picture. */
+    useReplay.getState().setVenueAsset("loading");
     (async () => {
-      const response = await fetch(asset);
-      if (!response.ok) return;
+      const response = await fetch(asset, { signal: controller.signal });
+      if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
       /* The asset is stored gzipped so the repo and the wire both stay small.
        * If a CDN layer ever transparently decodes it, the magic is already
        * plain in the first word and the stream step is skipped. */
@@ -778,7 +701,7 @@ export function VenueShore({ asset }: { asset: string }) {
           new Blob([buffer]).stream().pipeThrough(new DecompressionStream("gzip")),
         ).arrayBuffer();
       }
-      if (!live) return;
+      if (controller.signal.aborted) return;
       /* one mark pair per load, read back by the audit battery; the parse is a
        * once-per-race cost and this is the only way to see it from outside */
       performance.mark("layline-venue-parse-start");
@@ -789,26 +712,50 @@ export function VenueShore({ asset }: { asset: string }) {
         "layline-venue-parse-start",
         "layline-venue-parse-end",
       );
-      setLayers(loaded);
+      if (controller.signal.aborted) return;
+      setLayers(loaded.filter(drawable));
       requestSceneFrame();
-    })()
-      .catch((error) => {
-        /* No coast is a working scene: the sky and the water hold the horizon,
-         * which is exactly what the venues without baked assets already show. */
-        console.warn("venue shore failed to load", error);
-      })
-      .finally(() => {
-        if (live) useReplay.getState().setSceneryOk(true);
-      });
+    })().catch((error) => {
+      /* An abort is this component's own cleanup, not a failure: the venue it
+       * was fetching is not the venue on screen any more. */
+      if (controller.signal.aborted) return;
+      /* A failed coast is not a broken scene, but it is not a finished one
+       * either: the procedural arc below goes up in its place, which is what
+       * every venue without a baked asset already draws. */
+      console.warn("venue shore failed to load", error);
+      useReplay.getState().setVenueAsset("failed");
+    });
     return () => {
-      live = false;
+      controller.abort();
       for (const layer of loaded ?? []) layer.geometry.dispose();
       setLayers(null);
-      useReplay.getState().setSceneryOk(true);
+      useReplay.getState().setVenueAsset("absent");
     };
   }, [asset]);
 
-  if (layers === null) return null;
+  /* Nothing left to wait for in the one case where no venue frame will ever be
+   * drawn: the rig is holding the coast out of the scene on purpose. Without
+   * this, `ready` would sit at `loading` forever on a page that opened tactical.
+   */
+  useEffect(() => {
+    if (layers === null || inFrame || drawn.current) return;
+    drawn.current = true;
+    useReplay.getState().setVenueAsset("rendered");
+  }, [layers, inFrame]);
+
+  const markDrawn = useCallback(() => {
+    if (drawn.current) return;
+    drawn.current = true;
+    useReplay.getState().setVenueAsset("rendered");
+  }, []);
+
+  if (status === "failed") return <FallbackShore />;
+  /* The settled tactical rig sees 250 m of water from 160 m up and the nearest
+   * real land is 715 m away, so its five venue draws are pure cost (design doc
+   * 2.1). Unmounting rather than hiding: a hidden mesh still costs the render
+   * list a visit, and this only ever changes when a rig hand-over lands. */
+  if (layers === null || !inFrame) return null;
+  const last = layers[layers.length - 1];
   return (
     <>
       {layers.map((layer) => (
@@ -823,6 +770,10 @@ export function VenueShore({ asset }: { asset: string }) {
           geometry={layer.geometry}
           renderOrder={layer.drawOrder}
           frustumCulled={false}
+          /* The last layer in draw order, so `rendered` means every venue layer
+             has been through the pipe, not just the first one. A fetched asset
+             that never draws is exactly the state `ready` must not promise. */
+          onAfterRender={layer === last ? markDrawn : undefined}
         >
           {layer.material === MATERIAL_CURTAIN ? (
             <laylineVenueCurtainMaterial side={DoubleSide} />
@@ -832,10 +783,10 @@ export function VenueShore({ asset }: { asset: string }) {
                same references it already holds and nothing is allocated. */
             <laylineVenueShoreMaterial
               side={DoubleSide}
-              uAlbedoLo={(MATERIALS[layer.classId] ?? MATERIAL_FALLBACK).lo}
-              uAlbedoHi={(MATERIALS[layer.classId] ?? MATERIAL_FALLBACK).hi}
-              uRamp={(MATERIALS[layer.classId] ?? MATERIAL_FALLBACK).ramp}
-              uGrain={(MATERIALS[layer.classId] ?? MATERIAL_FALLBACK).grain}
+              uAlbedoLo={MATERIALS[layer.classId].lo}
+              uAlbedoHi={MATERIALS[layer.classId].hi}
+              uRamp={MATERIALS[layer.classId].ramp}
+              uGrain={MATERIALS[layer.classId].grain}
             />
           )}
         </mesh>

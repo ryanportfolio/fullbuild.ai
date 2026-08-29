@@ -874,7 +874,10 @@ export function RaceWorkspace({
         </details>
         {/* The shore geometry is baked from OSM coastline data and Mapzen
             terrain tiles; ODbL and the terrain tiles' own terms both ask for
-            credit anywhere that data is shown. */}
+            credit anywhere that data is shown. Mapzen is the tile set, not the
+            survey: over the continental US it composites USGS 3DEP at zoom 10
+            and above and NASA SRTM from zoom 7, and its attribution page asks
+            for both by name, courtesy of the U.S. Geological Survey. */}
         <p className={styles.dataCredit}>
           <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
             Scenery data © OpenStreetMap contributors
@@ -886,6 +889,10 @@ export function RaceWorkspace({
             rel="noreferrer"
           >
             Elevation from Mapzen terrain tiles
+          </a>
+          {" · "}
+          <a href="https://www.usgs.gov/3d-elevation-program" target="_blank" rel="noreferrer">
+            Terrain from USGS 3DEP and NASA SRTM, courtesy of the U.S. Geological Survey
           </a>
         </p>
       </section>
