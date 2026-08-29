@@ -134,3 +134,17 @@ of the lens/show doors is asserted by source inspection (every door behind
 (`NEXT_DIST_DIR=.next-audit npm run build` + grep client chunks for
 `api.lens`/`setShowMask`) is owed at the next quiet-worktree gate run since
 `npm run build` tears a live dev server's `.next`.
+
+## Read the frame counter BEFORE posing the lens (2026-08-29, survey lane)
+
+Custom lens drivers must sample `info().frames` BEFORE calling
+`__layline.lens(...)`, then wait for the counter to pass that sample. Reading
+the counter after the call races the draw the lens itself scheduled: the wait
+returns immediately, the screenshot is of the PREVIOUS pose, and the failure
+is silent because `info().lens` readback still reports the commanded pose
+exactly (it echoes module state, not the drawn frame). Observed: seven
+byte-identical shots of the default camera, all "readback exact". Defense in
+depth: also assert each shot's bytes differ from its predecessor's (the
+survey driver does). scripts/venue-lens.mjs itself samples before posing and
+is not affected; commit b1b69e23 fixed the renderer-side half of this hazard
+(remount frame request).
