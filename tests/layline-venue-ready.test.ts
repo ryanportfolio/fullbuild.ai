@@ -137,7 +137,17 @@ test("the venue is dropped only once the tactical hand-over has landed", () => {
   const rigs = source(CAMERA_RIGS);
   /* keyed on the composed shot, so the coast survives the 1.2 s flight into
      the rig rather than popping out at the start of it */
-  assert.match(rigs, /const venueInFrame = !\(move\.to === "tactical" && mix >= 1\);/);
+  assert.match(
+    rigs,
+    /const venueInFrame = inspecting \|\| !\(move\.to === "tactical" && mix >= 1\);/,
+  );
+  /* the one other thing that keeps the coast mounted: a capture lens can stand
+     anywhere, including inside the land the settled tactical rig drops, so an
+     inspection pose is its own reason to keep the venue in the scene */
+  assert.match(
+    rigs,
+    /const inspecting = process\.env\.NODE_ENV !== "production" && captureLens\.active;/,
+  );
   /* one compare per frame against a module mirror, and a store write only when
      the answer changes */
   assert.match(rigs, /if \(venueInFrame !== venueWasInFrame\) \{/);

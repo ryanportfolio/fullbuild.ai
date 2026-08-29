@@ -7,6 +7,7 @@ import { Color, DoubleSide, Vector2 } from "three";
 import { useReplay } from "../store";
 import { requestSceneFrame } from "./gate";
 import { shorelineGeometry } from "./SkyDome";
+import { VENUE_LAYER_PREFIX } from "./inspect";
 import {
   CLASS_HEROES,
   CLASS_MASSING,
@@ -783,6 +784,10 @@ export function VenueShore({ asset }: { asset: string }) {
           geometry={layer.geometry}
           renderOrder={layer.drawOrder}
           frustumCulled={false}
+          /* The one handle a capture has on a single semantic class: the
+             inspection mask (`__layline.show({venueLayers})`, dev only)
+             matches this name and writes visibility onto the mesh. */
+          name={`${VENUE_LAYER_PREFIX}${layer.classId}`}
           /* The last layer in draw order, so `rendered` means every venue layer
              has been through the pipe, not just the first one. A fetched asset
              that never draws is exactly the state `ready` must not promise. */

@@ -20,6 +20,7 @@ import { CameraRigs } from "./CameraRigs";
 import { CourseGraphics } from "./CourseGraphics";
 import { CurrentField } from "./CurrentField";
 import { Fleet } from "./Fleet";
+import { GROUP_BOATS, GROUP_HUD, GROUP_WATER, setMaskRoot } from "./inspect";
 import { SKY_HORIZON } from "./sky";
 import { Water } from "./Water";
 import { SkyDome } from "./SkyDome";
@@ -356,6 +357,19 @@ function RenderGate() {
   return null;
 }
 
+/* Hands the scene graph to the inspection mask, so `__layline.show` can write
+ * visibility onto the named groups without a React render. Mounted outside
+ * production only; with no root installed the mask is inert and applying it
+ * does nothing. */
+function InspectBridge() {
+  const scene = useThree((state) => state.scene);
+  useEffect(() => {
+    setMaskRoot(scene);
+    return () => setMaskRoot(null);
+  }, [scene]);
+  return null;
+}
+
 export function LaylineScene({
   race,
   layers,
@@ -422,16 +436,27 @@ export function LaylineScene({
       <color attach="background" args={[SKY_HORIZON]} />
       <SkyDome proceduralShore={scenery === undefined} />
       {scenery !== undefined && <VenueShore asset={scenery.asset} />}
-      <Water race={race} />
-      <CurrentField race={race} visible={layers.current} />
-      <CourseGraphics race={race} showLaylines={layers.laylines} />
-      <Fleet race={race} />
-      <WakeTrails race={race} />
-      <BoatTracks
-        race={race}
-        showTracks={layers.tracks}
-        showRawFixes={layers["raw-fixes"]}
-      />
+      {/* Three named groups, so a capture can take the race out of the picture
+          and leave the venue in it (`__layline.show`, dev only). They are plain
+          identity transforms: nothing under them moves, renderOrder is stated
+          per mesh and unaffected by depth, and `getObjectByName` is recursive,
+          so the label and picker lookups still find their anchors. */}
+      <group name={GROUP_WATER}>
+        <Water race={race} />
+      </group>
+      <group name={GROUP_HUD}>
+        <CurrentField race={race} visible={layers.current} />
+        <CourseGraphics race={race} showLaylines={layers.laylines} />
+        <BoatTracks
+          race={race}
+          showTracks={layers.tracks}
+          showRawFixes={layers["raw-fixes"]}
+        />
+      </group>
+      <group name={GROUP_BOATS}>
+        <Fleet race={race} />
+        <WakeTrails race={race} />
+      </group>
       <CameraRigs race={race} />
       <BoatLabels race={race} />
       <BoatPicker race={race} />
@@ -439,6 +464,7 @@ export function LaylineScene({
       <QualityGovernor />
       <DemandBridge />
       <RenderGate />
+      {process.env.NODE_ENV !== "production" && <InspectBridge />}
     </Canvas>
   );
 }

@@ -9,6 +9,9 @@ import { FIX_HZ } from "@/lib/layline/types";
 import type { Pose, RaceData, ReplayMode, RigName } from "@/lib/layline/types";
 import { useReplay } from "../store";
 import { requestSceneFrame, sceneGate } from "./gate";
+/* Aliased: `lens` is already a local word here for the projection a rig frames
+ * through, and the capture camera is a different thing entirely. */
+import { lens as captureLens } from "./inspect";
 import {
   distanceFor,
   freeform,
@@ -1546,10 +1549,34 @@ export function CameraRigs({ race }: { race: RaceData }) {
      * is the same test the shot itself uses one line down to decide it has
      * landed. One boolean compare per frame; the store is written on the two
      * frames a year it actually changes. */
-    const venueInFrame = !(move.to === "tactical" && mix >= 1);
+    /* The capture lens, if one is standing (dev only: NODE_ENV is a literal
+     * here, so a production build drops both reads and the branch with them).
+     * It is applied to the camera rather than to the shot, which is what keeps
+     * it from leaking anywhere: `shot` is what the freeform camera is seeded
+     * from and what the next hand-over leaves from, so writing an unclamped
+     * inspection pose into it would corrupt the visitor's camera the moment
+     * the lens was put down. Nothing under `interaction.ts` is touched. */
+    const inspecting = process.env.NODE_ENV !== "production" && captureLens.active;
+
+    /* The lens can stand anywhere, including inside the coast the settled
+     * tactical rig drops, so a lens on the scene is its own reason to keep the
+     * venue mounted. */
+    const venueInFrame = inspecting || !(move.to === "tactical" && mix >= 1);
     if (venueInFrame !== venueWasInFrame) {
       venueWasInFrame = venueInFrame;
       replay.setVenueInFrame(venueInFrame);
+    }
+
+    if (inspecting) {
+      camera.position.set(captureLens.ex, captureLens.ey, captureLens.ez);
+      aim.set(captureLens.ax, captureLens.ay, captureLens.az);
+      camera.lookAt(aim);
+      if (camera.fov !== captureLens.fov) {
+        camera.fov = captureLens.fov;
+        camera.updateProjectionMatrix();
+      }
+      camera.updateMatrixWorld();
+      return;
     }
 
     camera.position.set(shot.ex, shot.ey, shot.ez);

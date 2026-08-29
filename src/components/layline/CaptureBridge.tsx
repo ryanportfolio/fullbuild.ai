@@ -11,6 +11,16 @@ import {
   freeform,
 } from "./scene/interaction";
 import { requestSceneFrame } from "./scene/gate";
+import {
+  applyShowMask,
+  lens,
+  resetShowMask,
+  setLens,
+  setShowMask,
+  showMask,
+  type LensPlacement,
+  type ShowRequest,
+} from "./scene/inspect";
 import type { VenueAssetState } from "./store";
 import type { ReplayMode, RigName } from "@/lib/layline/types";
 
@@ -51,6 +61,31 @@ export interface CaptureInfo {
   yaw: number;
   pitch: number;
   dist: number;
+  /* Where the inspection lens is standing and what the scene is showing.
+   * Present outside production only, alongside the two calls that write them,
+   * so a capture script can assert per pose that the pose it asked for is the
+   * pose the next frame renders from. */
+  lens?: LensReadback;
+  show?: ShowReadback;
+}
+
+export interface LensReadback {
+  active: boolean;
+  /* eye */
+  x: number;
+  y: number;
+  z: number;
+  /* aim */
+  lookAt: [number, number, number];
+  fov: number;
+}
+
+export interface ShowReadback {
+  boats: boolean;
+  water: boolean;
+  hud: boolean;
+  /* null means every venue layer is drawn. */
+  venueLayers: number[] | null;
 }
 
 export interface CameraPose {
@@ -80,6 +115,17 @@ export interface LaylineCapture {
    * display, so nothing reflows and the scene keeps its exact size) for
    * clean environment captures; ui(true) restores. */
   ui: (show: boolean) => void;
+  /* Stand the camera at an arbitrary world point looking at another, with no
+   * clamp on range, height or pitch, and lens(null) to hand the camera back to
+   * the rigs. Capture-only: nothing on the page can reach it, and the
+   * visitor's own camera state is never written, so the restore is exact.
+   * Present outside production only. */
+  lens?: (placement: LensPlacement | null) => void;
+  /* Draw or drop whole parts of the scene: the boats, the water, the race
+   * overlay, and the venue's layers by class id. Visibility only, so nothing
+   * unmounts and nothing reflows, and it composes with ui(false). Present
+   * outside production only. */
+  show?: (request: ShowRequest) => void;
   info: () => CaptureInfo;
 }
 
@@ -98,6 +144,12 @@ declare global {
  *
  * It ships in production builds as well as development. A capture tool that
  * only works against a dev server can only ever verify a dev server.
+ *
+ * Two doors are the exception. `lens()` stands the camera outside every limit
+ * the pointer obeys and `show()` takes parts of the scene out of the picture:
+ * both exist to inspect how the venue is built, neither is anything a visitor
+ * should be able to reach, and both are compiled out of a production build
+ * along with the `info()` fields that read them back.
  */
 export function CaptureBridge() {
   useEffect(() => {
@@ -154,23 +206,66 @@ export function CaptureBridge() {
         }
         requestSceneFrame();
       },
-      info: () => ({
-        t: store.getState().t,
-        drawnAt: renderStats.drawnAt,
-        drawCalls: renderStats.drawCalls,
-        triangles: renderStats.triangles,
-        frames: renderStats.frames,
-        yaw: freeform.yaw,
-        pitch: freeform.pitch,
-        dist: freeform.dist,
-      }),
+      info: () => {
+        const reading: CaptureInfo = {
+          t: store.getState().t,
+          drawnAt: renderStats.drawnAt,
+          drawCalls: renderStats.drawCalls,
+          triangles: renderStats.triangles,
+          frames: renderStats.frames,
+          yaw: freeform.yaw,
+          pitch: freeform.pitch,
+          dist: freeform.dist,
+        };
+        if (process.env.NODE_ENV !== "production") {
+          reading.lens = {
+            active: lens.active,
+            x: lens.ex,
+            y: lens.ey,
+            z: lens.ez,
+            lookAt: [lens.ax, lens.ay, lens.az],
+            fov: lens.fov,
+          };
+          reading.show = {
+            boats: showMask.boats,
+            water: showMask.water,
+            hud: showMask.hud,
+            venueLayers: showMask.venueLayers === null ? null : [...showMask.venueLayers],
+          };
+        }
+        return reading;
+      },
     };
+    if (process.env.NODE_ENV !== "production") {
+      /* The two inspection doors. Both draw through the gate rather than
+       * trusting the loop: async scenery on a paused replay never reaches the
+       * screen on its own, and a frozen canvas has no next frame to read a
+       * dirty flag. */
+      api.lens = (placement) => {
+        setLens(placement);
+        requestSceneFrame();
+      };
+      api.show = (request) => {
+        setShowMask(request);
+        applyShowMask();
+        requestSceneFrame();
+      };
+    }
     window.__layline = api;
     const unsubscribe = store.subscribe((state) => {
       api.ready = captureReady(state);
     });
     return () => {
       unsubscribe();
+      if (process.env.NODE_ENV !== "production") {
+        /* Both inspection states are module scope and outlive this component,
+         * so leaving them set would hand the next visit a camera it has no
+         * door to put down and a scene missing whatever the last capture
+         * hid. */
+        setLens(null);
+        resetShowMask();
+        applyShowMask();
+      }
       if (window.__layline === api) delete window.__layline;
     };
   }, []);

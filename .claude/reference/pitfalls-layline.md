@@ -113,3 +113,17 @@ settled tactical framing must thaw, wait at least 2.5 s, then re-freeze.
 Also: `npm run build` tears the running dev server's `.next` (document 200,
 stylesheets/chunks 404 or 500); restart the server and re-run the server
 gate before any capture that follows a build.
+
+## venue-lens show() before first drawn venue frame can strand ready (2026-08-29)
+
+`__layline.show({venueLayers: [...]})` (dev-only inspection door) hides venue
+layer meshes by visibility. Readiness is latched by the LAST venue layer's
+`onAfterRender`, and an invisible mesh never renders: calling `show()` with a
+venue subset BEFORE the venue's first drawn frame can strand `ready` at
+`loading` forever. The venue-lens CLI is safe because it waits on `ready`
+before any `show()`; any new script must do the same. Also from the lens
+audit: production elimination of the lens/show doors is asserted by source
+inspection (every door behind `process.env.NODE_ENV !== "production"`); a
+build-level proof (`NEXT_DIST_DIR=.next-audit npm run build` + grep client
+chunks for `api.lens`/`setShowMask`) is owed at the next quiet-worktree gate
+run since `npm run build` tears a live dev server's `.next`.
