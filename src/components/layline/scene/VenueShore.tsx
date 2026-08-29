@@ -60,7 +60,16 @@ const GRAIN = 1.2;
 const SURF_TOP = 1.7;
 const WET_TOP = 4.2;
 
-const MAGIC = 0x324e564c; // "LVN2"
+const MAGIC_LVN2 = 0x324e564c; // "LVN2", the single-layer asset round 2 shipped
+const MAGIC_LVN3 = 0x334e564c; // "LVN3", the layered container
+
+/* Layer class ids, from the baker's layer table. Only the terrain layer wants
+ * the ground grain: the two-octave world noise is a terrain texture, and on a
+ * 120 m tower or a crane leg it draws horizontal bands that read as an
+ * artifact (design doc 2.3). One uniform per layer turns it off, which is
+ * cheaper than the spare attribute bit the doc offered as the alternative and
+ * costs nothing per frame. */
+const CLASS_TERRAIN = 1;
 
 /* The procedural arc is only ever seen edge-on from the water, where a
  * silhouette needs no form. The venue mesh is real terrain under a freeform
@@ -190,32 +199,37 @@ declare module "@react-three/fiber" {
   }
 }
 
-/** Parse the LVN2 buffer `scripts/layline-bake-venue.mjs` writes: quantised
- * world-frame positions, the aFade channel the shore shader already takes,
- * a hillshade byte per vertex, and an index. Positions are Int16 metres
- * (y in 0.1 m) so the wire stays small; dequantised here once, at load. */
-function parseVenueMesh(buffer: ArrayBuffer): BufferGeometry {
+type VenueLayer = { classId: number; drawOrder: number; geometry: BufferGeometry };
+
+/** One layer's body, in the byte order the LVN2 asset already shipped:
+ * quantised world-frame positions, the aFade channel the shore shader takes,
+ * a hillshade byte per vertex, then an index. Positions are Int16 metres
+ * (y in `yUnit` steps) so the wire stays small; dequantised here once, at
+ * load. */
+function parseLayer(
+  buffer: ArrayBuffer,
+  vertAt: number,
+  indexAt: number,
+  vertCount: number,
+  indexCount: number,
+  yUnit: number,
+  wideIndex: boolean,
+): BufferGeometry {
   const view = new DataView(buffer);
-  if (view.getUint32(0, true) !== MAGIC) throw new Error("not a LVN2 mesh");
-  const vertCount = view.getUint32(4, true);
-  const indexCount = view.getUint32(8, true);
-  const wideIndex = (view.getUint32(12, true) & 1) === 1;
-  let at = 16;
   const positions = new Float32Array(vertCount * 3);
+  let at = vertAt;
   for (let i = 0; i < vertCount; i++) {
     positions[i * 3] = view.getInt16(at, true);
-    positions[i * 3 + 1] = view.getInt16(at + 2, true) * 0.1;
+    positions[i * 3 + 1] = view.getInt16(at + 2, true) / yUnit;
     positions[i * 3 + 2] = view.getInt16(at + 4, true);
     at += 6;
   }
   const fades = new Uint8Array(buffer, at, vertCount);
   at += vertCount;
   const shadesChannel = new Uint8Array(buffer, at, vertCount);
-  at += vertCount;
-  at += (4 - (at % 4)) % 4;
   const indices = wideIndex
-    ? new Uint32Array(buffer, at, indexCount)
-    : new Uint16Array(buffer, at, indexCount);
+    ? new Uint32Array(buffer, indexAt, indexCount)
+    : new Uint16Array(buffer, indexAt, indexCount);
   const geometry = new BufferGeometry();
   geometry.setAttribute("position", new BufferAttribute(positions, 3));
   geometry.setAttribute("aFade", new BufferAttribute(fades.slice(), 1, true));
@@ -225,10 +239,62 @@ function parseVenueMesh(buffer: ArrayBuffer): BufferGeometry {
   return geometry;
 }
 
+/** Parse what `scripts/layline-bake-venue.mjs` writes. LVN3 carries a layer
+ * table, one semantic class per entry, so each class can take its own material
+ * and its own draw. LVN2, the single-layer asset round 2 shipped, is read as
+ * one terrain layer; keeping that branch is what lets a fallback asset stay
+ * usable. */
+function parseVenueMesh(buffer: ArrayBuffer): VenueLayer[] {
+  const view = new DataView(buffer);
+  const magic = view.getUint32(0, true);
+  if (magic === MAGIC_LVN2) {
+    const vertCount = view.getUint32(4, true);
+    const channels = 16 + vertCount * 8; // header + pos + fade + shade
+    return [
+      {
+        classId: CLASS_TERRAIN,
+        drawOrder: 10,
+        geometry: parseLayer(
+          buffer,
+          16,
+          channels + ((4 - (channels % 4)) % 4),
+          vertCount,
+          view.getUint32(8, true),
+          10,
+          (view.getUint32(12, true) & 1) === 1,
+        ),
+      },
+    ];
+  }
+  if (magic !== MAGIC_LVN3) throw new Error("not a LVN2 or LVN3 mesh");
+  const layerCount = view.getUint32(4, true);
+  const bodyOffset = view.getUint32(12, true);
+  const layers: VenueLayer[] = [];
+  for (let i = 0; i < layerCount; i++) {
+    const record = 16 + i * 24;
+    layers.push({
+      classId: view.getUint16(record, true),
+      drawOrder: view.getUint8(record + 3),
+      geometry: parseLayer(
+        buffer,
+        bodyOffset + view.getUint32(record + 16, true),
+        bodyOffset + view.getUint32(record + 20, true),
+        view.getUint32(record + 8, true),
+        view.getUint32(record + 12, true),
+        view.getUint8(record + 5),
+        view.getUint8(record + 6) === 1,
+      ),
+    });
+  }
+  return layers.sort((a, b) => a.drawOrder - b.drawOrder);
+}
+
 /**
- * The venue's real coast: one static mesh baked offline from OpenStreetMap
- * and Terrarium elevation, drawn with the same flat-colour-into-haze material
- * as the procedural shore it replaces. One draw call, nothing per frame.
+ * The venue's real coast: static meshes baked offline from OpenStreetMap and
+ * Terrarium elevation, drawn with the same flat-colour-into-haze material as
+ * the procedural shore they replace. One draw call per semantic layer, three
+ * today (terrain, urban massing, port infrastructure), nothing per frame: the
+ * geometry is immutable and every uniform is set once at mount.
  *
  * The fetch is the one asynchronous thing in the scene, so its arrival has to
  * go through the gate: a paused replay draws nothing on its own, and a coast
@@ -236,11 +302,11 @@ function parseVenueMesh(buffer: ArrayBuffer): BufferGeometry {
  * to appear.
  */
 export function VenueShore({ asset }: { asset: string }) {
-  const [geometry, setGeometry] = useState<BufferGeometry | null>(null);
+  const [layers, setLayers] = useState<VenueLayer[] | null>(null);
 
   useEffect(() => {
     let live = true;
-    let loaded: BufferGeometry | null = null;
+    let loaded: VenueLayer[] | null = null;
     /* The capture contract: ready excludes loading states, and this fetch is
      * the scene's one load. Down before the first frame can be drawn, up when
      * the coast is in or the fetch has failed, and up again on unmount so the
@@ -260,8 +326,17 @@ export function VenueShore({ asset }: { asset: string }) {
         ).arrayBuffer();
       }
       if (!live) return;
+      /* one mark pair per load, read back by the audit battery; the parse is a
+       * once-per-race cost and this is the only way to see it from outside */
+      performance.mark("layline-venue-parse-start");
       loaded = parseVenueMesh(buffer);
-      setGeometry(loaded);
+      performance.mark("layline-venue-parse-end");
+      performance.measure(
+        "layline-venue-parse",
+        "layline-venue-parse-start",
+        "layline-venue-parse-end",
+      );
+      setLayers(loaded);
       requestSceneFrame();
     })()
       .catch((error) => {
@@ -274,16 +349,23 @@ export function VenueShore({ asset }: { asset: string }) {
       });
     return () => {
       live = false;
-      loaded?.dispose();
-      setGeometry(null);
+      for (const layer of loaded ?? []) layer.geometry.dispose();
+      setLayers(null);
       useReplay.getState().setSceneryOk(true);
     };
   }, [asset]);
 
-  if (geometry === null) return null;
+  if (layers === null) return null;
   return (
-    <mesh geometry={geometry} frustumCulled={false}>
-      <laylineVenueShoreMaterial side={DoubleSide} />
-    </mesh>
+    <>
+      {layers.map((layer) => (
+        <mesh key={layer.classId} geometry={layer.geometry} frustumCulled={false}>
+          <laylineVenueShoreMaterial
+            side={DoubleSide}
+            uGrain={layer.classId === CLASS_TERRAIN ? GRAIN : 0}
+          />
+        </mesh>
+      ))}
+    </>
   );
 }

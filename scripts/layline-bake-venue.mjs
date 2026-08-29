@@ -18,16 +18,33 @@
  * The mesh is drawn unlit in one flat colour mixed toward the sky by haze,
  * exactly like the procedural shore it replaces, so only the silhouette
  * matters: interior seams between the cap, the relief grid and the walls are
- * invisible by construction. That is what lets this stay one draw call.
+ * invisible by construction. That is what lets a layer stay one draw call.
  *
- * LVN2 layout, little endian, after gunzip:
- *   u32 magic 0x324e564c  ("LVN2")
- *   u32 vertCount, u32 indexCount, u32 flags (bit 0: 32-bit indices)
- *   i16 pos[vertCount*3]   world x (m), y (0.1 m units), z (m)
- *   u8  fade[vertCount]    0..255, the aFade the shore shader already takes
- *   u8  shade[vertCount]   hillshade, 128 = flat colour, /128 multiplies it
- *   pad to 4 bytes
- *   u16|u32 idx[indexCount]
+ * The output carries semantic layers (design doc 2.1), one merged mesh and one
+ * draw call each: L1 near terrain, L2 urban massing, L3 port infrastructure.
+ * Layers exist so the runtime can vary the material per class (L2 and L3 run
+ * with the ground grain off) and so a later round can skip a class per rig.
+ *
+ * LVN3 layout, little endian, after gunzip:
+ *   u32 magic 0x334e564c  ("LVN3")
+ *   u32 layerCount, u32 flags (reserved, 0), u32 bodyOffset
+ *   layerCount x 24-byte records:
+ *     u16 classId    1 terrain, 2 massing, 3 infrastructure, 4 heroes,
+ *                    5 curtain, 6 reserved for vegetation
+ *     u8  material   0 shore, 1 curtain
+ *     u8  drawOrder  ascending
+ *     u8  attrMask   bit0 aFade, bit1 aShade, bit2 aDist (i16), bit3 aBase (u8)
+ *     u8  yUnit      y quantisation denominator; 10 means 0.1 m
+ *     u8  idx32      1 if this layer's indices are u32
+ *     u8  pad
+ *     u32 vertCount, u32 indexCount, u32 vertOffset, u32 indexOffset
+ *                    both offsets relative to bodyOffset
+ *   body, per layer, in the LVN2 order already shipped:
+ *     i16 pos[vertCount*3]   world x (m), y (0.1 m units), z (m)
+ *     u8  fade[vertCount]    0..255, the aFade the shore shader already takes
+ *     u8  shade[vertCount]   hillshade, 128 = flat colour, /128 multiplies it
+ *     pad to 4 bytes
+ *     u16|u32 idx[indexCount]
  *
  * Run: node scripts/layline-bake-venue.mjs long-beach
  */
@@ -80,6 +97,46 @@ const BATTER_MAX = 18;
 const DEM_ZOOM = 11;
 const ARC_STEP = (2 * Math.PI) / 180;
 
+/* L2, urban massing (design doc 2.1). A prism is only worth its 22 triangles
+ * when it clears about 3 px: 25 m at 7.5 km is 3.5 px under the 1056.2 px/rad
+ * focal length in doc 0.3, and 45 m holds that line out to the clip radius. */
+const MASS_MIN_H = 25;
+const MASS_NEAR = 7500;
+const MASS_FAR_MIN_H = 45;
+const MASS_FOOT = 8; // footprint vertices after simplification
+
+/* L3, port infrastructure. Crane dimensions are the round-3 doc's 9.1 figures,
+ * every one of them at or under a published dimension for these wharves:
+ * apex 72 to 80 m over the deck (against 89.6 m published crane height at
+ * Pier 400), 69 m front outreach (ZPMC 68.9 m at LBCT), 27 m back reach
+ * (ZPMC 27.4 m), 30 m rail gauge (30.48 m published at Pier 300/400). */
+const CRANE_MIN_SPACING = 55; // m, from the measured 54 m median crane spacing
+const CRANE_MAX = 40;
+const CRANE_LOD_NEAR = 5000; // m; beyond this a crane is under 11 px
+const CRANE_APEX_MIN = 72;
+const CRANE_APEX_SPAN = 8;
+const CRANE_OUTREACH = 69;
+const CRANE_BACKREACH = 27;
+const CRANE_GAUGE = 30;
+const CRANE_WIDTH = 18; // m along the wharf, between the two leg pairs
+const TANK_MAX = 60;
+const TANK_MIN_R = 7; // m; smaller tanks are under 2 px of width at 4 km
+const TANK_MIN_H = 6; // m; below this a tank is a disc lying on the ground
+const BLOCK_MAX = 40; // container blocks
+const BLOCK_H = 12; // m, a five-high stack
+const DECK_H = 6; // m, wharf and pier deck over MLLW (measured: 5.1 to 5.2 m)
+const DECK_MAX_SEG = 66; // 12 triangles each, the doc's 800-triangle deck line
+const DECK_W = 12; // m, a pier deck's drawn width
+/* z11 Terrarium carries bathymetry and harbour spikes: the tiles read -361 m at
+ * the Queen Mary berth and +85 m on the Pier G wharf (design doc 4.1), and an
+ * unclamped read floated one Pier E crane 37 m over the water. A wharf is not a
+ * hill. The LA County import measures these decks at 5.1 m on Pier J and 5.2 m
+ * on Pier G, so anything standing on the apron takes a deck datum in this band
+ * instead of the DEM's word for it. */
+const DECK_MAX_H = 12;
+const TANK_MAX_H = 25; // tank farms may sit inland, but not on a spike
+const MASS_GROUND_MAX = 40; // DEM fallback for the 8 buildings with no OSM ele
+
 const DEG = Math.PI / 180;
 const CACHE = ".tmp/venue-cache";
 mkdirSync(CACHE, { recursive: true });
@@ -130,11 +187,35 @@ async function cachedFetch(url, cacheName, binary) {
   return body;
 }
 
+const OVERPASS = "https://overpass-api.de/api/interpreter";
+
+const bboxOf = (margin) =>
+  `${lat0 - margin / mPerLat},${lon0 - margin / mPerLon},${lat0 + margin / mPerLat},${
+    lon0 + margin / mPerLon
+  }`;
+
+/** Q2 and Q3 are longer than a URL wants, so they go over POST. Same endpoint,
+ * same query text, same cache convention as Q1. */
+async function cachedPost(query, cacheName) {
+  const path = join(CACHE, cacheName);
+  if (existsSync(path)) return JSON.parse(readFileSync(path, "utf8"));
+  const res = await fetch(OVERPASS, {
+    method: "POST",
+    headers: {
+      "User-Agent": "layline-venue-bake/1",
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: "data=" + encodeURIComponent(query),
+  });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${cacheName}`);
+  const text = await res.text();
+  writeFileSync(path, text);
+  return JSON.parse(text);
+}
+
+/* Q1, the coast: unchanged since round 2 and pinned by the design doc 6.2. */
 async function fetchOverpass() {
-  const margin = CLIP_R + 1500;
-  const dLat = margin / mPerLat;
-  const dLon = margin / mPerLon;
-  const bbox = `${lat0 - dLat},${lon0 - dLon},${lat0 + dLat},${lon0 + dLon}`;
+  const bbox = bboxOf(CLIP_R + 1500);
   const query = `[out:json][timeout:180];(
     way["natural"="coastline"](${bbox});
     way["man_made"="breakwater"](${bbox});
@@ -142,12 +223,35 @@ async function fetchOverpass() {
     way["man_made"="crane"](${bbox});
   );out geom;`;
   const text = await cachedFetch(
-    "https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query),
+    OVERPASS + "?data=" + encodeURIComponent(query),
     `overpass-${venueId}.json`,
     false,
   );
   return JSON.parse(text);
 }
+
+/* Q2, urban massing: every building the LA County LiDAR import puts over 25 m
+ * inside the bake box. 90.8 per cent of buildings here carry `height`. */
+const fetchMassing = () =>
+  cachedPost(
+    `[out:json][timeout:180];
+way["building"]["height"](if:number(t["height"])>=${MASS_MIN_H})(${bboxOf(CLIP_R + 1500)});
+out geom;`,
+    `overpass-q2-${venueId}.json`,
+  );
+
+/* Q3, port infrastructure: tank farms, silos, pier decks, and the terminal
+ * polygons the container blocks are allowed to stand inside. */
+const fetchInfrastructure = () =>
+  cachedPost(
+    `[out:json][timeout:180];(
+  way["man_made"="storage_tank"](${bboxOf(CLIP_R + 1500)});
+  way["man_made"="silo"](${bboxOf(CLIP_R + 1500)});
+  way["man_made"="pier"](${bboxOf(CLIP_R + 1500)});
+  way["landuse"="industrial"](${bboxOf(CLIP_R + 1500)});
+);out geom;`,
+    `overpass-q3-${venueId}.json`,
+  );
 
 /* ------------------------------------------------- terrarium PNG elevation */
 
@@ -778,11 +882,36 @@ function earcut(ring) {
 
 /* ------------------------------------------------------------- mesh builder */
 
-const positions = [];
-const fades = [];
-const shades = [];
-const indices = [];
-const vertexIndex = new Map();
+/* One buffer set per semantic layer (design doc 2.1). Builders write into
+ * `current`; `into` switches it for the length of one builder. Vertex dedup is
+ * per layer, so a layer is always a self-contained mesh. */
+function newLayer(classId, name, drawOrder) {
+  return {
+    classId,
+    name,
+    drawOrder,
+    material: 0, // 0 shore; the curtain's material 1 arrives with L5
+    positions: [],
+    fades: [],
+    shades: [],
+    indices: [],
+    vertexIndex: new Map(),
+  };
+}
+
+const LAYERS = [newLayer(1, "terrain", 10), newLayer(2, "massing", 20), newLayer(3, "port", 21)];
+const [L_TERRAIN, L_MASSING, L_PORT] = LAYERS;
+let current = L_TERRAIN;
+
+function into(layer, build) {
+  const previous = current;
+  current = layer;
+  try {
+    return build();
+  } finally {
+    current = previous;
+  }
+}
 
 /* The scene's one sun (sky.ts: elevation 22, azimuth 305 in the course frame),
  * expressed in bake space (x, up, courseY). Form is baked as a per-vertex
@@ -820,19 +949,34 @@ function vertex(x, h, y, shade = SHADE_FLAT) {
   const qh = Math.round(h * 10);
   const qz = Math.round(-y);
   const key = `${qx},${qh},${qz},${shade}`;
-  let index = vertexIndex.get(key);
+  let index = current.vertexIndex.get(key);
   if (index === undefined) {
-    index = positions.length / 3;
-    positions.push(qx, qh, qz);
-    fades.push(Math.round(fadeAt(x, y) * 255));
-    shades.push(shade);
-    vertexIndex.set(key, index);
+    index = current.positions.length / 3;
+    current.positions.push(qx, qh, qz);
+    current.fades.push(Math.round(fadeAt(x, y) * 255));
+    current.shades.push(shade);
+    current.vertexIndex.set(key, index);
   }
   return index;
 }
 
 function triangle(a, b, c) {
-  if (a !== b && b !== c && a !== c) indices.push(a, b, c);
+  if (a === b || b === c || a === c) return;
+  /* positions are already quantised integers here, so this is an exact test:
+   * three collinear corners cover no pixels and only cost bytes. Ear clipping
+   * on a simplified footprint produces a few of them. */
+  const p = current.positions;
+  const ux = p[b * 3] - p[a * 3];
+  const uh = p[b * 3 + 1] - p[a * 3 + 1];
+  const uz = p[b * 3 + 2] - p[a * 3 + 2];
+  const vx = p[c * 3] - p[a * 3];
+  const vh = p[c * 3 + 1] - p[a * 3 + 1];
+  const vz = p[c * 3 + 2] - p[a * 3 + 2];
+  const nx = uh * vz - uz * vh;
+  const nh = uz * vx - ux * vz;
+  const nz = ux * vh - uh * vx;
+  if (nx === 0 && nh === 0 && nz === 0) return;
+  current.indices.push(a, b, c);
 }
 
 /** Shore height at a ring vertex: the higher of the ground right there and a
@@ -1334,126 +1478,525 @@ function buildBreakwaters(ways, coastlineIds) {
   console.log(`breakwaters: ${built} ways`);
 }
 
-/** Container gantries as flat silhouette quads at real crane positions,
- * oriented along the nearest coastline segment so the boom hangs over water.
- * Same visual language as the procedural cranes this replaces. */
-function buildCranes(cranePoints, rings) {
-  const MIN_SPACING = 110;
-  const MAX_CRANES = 26;
-  const placed = [];
-  const sorted = cranePoints
-    .filter((p) => inside(p) && Math.hypot(p.x, p.y) < FADE_START + 1500)
-    .sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y));
-  for (const p of sorted) {
-    if (placed.length >= MAX_CRANES) break;
-    if (placed.some((q) => Math.hypot(q.x - p.x, q.y - p.y) < MIN_SPACING)) continue;
-    placed.push(p);
+/* ------------------------------------------------- L2 and L3 solid geometry */
+
+/* Vector helpers in bake space (x across, h up, y up the course axis). */
+const v3 = (x, h, y) => ({ x, h, y });
+const sub3 = (a, b) => v3(a.x - b.x, a.h - b.h, a.y - b.y);
+const add3 = (a, b) => v3(a.x + b.x, a.h + b.h, a.y + b.y);
+const mul3 = (a, s) => v3(a.x * s, a.h * s, a.y * s);
+const dot3 = (a, b) => a.x * b.x + a.h * b.h + a.y * b.y;
+const cross3 = (a, b) =>
+  v3(a.h * b.y - a.y * b.h, a.y * b.x - a.x * b.y, a.x * b.h - a.h * b.x);
+const norm3 = (a) => {
+  const len = Math.hypot(a.x, a.h, a.y) || 1;
+  return v3(a.x / len, a.h / len, a.y / len);
+};
+
+/** One flat face, wound so its normal points outward, with its own shade byte
+ * on all four corners and no vertex shared with the next face. Faceting is what
+ * makes a box read as a box under a colour this flat (design doc 2.3). */
+function face(p0, p1, p2, p3, normal) {
+  const wind = dot3(cross3(sub3(p1, p0), sub3(p2, p0)), normal) >= 0;
+  const [q0, q1, q2, q3] = wind ? [p0, p1, p2, p3] : [p3, p2, p1, p0];
+  const shade = shadeOf(normal.x, normal.h, normal.y);
+  const a = vertex(q0.x, q0.h, q0.y, shade);
+  const b = vertex(q1.x, q1.h, q1.y, shade);
+  const c = vertex(q2.x, q2.h, q2.y, shade);
+  const d = vertex(q3.x, q3.h, q3.y, shade);
+  triangle(a, b, c);
+  triangle(a, c, d);
+}
+
+/**
+ * A structural member: a rectangular prism from `a` to `b`, `wide` metres
+ * across `across` and `thick` metres across the remaining axis, optionally
+ * tapering to `wideB` x `thickB` at the far end. 8 corners, 6 faces, 12
+ * triangles, per-face normals. This is what replaces the flat silhouette quads
+ * the round-2 cranes were drawn with: a quad seen edge on is one pixel (D9).
+ */
+function member(a, b, across, wide, thick, wideB = wide, thickB = thick) {
+  const axis = norm3(sub3(b, a));
+  let l1 = sub3(across, mul3(axis, dot3(across, axis)));
+  if (Math.hypot(l1.x, l1.h, l1.y) < 1e-6) {
+    l1 = sub3(v3(0, 1, 0), mul3(axis, dot3(v3(0, 1, 0), axis)));
   }
-  /* wharf direction: nearest ring segment */
-  const wharfDir = (p) => {
-    let best = null;
-    let bestDist = Infinity;
-    for (const ring of rings) {
-      for (let i = 0; i < ring.length; i++) {
-        const a = ring[i];
-        const b = ring[(i + 1) % ring.length];
-        const dx = b.x - a.x;
-        const dy = b.y - a.y;
-        const len2 = dx * dx + dy * dy || 1;
-        const t = Math.min(Math.max(((p.x - a.x) * dx + (p.y - a.y) * dy) / len2, 0), 1);
-        const px = a.x + dx * t;
-        const py = a.y + dy * t;
-        const d = Math.hypot(p.x - px, p.y - py);
-        if (d < bestDist) {
-          bestDist = d;
-          best = { x: dx, y: dy };
-        }
+  l1 = norm3(l1);
+  const l2 = norm3(cross3(axis, l1));
+  const at = (end, w, t, su, sv) =>
+    add3(add3(end, mul3(l1, (su * w) / 2)), mul3(l2, (sv * t) / 2));
+  const a00 = at(a, wide, thick, -1, -1);
+  const a10 = at(a, wide, thick, 1, -1);
+  const a11 = at(a, wide, thick, 1, 1);
+  const a01 = at(a, wide, thick, -1, 1);
+  const b00 = at(b, wideB, thickB, -1, -1);
+  const b10 = at(b, wideB, thickB, 1, -1);
+  const b11 = at(b, wideB, thickB, 1, 1);
+  const b01 = at(b, wideB, thickB, -1, 1);
+  face(a10, a11, b11, b10, l1);
+  face(a00, a01, b01, b00, mul3(l1, -1));
+  face(a01, a11, b11, b01, l2);
+  face(a00, a10, b10, b00, mul3(l2, -1));
+  face(a00, a10, a11, a01, mul3(axis, -1));
+  face(b00, b10, b11, b01, axis);
+}
+
+/** Deterministic per-site jitter: a hash of the quantised position, so a
+ * rebake reproduces every crane byte for byte whatever order they arrive in.
+ * The round-2 build used a shared LCG, which was reproducible but only as long
+ * as nothing upstream reordered the placements. */
+function hash01(x, y) {
+  let h = Math.imul(Math.round(x) | 0, 0x27d4eb2d) ^ Math.imul(Math.round(y) | 0, 0x165667b1);
+  h = Math.imul(h ^ (h >>> 15), 0x2545f491);
+  h ^= h >>> 13;
+  return (h >>> 0) / 4294967296;
+}
+
+/** Ground under a structure, clamped into a band the DEM's harbour spikes
+ * cannot reach. */
+const clampGround = (x, y, low, high) => Math.min(Math.max(groundAt(x, y), low), high);
+
+const centroidOf = (ring) => {
+  let cx = 0;
+  let cy = 0;
+  for (const p of ring) {
+    cx += p.x / ring.length;
+    cy += p.y / ring.length;
+  }
+  return { x: cx, y: cy };
+};
+
+/** Way geometry -> course-frame ring, closing duplicate dropped. */
+function ringOf(way) {
+  const ring = way.geometry.map((g) => project(g.lat, g.lon));
+  if (ring.length > 1 && keyOf(ring[0]) === keyOf(ring[ring.length - 1])) ring.pop();
+  return ring;
+}
+
+/** Visvalingam: drop the vertex whose ear has the least area until `want`
+ * remain. Douglas-Peucker cannot hit an exact vertex budget, and the budget is
+ * what L2's 22 triangles per prism are bought with. */
+function reduceRing(ring, want) {
+  const out = ring.slice();
+  while (out.length > want) {
+    let worst = 0;
+    let worstArea = Infinity;
+    for (let i = 0; i < out.length; i++) {
+      const a = out[(i - 1 + out.length) % out.length];
+      const p = out[i];
+      const b = out[(i + 1) % out.length];
+      const area = Math.abs((p.x - a.x) * (b.y - a.y) - (p.y - a.y) * (b.x - a.x)) / 2;
+      if (area < worstArea) {
+        worstArea = area;
+        worst = i;
       }
     }
-    const len = best ? Math.hypot(best.x, best.y) || 1 : 1;
-    return best ? { x: best.x / len, y: best.y / len } : { x: 1, y: 0 };
-  };
-  let seed = 1234567;
-  const random = () => {
-    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-    return seed / 0x7fffffff;
-  };
-  for (const p of placed) {
-    const dir = wharfDir(p);
-    /* the crane's own vertical plane runs along the wharf; u is metres along
-     * it, so a member drawn in (u, h) lands in world via p + dir*u */
-    const bar = (u0, h0, u1, h1, thick) => {
-      const du = u1 - u0;
-      const dh = h1 - h0;
-      const len = Math.hypot(du, dh) || 1;
-      const au = ((-dh / len) * thick) / 2;
-      const ah = ((du / len) * thick) / 2;
-      const at = (u, h) => vertex(p.x + dir.x * u, h, p.y + dir.y * u);
-      const v0 = at(u0 - au, h0 - ah);
-      const v1 = at(u0 + au, h0 + ah);
-      const v2 = at(u1 + au, h1 + ah);
-      const v3 = at(u1 - au, h1 - ah);
-      triangle(v0, v1, v2);
-      triangle(v0, v2, v3);
-    };
-    const sill = Math.max(groundAt(p.x, p.y), MIN_SHORE_H);
-    const apex = sill + 42 + random() * 14;
-    const gauge = 24 + random() * 8;
-    const portal = sill + (apex - sill) * 0.42;
-    const side = random() < 0.5 ? -1 : 1;
-    const boom = (34 + random() * 22) * side;
-    const back = boom * -0.35;
-    const hinge = sill + (apex - sill) * 0.56;
-    bar(-gauge / 2, sill, -gauge * 0.29, portal, 3.2);
-    bar(gauge / 2, sill, gauge * 0.29, portal, 3.2);
-    bar(-gauge * 0.34, portal + 1.8, gauge * 0.34, portal + 1.8, 3.6);
-    bar(-gauge * 0.3, portal + 3.6, 0, apex, 2.6);
-    bar(gauge * 0.3, portal + 3.6, 0, apex, 2.6);
-    bar(0, hinge, boom, hinge + (apex - hinge) * 0.2, 3.4);
-    bar(0, hinge, back, hinge + (apex - hinge) * 0.35, 2.8);
-    bar(0, apex, boom * 0.9, hinge + (apex - hinge) * 0.24, 2.2);
+    out.splice(worst, 1);
   }
-  console.log(`cranes: ${placed.length} of ${cranePoints.length} candidates`);
+  return out;
+}
+
+/** Nearest coastline segment: its direction, and the seaward normal. Land is
+ * on the left of the boundary direction, so the right normal points at water,
+ * which is the side a container crane's boom hangs over. */
+function quayFrame(rings, p) {
+  let dir = { x: 1, y: 0 };
+  let bestDist = Infinity;
+  for (const ring of rings) {
+    for (let i = 0; i < ring.length; i++) {
+      const a = ring[i];
+      const b = ring[(i + 1) % ring.length];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len2 = dx * dx + dy * dy || 1;
+      const t = Math.min(Math.max(((p.x - a.x) * dx + (p.y - a.y) * dy) / len2, 0), 1);
+      const d = Math.hypot(p.x - (a.x + dx * t), p.y - (a.y + dy * t));
+      if (d < bestDist) {
+        bestDist = d;
+        const len = Math.hypot(dx, dy) || 1;
+        dir = { x: dx / len, y: dy / len };
+      }
+    }
+  }
+  return { quay: dir, sea: { x: dir.y, y: -dir.x }, dist: bestDist };
+}
+
+/**
+ * L2, urban massing: one faceted prism per OSM building that clears the
+ * screen-space cut in design doc 2.1, extruded from its own footprint to its
+ * own `height` tag. Ground under it comes from the LA County import's
+ * `ele - height` where the building carries `ele` (measured median 5.1 m on the
+ * Pier J wharf and 5.2 m on Pier G against a published 4 to 7 m MLLW deck, so
+ * the datum needs no offset), and from the DEM where it does not.
+ */
+function buildMassing(ways) {
+  let prisms = 0;
+  let fromEle = 0;
+  let footVerts = 0;
+  const picked = [];
+  for (const way of ways) {
+    const height = Number.parseFloat(way.tags?.height);
+    if (!Number.isFinite(height) || height < MASS_MIN_H) continue;
+    let ring = ringOf(way);
+    if (ring.length < 3) continue;
+    const centre = centroidOf(ring);
+    const d = Math.hypot(centre.x, centre.y);
+    if (d > CLIP_R) continue;
+    if (d > MASS_NEAR && height < MASS_FAR_MIN_H) continue;
+    if (signedArea(ring) < 0) ring.reverse();
+    if (ring.length > MASS_FOOT) ring = reduceRing(ring, MASS_FOOT);
+    /* positions ship as Int16 metres, so an edge shorter than the quantiser
+     * lands as a zero-area wall: drop those corners rather than emit them */
+    const kept = [];
+    for (const p of ring) {
+      if (kept.length === 0 || Math.hypot(p.x - kept[kept.length - 1].x, p.y - kept[kept.length - 1].y) >= 2) {
+        kept.push(p);
+      }
+    }
+    while (kept.length > 2 && Math.hypot(kept[0].x - kept[kept.length - 1].x, kept[0].y - kept[kept.length - 1].y) < 2) {
+      kept.pop();
+    }
+    ring = kept;
+    if (ring.length < 3) continue;
+    if (Math.abs(signedArea(ring)) < 40) continue;
+    const ele = Number.parseFloat(way.tags?.ele);
+    const base = Number.isFinite(ele)
+      ? Math.max(ele - height, 0)
+      : clampGround(centre.x, centre.y, 0, MASS_GROUND_MAX);
+    if (Number.isFinite(ele)) fromEle += 1;
+    /* The walls run from below the terrain surface, not from the building's own
+     * ground datum: the relief lattice under it is a 60 m DEM sample and the
+     * two disagree by metres. A prism whose foot stops at its own base is the
+     * floating slab defect (D3) waiting to come back at a grazing angle. */
+    const foot = Math.max(Math.min(base, clampGround(centre.x, centre.y, 0, MASS_GROUND_MAX), MIN_SHORE_H) - 3, BASE_Y);
+    picked.push({ ring, foot, base, top: base + height, height, d });
+  }
+  for (const b of picked) {
+    const n = b.ring.length;
+    for (let i = 0; i < n; i++) {
+      const a = b.ring[i];
+      const c = b.ring[(i + 1) % n];
+      const dx = c.x - a.x;
+      const dy = c.y - a.y;
+      const len = Math.hypot(dx, dy) || 1;
+      /* CCW ring: the outward normal is the right normal of the edge */
+      const normal = v3(dy / len, 0, -dx / len);
+      face(
+        v3(a.x, b.foot, a.y),
+        v3(c.x, b.foot, c.y),
+        v3(c.x, b.top, c.y),
+        v3(a.x, b.top, a.y),
+        normal,
+      );
+    }
+    const roof = earcut(b.ring);
+    const top = b.ring.map((p) => vertex(p.x, b.top, p.y, SHADE_FLAT));
+    for (let i = 0; i < roof.length; i += 3) {
+      triangle(top[roof[i]], top[roof[i + 1]], top[roof[i + 2]]);
+    }
+    prisms += 1;
+    footVerts += n;
+  }
+  console.log(
+    `massing: ${prisms} prisms of ${ways.length} candidates, ${fromEle} on OSM ele ground, ` +
+      `${(footVerts / Math.max(prisms, 1)).toFixed(1)} footprint verts each`,
+  );
+}
+
+/**
+ * L3, port infrastructure: container gantries as real volumes at real scale,
+ * the tank farms, the wharf and pier decks, and stylised container blocks
+ * inside terminal polygons that hold a crane.
+ *
+ * The crane frame is the real one: rails run along the quay, the gauge and the
+ * boom both lie in the plane perpendicular to it, and the boom hangs seaward.
+ * The round-2 build drew the boom along the quay instead, which is why the
+ * cranes never read as a comb of gantries over the water (D9).
+ */
+function buildPort(cranePoints, infra, rings, boxes) {
+  const placed = [];
+  /* the whole disc, not round 2's 7.5 km: the Pier T, Pier 400 and Pier 300
+   * banks sit at 7.4 to 9.1 km and the doc's inventory keeps all three */
+  const candidates = cranePoints
+    .filter((p) => inside(p))
+    .sort((a, b) => Math.hypot(a.x, a.y) - Math.hypot(b.x, b.y));
+  for (const p of candidates) {
+    if (placed.length >= CRANE_MAX) break;
+    if (placed.some((q) => Math.hypot(q.x - p.x, q.y - p.y) < CRANE_MIN_SPACING)) continue;
+    placed.push(p);
+  }
+  let near = 0;
+  let far = 0;
+  for (const p of placed) {
+    const { quay, sea } = quayFrame(rings, p);
+    const at = (u, v, h) =>
+      v3(p.x + sea.x * u + quay.x * v, h, p.y + sea.y * u + quay.y * v);
+    const across = v3(quay.x, 0, quay.y);
+    const seaV = v3(sea.x, 0, sea.y);
+    const sill = clampGround(p.x, p.y, MIN_SHORE_H, DECK_MAX_H);
+    const rail = sill - 2; // legs start inside the apron, never on top of it
+    const apex = sill + CRANE_APEX_MIN + hash01(p.x, p.y) * CRANE_APEX_SPAN;
+    const portal = sill + (apex - sill) * 0.42;
+    const hinge = sill + (apex - sill) * 0.62;
+    const g = CRANE_GAUGE / 2;
+    const w = CRANE_WIDTH / 2;
+    const d = Math.hypot(p.x, p.y);
+    if (d <= CRANE_LOD_NEAR) {
+      /* 12 members, 144 triangles: the full archetype of design doc 9.1 */
+      for (const u of [g, -g]) {
+        for (const v of [w, -w]) member(at(u, v, rail), at(u, v, portal), across, 1.8, 1.8);
+      }
+      for (const u of [g, -g]) member(at(u, -w, portal), at(u, w, portal), seaV, 1.6, 1.6);
+      member(at(g, 0, portal), at(-g, 0, portal), across, 1.6, 1.6);
+      for (const v of [w, -w]) member(at(g, v, portal), at(-g * 0.1, 0, apex), across, 1.6, 1.6);
+      member(at(g, 0, hinge), at(g + CRANE_OUTREACH, 0, hinge + 2), across, 3.0, 2.6, 1.8, 1.8);
+      member(at(-g, 0, hinge), at(-g - CRANE_BACKREACH, 0, hinge + 4), across, 2.6, 2.4);
+      member(at(-g * 0.55, -w * 0.9, portal + 4), at(-g * 0.55, w * 0.9, portal + 4), seaV, 8, 7);
+      near += 1;
+    } else {
+      /* 5 members, 60 triangles: four legs and the gantry beam. Under 11 px
+       * that silhouette is all a crane has left (design doc 9.1). */
+      for (const u of [g, -g]) {
+        for (const v of [w, -w]) member(at(u, v, rail), at(u, v, hinge), across, 2.0, 2.0);
+      }
+      member(
+        at(-g - CRANE_BACKREACH, 0, hinge),
+        at(g + CRANE_OUTREACH, 0, hinge + 2),
+        across,
+        2.8,
+        2.4,
+      );
+      far += 1;
+    }
+  }
+  console.log(
+    `cranes: ${placed.length} of ${cranePoints.length} candidates, ${near} near (144 tris) + ${far} far (60)`,
+  );
+
+  /* tanks: the widest silhouettes first, since a tank is a 14 m wall read
+   * across its diameter rather than up its height */
+  const tanks = [];
+  for (const way of infra) {
+    const kind = way.tags?.man_made;
+    if (kind !== "storage_tank" && kind !== "silo") continue;
+    const ring = ringOf(way);
+    if (ring.length < 3) continue;
+    const centre = centroidOf(ring);
+    const d = Math.hypot(centre.x, centre.y);
+    if (d > MASS_NEAR || !inside(centre)) continue;
+    let radius = 0;
+    for (const p of ring) radius = Math.max(radius, Math.hypot(p.x - centre.x, p.y - centre.y));
+    if (radius < TANK_MIN_R) continue;
+    const tagged = Number.parseFloat(way.tags?.height);
+    const height = Number.isFinite(tagged) ? tagged : 12;
+    /* a 46 m disc standing 2.7 m tall is 0.5 px of height and 18 px of width:
+     * that is a pancake on the ground, the shape round 2 spent its whole
+     * budget removing. Tanks below the deck freeboard are not drawn. */
+    if (height < TANK_MIN_H) continue;
+    /* most of these carry `building` too, from the same LiDAR import. Only the
+     * ones over the L2 cut have already been extruded there from their real
+     * footprint; drawing those twice is worse than not drawing them here. */
+    if (way.tags?.building && height >= MASS_MIN_H) continue;
+    tanks.push({ centre, radius, height, d });
+  }
+  /* rank by the silhouette each one actually presents, not by footprint alone */
+  tanks.sort((a, b) => (b.radius * b.height) / b.d ** 2 - (a.radius * a.height) / a.d ** 2);
+  const drawnTanks = tanks.slice(0, TANK_MAX);
+  for (const tank of drawnTanks) {
+    const ground = clampGround(tank.centre.x, tank.centre.y, MIN_SHORE_H, TANK_MAX_H);
+    const base = ground - 2; // into the lattice, never floating over it
+    const top = ground + tank.height;
+    const ring = [];
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
+      ring.push({
+        x: tank.centre.x + Math.cos(a) * tank.radius,
+        y: tank.centre.y + Math.sin(a) * tank.radius,
+      });
+    }
+    for (let i = 0; i < 8; i++) {
+      const a = ring[i];
+      const b = ring[(i + 1) % 8];
+      const mx = (a.x + b.x) / 2 - tank.centre.x;
+      const my = (a.y + b.y) / 2 - tank.centre.y;
+      const len = Math.hypot(mx, my) || 1;
+      face(
+        v3(a.x, base, a.y),
+        v3(b.x, base, b.y),
+        v3(b.x, top, b.y),
+        v3(a.x, top, a.y),
+        v3(mx / len, 0, my / len),
+      );
+    }
+    const lid = earcut(ring);
+    const rim = ring.map((p) => vertex(p.x, top, p.y, SHADE_FLAT));
+    for (let i = 0; i < lid.length; i += 3) triangle(rim[lid[i]], rim[lid[i + 1]], rim[lid[i + 2]]);
+  }
+  console.log(`tanks: ${drawnTanks.length} of ${tanks.length} inside ${MASS_NEAR} m`);
+
+  /* decks: the longest pier lines first, simplified in the same pass the coast
+   * uses, drawn as a slab so the pier reads as a structure standing over the
+   * water rather than as a line drawn on it */
+  const piers = [];
+  for (const way of infra) {
+    if (way.tags?.man_made !== "pier") continue;
+    const line = simplify(way.geometry.map((g) => project(g.lat, g.lon))).filter(inside);
+    if (line.length < 2) continue;
+    let length = 0;
+    for (let i = 0; i < line.length - 1; i++) {
+      length += Math.hypot(line[i + 1].x - line[i].x, line[i + 1].y - line[i].y);
+    }
+    const centre = centroidOf(line);
+    if (length < 150 || Math.hypot(centre.x, centre.y) > FADE_START) continue;
+    piers.push({ line, length });
+  }
+  piers.sort((a, b) => b.length - a.length);
+  let segments = 0;
+  let decks = 0;
+  for (const pier of piers) {
+    if (segments >= DECK_MAX_SEG) break;
+    for (let i = 0; i < pier.line.length - 1 && segments < DECK_MAX_SEG; i++) {
+      const a = pier.line[i];
+      const b = pier.line[i + 1];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len = Math.hypot(dx, dy) || 1;
+      /* the slab runs from the waterline up to the deck rather than hovering at
+       * deck height: round 2 measured that a face with no contact with the sea
+       * reads as a plate laid on top of it (D3). Round 5 puts Belmont Pier back
+       * on piles as a hero; every other pier here is a solid wharf anyway. */
+      member(
+        v3(a.x, DECK_H / 2, a.y),
+        v3(b.x, DECK_H / 2, b.y),
+        v3(dy / len, 0, -dx / len),
+        DECK_W,
+        DECK_H,
+      );
+      segments += 1;
+    }
+    decks += 1;
+  }
+  console.log(`decks: ${decks} piers, ${segments} segments of ${piers.length} candidates`);
+
+  /* container blocks: the one invented geometry in the plan, so it is fenced.
+   *
+   * The doc fences them inside `landuse=industrial` polygons. Measured here,
+   * that fence does not exist: of the 158 industrial polygons in the box, one
+   * holds a crane and it is the Port of Los Angeles polygon 11 km out; the
+   * nearest industrial boundary to the nearest Pier J crane is 1,932 m away.
+   * The apron the cranes stand on is simply untagged. So the fence is the real
+   * geometry that does exist: a block stands on the landward side of a placed
+   * crane, within 450 m of it, clear of the gantry itself, with all four
+   * corners on land, on a fixed world grid rather than on a random number. */
+  const blocks = [];
+  const STEP = 130;
+  const APRON = 450;
+  for (const crane of placed) {
+    if (Math.hypot(crane.x, crane.y) > FADE_START) continue;
+    const frame = quayFrame(rings, crane);
+    for (let gx = Math.ceil((crane.x - APRON) / STEP) * STEP; gx <= crane.x + APRON; gx += STEP) {
+      for (let gy = Math.ceil((crane.y - APRON) / STEP) * STEP; gy <= crane.y + APRON; gy += STEP) {
+        const inland = (gx - crane.x) * frame.sea.x + (gy - crane.y) * frame.sea.y;
+        const along = Math.hypot(gx - crane.x, gy - crane.y);
+        if (inland > -60 || along > APRON) continue;
+        if (blocks.some((b) => Math.hypot(b.x - gx, b.y - gy) < STEP * 0.9)) continue;
+        const { quay } = quayFrame(rings, { x: gx, y: gy });
+        const nx = -quay.y;
+        const ny = quay.x;
+        let ok = true;
+        for (const su of [-1, 1]) {
+          for (const sv of [-1, 1]) {
+            const cx = gx + quay.x * su * 35 + nx * sv * 16;
+            const cy = gy + quay.y * su * 35 + ny * sv * 16;
+            if (!insideLand(boxes, cx, cy)) ok = false;
+          }
+        }
+        if (!ok) continue;
+        blocks.push({ x: gx, y: gy, quay, d: Math.hypot(gx, gy) });
+      }
+    }
+  }
+  blocks.sort((a, b) => a.d - b.d);
+  const drawnBlocks = blocks.slice(0, BLOCK_MAX);
+  for (const block of drawnBlocks) {
+    const base = clampGround(block.x, block.y, MIN_SHORE_H, DECK_MAX_H) - 1;
+    member(
+      v3(block.x - block.quay.x * 35, base + BLOCK_H / 2, block.y - block.quay.y * 35),
+      v3(block.x + block.quay.x * 35, base + BLOCK_H / 2, block.y + block.quay.y * 35),
+      v3(-block.quay.y, 0, block.quay.x),
+      32,
+      BLOCK_H,
+    );
+  }
+  console.log(`container blocks: ${drawnBlocks.length} of ${blocks.length} apron sites`);
 }
 
 /* ------------------------------------------------------------------ output */
 
+const ATTR_FADE = 1;
+const ATTR_SHADE = 2;
+const Y_UNIT = 10; // y quantised in 0.1 m
+
+/** LVN3: the LVN2 body, once per layer, behind a layer table. Nothing about
+ * how a layer's bytes are laid out changed, so the decoder is one loop around
+ * the parser that already shipped. */
 function writeAsset() {
-  const vertCount = positions.length / 3;
-  const use32 = vertCount > 65535;
-  const posBytes = vertCount * 6;
-  const channelBytes = vertCount * 2; // fade + shade
-  const head = 16 + posBytes + channelBytes;
-  const pad = head % 4 === 0 ? 0 : 4 - (head % 4);
-  const idxBytes = indices.length * (use32 ? 4 : 2);
-  const buffer = Buffer.alloc(head + pad + idxBytes);
-  buffer.writeUInt32LE(0x324e564c, 0); // "LVN2"
-  buffer.writeUInt32LE(vertCount, 4);
-  buffer.writeUInt32LE(indices.length, 8);
-  buffer.writeUInt32LE(use32 ? 1 : 0, 12);
-  let at = 16;
-  for (let i = 0; i < positions.length; i++) {
-    buffer.writeInt16LE(Math.max(-32768, Math.min(32767, positions[i])), at);
-    at += 2;
-  }
-  for (let i = 0; i < fades.length; i++) {
-    buffer.writeUInt8(fades[i], at);
-    at += 1;
-  }
-  for (let i = 0; i < shades.length; i++) {
-    buffer.writeUInt8(shades[i], at);
-    at += 1;
-  }
-  at += pad;
-  for (let i = 0; i < indices.length; i++) {
-    if (use32) buffer.writeUInt32LE(indices[i], at);
-    else buffer.writeUInt16LE(indices[i], at);
-    at += use32 ? 4 : 2;
-  }
+  const layers = LAYERS.filter((layer) => layer.indices.length > 0);
+  const blocks = layers.map((layer) => {
+    const vertCount = layer.positions.length / 3;
+    const use32 = vertCount > 65535;
+    const head = vertCount * 6 + vertCount * 2; // pos + fade + shade
+    const pad = (4 - (head % 4)) % 4;
+    const body = head + pad + layer.indices.length * (use32 ? 4 : 2);
+    /* every layer block starts 4-byte aligned, so a typed-array view over any
+     * layer's indices is legal however the layer before it ended */
+    return { layer, vertCount, use32, head, pad, bytes: body + ((4 - (body % 4)) % 4) };
+  });
+  const bodyOffset = 16 + layers.length * 24;
+  const buffer = Buffer.alloc(bodyOffset + blocks.reduce((sum, b) => sum + b.bytes, 0));
+  buffer.writeUInt32LE(0x334e564c, 0); // "LVN3"
+  buffer.writeUInt32LE(layers.length, 4);
+  buffer.writeUInt32LE(0, 8); // flags, reserved
+  buffer.writeUInt32LE(bodyOffset, 12);
+
+  let bodyAt = 0;
+  blocks.forEach((block, i) => {
+    const { layer, vertCount, use32, head, pad } = block;
+    const record = 16 + i * 24;
+    buffer.writeUInt16LE(layer.classId, record);
+    buffer.writeUInt8(layer.material, record + 2);
+    buffer.writeUInt8(layer.drawOrder, record + 3);
+    buffer.writeUInt8(ATTR_FADE | ATTR_SHADE, record + 4);
+    buffer.writeUInt8(Y_UNIT, record + 5);
+    buffer.writeUInt8(use32 ? 1 : 0, record + 6);
+    buffer.writeUInt8(0, record + 7); // pad
+    buffer.writeUInt32LE(vertCount, record + 8);
+    buffer.writeUInt32LE(layer.indices.length, record + 12);
+    buffer.writeUInt32LE(bodyAt, record + 16);
+    buffer.writeUInt32LE(bodyAt + head + pad, record + 20);
+
+    let at = bodyOffset + bodyAt;
+    for (let k = 0; k < layer.positions.length; k++) {
+      buffer.writeInt16LE(Math.max(-32768, Math.min(32767, layer.positions[k])), at);
+      at += 2;
+    }
+    for (let k = 0; k < layer.fades.length; k++) buffer.writeUInt8(layer.fades[k], at++);
+    for (let k = 0; k < layer.shades.length; k++) buffer.writeUInt8(layer.shades[k], at++);
+    at += pad;
+    for (let k = 0; k < layer.indices.length; k++) {
+      if (use32) buffer.writeUInt32LE(layer.indices[k], at);
+      else buffer.writeUInt16LE(layer.indices[k], at);
+      at += use32 ? 4 : 2;
+    }
+    bodyAt += block.bytes;
+  });
+
   const gz = gzipSync(buffer, { level: 9 });
   const outDir = "public/prototype/layline/venues";
   mkdirSync(outDir, { recursive: true });
   writeFileSync(join(outDir, `${venueId}.bin`), gz);
+  const vertCount = blocks.reduce((sum, b) => sum + b.vertCount, 0);
+  const triCount = layers.reduce((sum, layer) => sum + layer.indices.length / 3, 0);
   const manifest = {
     id: venueId,
     origin: venue.origin,
@@ -1462,14 +2005,31 @@ function writeAsset() {
     dataVersion: new Date().toISOString().slice(0, 10),
     sources: {
       coastline: "OpenStreetMap via Overpass API",
+      buildings: "OpenStreetMap via Overpass API (LA County LiDAR heights)",
       elevation: `Mapzen Terrarium z${DEM_ZOOM} (AWS Open Data)`,
     },
     attribution: venue.attribution,
-    stats: { vertices: vertCount, triangles: indices.length / 3, bytes: gz.length },
+    stats: {
+      vertices: vertCount,
+      triangles: triCount,
+      bytes: gz.length,
+      layers: layers.map((layer, i) => ({
+        classId: layer.classId,
+        name: layer.name,
+        vertices: blocks[i].vertCount,
+        triangles: layer.indices.length / 3,
+      })),
+    },
   };
   writeFileSync(join(outDir, `${venueId}.json`), JSON.stringify(manifest, null, 2) + "\n");
+  for (const block of blocks) {
+    console.log(
+      `  layer ${block.layer.classId} ${block.layer.name}: ${block.vertCount} verts, ` +
+        `${block.layer.indices.length / 3} tris, ${block.bytes} raw bytes`,
+    );
+  }
   console.log(
-    `asset: ${vertCount} verts, ${indices.length / 3} tris, ${buffer.length} raw, ${gz.length} gzipped`,
+    `asset: ${layers.length} layers, ${vertCount} verts, ${triCount} tris, ${buffer.length} raw, ${gz.length} gzipped`,
   );
 }
 
@@ -1499,6 +2059,13 @@ function writeDebugSvg(rings) {
 /* -------------------------------------------------------------------- main */
 
 const overpass = await fetchOverpass();
+const massingWays = (await fetchMassing()).elements.filter(
+  (e) => e.type === "way" && e.geometry && e.tags?.height,
+);
+const infraWays = (await fetchInfrastructure()).elements.filter(
+  (e) => e.type === "way" && e.geometry,
+);
+console.log(`overpass Q2/Q3: ${massingWays.length} tall buildings, ${infraWays.length} infra ways`);
 await prefetchDem();
 
 const coastWays = overpass.elements.filter(
@@ -1612,8 +2179,12 @@ for (let deg = 0; deg < 360; deg += 30) {
 console.log(`coast distance by course bearing (m): ${report.join(" ")}`);
 
 writeDebugSvg(rings);
-buildLand(rings);
-buildRelief(ringBoxes(rings));
-buildBreakwaters(breakwaterWays, coastlineIds);
-buildCranes(craneNodes.concat(craneWays), rings);
+const boxes = ringBoxes(rings);
+into(L_TERRAIN, () => {
+  buildLand(rings);
+  buildRelief(boxes);
+  buildBreakwaters(breakwaterWays, coastlineIds);
+});
+into(L_MASSING, () => buildMassing(massingWays));
+into(L_PORT, () => buildPort(craneNodes.concat(craneWays), infraWays, rings, boxes));
 writeAsset();
