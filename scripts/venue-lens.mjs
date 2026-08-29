@@ -610,6 +610,16 @@ if (opts.compare !== null) {
 
 /* --------------------------------------------------------------- run.json */
 
+/* A browser error is a failed run, not a footnote: a shader compile failure or
+ * an uncaught page exception can still produce plausible-looking captures, and
+ * a run that prints `clean` over one would be accepted as evidence. Promoted
+ * here, before run.json is assembled, so the failure is in the artifact too. */
+if (consoleErrors.length > 0) {
+  problems.push(
+    `${consoleErrors.length} console/page error(s); first: ${consoleErrors[0]}`,
+  );
+}
+
 const run = {
   label,
   command: process.argv.slice(1).join(" "),

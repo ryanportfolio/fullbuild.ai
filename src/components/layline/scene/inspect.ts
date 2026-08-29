@@ -183,14 +183,38 @@ export function setMaskRoot(node: MaskNode | null): void {
   if (node !== null) applyShowMask();
 }
 
+/* Readiness (`__layline.ready`) is latched by the LAST venue layer's
+ * `onAfterRender`, and an invisible mesh never renders: a mask that hid that
+ * layer before the venue's first drawn frame would strand readiness at
+ * `loading` forever. So venue-layer hiding is deferred until the scene reports
+ * the venue drawn (or promoted without a drawable frame, e.g. settled
+ * tactical); until then every venue layer stays visible whatever the mask
+ * says, and the pending mask is applied the moment the latch closes. */
+let venueDrawn = false;
+
+/** Returns true when the flag actually flipped, so the caller can schedule a
+ * frame for a deferred mask that was just applied (a frozen page draws nothing
+ * on its own). */
+export function setVenueDrawnForMask(drawnNow: boolean): boolean {
+  if (venueDrawn === drawnNow) return false;
+  venueDrawn = drawnNow;
+  if (drawnNow) applyShowMask();
+  return true;
+}
+
+export function isVenueDrawnForMask(): boolean {
+  return venueDrawn;
+}
+
 /**
  * Write the mask onto the scene graph.
  *
  * Visibility, not unmounting: a hidden mesh keeps its geometry, its material
  * and its place in the render list, so toggling a group costs no React render,
- * no reflow and no shader recompile, and the venue's `onAfterRender` readiness
- * latch is not disturbed. Once a name is matched the walk stops there, because
- * a group's children carry none of the names it could match.
+ * no reflow and no shader recompile. The venue's `onAfterRender` readiness
+ * latch is protected by the `venueDrawn` deferral above, not by visibility
+ * alone. Once a name is matched the walk stops there, because a group's
+ * children carry none of the names it could match.
  */
 export function applyShowMask(): void {
   if (root !== null) walk(root);
@@ -199,7 +223,8 @@ export function applyShowMask(): void {
 function walk(node: MaskNode): void {
   const want = maskVisible(showMask, node.name);
   if (want !== null) {
-    node.visible = want;
+    node.visible =
+      !venueDrawn && node.name.startsWith(VENUE_LAYER_PREFIX) ? true : want;
     return;
   }
   for (const child of node.children) walk(child);

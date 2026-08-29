@@ -19,12 +19,14 @@ import {
   LENS_FOV,
   VENUE_LAYER_PREFIX,
   applyShowMask,
+  isVenueDrawnForMask,
   lens,
   maskVisible,
   resetShowMask,
   setLens,
   setMaskRoot,
   setShowMask,
+  setVenueDrawnForMask,
   showMask,
   type MaskNode,
 } from "../src/components/layline/scene/inspect";
@@ -136,6 +138,9 @@ test("applying the mask writes visibility and stops at the group it matched", ()
   };
   resetShowMask();
   setMaskRoot(scene);
+  /* The venue has drawn its first frame in this scenario; deferral is its own
+   * test below. */
+  setVenueDrawnForMask(true);
   setShowMask({ all: false, venueLayers: [4] });
   applyShowMask();
   const byName = (name: string) => scene.children.find((child) => child.name === name);
@@ -158,6 +163,64 @@ test("applying the mask writes visibility and stops at the group it matched", ()
   setShowMask({ all: false });
   applyShowMask();
   resetShowMask();
+});
+
+test("venue-layer hiding is deferred until the venue has drawn once", () => {
+  /* Readiness is latched by the last venue layer's onAfterRender, and an
+   * invisible mesh never renders: a mask applied before the first drawn venue
+   * frame must not be able to hide the layer that raises `ready` (codex P2 on
+   * f9944a0d). Non-venue groups are maskable throughout. */
+  const leaf = (name: string): MaskNode => ({ name, visible: true, children: [] });
+  const scene: MaskNode = {
+    name: "",
+    visible: true,
+    children: [
+      { name: GROUP_BOATS, visible: true, children: [] },
+      leaf(`${VENUE_LAYER_PREFIX}1`),
+      leaf(`${VENUE_LAYER_PREFIX}5`),
+    ],
+  };
+  const byName = (name: string) => scene.children.find((child) => child.name === name);
+  setVenueDrawnForMask(false);
+  resetShowMask();
+  setMaskRoot(scene);
+  setShowMask({ all: false, venueLayers: [1] });
+  applyShowMask();
+  assert.equal(byName(GROUP_BOATS)?.visible, false, "non-venue groups mask immediately");
+  assert.equal(byName(`${VENUE_LAYER_PREFIX}1`)?.visible, true);
+  assert.equal(
+    byName(`${VENUE_LAYER_PREFIX}5`)?.visible,
+    true,
+    "no venue layer can be hidden before the venue's first drawn frame",
+  );
+  assert.equal(isVenueDrawnForMask(), false);
+  /* The latch closing applies the pending mask by itself: the caller that
+   * asked for isolation before the first frame still gets it. */
+  setVenueDrawnForMask(true);
+  assert.equal(isVenueDrawnForMask(), true);
+  assert.equal(byName(`${VENUE_LAYER_PREFIX}1`)?.visible, true);
+  assert.equal(byName(`${VENUE_LAYER_PREFIX}5`)?.visible, false);
+  /* A new asset load reopens the window. */
+  setVenueDrawnForMask(false);
+  applyShowMask();
+  assert.equal(byName(`${VENUE_LAYER_PREFIX}5`)?.visible, true);
+  setVenueDrawnForMask(true);
+  setMaskRoot(null);
+  resetShowMask();
+});
+
+test("the venue tells the mask when its first frame lands, and remounts request a frame", () => {
+  const shore = source(VENUE_SHORE);
+  /* Every readiness promotion site closes the mask's deferral window... */
+  assert.match(shore, /setVenueAsset\("rendered"\);\s*\r?\n\s*tellMaskVenueDrawn\(true\);[\s\S]{0,400}setVenueAsset\("rendered"\);\s*\r?\n\s*tellMaskVenueDrawn\(true\);/);
+  assert.match(shore, /state\.setVenueAsset\("fallback"\);\s*\r?\n\s*tellMaskVenueDrawn\(true\);/);
+  /* ...and a new load or unmount reopens it. */
+  assert.match(shore, /drawn\.current = false;\s*\r?\n\s*tellMaskVenueDrawn\(false\);/);
+  assert.match(shore, /setVenueAsset\("absent"\);\s*\r?\n\s*tellMaskVenueDrawn\(false\);/);
+  /* Layer meshes (re)mounting on a frozen page must schedule their own frame:
+   * the lens can force venueInFrame true during a drawn frame, and a `never`
+   * frameloop draws nothing after the remount commits (codex P2 on f9944a0d). */
+  assert.match(shore, /if \(layers === null \|\| !inFrame\) return;\s*\r?\n\s*requestSceneFrame\(\);/);
 });
 
 test("both doors are compiled out of a production build", () => {

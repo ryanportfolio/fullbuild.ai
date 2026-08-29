@@ -7,7 +7,25 @@ import { Color, DoubleSide, Vector2 } from "three";
 import { useReplay } from "../store";
 import { requestSceneFrame } from "./gate";
 import { shorelineGeometry } from "./SkyDome";
-import { VENUE_LAYER_PREFIX } from "./inspect";
+import { VENUE_LAYER_PREFIX, setVenueDrawnForMask } from "./inspect";
+
+/* The inspection mask defers venue-layer hiding until readiness has latched
+ * (an invisible mesh never fires `onAfterRender`, so a mask applied before the
+ * venue's first drawn frame could strand `ready` at `loading` forever). These
+ * notifications close that window; in production the mask does not exist and
+ * the calls compile to nothing. */
+function tellMaskVenueDrawn(drawnNow: boolean): void {
+  if (
+    process.env.NODE_ENV !== "production" &&
+    setVenueDrawnForMask(drawnNow) &&
+    drawnNow
+  ) {
+    /* The deferred mask was just written onto the scene; a frozen page needs
+     * one more frame to show it. One request at the moment the latch closes,
+     * never per-frame (setVenueDrawnForMask returns false when unchanged). */
+    requestSceneFrame();
+  }
+}
 import {
   CLASS_HEROES,
   CLASS_MASSING,
@@ -653,6 +671,7 @@ function FallbackShore() {
   const markFallbackDrawn = useCallback(() => {
     const state = useReplay.getState();
     if (state.venueAsset === "failed") state.setVenueAsset("fallback");
+    tellMaskVenueDrawn(true);
   }, []);
   return (
     <mesh geometry={geometry} frustumCulled={false} onAfterRender={markFallbackDrawn}>
@@ -694,6 +713,7 @@ export function VenueShore({ asset }: { asset: string }) {
     const controller = new AbortController();
     let loaded: VenueLayer[] | null = null;
     drawn.current = false;
+    tellMaskVenueDrawn(false);
     /* The capture contract: ready excludes loading states, and this fetch is
      * the scene's one load. `rendered` is raised by the mesh itself, on its
      * first drawn frame; nothing here can raise it, because a parsed asset is
@@ -744,8 +764,21 @@ export function VenueShore({ asset }: { asset: string }) {
       for (const layer of loaded ?? []) layer.geometry.dispose();
       setLayers(null);
       useReplay.getState().setVenueAsset("absent");
+      tellMaskVenueDrawn(false);
     };
   }, [asset]);
+
+  /* The layer meshes can (re)mount on a frozen page: the capture lens forces
+   * `venueInFrame` true DURING a drawn frame (a settled tactical rig had set it
+   * false), React commits the remount after that frame, and a `never` frameloop
+   * schedules nothing on its own. Without this post-commit request the first
+   * frame reported after `lens()` is coastless even though the readback is
+   * correct. Also covers the initial mount, where it is a harmless duplicate of
+   * the fetch's own request. */
+  useEffect(() => {
+    if (layers === null || !inFrame) return;
+    requestSceneFrame();
+  }, [layers, inFrame]);
 
   /* Nothing left to wait for in the one case where no venue frame will ever be
    * drawn: the rig is holding the coast out of the scene on purpose. Without
@@ -755,12 +788,14 @@ export function VenueShore({ asset }: { asset: string }) {
     if (layers === null || inFrame || drawn.current) return;
     drawn.current = true;
     useReplay.getState().setVenueAsset("rendered");
+    tellMaskVenueDrawn(true);
   }, [layers, inFrame]);
 
   const markDrawn = useCallback(() => {
     if (drawn.current) return;
     drawn.current = true;
     useReplay.getState().setVenueAsset("rendered");
+    tellMaskVenueDrawn(true);
   }, []);
 
   if (status === "failed" || status === "fallback") return <FallbackShore />;

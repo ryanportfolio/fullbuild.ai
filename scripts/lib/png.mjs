@@ -96,7 +96,11 @@ export function comparePng(a, b, threshold = 1) {
   if (a.width !== b.width || a.height !== b.height) {
     return { comparable: false, reason: `${a.width}x${a.height} against ${b.width}x${b.height}` };
   }
-  const colours = Math.min(a.channels, b.channels) === 1 ? 1 : 3;
+  /* Colour samples per pixel: 1 for grayscale layouts (1 = gray, 2 = gray +
+   * alpha), 3 for colour layouts (3 = rgb, 4 = rgba). Comparing "3" on a
+   * 2-channel image would read alpha and the next pixel's gray as colours and
+   * run past the buffer on the last pixel (NaN deltas). */
+  const colours = Math.min(a.channels, b.channels) <= 2 ? 1 : 3;
   let differing = 0;
   let over = 0;
   let max = 0;
