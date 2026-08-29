@@ -70,3 +70,25 @@ animation and the two hashes are stable values rather than a continuum.
 `shape-rendering: geometricPrecision` changes nothing (verified: identical
 hashes). Do not demand a byte-identical hash for this view; the panels view is
 byte-identical across four runs and still worth pinning.
+
+## Freeform inherits the entering rig's field of view (2026-08-28)
+
+`seedFreeformFromShot` (`interaction.ts`) copies `shot.fov` into the freeform
+camera: enter from tactical and the scene renders at 45 deg (1056.2 px/rad),
+from tv at 40 (1202.0 px/rad), from chase at 55. The battery cycles
+chase, tv, tactical before freeform, so its shots use 45; a probe that goes
+straight to freeform gets 40, and the same asserted yaw/pitch/dist puts a
+ridge 23 px away from where the battery's constant predicts. Pixel arithmetic
+is only comparable within one entry route. Every capture script must print
+its route and focal constant into its own JSON.
+
+## Capture posing is API-only (2026-08-28)
+
+`window.__layline.camera({yaw, pitch, dist})` poses the freeform camera
+absolutely, clamped to pointer limits, echoed back through `info()`. Synthetic
+pointer drags under-rotate under load (owner-observed) and are banned for
+posing. A still press is never safe on the canvas: on water it toggles
+playback, on a boat it selects (`pressOutcome`). `__layline.ui(false)` bares
+the scene (visibility, no reflow) for environment crops. The animated dither
+advances per drawn frame: hash-compare only captures with identical scripted
+frame counts; pixel-diff otherwise.
