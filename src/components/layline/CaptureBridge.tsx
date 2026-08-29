@@ -2,6 +2,15 @@
 
 import { useEffect } from "react";
 import { renderStats, useReplay } from "./store";
+import {
+  DIST_MAX,
+  DIST_MIN,
+  PITCH_MAX,
+  PITCH_MIN,
+  clamp,
+  freeform,
+} from "./scene/interaction";
+import { requestSceneFrame } from "./scene/gate";
 import type { ReplayMode, RigName } from "@/lib/layline/types";
 
 export interface CaptureInfo {
@@ -17,6 +26,17 @@ export interface CaptureInfo {
    * either side of an action, it says whether anything was drawn for that
    * action, which a screenshot of a settled page cannot. */
   frames: number;
+  /* The freeform orbit pose the next frame will render from. Read back after
+   * camera() to prove a requested pose actually took. */
+  yaw: number;
+  pitch: number;
+  dist: number;
+}
+
+export interface CameraPose {
+  yaw?: number;
+  pitch?: number;
+  dist?: number;
 }
 
 export interface LaylineCapture {
@@ -31,6 +51,11 @@ export interface LaylineCapture {
   rig: (name: RigName) => void;
   follow: (boatId: string) => void;
   mode: (mode: ReplayMode) => void;
+  /* Set the freeform orbit pose directly, no pointer synthesis. Values are
+   * clamped to the same limits the pointer obeys, so a capture cannot stand
+   * anywhere a hand cannot. Switches to the freeform rig if needed and draws
+   * a frame even while frozen. */
+  camera: (pose: CameraPose) => void;
   info: () => CaptureInfo;
 }
 
@@ -68,12 +93,32 @@ export function CaptureBridge() {
       rig: (name) => store.getState().setRig(name),
       follow: (boatId) => store.getState().follow(boatId),
       mode: (mode) => store.getState().setMode(mode),
+      camera: (pose) => {
+        const state = store.getState();
+        if (state.rig !== "freeform") state.setRig("freeform");
+        if (pose.yaw !== undefined) freeform.yaw = pose.yaw;
+        if (pose.pitch !== undefined) {
+          freeform.pitch = clamp(pose.pitch, PITCH_MIN, PITCH_MAX);
+        }
+        if (pose.dist !== undefined) {
+          freeform.dist = clamp(pose.dist, DIST_MIN, DIST_MAX);
+        }
+        /* A framing move in flight would keep easing the centre and range
+         * after this returns; the pose asked for is the pose delivered. */
+        freeform.left = 0;
+        freeform.pending = null;
+        freeform.retarget = false;
+        requestSceneFrame();
+      },
       info: () => ({
         t: store.getState().t,
         drawnAt: renderStats.drawnAt,
         drawCalls: renderStats.drawCalls,
         triangles: renderStats.triangles,
         frames: renderStats.frames,
+        yaw: freeform.yaw,
+        pitch: freeform.pitch,
+        dist: freeform.dist,
       }),
     };
     window.__layline = api;
