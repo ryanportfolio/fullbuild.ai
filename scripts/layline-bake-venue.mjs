@@ -34,7 +34,8 @@
  *                    5 curtain, 6 reserved for vegetation
  *     u8  material   0 shore, 1 curtain
  *     u8  drawOrder  ascending
- *     u8  attrMask   bit0 aFade, bit1 aShade, bit2 aDist (i16), bit3 aBase (u8)
+ *     u8  attrMask   bit0 aFade, bit1 aShade, bit2 aDist (i16), bit3 aBase (u8;
+ *                    bit0 base vertex, bit1 far band)
  *     u8  yUnit      y quantisation denominator; 10 means 0.1 m
  *     u8  idx32      1 if this layer's indices are u32
  *     u8  pad
@@ -176,7 +177,13 @@ const R_EFF = 7432833;
 const ATTR_FADE = 1;
 const ATTR_SHADE = 2;
 const ATTR_DIST = 4; // i16, 4 m units
-const ATTR_BASE = 8; // u8, 0 ridge vertex / 255 base vertex
+/* u8 column code: bit0 marks a base vertex, bit1 marks the far band. The band
+ * bit is what the runtime orders the two curtain bands in depth by; deriving it
+ * from the range instead cannot work, because the mid march ends and the far
+ * march begins at the same 35 km. */
+const ATTR_BASE = 8;
+const COLUMN_BASE = 1;
+const COLUMN_FAR = 2;
 const ATTR_BYTES = { [ATTR_FADE]: 1, [ATTR_SHADE]: 1, [ATTR_DIST]: 2, [ATTR_BASE]: 1 };
 const Y_UNIT = 10; // y quantised in 0.1 m
 
@@ -1307,6 +1314,112 @@ function footBelow(x, y, base, reach) {
   return floor - 1;
 }
 
+/* The drawn L1 surface, indexed from the triangles the terrain layer actually
+ * emitted rather than from the lattice it was built out of.
+ *
+ * `latticeLow` answers a question about the relief lattice, and the lattice is
+ * only one of the three things L1 draws: along a quay the surface under a crane
+ * is the shore ring's batter, which runs from the waterline up to an inset
+ * crest, and the batter at the wharf edge sits metres below the lowest lattice
+ * corner near the assembly centre. Round 4b grounded a whole crane on one
+ * lattice minimum sampled at its centre and left 20 seaward feet 0.6 to 4.8 m
+ * clear of the batter under them. Reading the emitted triangles removes the
+ * proxy: whatever L1 draws under a foot is what the foot is planted against. */
+let terrainTris = null;
+let terrainGrid = null;
+const TERRAIN_CELL = 64;
+
+/** Index L_TERRAIN's emitted triangles by xz cell. Positions are already
+ * quantised and in render axes (x, h in 0.1 m, z = -courseY); this converts
+ * them back to the course frame the placement code works in. */
+function buildTerrainIndex() {
+  terrainTris = [];
+  terrainGrid = new Map();
+  const p = L_TERRAIN.positions;
+  const index = L_TERRAIN.indices;
+  for (let t = 0; t < index.length; t += 3) {
+    const corner = [];
+    for (let k = 0; k < 3; k++) {
+      const v = index[t + k] * 3;
+      corner.push([p[v], -p[v + 2], p[v + 1] / 10]);
+    }
+    const [a, b, c] = corner;
+    const area2 = (b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1]);
+    if (Math.abs(area2) < 1e-9) continue; // vertical wall: no xz footprint
+    const id = terrainTris.length;
+    terrainTris.push([a, b, c, area2]);
+    const i0 = Math.floor(Math.min(a[0], b[0], c[0]) / TERRAIN_CELL);
+    const i1 = Math.floor(Math.max(a[0], b[0], c[0]) / TERRAIN_CELL);
+    const j0 = Math.floor(Math.min(a[1], b[1], c[1]) / TERRAIN_CELL);
+    const j1 = Math.floor(Math.max(a[1], b[1], c[1]) / TERRAIN_CELL);
+    for (let i = i0; i <= i1; i++) {
+      for (let j = j0; j <= j1; j++) {
+        const key = `${i},${j}`;
+        let cell = terrainGrid.get(key);
+        if (!cell) terrainGrid.set(key, (cell = []));
+        cell.push(id);
+      }
+    }
+  }
+  console.log(`terrain index: ${terrainTris.length} triangles over ${terrainGrid.size} cells`);
+}
+
+/** The highest drawn L1 surface at one course-frame point, or null where L1
+ * draws nothing there (open water). The maximum, because L1 stacks a cap over
+ * a batter over a skirt and only the top of that stack is visible. */
+function terrainHeightAt(x, y) {
+  if (terrainGrid === null) return null;
+  const cell = terrainGrid.get(
+    `${Math.floor(x / TERRAIN_CELL)},${Math.floor(y / TERRAIN_CELL)}`,
+  );
+  if (!cell) return null;
+  let best = null;
+  for (const id of cell) {
+    const [a, b, c, area2] = terrainTris[id];
+    const w0 = ((b[0] - x) * (c[1] - y) - (c[0] - x) * (b[1] - y)) / area2;
+    const w1 = ((c[0] - x) * (a[1] - y) - (a[0] - x) * (c[1] - y)) / area2;
+    const w2 = 1 - w0 - w1;
+    if (w0 < -1e-6 || w1 < -1e-6 || w2 < -1e-6) continue;
+    const h = w0 * a[2] + w1 * b[2] + w2 * c[2];
+    if (best === null || h > best) best = h;
+  }
+  return best;
+}
+
+/* How far a foot is driven below the surface it stands on, and how wide a
+ * stencil the surface is read over. The stencil covers a leg's own bottom face
+ * (the widest member is 2.0 m square, half-diagonal 1.41 m) so the corner
+ * vertices are planted, not just the axis; the embed is the same 1 m
+ * `footBelow` already uses, which is four times the 0.1 m the position
+ * quantiser rounds to. */
+const FOOT_EMBED = 1;
+const FOOT_STENCIL = 1.5;
+
+/**
+ * Where one leg's bottom belongs: at the assembly's own rail height, or driven
+ * under the L1 surface beneath that leg wherever the surface runs lower. Legs
+ * only ever grow downward, so the rail stays the assembly's structural datum
+ * and the apex, portal and hinge heights are untouched.
+ */
+let perFootDrops = 0;
+function footOnTerrain(x, y, rail) {
+  let low = null;
+  for (const [dx, dy] of [
+    [0, 0],
+    [FOOT_STENCIL, FOOT_STENCIL],
+    [FOOT_STENCIL, -FOOT_STENCIL],
+    [-FOOT_STENCIL, FOOT_STENCIL],
+    [-FOOT_STENCIL, -FOOT_STENCIL],
+  ]) {
+    const h = terrainHeightAt(x + dx, y + dy);
+    if (h === null) continue;
+    if (low === null || h < low) low = h;
+  }
+  if (low === null || rail <= low - FOOT_EMBED) return rail;
+  perFootDrops += 1;
+  return low - FOOT_EMBED;
+}
+
 function buildRelief(boxes) {
   const half = Math.ceil(FADE_END / RELIEF_CELL);
   const N = 2 * half + 1;
@@ -1728,19 +1841,20 @@ function buildCurtain() {
    * the same range. The shader runs one formula over both and only the base
    * takes the horizon clamp, so a base vertex ships its column's real range
    * and a height of zero. That zero is also what gzip gets a run of. */
-  const columnVertex = (c, sample, base) => {
+  const columnVertex = (c, sample, base, bandBit) => {
     const cb = c * CURTAIN_STEP_DEG * DEG;
     return curtainVertex(
       Math.round(Math.sin(cb) * 1000),
       base ? 0 : Math.round(sample.h * Y_UNIT),
       Math.round(-Math.cos(cb) * 1000),
       Math.round(sample.d / 4),
-      base ? 255 : 0,
+      (base ? COLUMN_BASE : 0) | bandBit,
     );
   };
-  const ridgeVertex = (c, sample) => columnVertex(c, sample, false);
-  const baseVertex = (c, sample) => columnVertex(c, sample, true);
   for (const band of bands) {
+    const bandBit = band.name === "far" ? COLUMN_FAR : 0;
+    const ridgeVertex = (c, sample) => columnVertex(c, sample, false, bandBit);
+    const baseVertex = (c, sample) => columnVertex(c, sample, true, bandBit);
     const profile = [];
     for (let c = 0; c < columns; c++) {
       const cb = c * CURTAIN_STEP_DEG * DEG;
@@ -2038,6 +2152,12 @@ function buildPort(cranePoints, infra, rings, boxes) {
     const g = CRANE_GAUGE / 2;
     const w = CRANE_WIDTH / 2;
     const d = Math.hypot(p.x, p.y);
+    /* One rail height for the whole gantry is what left 20 seaward feet in the
+     * air: the gauge is 30 m, so the waterside pair stands over the shore
+     * batter while the landside pair stands on the apron behind it, and a
+     * single lattice minimum taken at the centre cannot be under both. Each leg
+     * reads the L1 surface under its own footprint and grows down to meet it. */
+    const railAt = (u, v) => footOnTerrain(p.x + sea.x * u + quay.x * v, p.y + sea.y * u + quay.y * v, rail);
     /* The legs carry the boom, so they run to the hinge, not to the portal
      * beam. Round 4a stopped them at 0.42 of the apex and hung the boom and the
      * backreach at 0.62, which left both members floating about 16 m clear of
@@ -2049,7 +2169,7 @@ function buildPort(cranePoints, infra, rings, boxes) {
       /* 14 members, 168 triangles: the design doc 9.1 archetype plus the two
        * hinge beams the boom and the backreach are attached with */
       for (const u of [g, -g]) {
-        for (const v of [w, -w]) member(at(u, v, rail), at(u, v, hinge), across, 1.8, 1.8);
+        for (const v of [w, -w]) member(at(u, v, railAt(u, v)), at(u, v, hinge), across, 1.8, 1.8);
       }
       for (const u of [g, -g]) member(at(u, -w, portal), at(u, w, portal), seaV, 1.6, 1.6);
       member(at(g, 0, portal), at(-g, 0, portal), across, 1.6, 1.6);
@@ -2064,7 +2184,7 @@ function buildPort(cranePoints, infra, rings, boxes) {
        * pair together, and the gantry beam it carries. Under 11 px that
        * silhouette is all a crane has left (design doc 9.1). */
       for (const u of [g, -g]) {
-        for (const v of [w, -w]) member(at(u, v, rail), at(u, v, hinge), across, 2.0, 2.0);
+        for (const v of [w, -w]) member(at(u, v, railAt(u, v)), at(u, v, hinge), across, 2.0, 2.0);
       }
       member(at(g, -w, hinge), at(g, w, hinge), seaV, 2.4, 2.2);
       member(
@@ -2243,7 +2363,10 @@ function buildPort(cranePoints, infra, rings, boxes) {
     );
   }
   console.log(`container blocks: ${drawnBlocks.length} of ${blocks.length} apron sites`);
-  console.log(`feet: ${footSnaps} assemblies snapped down onto the L1 lattice`);
+  console.log(
+    `feet: ${footSnaps} assemblies snapped down onto the L1 lattice, ` +
+      `${perFootDrops} crane legs grown down onto the L1 surface under their own footprint`,
+  );
 }
 
 /* ------------------------------------------------------------------ output */
@@ -2574,6 +2697,9 @@ into(L_TERRAIN, () => {
   buildRelief(boxes);
   buildBreakwaters(breakwaterWays, coastlineIds);
 });
+/* L1 is complete here and nothing after this adds to it, so the surface every
+ * later layer stands on is now a fixed set of triangles. */
+buildTerrainIndex();
 into(L_MASSING, () => buildMassing(massingWays));
 into(L_PORT, () => buildPort(craneNodes.concat(craneWays), infraWays, rings, boxes));
 await prefetchCurtainDem();

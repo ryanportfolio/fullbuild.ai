@@ -398,7 +398,13 @@ export function LaylineScene({
     <Canvas
       dpr={[1, 2]}
       frameloop={frozen ? "never" : "always"}
-      camera={{ position: [44, 34, 76], fov: 40, near: 1, far: 12000 }}
+      /* far 16,000, not the 12,000 this shipped with, because the freeform pan
+       * is now bounded at 2,500 m from the followed boat rather than unbounded:
+       * inside that bound the eye can stand 3,700 m from the course origin and
+       * the venue's terrain reaches 10,500 m the other way, so 12,000 would clip
+       * real coast. Depth resolution is `z^2 (f - n) / (f n 2^24)` and near is
+       * 1, so moving far from 12,000 to 16,000 costs 0.002 per cent of it. */
+      camera={{ position: [44, 34, 76], fov: 40, near: 1, far: 16000 }}
       gl={{
         /* Multisampling is free here only because nothing post-processes the
          * frame: with no render target chain the default framebuffer can carry

@@ -83,20 +83,38 @@ const ATTR_BASE = 8;
 
 /* The curtain's own constants, and every one of them is load-bearing.
  *
- * R_CURTAIN is where the band is drawn: the terrain is clipped at 10,500 m and
- * the camera never leaves a 900 m circle, so nothing real is ever more than
- * 11,400 m from the eye and the curtain sits behind all of it while staying
- * inside the 12,000 m far plane. The 120 m ramp with true range is what keeps
- * the two bands off each other: they cover the same azimuths over the San
- * Gabriels, and at one shared radius they are coplanar and z-fight. Ramping the
- * radius orders them by real distance instead, and because the whole vertex
- * scales about the camera, it moves depth without moving a single pixel.
+ * R_CURTAIN is where the mid band is drawn, and its floor is set by how far the
+ * camera can get from the course origin. The orbit centre is panned within
+ * PAN_MAX 2,500 m of the boat it follows, the boat sails a 100 m leg so it is
+ * never more than about 300 m out, and the eye stands off the centre by
+ * DIST_MAX 900 m: 3,700 m of eye excursion, against terrain clipped at
+ * 10,500 m. Nothing real is ever more than 14,200 m from the eye, so 14,400 m
+ * puts the curtain behind all of it at every legal camera. That is why the
+ * scene's far plane is 16,000 and not the 12,000 it was when the curtain sat at
+ * 11,780 and pan was unbounded: with n = 1 the depth resolution is
+ * `z^2 (f - n) / (f n 2^24)`, which the far plane moves by 0.002 per cent
+ * between 12,000 and 16,000 and the range moves by the square.
+ *
+ * R_CURTAIN_BAND is what keeps the two bands off each other. They cover the
+ * same azimuths over the San Gabriels, and at one shared radius they are
+ * coplanar and z-fight. Round 4b ordered them by true range, which fixed 756 of
+ * the 775 shared azimuths and left 41 inside a single depth quantum: the two
+ * marches meet at 35 km, so a mid column that peaks at its far limit and a far
+ * column that peaks at its near limit land on the same radius however the ramp
+ * is shaped. The separation is keyed on the band instead. At 14.5 km with a
+ * 24-bit buffer and near 1 / far 16,000 the quantum is
+ * `z^2 (f - n) / (f n 2^24)` = 12.5 m, so 80 m is six quanta and does not
+ * depend on where either march happened to find its summit.
+ *
+ * Moving a band's radius moves no pixel: the vertex is
+ * `cameraPosition + radius * (dir + vec3(0, elev, 0))`, so radius scales the
+ * whole offset from the eye and leaves the ray, and therefore the fragment,
+ * exactly where it was. Only the depth changes.
  *
  * R_EFF is the 7/6 Earth radius under standard refraction: the same constant
  * the bake took the curvature drop out with, so the two cannot disagree. */
-const R_CURTAIN = 11780;
-const R_CURTAIN_RAMP = 120;
-const R_CURTAIN_SPAN = 90000; // the march's 90 km cut-off
+const R_CURTAIN = 14400;
+const R_CURTAIN_BAND = 80;
 const R_EFF = 7432833;
 
 /* Extinction toward the zenith. Distant land does not go grey, it goes the
@@ -231,16 +249,19 @@ void main() {
 );
 
 /* The far horizon curtain: Palos Verdes at 16.7 km, Catalina at 47, the San
- * Gabriels and the Santa Anas at 54 to 77, all of them outside the 12,000 m far
- * plane and none of them able to be mesh at its real range.
+ * Gabriels and the Santa Anas at 54 to 77, all of them outside the far plane
+ * and none of them able to be mesh at its real range.
  *
  * The bake ray marched them out of the DEM and shipped a profile whose vertices
- * carry a unit direction, a true summit height and a true range. This shader
- * puts each vertex back at a fixed radius around the camera and recomputes its
- * elevation angle from those true numbers, so the band swings by exactly what
- * the real ridge would as the camera climbs. A curtain nailed to a fixed height
- * would swing 3.8 degrees between the water-level and the 779 m cameras where
- * Palos Verdes swings 2.7, and that 1.1 degree error is 21 px on a 28 px ridge.
+ * carry a direction from the course origin, a true summit height and a true
+ * range from that origin. Those three reconstruct the summit's real world
+ * point, so this shader can measure the bearing, the range and the elevation
+ * angle from wherever the eye actually is and then draw the result on a shell
+ * at a convenient radius. Both of the errors a naive band has come out in the
+ * wash: a curtain nailed to a fixed height swings 3.8 degrees between the
+ * water-level and the 779 m cameras where Palos Verdes swings 2.7, and a
+ * curtain nailed to the camera's own bearing slides the whole skyline along
+ * with a 900 m pan where the real ridge swings 3.1 degrees, 57 px.
  *
  * cameraPosition is a uniform three.js already maintains, so this costs nothing
  * per frame on the JavaScript side. What it does cost is the mesh's bounding
@@ -263,10 +284,23 @@ varying vec3 vDir;
 varying float vK;
 
 void main() {
-  /* pos.xz is the unit horizontal direction times 1000; pos.y is the true
-     summit height above sea level, already dequantised to metres. */
-  vec3 dir = vec3(position.x, 0.0, position.z) * 0.001;
-  float D = aDist * 4.0;  // aDist ships as an unnormalised Int16 in 4 m units
+  /* pos.xz is the unit horizontal direction FROM THE COURSE ORIGIN times 1000,
+     aDist the true horizontal range from the origin in 4 m units, and pos.y the
+     true summit height above sea level. Together they put the summit back at a
+     real world point, and everything below is measured from the eye to that
+     point rather than from the eye along the baked direction.
+
+     That is the whole of the parallax fix. Anchoring on the baked direction
+     nails the skyline to the camera: pan 900 m across the bearing of the Palos
+     Verdes ridge at 16.5 km and the real ridge swings 3.1 degrees, 57 px, while
+     a camera-locked band swings none of it and slides with the eye. Recomputing
+     the bearing costs one normalize per vertex on 4,252 vertices and nothing
+     per frame on the JavaScript side, because cameraPosition is a uniform
+     three.js already maintains. */
+  vec2 anchor = vec2(position.x, position.z) * (aDist * 4.0 * 0.001);
+  vec2 eyeVec = anchor - cameraPosition.xz;
+  float D = max(length(eyeVec), 1.0);
+  vec3 dir = vec3(eyeVec.x, 0.0, eyeVec.y) / D;
   float fall = D * D / ${(2 * R_EFF).toFixed(1)};
   /* One formula for both ends of the column: the ridge carries the summit
      height, the base carries zero, so the base lands on the sea surface at the
@@ -281,11 +315,14 @@ void main() {
      freeform camera the whole mid band inverts, Palos Verdes included. Taking
      the sea at range instead gives 28 px of ridge at 779 m and 27 px at the
      waterline, which is the pair of figures design doc 1.4 predicts. */
-  float sea = (position.y - cameraPosition.y - fall) / max(D, 1.0);
+  float sea = (position.y - cameraPosition.y - fall) / D;
   float horizon = -sqrt(2.0 * max(cameraPosition.y, 0.5) / ${R_EFF.toFixed(1)}) - 0.0015;
-  float elev = aBase > 0.5 ? min(sea, horizon) : sea;
-  float radius = ${R_CURTAIN.toFixed(1)} +
-    clamp(D / ${R_CURTAIN_SPAN.toFixed(1)}, 0.0, 1.0) * ${R_CURTAIN_RAMP.toFixed(1)};
+  /* aBase is a column code, not a flag: bit 0 marks the base vertex, bit 1 the
+     far band. Both arrive as exact small integers in a float. */
+  float isBase = mod(aBase, 2.0);
+  float isFar = step(2.0, aBase);
+  float elev = isBase > 0.5 ? min(sea, horizon) : sea;
+  float radius = ${R_CURTAIN.toFixed(1)} + isFar * ${R_CURTAIN_BAND.toFixed(1)};
   vec3 world = cameraPosition + dir * radius + vec3(0.0, radius * elev, 0.0);
   vDir = world - cameraPosition;
   vK = clamp(
