@@ -3,3 +3,13 @@
 # Baked venue manifests are generated LF; autocrlf must not rewrite them
 # (a CRLF round trip desyncs the file from the baker output; round-5b audit N2).
 public/prototype/layline/venues/*.json text eol=lf
+# Derived scenery products are generated LF and pinned by sha256 in
+# scripts/venue-data/<venue>/provenance.json; a CRLF round trip breaks the hash.
+scripts/venue-data/**/*.json text eol=lf
+# Vendored laz-perf (Apache-2.0) is byte-pinned by the sha256s recorded in
+# scripts/lib/laz-perf/PROVENANCE.md, so git must not touch a single byte.
+# laz-perf.js is minified with LF newlines: autocrlf=true would rewrite them
+# on checkout and break the hash, hence -text rather than eol=lf.
+scripts/lib/laz-perf/laz-perf.js -text
+scripts/lib/laz-perf/laz-perf.wasm -text
+scripts/lib/laz-perf/COPYING -text
