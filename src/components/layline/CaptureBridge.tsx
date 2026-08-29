@@ -56,6 +56,10 @@ export interface LaylineCapture {
    * anywhere a hand cannot. Switches to the freeform rig if needed and draws
    * a frame even while frozen. */
   camera: (pose: CameraPose) => void;
+  /* ui(false) hides every DOM element except the canvases (visibility, not
+   * display, so nothing reflows and the scene keeps its exact size) for
+   * clean environment captures; ui(true) restores. */
+  ui: (show: boolean) => void;
   info: () => CaptureInfo;
 }
 
@@ -108,6 +112,29 @@ export function CaptureBridge() {
         freeform.left = 0;
         freeform.pending = null;
         freeform.retarget = false;
+        requestSceneFrame();
+      },
+      ui: (show) => {
+        const root = document.documentElement;
+        if (show) {
+          delete root.dataset.laylineBare;
+        } else {
+          root.dataset.laylineBare = "true";
+          if (document.getElementById("layline-bare-style") === null) {
+            const style = document.createElement("style");
+            style.id = "layline-bare-style";
+            style.textContent = [
+              /* visibility, not display: the layout must not reflow, so the
+               * scene canvas keeps the exact size a framed capture expects.
+               * A canvas turns itself back visible under hidden ancestors;
+               * HUD-owned canvases (the dock strips) stay hidden. */
+              "html[data-layline-bare] body *:not(canvas){visibility:hidden !important;}",
+              "html[data-layline-bare] canvas{visibility:visible !important;}",
+              "html[data-layline-bare] [data-dock] canvas{visibility:hidden !important;}",
+            ].join("\n");
+            document.head.appendChild(style);
+          }
+        }
         requestSceneFrame();
       },
       info: () => ({
