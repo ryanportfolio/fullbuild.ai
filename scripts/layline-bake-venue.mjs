@@ -203,9 +203,26 @@ const MASS_GROUND_MAX = 40; // DEM fallback for the 8 buildings with no OSM ele
  * within a metre or two of the MIN_SHORE_H the coast is floored at. Nothing on
  * an island is allowed a higher datum than this. */
 const ISLE_DECK_MAX = 8;
-const ISLE_RIM_INSET = 22; // m inside the OSM waterline: clear of L1's 8-18 m batter
+/* Round 0 (catalogue 6.2) replaced two guesses with the lidar shoreline profile,
+ * scripts/venue-data/long-beach/shoreline.json, which bins class 2 and 20 ground
+ * z by signed distance to each island's own OSM ring.
+ *
+ *   island      crownAtM   lipM
+ *   White         12       1.05
+ *   Grissom        9       0.08   lip an outlier: that ring's crown barely
+ *   Chaffee        8       1.08   stands over its deck at 1 m bins
+ *   Freeman       11       1.28
+ *
+ * The inset takes the median crown distance, 10 m, against the 22 m guessed
+ * from L1's batter width; the lip takes the median of the four measured lips,
+ * 1.065 m, against 3.4. Both medians rather than means, because that is how the
+ * product itself reduces a bin and because Grissom's 0.08 would drag a mean.
+ * ISLE_RIM_W stays at 18 m: the measured rim is 3 to 5 m wide (White is back on
+ * her deck 15 m inboard of a crown 12 m inboard) but narrowing it is the armour
+ * stone round's job, not a colour-and-proportion round's. */
+const ISLE_RIM_INSET = 10; // m inside the OSM waterline: shoreline.json median crownAtM
 const ISLE_RIM_W = 18; // m of rock rim between the lip and the planting
-const ISLE_RIM_LIP = 3.4; // m of rim crown over the island deck
+const ISLE_RIM_LIP = 1.07; // m of rim crown over the island deck: shoreline.json median lipM
 const ISLE_VEG_LOW = 9; // m of canopy over the deck at its thinnest
 const ISLE_VEG_SPAN = 10; // m more where the planting is dense
 const ISLE_CLUMPS = 3; // taller lumps that break the canopy's top edge
@@ -216,7 +233,25 @@ const ISLE_SCREENS = 4; // sculpted screen panels per island
 const ISLE_SCREEN_H = 13; // m, over the deck
 /* Queen Mary: 310.7 m LOA and 55.2 m to the funnel tops (Wikipedia); OSM way
  * 438331516 carries the hull outline and `height=10`, which is the hull to the
- * promenade deck. Everything above that is the superstructure. */
+ * promenade deck. Everything above that is the superstructure.
+ *
+ * Round 0 (catalogue 7.1) changed what these two are measured FROM, not their
+ * values. The bake already assigned the correct near-black to the hull, then
+ * drew the band from -3 to +10 in absolute world y while the terrain L1 puts
+ * around her berth stands at 6.0 to 12.0 m (probed at bake time over her own
+ * hull ring). Most of the black was underground and the ship read as a pale
+ * grey box, which inverts the single most recognisable thing about her. They
+ * are now offsets from the ground under her berth: 10 m of black hull standing
+ * clear on every side, which is what OSM's `height=10` measures, and 3 m of it
+ * buried so her foot does not float.
+ *
+ * QM_DECK1, QM_DECK2 and QM_FUNNEL_TOP stay ABSOLUTE deliberately. Carrying the
+ * datum up through them would put her funnel tops at 67 m over a sea her own
+ * source says she stands 55.2 m above, which is exactly the kind of dimension
+ * inflation contract amendment 3 requires owner approval for. Held where they
+ * are, she draws 10 m of hull, 16 m of upperworks and 17 m of funnel over a
+ * waterline at 9 m: 46 m of ship above the sea, against the 43.4 m her sourced
+ * 55.2 m keel-to-funnel figure implies once her 11.8 m draught is taken off. */
 const QM_HULL_TOP = 10;
 const QM_HULL_BOTTOM = -3;
 const QM_DECK1 = 30;
@@ -294,10 +329,16 @@ const ATTR_MAT = 16;
 const MAT_RAMP = 0;
 const MAT_ROCK = 1; // island rock rim, Catalina boulder armour
 const MAT_VEG = 2; // island planting, palms and shrub mass
-const MAT_PALE = 3; // screen towers, the dome, lighthouses, ship upperworks
+const MAT_PALE = 3; // screen towers, the bridge towers, ship upperworks
 const MAT_DARK = 4; // ship hull, derrick and bridge steel
 const MAT_ACCENT = 5; // Cunard funnel red
 const MAT_TANK = 6; // storage-tank paint, chalky off-white for solar reflectance
+/* Round 0 (catalogue 7.4 and 10.2): the Spruce Goose dome is white aluminium
+ * panel and the Long Beach Harbor Light is a white concrete box tower. Both
+ * were taking MAT_PALE, which round 5 derived from the THUMS screen towers and
+ * which the grey-concrete bridge towers also take, so neither could be made
+ * white without repainting the other two. */
+const MAT_WHITE = 7; // the dome and the harbour light, white
 const ATTR_BYTES = {
   [ATTR_FADE]: 1,
   [ATTR_SHADE]: 1,
@@ -2017,7 +2058,14 @@ function buildBreakwaters(ways, coastlineIds) {
   const HEIGHT = 5;
   const CREST_VARY = 0.7; // m of crest undulation either side of HEIGHT
   const BASE_HALF = 30;
-  const CREST_HALF = 9;
+  /* Round 0 (catalogue 10.1). The USACE Coastal Hydraulics Laboratory section
+   * table gives the Middle Breakwater a 16 ft crest at +14 ft MLLW and states
+   * that the Long Beach Breakwater is the same section but for its core
+   * elevation [P7a]. 16 ft is 4.877 m, so the half-width is 2.44 and not the 9
+   * that drew an 18 m crest, nearly four times too wide, and turned a rubble
+   * mound into a road. HEIGHT stays at 5 m: the table's +14 ft is 4.27 m and
+   * the drawn 5 is within a rounding of it. */
+  const CREST_HALF = 2.44;
   let built = 0;
   for (const way of ways) {
     if (coastlineIds.has(way.id)) continue;
@@ -3017,7 +3065,9 @@ function buildIsland(spec, allTowers) {
 
 /** The Queen Mary: a hull from her own OSM outline, two tiers of upperworks and
  * three funnels. 310.7 m LOA and 55.2 m to the funnel tops (Wikipedia); the
- * OSM way carries `height=10`, the hull to the promenade deck. */
+ * OSM way carries `height=10`, the hull to the promenade deck, and round 0
+ * measures that band from the ground under her berth rather than from world
+ * zero so the black is above the terrain instead of inside it. */
 function buildQueenMary(way) {
   if (!way) return 0;
   const before = current.indices.length;
@@ -3031,6 +3081,16 @@ function buildQueenMary(way) {
   for (const p of hull) {
     beam = Math.max(beam, Math.abs((p.x - centre.x) * -axis.y + (p.y - centre.y) * axis.x) * 2);
   }
+  /* The datum the hull band is measured from: the HIGHEST ground L1 puts under
+   * her own outline, not the centroid's. The berth runs 6.0 to 12.0 m across
+   * her sixteen hull vertices, so anything lower leaves the black buried on the
+   * side the terrain is tallest, which is the defect catalogue 7.1 names. */
+  const berth = Math.max(...hull.map((p) => heroGround(p.x, p.y, MIN_SHORE_H, DECK_MAX_H)));
+  const hullTop = berth + QM_HULL_TOP;
+  const hullBottom = berth + QM_HULL_BOTTOM;
+  console.log(
+    `queen mary datum: berth ground ${berth.toFixed(1)} m, black hull ${hullBottom.toFixed(1)} to ${hullTop.toFixed(1)} m`,
+  );
   withMat(MAT_DARK, () => {
     const n = hull.length;
     for (let i = 0; i < n; i++) {
@@ -3040,17 +3100,17 @@ function buildQueenMary(way) {
       const dy = b.y - a.y;
       const len = Math.hypot(dx, dy) || 1;
       face(
-        v3(a.x, QM_HULL_BOTTOM, a.y),
-        v3(b.x, QM_HULL_BOTTOM, b.y),
-        v3(b.x, QM_HULL_TOP, b.y),
-        v3(a.x, QM_HULL_TOP, a.y),
+        v3(a.x, hullBottom, a.y),
+        v3(b.x, hullBottom, b.y),
+        v3(b.x, hullTop, b.y),
+        v3(a.x, hullTop, a.y),
         v3(dy / len, 0, -dx / len),
       );
     }
   });
   withMat(MAT_PALE, () => {
     const cap = earcut(hull);
-    const deck = hull.map((p) => vertex(p.x, QM_HULL_TOP, p.y, SHADE_FLAT));
+    const deck = hull.map((p) => vertex(p.x, hullTop, p.y, SHADE_FLAT));
     for (let i = 0; i < cap.length; i += 3) {
       triangle(deck[cap[i]], deck[cap[i + 1]], deck[cap[i + 2]]);
     }
@@ -3065,7 +3125,7 @@ function buildQueenMary(way) {
         to - from,
         width,
       );
-    tier(QM_HULL_TOP, QM_DECK1, length * 0.31, beam * 0.72);
+    tier(hullTop, QM_DECK1, length * 0.31, beam * 0.72);
     tier(QM_DECK1, QM_DECK2, length * 0.22, beam * 0.5);
   });
   withMat(MAT_ACCENT, () => {
@@ -3163,7 +3223,7 @@ function buildDome(way) {
   const c = areaCentre(ringOf(way));
   const ground = heroGround(c.x, c.y, MIN_SHORE_H, DECK_MAX_H);
   const RINGS = 3;
-  withMat(MAT_PALE, () => {
+  withMat(MAT_WHITE, () => {
     for (let r = 0; r < RINGS; r++) {
       const t0 = r / RINGS;
       const t1 = (r + 1) / RINGS;
@@ -3214,7 +3274,7 @@ function buildRobotLight(node) {
    * puts one 24 m relief spike under this exact point (a 64 m DEM sample of
    * the breakwater head), and the cap is what keeps the light off it */
   const ground = heroGround(p.x, p.y, 0, MIN_SHORE_H);
-  withMat(MAT_PALE, () => {
+  withMat(MAT_WHITE, () => {
     /* the columns are 0.15 px of width at 3.6 km, so the stand is one block:
      * what survives at this range is a pale vertical over the breakwater line */
     member(v3(p.x, ground - 1, p.y), v3(p.x, ground + top * 0.55, p.y), v3(1, 0, 0), 9, 9);

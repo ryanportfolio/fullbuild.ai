@@ -19,9 +19,9 @@
     "Terrain: USGS 3DEP and NASA SRTM, courtesy of the U.S. Geological Survey"
   ],
   "stats": {
-    "vertices": 41117,
-    "triangles": 40360,
-    "bytes": 350302,
+    "vertices": 41041,
+    "triangles": 40349,
+    "bytes": 349921,
     "layers": [
       {
         "classId": 5,
@@ -32,7 +32,7 @@
       {
         "classId": 1,
         "name": "terrain",
-        "vertices": 19144,
+        "vertices": 19075,
         "triangles": 24930
       },
       {
@@ -50,8 +50,8 @@
       {
         "classId": 4,
         "name": "heroes",
-        "vertices": 2671,
-        "triangles": 1695
+        "vertices": 2664,
+        "triangles": 1684
       }
     ]
   }

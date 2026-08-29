@@ -456,9 +456,14 @@ test("the substance byte ships on the port and hero layers and nowhere else", ()
   const port = substances.get(CLASS_PORT)!;
   assert.deepEqual([...port.keys()].sort((a, b) => a - b), [0, 6]);
   assert.equal(port.get(6), 1938);
-  /* L4: rock, planting, pale, hull and funnel, no ramp vertices at all */
+  /* L4: rock, planting, pale, hull, funnel and white, no ramp vertices at all.
+     Round 0 added 7, white: the Spruce Goose dome and the Long Beach Harbor
+     Light are both documented white and were drawing in the pale substance,
+     which round 5 derived from the THUMS screen towers and which the grey
+     concrete bridge towers also take. */
   const heroes = substances.get(CLASS_HEROES)!;
-  assert.deepEqual([...heroes.keys()].sort((a, b) => a - b), [1, 2, 3, 4, 5]);
+  assert.deepEqual([...heroes.keys()].sort((a, b) => a - b), [1, 2, 3, 4, 5, 7]);
+  assert.equal(heroes.get(7), 150);
   assert.equal(heroes.get(0), undefined);
 });
 
@@ -637,12 +642,12 @@ test("the committed asset and the baker that made it are both pinned", () => {
      from the same cache are byte-identical. */
   assert.equal(
     sha256(bytes(ASSET)),
-    "50ee6d5d914c4b688d32ca0b8834a6a38442231bdb28e778791e86bc6084f48f",
+    "a89c9847da68f9cd69eaaa157312143bb0d2948d0baa22cd7764b0c843e0cf15",
     "the committed venue asset changed; rebake it and restate both hashes",
   );
   assert.equal(
     sha256(bytes(BAKER)),
-    "eea3b1527c1e1b3acb4018247c4536ead41a94aac6eec7be6aeecefd924e5817",
+    "65f5f4e758889be395670ea6252092d3f15175b99e1f29dcfbaf184f3c08722f",
     "the baker changed; rebake the venue and restate both hashes",
   );
   const manifest = JSON.parse(

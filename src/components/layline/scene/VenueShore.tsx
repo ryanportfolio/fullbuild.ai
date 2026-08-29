@@ -47,6 +47,7 @@ import {
   VENUE_HERO_FUNNEL,
   VENUE_HERO_HULL,
   VENUE_HERO_PALE,
+  VENUE_HERO_WHITE,
   VENUE_ISLE_ROCK,
   VENUE_ISLE_VEG,
   VENUE_RIDGE_FAR,
@@ -209,19 +210,20 @@ const MATERIAL_FALLBACK = MATERIALS[CLASS_TERRAIN];
 
 /* The named substances, indexed by the `aMat` byte the baker writes. Index 0 is
  * "no named substance, use the layer's height ramp", which is what every vertex
- * outside L3 and L4 carries, so the six below are 1 to 6 and the shader selects
- * between them without an array lookup or a branch.
+ * outside L3 and L4 carries, so the seven below are 1 to 7 and the shader
+ * selects between them without an array lookup or a branch.
  *
  * Every one is a reflectance derived the round-4d way, measured appearance
- * inverted through the render chain: .tmp/venue-audit/round5/mix-heroes.mjs and
- * .tmp/venue-audit/round6/mix-tank.mjs print the derivations and each round's
- * provenance.md holds the sources. */
+ * inverted through the render chain: .tmp/venue-audit/round5/mix-heroes.mjs,
+ * .tmp/venue-audit/round6/mix-tank.mjs and .tmp/round0-constants/mix-round0.mjs
+ * print the derivations and each round's provenance holds the sources. */
 const HERO_ROCK = new Color(VENUE_ISLE_ROCK);
 const HERO_VEG = new Color(VENUE_ISLE_VEG);
 const HERO_PALE = new Color(VENUE_HERO_PALE);
 const HERO_HULL = new Color(VENUE_HERO_HULL);
 const HERO_FUNNEL = new Color(VENUE_HERO_FUNNEL);
 const SUBSTANCE_TANK = new Color(VENUE_TANK);
+const HERO_WHITE = new Color(VENUE_HERO_WHITE);
 
 /* Both lights reach the shader normalised to luminance 1, so the two gains
  * above read as an irradiance ratio and can be checked against a clear sky
@@ -340,6 +342,7 @@ const VenueShoreMaterial = shaderMaterial(
     uHeroHull: HERO_HULL,
     uHeroFunnel: HERO_FUNNEL,
     uTank: SUBSTANCE_TANK,
+    uHeroWhite: HERO_WHITE,
     uHaze: HAZE_NEAR,
     uHazeFar: HAZE_FAR,
     uHazeMix: HAZE_NEAR_WEIGHT,
@@ -378,6 +381,7 @@ uniform vec3 uHeroPale;
 uniform vec3 uHeroHull;
 uniform vec3 uHeroFunnel;
 uniform vec3 uTank;
+uniform vec3 uHeroWhite;
 uniform vec2 uRamp;
 uniform vec2 uGrain;
 uniform float uHaze;
@@ -439,6 +443,7 @@ void main() {
   vec3 heroMid = mix(uHeroPale, uHeroHull, step(3.5, vMat));
   vec3 named = mix(mix(heroLow, heroMid, step(2.5, vMat)), uHeroFunnel, step(4.5, vMat));
   named = mix(named, uTank, step(5.5, vMat));
+  named = mix(named, uHeroWhite, step(6.5, vMat));
   vec3 albedo = mix(mix(uAlbedoLo, uAlbedoHi, band), named, step(0.5, vMat));
 
   /* The bake writes 0.62 for a face turned fully away from the sun and 1.17

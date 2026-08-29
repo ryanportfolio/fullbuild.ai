@@ -30,8 +30,23 @@ export const SKY_ZENITH = "#33628c";
 export const SKY_HORIZON = "#d9e6ee";
 export const SUN_TINT = "#f3ddc0";
 export const SUN_DISC = "#ffdfae";
-export const WATER_DEEP = "#0a2a44";
-export const WATER_MID = "#12456b";
+/* The two body colours are San Pedro Bay's own, not an ocean's (catalogue 5.4).
+ * Inside the federal breakwater the circulation is poor enough to trap urban
+ * runoff and the Los Angeles River plume, and the venue's colour oracle agrees:
+ * the NAIP 2022 median over open water AT THE COURSE ORIGIN is rgb(44,69,61), a
+ * dark green-grey. Four island water regions corroborate it within a few levels
+ * (scripts/venue-data/long-beach/swatches.json, points[openWater] and
+ * regions[*.water]).
+ *
+ * These two are not reflectances the way the venue materials below are: Water
+ * .tsx adds `body` as upwelling radiance rather than multiplying it by a light,
+ * so the inversion stops at the tone map. .tmp/round0-constants/mix-round0.mjs
+ * solves the shader's own nadir condition (NoV = 1, Fresnel at its 0.02 floor,
+ * mix weight 0.30) for the pair, holding the shipped per-channel ratio M/D so
+ * the trough-to-crest contrast that gives the surface its form is untouched.
+ * The result renders rgb(44,69,61) byte-exact at that condition. */
+export const WATER_DEEP = "#3d4741";
+export const WATER_MID = "#567066";
 export const WATER_SCATTER = "#1c6b53"; // light through the back of a crest
 export const GLINT = "#ffd9a0";
 export const WHITECAP = "#eaf2f5";
@@ -50,7 +65,13 @@ export const SHORE = "#16212a"; // the bluff and terminals, under their own haze
  * numbers, is .tmp/venue-audit/round4d/provenance.md. Only VenueShore reads
  * them; the sky, the water and the boats are untouched. */
 export const VENUE_SKY_FILL = "#8196ad"; // the sky dome's own hemispherical average, derived
-export const VENUE_APRON = "#7e7d74"; // harbour fill, armour stone, apron, waterfront green
+/* Round 0 (catalogue 8.3) replaced the six-part photograph mix this constant
+ * shipped with by the venue's own measurement: the NAIP median over the Pier J
+ * apron is rgb(159,165,164), a cool grey, where the mix rendered rgb(146,140,
+ * 124), a warm tan. NAIP is nadir, so the measured surface is horizontal and
+ * the inversion runs at lit = sin(22 deg). This is the terrain layer's low
+ * band, so it repaints every made ground at the waterline, not only Pier J. */
+export const VENUE_APRON = "#889195"; // harbour fill, armour stone, apron, waterfront green
 export const VENUE_SCRUB = "#847a63"; // dry coastal sage scrub over Monterey Fm bluffs
 export const VENUE_YARD = "#777677"; // container stacks over the concrete apron
 export const VENUE_STEEL = "#727575"; // POLB gantry cranes, the mixed liveries of a bank
@@ -72,7 +93,20 @@ export const VENUE_TOWER = "#77787b"; // downtown Long Beach, precast and blue-g
  * layers instead, which is what these six index into. */
 export const VENUE_ISLE_ROCK = "#7c7b70"; // Catalina boulder armour on the island rims
 export const VENUE_ISLE_VEG = "#454e3c"; // THUMS palms, shrub mass and irrigated slope
-export const VENUE_HERO_PALE = "#7e898e"; // screen towers, the dome, lighthouses, upperworks
+export const VENUE_HERO_PALE = "#7e898e"; // screen towers, the bridge towers, ship upperworks
+/* Round 0 (catalogue 7.4 and 10.2). The Spruce Goose dome is white aluminium
+ * panel and the Long Beach Harbor Light is a white concrete box tower; both
+ * were drawing in VENUE_HERO_PALE, which round 5 derived as a THUMS screen-
+ * tower mix carrying 14 per cent of a pale BLUE infill panel. They cannot take
+ * that constant white without repainting sixteen screen towers and a bridge
+ * whose towers are grey concrete, so they get their own index instead. No pixel
+ * of either structure is measured anywhere in this project, so this is the
+ * weakest provenance of round 0: it is the mean of the two nearest white paint
+ * values in round-4d research.md section 2, one MEASURED (#DEDFDF, machinery
+ * house) and one INFERRED (#C8CCCB, crane livery with haze removed; the
+ * measured pixel in that frame is #BFD5DF), both POLB crane frames, inverted
+ * at lit 0.70. */
+export const VENUE_HERO_WHITE = "#8c96a0"; // the dome and the harbour light, white
 export const VENUE_HERO_HULL = "#333338"; // Queen Mary hull plating, well masts
 export const VENUE_HERO_FUNNEL = "#753c31"; // Cunard funnel red under its black top band
 export const VENUE_TANK = "#80868b"; // tank paint, chalky off-white, with its rust and grime
