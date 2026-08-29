@@ -534,6 +534,44 @@ function pointSegDist(p, a, b) {
   return Math.hypot(p.x - (a.x + dx * t), p.y - (a.y + dy * t));
 }
 
+/** True when segments a->b and c->d cross at a point interior to both. Touching
+ * endpoints and collinear overlap read as no crossing, which is what shared ring
+ * vertices are. */
+function segmentsCross(a, b, c, d) {
+  const side = (p, q, r) => Math.sign((q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x));
+  const s1 = side(a, b, c);
+  const s2 = side(a, b, d);
+  const s3 = side(c, d, a);
+  const s4 = side(c, d, b);
+  return s1 !== 0 && s2 !== 0 && s3 !== 0 && s4 !== 0 && s1 !== s2 && s3 !== s4;
+}
+
+/** Indices of every vertex bounding a self-crossing edge of a closed ring.
+ * O(n^2) with a bounding-box reject; bake-time only, on rings of a few hundred
+ * points. */
+function selfCrossingVerts(ring) {
+  const n = ring.length;
+  const hit = new Set();
+  for (let i = 0; i < n; i++) {
+    const a = ring[i];
+    const b = ring[(i + 1) % n];
+    const loX = Math.min(a.x, b.x);
+    const hiX = Math.max(a.x, b.x);
+    const loY = Math.min(a.y, b.y);
+    const hiY = Math.max(a.y, b.y);
+    for (let j = i + 2; j < n; j++) {
+      if (i === 0 && j === n - 1) continue; // the two edges meeting at ring[0]
+      const c = ring[j];
+      const d = ring[(j + 1) % n];
+      if (Math.min(c.x, d.x) > hiX || Math.max(c.x, d.x) < loX) continue;
+      if (Math.min(c.y, d.y) > hiY || Math.max(c.y, d.y) < loY) continue;
+      if (!segmentsCross(a, b, c, d)) continue;
+      hit.add(i).add((i + 1) % n).add(j).add((j + 1) % n);
+    }
+  }
+  return hit;
+}
+
 /** The narrowest feature worth keeping at this range, on the same distance
  * schedule the simplify tolerance already uses: what is a readable spit at
  * 700 m is a torn hairline at 5 km. */
@@ -566,6 +604,53 @@ function splitPinches(ring, depth = 0) {
   const head = ring.slice(best.i, best.j + 1);
   const tail = ring.slice(best.j).concat(ring.slice(0, best.i + 1));
   return splitPinches(head, depth + 1).concat(splitPinches(tail, depth + 1));
+}
+
+/**
+ * Undo a pinch split whose two halves both survived.
+ *
+ * splitPinches leaves the chord in both halves, and buildLand reads every ring
+ * edge as coastline: a surviving pair therefore ran opposing sea-level batter
+ * faces, skirts and the shader's surf band straight through the interior of a
+ * land neck. The split only exists so a doomed finger can be measured and
+ * dropped on its own, so once both halves are through the filter the pair is
+ * put back: the two rings carry the chord in opposite directions, so walking A
+ * from the chord's far end all the way round to its near end and then walking B
+ * the same way, skipping the two shared vertices the second time, gives the
+ * union's boundary and dissolves the chord. Repeats to a fixpoint, for a ring
+ * that split into three or more surviving pieces.
+ */
+function mergeSplitChords(rings) {
+  const out = rings.map((ring) => ring.slice());
+  const key = (a, b) => `${a.x.toFixed(3)},${a.y.toFixed(3)}|${b.x.toFixed(3)},${b.y.toFixed(3)}`;
+  let merges = 0;
+  for (;;) {
+    const seen = new Map();
+    let pair = null;
+    search: for (let ri = 0; ri < out.length; ri++) {
+      const ring = out[ri];
+      for (let i = 0; i < ring.length; i++) {
+        const a = ring[i];
+        const b = ring[(i + 1) % ring.length];
+        const rev = seen.get(key(b, a));
+        if (rev && rev.ri !== ri) {
+          pair = { a: rev, b: { ri, i } };
+          break search;
+        }
+        seen.set(key(a, b), { ri, i });
+      }
+    }
+    if (!pair) break;
+    const A = out[pair.a.ri];
+    const B = out[pair.b.ri];
+    const merged = [];
+    for (let k = 0; k < A.length; k++) merged.push(A[(pair.a.i + 1 + k) % A.length]);
+    for (let k = 0; k < B.length - 2; k++) merged.push(B[(pair.b.i + 2 + k) % B.length]);
+    out[pair.a.ri] = merged;
+    out.splice(pair.b.ri, 1);
+    merges += 1;
+  }
+  return { rings: out, merges };
 }
 
 /** A ring worth drawing: real area, and a mean width (2A/P) that still spans
@@ -832,14 +917,33 @@ function buildLand(rings) {
   let capTris = 0;
   let wallTris = 0;
   let flat = 0;
+  let pulled = 0;
   for (const ring of rings) {
     const n = ring.length;
     const heights = ring.map((_, i) => Math.min(shoreHeight(ring, i), 25));
     /* a low shore gets a wide gentle run, a bluff a short steep one */
     const wants = heights.map((h) => Math.min(Math.max(1.5 * h, BATTER_MIN), BATTER_MAX));
-    let crest = insetRing(ring, wants);
+    /* The bisector offset folds wherever the inward runs of two stretches of
+     * shore meet, and a fold that stays local leaves the ring's area almost
+     * intact, so the area guard below never sees it while earcut turns it into
+     * overlapping cap and batter. Pull the runs back only where the crest
+     * actually crosses itself: halve every run bounding a crossing edge, snap
+     * anything under 5 cm to zero, and re-offset. Runs that reach zero put that
+     * span of crest back on the waterline, which is simple by construction, so
+     * the loop terminates; the count of rings that needed it is reported. */
+    const limits = wants.slice();
+    let crest = insetRing(ring, limits);
+    let pulls = 0;
+    for (let attempt = 0; attempt < 24; attempt++) {
+      const folded = selfCrossingVerts(crest.ring);
+      if (folded.size === 0) break;
+      for (const i of folded) limits[i] = limits[i] * 0.5 < 0.05 ? 0 : limits[i] * 0.5;
+      crest = insetRing(ring, limits);
+      pulls += 1;
+    }
+    if (pulls > 0) pulled += 1;
     const area = signedArea(ring);
-    if (signedArea(crest.ring) < 0.25 * area) {
+    if (selfCrossingVerts(crest.ring).size > 0 || signedArea(crest.ring) < 0.25 * area) {
       /* the offset folded through itself; this ring keeps a vertical face */
       crest = { ring: ring.map((p) => ({ x: p.x, y: p.y })), runs: new Array(n).fill(0) };
       flat += 1;
@@ -885,7 +989,7 @@ function buildLand(rings) {
     }
   }
   console.log(
-    `land: ${rings.length} rings, ${capTris} cap tris, ${wallTris} shore tris, ${flat} rings kept vertical`,
+    `land: ${rings.length} rings, ${capTris} cap tris, ${wallTris} shore tris, ${pulled} crests unfolded, ${flat} rings kept vertical`,
   );
 }
 
@@ -932,18 +1036,23 @@ function buildRelief(boxes) {
     [-1, 0], [1, 0],
     [-1, 1], [0, 1], [1, 1],
   ];
-  const neighbours = (i, j, into) => {
+  const neighbours = (src, i, j, into) => {
     into.length = 0;
     for (const [di, dj] of OFF) {
       const ii = i + di;
       const jj = j + dj;
       if (ii < 0 || jj < 0 || ii >= N || jj >= N) continue;
       const c = at(ii, jj);
-      if (land[c]) into.push(height[c]);
+      if (land[c]) into.push(src[c]);
     }
     return into;
   };
 
+  /* Both the corner under test and its neighbours are read from the unclamped
+   * snapshot, and clamps land in `height`. Reading neighbours from the array
+   * the loop is writing made every corner's median depend on which of its
+   * neighbours the scan had already reached, so clamps cascaded down a row and
+   * the result changed with traversal order. */
   let spikes = 0;
   const bag = [];
   const raw = height.slice();
@@ -951,7 +1060,7 @@ function buildRelief(boxes) {
     for (let i = 0; i < N; i++) {
       const c = at(i, j);
       if (!land[c]) continue;
-      const ns = neighbours(i, j, bag);
+      const ns = neighbours(raw, i, j, bag);
       if (ns.length < 5) continue;
       ns.sort((a, b) => a - b);
       const med = ns[ns.length >> 1];
@@ -1471,9 +1580,11 @@ if (process.env.BAKE_DEBUG) {
   }
 }
 rings = rings.filter(substantial);
+const rejoined = mergeSplitChords(rings);
+rings = rejoined.rings;
 const totalVerts = rings.reduce((s, r) => s + r.length, 0);
 console.log(
-  `rings: ${rings.length} land rings, ${totalVerts} verts after simplify and sliver filter (${beforeSlivers} before)`,
+  `rings: ${rings.length} land rings, ${totalVerts} verts after simplify and sliver filter (${beforeSlivers} before), ${rejoined.merges} pinch splits rejoined`,
 );
 
 /* coast distance by bearing, to sanity-check the course window */

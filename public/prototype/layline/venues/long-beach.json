@@ -6,7 +6,7 @@
   },
   "bearing": 215,
   "clipRadius": 10500,
-  "dataVersion": "2026-08-28",
+  "dataVersion": "2026-08-29",
   "sources": {
     "coastline": "OpenStreetMap via Overpass API",
     "elevation": "Mapzen Terrarium z11 (AWS Open Data)"
@@ -16,8 +16,8 @@
     "Elevation: Mapzen Terrarium tiles via AWS Open Data"
   ],
   "stats": {
-    "vertices": 19834,
-    "triangles": 25280,
-    "bytes": 205549
+    "vertices": 19818,
+    "triangles": 25272,
+    "bytes": 205434
   }
 }
