@@ -3004,9 +3004,10 @@ function buildGateway(way) {
       const deck = deckAt(t);
       member(v3(p.x, foot, p.y), v3(p.x, deck, p.y), u, 13, 13, 11, 11);
       member(v3(p.x, deck, p.y), v3(p.x, GATEWAY_TOWER_H, p.y), u, 11, 11, 6, 6);
-      /* one wedge per stay fan: 1.2 m at the tower head, 110 m of deck at the
-       * far end, so the fan has volume from every heading and cannot vanish
-       * edge-on the way a plane would */
+      /* one wedge per stay fan: 1.2 m at the tower head, opening to 110 m at
+       * the deck IN THE SPAN'S VERTICAL PLANE (wideB rides l1, which lies in
+       * that plane; the cross-deck l2 thickness stays 1.2 m), so the fan reads
+       * from every heading without growing sideways sails off a 30 m deck */
       for (const dir of [-1, 1]) {
         const anchor = at(t + dir * 120);
         member(
@@ -3015,8 +3016,8 @@ function buildGateway(way) {
           v3(0, 1, 0),
           1.2,
           1.2,
-          1.2,
           110,
+          1.2,
         );
       }
     }

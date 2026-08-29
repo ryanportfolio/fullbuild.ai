@@ -18,9 +18,9 @@
     "Elevation: Mapzen Terrarium tiles via AWS Open Data"
   ],
   "stats": {
-    "vertices": 41116,
+    "vertices": 41115,
     "triangles": 40360,
-    "bytes": 350226,
+    "bytes": 350218,
     "layers": [
       {
         "classId": 5,
@@ -49,7 +49,7 @@
       {
         "classId": 4,
         "name": "heroes",
-        "vertices": 2672,
+        "vertices": 2671,
         "triangles": 1695
       }
     ]
