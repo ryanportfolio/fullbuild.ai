@@ -88,8 +88,11 @@ export const AUTOPLAY_FROM = -5;
 
 export type PlayRate = 1 | 2 | 4;
 
-/** The four states a venue's baked coast can be in; see `venueAsset` below. */
-export type VenueAssetState = "absent" | "loading" | "rendered" | "failed";
+/** The states a venue's baked coast can be in; see `venueAsset` below.
+ * `failed` means the fetch died and the fallback arc has NOT yet been drawn;
+ * `fallback` means the arc has been through onAfterRender. The split exists so
+ * readiness cannot rise on a failure the render gate never woke up to draw. */
+export type VenueAssetState = "absent" | "loading" | "rendered" | "failed" | "fallback";
 
 interface ReplayStore {
   /* The registry id of the loaded race. Bumping it remounts the viewer, so a

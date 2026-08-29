@@ -43,8 +43,11 @@ test("ready waits for a drawn frame and for a drawn coast, in either order", () 
   assert.equal(captureReady({ webglOk: true, venueAsset: "rendered" }), true);
   /* a race with no baked coast never waits for one */
   assert.equal(captureReady({ webglOk: true, venueAsset: "absent" }), true);
-  /* a failed coast is a finished picture: the procedural arc is up */
-  assert.equal(captureReady({ webglOk: true, venueAsset: "failed" }), true);
+  /* a failure whose fallback arc has not been drawn yet is NOT a picture:
+     a capture there would contain neither coast (codex round-6 P1) */
+  assert.equal(captureReady({ webglOk: true, venueAsset: "failed" }), false);
+  /* the fallback arc has been through onAfterRender: finished picture */
+  assert.equal(captureReady({ webglOk: true, venueAsset: "fallback" }), true);
 });
 
 test("a fetched but undrawn asset does not count as ready", () => {
@@ -71,18 +74,26 @@ test("a race switch takes readiness back down and the next venue puts it back", 
   assert.equal(captureReady(useReplay.getState()), true);
 });
 
-test("the failure path is a fallback coast, not a lowered flag forever", () => {
+test("the failure path is a fallback coast, and ready waits for its drawn frame", () => {
   useReplay.setState({ webglOk: true });
   useReplay.getState().setVenueAsset("loading");
   assert.equal(captureReady(useReplay.getState()), false);
+  /* fetch died: the fallback is promised but not yet on screen */
   useReplay.getState().setVenueAsset("failed");
+  assert.equal(captureReady(useReplay.getState()), false);
+  /* the arc's own onAfterRender fired */
+  useReplay.getState().setVenueAsset("fallback");
   assert.equal(captureReady(useReplay.getState()), true);
 
   const shore = source(VENUE_SHORE);
   /* the fallback is the scene's own procedural arc, the one every race without
      a baked coast already draws, not a second invented shoreline */
   assert.match(shore, /import \{ shorelineGeometry \} from "\.\/SkyDome"/);
-  assert.match(shore, /if \(status === "failed"\) return <FallbackShore \/>;/);
+  assert.match(shore, /if \(status === "failed" \|\| status === "fallback"\) return <FallbackShore \/>;/);
+  /* the catch wakes the render gate, or a paused replay never draws the arc */
+  assert.match(shore, /setVenueAsset\("failed"\);\s*\n(\s*\/\*[\s\S]*?\*\/\s*\n)?\s*requestSceneFrame\(\);/);
+  /* only the arc's drawn frame promotes failed to fallback */
+  assert.match(shore, /if \(state\.venueAsset === "failed"\) state\.setVenueAsset\("fallback"\);/);
 });
 
 test("the venue mesh raises rendered from a drawn frame, not from the fetch", () => {

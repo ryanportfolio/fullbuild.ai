@@ -100,9 +100,12 @@ tri-state (absent/loading/rendered/failed), and `rendered` is written only by
 the last venue layer's `onAfterRender`. On a venue race, ready flips exactly
 when `info().drawCalls` reaches 53 and is never true at 48: a capture behind
 ready genuinely contains the coast. Two sharp edges. (1) On the failure path
-ready is true with no baked coast, and for one frame before even the
-procedural fallback draws; a capture that needs the real coast must check
-draw calls, not just ready. (2) The settled tactical rig drops the venue
+ready is true only after the procedural fallback arc's own drawn frame
+(`failed` is not ready; the arc's onAfterRender promotes it to `fallback`,
+fixed after codex round-6 P1: previously a paused replay could sit ready with
+no coast drawn at all). A capture that needs the REAL coast must still check
+draw calls: ready + fallback contains the arc, not the venue. (2) The settled
+tactical rig drops the venue
 (49 draws / 81,962 tris live, keyed on the composed shot reaching mix >= 1),
 but a FROZEN page never completes the hand-over: `rig("tactical")` after
 `freeze()` holds all five venue draws indefinitely. A capture wanting the

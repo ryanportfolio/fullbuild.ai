@@ -643,8 +643,18 @@ function drawable(layer: VenueLayer): boolean {
 function FallbackShore() {
   const geometry = useMemo(shorelineGeometry, []);
   useEffect(() => () => geometry.dispose(), [geometry]);
+  /* The frame request runs AFTER this mesh is committed, so the drawn frame it
+   * schedules is guaranteed to contain the arc; the one in the fetch's catch
+   * can race the React commit and draw a frame without it. */
+  useEffect(() => {
+    requestSceneFrame();
+  }, []);
+  const markFallbackDrawn = useCallback(() => {
+    const state = useReplay.getState();
+    if (state.venueAsset === "failed") state.setVenueAsset("fallback");
+  }, []);
   return (
-    <mesh geometry={geometry} frustumCulled={false}>
+    <mesh geometry={geometry} frustumCulled={false} onAfterRender={markFallbackDrawn}>
       <laylineShoreMaterial side={DoubleSide} />
     </mesh>
   );
@@ -724,6 +734,9 @@ export function VenueShore({ asset }: { asset: string }) {
        * every venue without a baked asset already draws. */
       console.warn("venue shore failed to load", error);
       useReplay.getState().setVenueAsset("failed");
+      /* A paused replay draws nothing on its own; without this the fallback
+       * arc would wait for the next interaction while ready stayed down. */
+      requestSceneFrame();
     });
     return () => {
       controller.abort();
@@ -749,7 +762,7 @@ export function VenueShore({ asset }: { asset: string }) {
     useReplay.getState().setVenueAsset("rendered");
   }, []);
 
-  if (status === "failed") return <FallbackShore />;
+  if (status === "failed" || status === "fallback") return <FallbackShore />;
   /* The settled tactical rig sees 250 m of water from 160 m up and the nearest
    * real land is 715 m away, so its five venue draws are pure cost (design doc
    * 2.1). Unmounting rather than hiding: a hidden mesh still costs the render

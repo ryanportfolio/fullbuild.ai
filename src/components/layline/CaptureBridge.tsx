@@ -27,7 +27,10 @@ import type { ReplayMode, RigName } from "@/lib/layline/types";
  * coast at all.
  */
 export function captureReady(state: { webglOk: boolean; venueAsset: VenueAssetState }): boolean {
-  return state.webglOk && state.venueAsset !== "loading";
+  /* `failed` is a promise of a fallback coast that has not been drawn yet; a
+   * capture taken there would contain neither coast. Readiness waits for the
+   * fallback's own drawn frame (`fallback`), same rule as the real mesh. */
+  return state.webglOk && state.venueAsset !== "loading" && state.venueAsset !== "failed";
 }
 
 export interface CaptureInfo {
