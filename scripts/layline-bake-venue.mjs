@@ -21,9 +21,10 @@
  * invisible by construction. That is what lets a layer stay one draw call.
  *
  * The output carries semantic layers (design doc 2.1), one merged mesh and one
- * draw call each: L1 near terrain, L2 urban massing, L3 port infrastructure.
- * Layers exist so the runtime can vary the material per class (L2 and L3 run
- * with the ground grain off) and so a later round can skip a class per rig.
+ * draw call each: L1 near terrain, L2 urban massing, L3 port infrastructure,
+ * L5 far horizon curtain. Layers exist so the runtime can vary the material per
+ * class (L2 and L3 run with the ground grain off, L5 runs its own shader) and
+ * so a later round can skip a class per rig.
  *
  * LVN3 layout, little endian, after gunzip:
  *   u32 magic 0x334e564c  ("LVN3")
@@ -39,12 +40,20 @@
  *     u8  pad
  *     u32 vertCount, u32 indexCount, u32 vertOffset, u32 indexOffset
  *                    both offsets relative to bodyOffset
- *   body, per layer, in the LVN2 order already shipped:
+ *   body, per layer, in the LVN2 order already shipped, each channel present
+ *   only when attrMask claims it:
  *     i16 pos[vertCount*3]   world x (m), y (0.1 m units), z (m)
  *     u8  fade[vertCount]    0..255, the aFade the shore shader already takes
  *     u8  shade[vertCount]   hillshade, 128 = flat colour, /128 multiplies it
+ *     i16 dist[vertCount]    true horizontal range in 4 m units (curtain only)
+ *     u8  base[vertCount]    0 ridge / 255 base vertex (curtain only)
  *     pad to 4 bytes
  *     u16|u32 idx[indexCount]
+ *
+ * The curtain (classId 5, material 1) reinterprets `pos`: xz is the unit
+ * horizontal direction times 1000 and y is the true summit height above sea
+ * level. Its vertex shader relocates every vertex to a fixed radius around the
+ * camera, so the mesh must be drawn with frustumCulled = false.
  *
  * Run: node scripts/layline-bake-venue.mjs long-beach
  */
@@ -136,6 +145,40 @@ const DECK_W = 12; // m, a pier deck's drawn width
 const DECK_MAX_H = 12;
 const TANK_MAX_H = 25; // tank farms may sit inland, but not on a spike
 const MASS_GROUND_MAX = 40; // DEM fallback for the 8 buildings with no OSM ele
+
+/* L5, the far horizon curtain (design doc 5). Everything the inventory names
+ * beyond the 10.5 km clip disc is profile, never terrain: Palos Verdes at
+ * 16.7 km, Catalina at 47 km, the San Gabriels and the Santa Anas at 54 to
+ * 77 km. Two bands come out of one ray march, at the zooms doc 4.2 assigns:
+ * z11 (63.6 m per sample) over the mid band and z10 (127 m) over the far one.
+ *
+ * The cut-off is 90 km. San Gorgonio at 129 km and San Jacinto at 137 km are
+ * geometrically visible and were dropped in doc 1.4: the one Long Beach
+ * visibility source found puts the 54 to 77 km ranges in view after storms and
+ * says nothing about 130 km. */
+const CURTAIN_STEP_DEG = 0.2; // 3.7 px per sample at the 1056.2 px/rad focal
+const CURTAIN_MID_ZOOM = 11;
+const CURTAIN_FAR_ZOOM = 10;
+const CURTAIN_MID_FROM = 10500; // the clip radius: the curtain starts where L1 stops
+const CURTAIN_MID_TO = 35000;
+const CURTAIN_FAR_TO = 90000;
+const CURTAIN_MID_STEP = 60; // m, at or under the band's own sample pitch
+const CURTAIN_FAR_STEP = 120;
+/* 0.015 deg is 0.3 px at frame centre. Over the open Pacific this skips most
+ * of the compass, which is where the triangle budget comes from. */
+const CURTAIN_MIN_ANGLE = 0.015 * (Math.PI / 180);
+/* Standard refraction, 7/6 of the Earth's radius (design doc 0.5). Drop at
+ * range d is d^2 / (2 R_EFF); the shader recomputes the same term per frame
+ * from the vertex's true range, so bake and runtime cannot disagree. */
+const R_EFF = 7432833;
+
+/* Container channel bits, in the order a layer block lays them out. */
+const ATTR_FADE = 1;
+const ATTR_SHADE = 2;
+const ATTR_DIST = 4; // i16, 4 m units
+const ATTR_BASE = 8; // u8, 0 ridge vertex / 255 base vertex
+const ATTR_BYTES = { [ATTR_FADE]: 1, [ATTR_SHADE]: 1, [ATTR_DIST]: 2, [ATTR_BASE]: 1 };
+const Y_UNIT = 10; // y quantised in 0.1 m
 
 const DEG = Math.PI / 180;
 const CACHE = ".tmp/venue-cache";
@@ -316,13 +359,13 @@ function decodePng(buffer) {
 
 const demTiles = new Map();
 
-async function demTile(tx, ty) {
-  const key = `${tx}/${ty}`;
+async function demTile(tx, ty, zoom = DEM_ZOOM) {
+  const key = `${zoom}/${tx}/${ty}`;
   let tile = demTiles.get(key);
   if (!tile) {
     const buffer = await cachedFetch(
-      `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${DEM_ZOOM}/${tx}/${ty}.png`,
-      `terrarium-${DEM_ZOOM}-${tx}-${ty}.png`,
+      `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${zoom}/${tx}/${ty}.png`,
+      `terrarium-${zoom}-${tx}-${ty}.png`,
       true,
     );
     tile = decodePng(buffer);
@@ -331,19 +374,29 @@ async function demTile(tx, ty) {
   return tile;
 }
 
-/** Elevation in metres at lat/lon, bilinear across the tile mosaic.
- * Terrarium encodes bathymetry too, so open water reads negative. */
-function demAt(lat, lon) {
-  const scale = 2 ** DEM_ZOOM;
-  const fx = ((lon + 180) / 360) * scale;
+/** Fractional tile-pixel coordinates of a lat/lon at one zoom, in the same
+ * bilinear convention `demAt` samples with (pixel centres at half steps). */
+function demPixel(lat, lon, zoom) {
+  const scale = 2 ** zoom;
   const latRad = lat * DEG;
-  const fy = ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * scale;
-  const px = fx * 256 - 0.5;
-  const py = fy * 256 - 0.5;
+  return {
+    px: ((lon + 180) / 360) * scale * 256 - 0.5,
+    py: ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * scale * 256 - 0.5,
+  };
+}
+
+/** Elevation in metres at lat/lon, bilinear across the tile mosaic.
+ * Terrarium encodes bathymetry too, so open water reads negative.
+ *
+ * The zoom is a parameter because the curtain marches the same decoder over the
+ * coarser z11/z10 mosaics (design doc 4.2); every call inside the 10.5 km disc
+ * still lands on DEM_ZOOM, so L1's heights are bit-for-bit what round 2 baked. */
+function demAt(lat, lon, zoom = DEM_ZOOM) {
+  const { px, py } = demPixel(lat, lon, zoom);
   const sample = (ix, iy) => {
     const tx = Math.floor(ix / 256);
     const ty = Math.floor(iy / 256);
-    const tile = demTiles.get(`${tx}/${ty}`);
+    const tile = demTiles.get(`${zoom}/${tx}/${ty}`);
     if (!tile) return 0;
     const cx = ix - tx * 256;
     const cy = iy - ty * 256;
@@ -885,22 +938,39 @@ function earcut(ring) {
 /* One buffer set per semantic layer (design doc 2.1). Builders write into
  * `current`; `into` switches it for the length of one builder. Vertex dedup is
  * per layer, so a layer is always a self-contained mesh. */
-function newLayer(classId, name, drawOrder) {
+function newLayer(classId, name, drawOrder, material = 0) {
   return {
     classId,
     name,
     drawOrder,
-    material: 0, // 0 shore; the curtain's material 1 arrives with L5
+    material, // 0 shore, 1 curtain
+    /* Which channels this layer's block carries, in the container's fixed
+     * order. The shore layers pay for fade and shade; the curtain pays for a
+     * true range and a base flag instead and would waste a byte per vertex on
+     * either of the other two. */
+    attrMask: material === 1 ? ATTR_DIST | ATTR_BASE : ATTR_FADE | ATTR_SHADE,
     positions: [],
     fades: [],
     shades: [],
+    dists: [],
+    bases: [],
     indices: [],
     vertexIndex: new Map(),
+    /* Morton order pays on a mesh of scattered small solids and costs nothing
+     * on one that is already a monotone sweep (design doc 2.2). */
+    morton: !process.env.BAKE_NO_MORTON && (classId === 2 || classId === 3),
   };
 }
 
-const LAYERS = [newLayer(1, "terrain", 10), newLayer(2, "massing", 20), newLayer(3, "port", 21)];
-const [L_TERRAIN, L_MASSING, L_PORT] = LAYERS;
+/* The curtain draws first: it is 11.8 km out and everything else in the venue
+ * is inside 10.5 km, so drawOrder 0 puts it behind the lot. */
+const LAYERS = [
+  newLayer(5, "curtain", 0, 1),
+  newLayer(1, "terrain", 10),
+  newLayer(2, "massing", 20),
+  newLayer(3, "port", 21),
+];
+const [L_CURTAIN, L_TERRAIN, L_MASSING, L_PORT] = LAYERS;
 let current = L_TERRAIN;
 
 function into(layer, build) {
@@ -955,6 +1025,23 @@ function vertex(x, h, y, shade = SHADE_FLAT) {
     current.positions.push(qx, qh, qz);
     current.fades.push(Math.round(fadeAt(x, y) * 255));
     current.shades.push(shade);
+    current.vertexIndex.set(key, index);
+  }
+  return index;
+}
+
+/** A curtain vertex. Its three position slots already hold quantised integers
+ * (a direction times 1000 and a summit height in 0.1 m), so unlike `vertex`
+ * there is nothing left to round; the dedup key is the whole tuple, which is
+ * what lets two bands share a column direction without sharing a vertex. */
+function curtainVertex(dirX, height, dirZ, dist, base) {
+  const key = `${dirX},${height},${dirZ},${dist},${base}`;
+  let index = current.vertexIndex.get(key);
+  if (index === undefined) {
+    index = current.positions.length / 3;
+    current.positions.push(dirX, height, dirZ);
+    current.dists.push(dist);
+    current.bases.push(base);
     current.vertexIndex.set(key, index);
   }
   return index;
@@ -1155,6 +1242,71 @@ function buildLand(rings) {
  * passes run over land corners only, so a coastal height is never dragged down
  * by the sea on the other side of the shoreline.
  */
+/* The filtered relief lattice, published by buildRelief for the layers that
+ * have to stand on it. Null until L1 has been built. */
+let reliefField = null;
+
+/**
+ * The lowest lattice corner within `reach` metres of (x, y), or null where the
+ * footprint touches no land corner at all.
+ *
+ * The minimum rather than a bilinear read, and over a radius rather than one
+ * cell: a 30 m crane gauge spans a whole lattice cell, and a foot only counts
+ * as planted when it is under the ground at every corner it stands over.
+ */
+function latticeLow(x, y, reach) {
+  if (reliefField === null) return { low: null, edge: true };
+  const { N, half, cell, land, height } = reliefField;
+  const span = Math.ceil(reach / cell);
+  const i0 = Math.floor(x / cell) + half;
+  const j0 = Math.floor(y / cell) + half;
+  let low = null;
+  let edge = false;
+  for (let dj = -span; dj <= span + 1; dj++) {
+    for (let di = -span; di <= span + 1; di++) {
+      const i = i0 + di;
+      const j = j0 + dj;
+      if (i < 0 || j < 0 || i >= N || j >= N) {
+        edge = true;
+        continue;
+      }
+      const cx = (i - half) * cell;
+      const cy = (j - half) * cell;
+      if (Math.hypot(cx - x, cy - y) > reach + cell) continue;
+      const c = j * N + i;
+      /* A water corner in reach means the lattice does not tessellate the cell
+       * under this assembly: what L1 draws there is the ring cap, which can sit
+       * metres below the nearest lattice corner. */
+      if (!land[c]) {
+        edge = true;
+        continue;
+      }
+      if (low === null || height[c] < low) low = height[c];
+    }
+  }
+  return { low, edge };
+}
+
+/**
+ * A foot that cannot float. `clampGround` reads the raw DEM through a band
+ * clamp; L1 draws a despiked, twice-smoothed, MIN_SHORE_H-floored lattice, and
+ * where the raw read runs higher than the drawn surface the assembly ends up
+ * standing on nothing. Round 4a left five of them 1 to 4 m in the air. Counted,
+ * so a rebake reports how many needed the correction.
+ */
+let footSnaps = 0;
+function footBelow(x, y, base, reach) {
+  const { low, edge } = latticeLow(x, y, reach);
+  /* Where the footprint reaches water, L1 draws the ring cap rather than the
+   * lattice, and the cap's floor is MIN_SHORE_H however high the nearest hill
+   * corner reads. Inland, the lattice is the surface and the assembly plants
+   * against it rather than being dragged down to the waterline. */
+  const floor = edge ? Math.min(low ?? Infinity, MIN_SHORE_H) : low;
+  if (floor === null || !Number.isFinite(floor) || base <= floor - 1) return base;
+  footSnaps += 1;
+  return floor - 1;
+}
+
 function buildRelief(boxes) {
   const half = Math.ceil(FADE_END / RELIEF_CELL);
   const N = 2 * half + 1;
@@ -1259,6 +1411,13 @@ function buildRelief(boxes) {
     shadeCache[c] = s;
     return s;
   };
+
+  /* Publish the filtered field so the structure layers can stand on the same
+   * surface L1 actually draws. `groundAt` is a raw DEM read; this has been
+   * despiked, twice smoothed and floored at MIN_SHORE_H, and the two differ by
+   * metres, which is what left five round-4a assemblies hanging 1 to 4 m over
+   * their own ground. */
+  reliefField = { N, half, cell: RELIEF_CELL, land, height };
 
   const corner = (i, j) => vertex(cornerX(i), height[at(i, j)], cornerY(j), cornerShade(i, j));
 
@@ -1476,6 +1635,142 @@ function buildBreakwaters(ways, coastlineIds) {
     }
   }
   console.log(`breakwaters: ${built} ways`);
+}
+
+/* ----------------------------------------------------- L5, horizon curtain */
+
+/**
+ * One azimuth column of a profile band: the sample between `from` and `to`
+ * whose elevation angle from a sea-level eye is the largest, with the Earth's
+ * curvature already taken out of it.
+ *
+ * Everything at or below sea level is skipped rather than clamped. Terrarium
+ * carries ETOPO1 bathymetry under water, so an unfiltered march would raise a
+ * ridge out of the sea floor; the profile has to be land or nothing.
+ */
+function marchColumn(dx, dy, from, to, step, zoom) {
+  let bestAngle = -Infinity;
+  let bestD = 0;
+  let bestH = 0;
+  for (let d = from; d <= to; d += step) {
+    const { lat, lon } = unproject(dx * d, dy * d);
+    const h = demAt(lat, lon, zoom);
+    if (h <= 0) continue;
+    const angle = (h - (d * d) / (2 * R_EFF)) / d;
+    if (angle > bestAngle) {
+      bestAngle = angle;
+      bestD = d;
+      bestH = h;
+    }
+  }
+  return bestAngle > CURTAIN_MIN_ANGLE ? { d: bestD, h: bestH, angle: bestAngle } : null;
+}
+
+/** Every tile the march will read, including the far corner each bilinear
+ * sample reaches into. Collected by walking the march's own grid rather than
+ * by bounding a box, so the prefetch and the march can never disagree. */
+function curtainTiles(from, to, step, zoom) {
+  const wanted = new Set();
+  const columns = Math.round(360 / CURTAIN_STEP_DEG);
+  for (let c = 0; c < columns; c++) {
+    const cb = c * CURTAIN_STEP_DEG * DEG;
+    const dx = Math.sin(cb);
+    const dy = Math.cos(cb);
+    for (let d = from; d <= to; d += step) {
+      const { lat, lon } = unproject(dx * d, dy * d);
+      const { px, py } = demPixel(lat, lon, zoom);
+      const x0 = Math.floor(px);
+      const y0 = Math.floor(py);
+      for (const ix of [x0, x0 + 1]) {
+        for (const iy of [y0, y0 + 1]) {
+          wanted.add(`${Math.floor(ix / 256)}/${Math.floor(iy / 256)}`);
+        }
+      }
+    }
+  }
+  return [...wanted].sort();
+}
+
+async function prefetchCurtainDem() {
+  for (const [from, to, step, zoom] of [
+    [CURTAIN_MID_FROM, CURTAIN_MID_TO, CURTAIN_MID_STEP, CURTAIN_MID_ZOOM],
+    [CURTAIN_MID_TO, CURTAIN_FAR_TO, CURTAIN_FAR_STEP, CURTAIN_FAR_ZOOM],
+  ]) {
+    const tiles = curtainTiles(from, to, step, zoom);
+    for (const key of tiles) {
+      const [tx, ty] = key.split("/").map(Number);
+      await demTile(tx, ty, zoom);
+    }
+    console.log(`curtain DEM: ${tiles.length} terrarium tiles at z${zoom}`);
+  }
+}
+
+/**
+ * L5: the two profile bands, ray marched out of the DEM and emitted as one
+ * quad strip per band into one mesh and one draw (design doc 5.2).
+ *
+ * The layer reinterprets `pos`, and it is the container's only semantic
+ * overload: `pos.xz` is the unit horizontal direction times 1000 and `pos.y` is
+ * the vertex's true summit height above sea level, both still Int16 in the same
+ * slots. `aDist` carries the true horizontal range so the vertex shader can
+ * recompute the exact elevation angle for whatever height the eye is at; a
+ * curtain nailed to a fixed y would swing 3.8 degrees between the water-level
+ * and the 779 m freeform cameras where the real Palos Verdes ridge swings 2.7,
+ * and that 1.1 degree error is 21 px on a 28 px ridge.
+ */
+function buildCurtain() {
+  const columns = Math.round(360 / CURTAIN_STEP_DEG);
+  const bands = [
+    { name: "mid", from: CURTAIN_MID_FROM, to: CURTAIN_MID_TO, step: CURTAIN_MID_STEP, zoom: CURTAIN_MID_ZOOM },
+    { name: "far", from: CURTAIN_MID_TO, to: CURTAIN_FAR_TO, step: CURTAIN_FAR_STEP, zoom: CURTAIN_FAR_ZOOM },
+  ];
+  /* A column is two vertices on one direction: the summit, and sea level at
+   * the same range. The shader runs one formula over both and only the base
+   * takes the horizon clamp, so a base vertex ships its column's real range
+   * and a height of zero. That zero is also what gzip gets a run of. */
+  const columnVertex = (c, sample, base) => {
+    const cb = c * CURTAIN_STEP_DEG * DEG;
+    return curtainVertex(
+      Math.round(Math.sin(cb) * 1000),
+      base ? 0 : Math.round(sample.h * Y_UNIT),
+      Math.round(-Math.cos(cb) * 1000),
+      Math.round(sample.d / 4),
+      base ? 255 : 0,
+    );
+  };
+  const ridgeVertex = (c, sample) => columnVertex(c, sample, false);
+  const baseVertex = (c, sample) => columnVertex(c, sample, true);
+  for (const band of bands) {
+    const profile = [];
+    for (let c = 0; c < columns; c++) {
+      const cb = c * CURTAIN_STEP_DEG * DEG;
+      profile.push(marchColumn(Math.sin(cb), Math.cos(cb), band.from, band.to, band.step, band.zoom));
+    }
+    let quads = 0;
+    let widest = 0;
+    let run = 0;
+    for (let c = 0; c < columns; c++) {
+      const next = (c + 1) % columns;
+      run = profile[c] === null ? 0 : run + 1;
+      widest = Math.max(widest, run);
+      if (profile[c] === null || profile[next] === null) continue;
+      triangle(ridgeVertex(c, profile[c]), baseVertex(c, profile[c]), baseVertex(next, profile[next]));
+      triangle(
+        ridgeVertex(c, profile[c]),
+        baseVertex(next, profile[next]),
+        ridgeVertex(next, profile[next]),
+      );
+      quads += 1;
+    }
+    const live = profile.filter(Boolean);
+    const peak = live.reduce((best, p) => (p.angle > best.angle ? p : best), live[0]);
+    console.log(
+      `curtain ${band.name}: ${live.length} of ${columns} columns carry land, ${quads} quads, ` +
+        `widest run ${(widest * CURTAIN_STEP_DEG).toFixed(1)} deg, ` +
+        `highest ${peak.h.toFixed(0)} m at ${(peak.d / 1000).toFixed(1)} km ` +
+        `(${(peak.angle / DEG).toFixed(3)} deg, ${(peak.angle * 1056.2).toFixed(1)} px)`,
+    );
+  }
 }
 
 /* ------------------------------------------------- L2 and L3 solid geometry */
@@ -1734,31 +2029,44 @@ function buildPort(cranePoints, infra, rings, boxes) {
     const across = v3(quay.x, 0, quay.y);
     const seaV = v3(sea.x, 0, sea.y);
     const sill = clampGround(p.x, p.y, MIN_SHORE_H, DECK_MAX_H);
-    const rail = sill - 2; // legs start inside the apron, never on top of it
+    /* legs start inside the apron, never on top of it, and never above the
+     * relief lattice L1 actually draws under the wharf */
+    const rail = footBelow(p.x, p.y, sill - 2, CRANE_GAUGE);
     const apex = sill + CRANE_APEX_MIN + hash01(p.x, p.y) * CRANE_APEX_SPAN;
     const portal = sill + (apex - sill) * 0.42;
     const hinge = sill + (apex - sill) * 0.62;
     const g = CRANE_GAUGE / 2;
     const w = CRANE_WIDTH / 2;
     const d = Math.hypot(p.x, p.y);
+    /* The legs carry the boom, so they run to the hinge, not to the portal
+     * beam. Round 4a stopped them at 0.42 of the apex and hung the boom and the
+     * backreach at 0.62, which left both members floating about 16 m clear of
+     * anything, and put the A-frame 6 m to one side of the boom root as well.
+     * Both leg pairs now reach the hinge and a beam runs across each pair
+     * through the root the member springs from, which is where a real gantry
+     * carries that load. */
     if (d <= CRANE_LOD_NEAR) {
-      /* 12 members, 144 triangles: the full archetype of design doc 9.1 */
+      /* 14 members, 168 triangles: the design doc 9.1 archetype plus the two
+       * hinge beams the boom and the backreach are attached with */
       for (const u of [g, -g]) {
-        for (const v of [w, -w]) member(at(u, v, rail), at(u, v, portal), across, 1.8, 1.8);
+        for (const v of [w, -w]) member(at(u, v, rail), at(u, v, hinge), across, 1.8, 1.8);
       }
       for (const u of [g, -g]) member(at(u, -w, portal), at(u, w, portal), seaV, 1.6, 1.6);
       member(at(g, 0, portal), at(-g, 0, portal), across, 1.6, 1.6);
-      for (const v of [w, -w]) member(at(g, v, portal), at(-g * 0.1, 0, apex), across, 1.6, 1.6);
+      for (const u of [g, -g]) member(at(u, -w, hinge), at(u, w, hinge), seaV, 2.2, 2.0);
+      for (const v of [w, -w]) member(at(g, v, hinge), at(-g * 0.1, 0, apex), across, 1.6, 1.6);
       member(at(g, 0, hinge), at(g + CRANE_OUTREACH, 0, hinge + 2), across, 3.0, 2.6, 1.8, 1.8);
       member(at(-g, 0, hinge), at(-g - CRANE_BACKREACH, 0, hinge + 4), across, 2.6, 2.4);
       member(at(-g * 0.55, -w * 0.9, portal + 4), at(-g * 0.55, w * 0.9, portal + 4), seaV, 8, 7);
       near += 1;
     } else {
-      /* 5 members, 60 triangles: four legs and the gantry beam. Under 11 px
-       * that silhouette is all a crane has left (design doc 9.1). */
+      /* 6 members, 72 triangles: four legs, the beam that ties the waterside
+       * pair together, and the gantry beam it carries. Under 11 px that
+       * silhouette is all a crane has left (design doc 9.1). */
       for (const u of [g, -g]) {
         for (const v of [w, -w]) member(at(u, v, rail), at(u, v, hinge), across, 2.0, 2.0);
       }
+      member(at(g, -w, hinge), at(g, w, hinge), seaV, 2.4, 2.2);
       member(
         at(-g - CRANE_BACKREACH, 0, hinge),
         at(g + CRANE_OUTREACH, 0, hinge + 2),
@@ -1770,7 +2078,7 @@ function buildPort(cranePoints, infra, rings, boxes) {
     }
   }
   console.log(
-    `cranes: ${placed.length} of ${cranePoints.length} candidates, ${near} near (144 tris) + ${far} far (60)`,
+    `cranes: ${placed.length} of ${cranePoints.length} candidates, ${near} near (168 tris) + ${far} far (72)`,
   );
 
   /* tanks: the widest silhouettes first, since a tank is a 14 m wall read
@@ -1804,7 +2112,8 @@ function buildPort(cranePoints, infra, rings, boxes) {
   const drawnTanks = tanks.slice(0, TANK_MAX);
   for (const tank of drawnTanks) {
     const ground = clampGround(tank.centre.x, tank.centre.y, MIN_SHORE_H, TANK_MAX_H);
-    const base = ground - 2; // into the lattice, never floating over it
+    /* into the lattice, never floating over it */
+    const base = footBelow(tank.centre.x, tank.centre.y, ground - 2, tank.radius);
     const top = ground + tank.height;
     const ring = [];
     for (let i = 0; i < 8; i++) {
@@ -1919,7 +2228,12 @@ function buildPort(cranePoints, infra, rings, boxes) {
   blocks.sort((a, b) => a.d - b.d);
   const drawnBlocks = blocks.slice(0, BLOCK_MAX);
   for (const block of drawnBlocks) {
-    const base = clampGround(block.x, block.y, MIN_SHORE_H, DECK_MAX_H) - 1;
+    const base = footBelow(
+      block.x,
+      block.y,
+      clampGround(block.x, block.y, MIN_SHORE_H, DECK_MAX_H) - 1,
+      36,
+    );
     member(
       v3(block.x - block.quay.x * 35, base + BLOCK_H / 2, block.y - block.quay.y * 35),
       v3(block.x + block.quay.x * 35, base + BLOCK_H / 2, block.y + block.quay.y * 35),
@@ -1929,23 +2243,81 @@ function buildPort(cranePoints, infra, rings, boxes) {
     );
   }
   console.log(`container blocks: ${drawnBlocks.length} of ${blocks.length} apron sites`);
+  console.log(`feet: ${footSnaps} assemblies snapped down onto the L1 lattice`);
 }
 
 /* ------------------------------------------------------------------ output */
 
-const ATTR_FADE = 1;
-const ATTR_SHADE = 2;
-const Y_UNIT = 10; // y quantised in 0.1 m
+/** Interleave the low 16 bits of a value into every third bit, so three of
+ * these OR together into a 48-bit Morton code. 2^45 is exact in a double, so
+ * the sort needs no BigInt. */
+function mortonSpread(v) {
+  let out = 0;
+  for (let bit = 0; bit < 16; bit++) if (v & (1 << bit)) out += 2 ** (3 * bit);
+  return out;
+}
+
+/**
+ * Reorder a layer's vertices along a Morton curve of their quantised position
+ * and remap its indices to match (design doc 2.2, required for round 4).
+ *
+ * The mesh is untouched: same vertices, same triangles, same winding, only the
+ * order they are written in. Emission order follows the builders, so a tank
+ * farm and a crane bank a kilometre apart end up interleaved in the position
+ * stream and every Int16 delta is a full coordinate; sorting by locality turns
+ * most of them into small ones, which is what gzip's match finder wants.
+ */
+function mortonSort(layer) {
+  const n = layer.positions.length / 3;
+  const code = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    code[i] =
+      mortonSpread((layer.positions[i * 3] + 32768) & 0xffff) * 4 +
+      mortonSpread((layer.positions[i * 3 + 1] + 32768) & 0xffff) * 2 +
+      mortonSpread((layer.positions[i * 3 + 2] + 32768) & 0xffff);
+  }
+  /* ties broken by the original index, so the sort is a total order and two
+   * bakes cannot disagree about it */
+  const order = Array.from({ length: n }, (_, i) => i).sort((a, b) => code[a] - code[b] || a - b);
+  const to = new Int32Array(n);
+  for (let k = 0; k < n; k++) to[order[k]] = k;
+  const positions = new Array(n * 3);
+  const fades = layer.fades.length ? new Array(n) : [];
+  const shades = layer.shades.length ? new Array(n) : [];
+  const dists = layer.dists.length ? new Array(n) : [];
+  const bases = layer.bases.length ? new Array(n) : [];
+  for (let k = 0; k < n; k++) {
+    const from = order[k];
+    positions[k * 3] = layer.positions[from * 3];
+    positions[k * 3 + 1] = layer.positions[from * 3 + 1];
+    positions[k * 3 + 2] = layer.positions[from * 3 + 2];
+    if (fades.length) fades[k] = layer.fades[from];
+    if (shades.length) shades[k] = layer.shades[from];
+    if (dists.length) dists[k] = layer.dists[from];
+    if (bases.length) bases[k] = layer.bases[from];
+  }
+  layer.positions = positions;
+  layer.fades = fades;
+  layer.shades = shades;
+  layer.dists = dists;
+  layer.bases = bases;
+  for (let i = 0; i < layer.indices.length; i++) layer.indices[i] = to[layer.indices[i]];
+}
 
 /** LVN3: the LVN2 body, once per layer, behind a layer table. Nothing about
  * how a layer's bytes are laid out changed, so the decoder is one loop around
  * the parser that already shipped. */
 function writeAsset() {
   const layers = LAYERS.filter((layer) => layer.indices.length > 0);
+  for (const layer of layers) if (layer.morton) mortonSort(layer);
   const blocks = layers.map((layer) => {
     const vertCount = layer.positions.length / 3;
     const use32 = vertCount > 65535;
-    const head = vertCount * 6 + vertCount * 2; // pos + fade + shade
+    let perVertex = 6; // the three Int16 position slots every layer carries
+    for (const bit of [ATTR_FADE, ATTR_SHADE, ATTR_DIST, ATTR_BASE]) {
+      if (layer.attrMask & bit) perVertex += ATTR_BYTES[bit];
+    }
+    const head = vertCount * perVertex;
     const pad = (4 - (head % 4)) % 4;
     const body = head + pad + layer.indices.length * (use32 ? 4 : 2);
     /* every layer block starts 4-byte aligned, so a typed-array view over any
@@ -1966,7 +2338,7 @@ function writeAsset() {
     buffer.writeUInt16LE(layer.classId, record);
     buffer.writeUInt8(layer.material, record + 2);
     buffer.writeUInt8(layer.drawOrder, record + 3);
-    buffer.writeUInt8(ATTR_FADE | ATTR_SHADE, record + 4);
+    buffer.writeUInt8(layer.attrMask, record + 4);
     buffer.writeUInt8(Y_UNIT, record + 5);
     buffer.writeUInt8(use32 ? 1 : 0, record + 6);
     buffer.writeUInt8(0, record + 7); // pad
@@ -1980,8 +2352,22 @@ function writeAsset() {
       buffer.writeInt16LE(Math.max(-32768, Math.min(32767, layer.positions[k])), at);
       at += 2;
     }
-    for (let k = 0; k < layer.fades.length; k++) buffer.writeUInt8(layer.fades[k], at++);
-    for (let k = 0; k < layer.shades.length; k++) buffer.writeUInt8(layer.shades[k], at++);
+    /* channels in the container's fixed order, only the ones attrMask claims */
+    if (layer.attrMask & ATTR_FADE) {
+      for (let k = 0; k < layer.fades.length; k++) buffer.writeUInt8(layer.fades[k], at++);
+    }
+    if (layer.attrMask & ATTR_SHADE) {
+      for (let k = 0; k < layer.shades.length; k++) buffer.writeUInt8(layer.shades[k], at++);
+    }
+    if (layer.attrMask & ATTR_DIST) {
+      for (let k = 0; k < layer.dists.length; k++) {
+        buffer.writeInt16LE(layer.dists[k], at);
+        at += 2;
+      }
+    }
+    if (layer.attrMask & ATTR_BASE) {
+      for (let k = 0; k < layer.bases.length; k++) buffer.writeUInt8(layer.bases[k], at++);
+    }
     at += pad;
     for (let k = 0; k < layer.indices.length; k++) {
       if (use32) buffer.writeUInt32LE(layer.indices[k], at);
@@ -2007,6 +2393,9 @@ function writeAsset() {
       coastline: "OpenStreetMap via Overpass API",
       buildings: "OpenStreetMap via Overpass API (LA County LiDAR heights)",
       elevation: `Mapzen Terrarium z${DEM_ZOOM} (AWS Open Data)`,
+      horizon: `Mapzen Terrarium z${CURTAIN_MID_ZOOM}/z${CURTAIN_FAR_ZOOM} ray march to ${
+        CURTAIN_FAR_TO / 1000
+      } km (AWS Open Data)`,
     },
     attribution: venue.attribution,
     stats: {
@@ -2187,4 +2576,6 @@ into(L_TERRAIN, () => {
 });
 into(L_MASSING, () => buildMassing(massingWays));
 into(L_PORT, () => buildPort(craneNodes.concat(craneWays), infraWays, rings, boxes));
+await prefetchCurtainDem();
+into(L_CURTAIN, () => buildCurtain());
 writeAsset();

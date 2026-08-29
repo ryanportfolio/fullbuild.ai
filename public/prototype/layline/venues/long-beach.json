@@ -10,17 +10,24 @@
   "sources": {
     "coastline": "OpenStreetMap via Overpass API",
     "buildings": "OpenStreetMap via Overpass API (LA County LiDAR heights)",
-    "elevation": "Mapzen Terrarium z11 (AWS Open Data)"
+    "elevation": "Mapzen Terrarium z11 (AWS Open Data)",
+    "horizon": "Mapzen Terrarium z11/z10 ray march to 90 km (AWS Open Data)"
   },
   "attribution": [
     "Map data (c) OpenStreetMap contributors, ODbL",
     "Elevation: Mapzen Terrarium tiles via AWS Open Data"
   ],
   "stats": {
-    "vertices": 33117,
-    "triangles": 33753,
-    "bytes": 286781,
+    "vertices": 38516,
+    "triangles": 38713,
+    "bytes": 333214,
     "layers": [
+      {
+        "classId": 5,
+        "name": "curtain",
+        "vertices": 4252,
+        "triangles": 4240
+      },
       {
         "classId": 1,
         "name": "terrain",
@@ -36,8 +43,8 @@
       {
         "classId": 3,
         "name": "port",
-        "vertices": 10403,
-        "triangles": 6606
+        "vertices": 11550,
+        "triangles": 7326
       }
     ]
   }
