@@ -48,7 +48,10 @@ import {
   VENUE_HERO_HULL,
   VENUE_HERO_PALE,
   VENUE_HERO_WHITE,
+  VENUE_ISLE_DECK,
+  VENUE_ISLE_PANEL,
   VENUE_ISLE_ROCK,
+  VENUE_ISLE_SCREEN,
   VENUE_ISLE_VEG,
   VENUE_RIDGE_FAR,
   VENUE_RIDGE_NEAR,
@@ -224,6 +227,9 @@ const HERO_HULL = new Color(VENUE_HERO_HULL);
 const HERO_FUNNEL = new Color(VENUE_HERO_FUNNEL);
 const SUBSTANCE_TANK = new Color(VENUE_TANK);
 const HERO_WHITE = new Color(VENUE_HERO_WHITE);
+const ISLE_SCREEN = new Color(VENUE_ISLE_SCREEN);
+const ISLE_PANEL = new Color(VENUE_ISLE_PANEL);
+const ISLE_DECK = new Color(VENUE_ISLE_DECK);
 
 /* Both lights reach the shader normalised to luminance 1, so the two gains
  * above read as an irradiance ratio and can be checked against a clear sky
@@ -343,6 +349,9 @@ const VenueShoreMaterial = shaderMaterial(
     uHeroFunnel: HERO_FUNNEL,
     uTank: SUBSTANCE_TANK,
     uHeroWhite: HERO_WHITE,
+    uIsleScreen: ISLE_SCREEN,
+    uIslePanel: ISLE_PANEL,
+    uIsleDeck: ISLE_DECK,
     uHaze: HAZE_NEAR,
     uHazeFar: HAZE_FAR,
     uHazeMix: HAZE_NEAR_WEIGHT,
@@ -382,6 +391,9 @@ uniform vec3 uHeroHull;
 uniform vec3 uHeroFunnel;
 uniform vec3 uTank;
 uniform vec3 uHeroWhite;
+uniform vec3 uIsleScreen;
+uniform vec3 uIslePanel;
+uniform vec3 uIsleDeck;
 uniform vec2 uRamp;
 uniform vec2 uGrain;
 uniform float uHaze;
@@ -444,6 +456,9 @@ void main() {
   vec3 named = mix(mix(heroLow, heroMid, step(2.5, vMat)), uHeroFunnel, step(4.5, vMat));
   named = mix(named, uTank, step(5.5, vMat));
   named = mix(named, uHeroWhite, step(6.5, vMat));
+  named = mix(named, uIsleScreen, step(7.5, vMat));
+  named = mix(named, uIslePanel, step(8.5, vMat));
+  named = mix(named, uIsleDeck, step(9.5, vMat));
   vec3 albedo = mix(mix(uAlbedoLo, uAlbedoHi, band), named, step(0.5, vMat));
 
   /* The bake writes 0.62 for a face turned fully away from the sun and 1.17
@@ -454,8 +469,13 @@ void main() {
   /* Ground grain is a terrain texture. Rock and planting are ground and take
      it; painted concrete, hull plate, a funnel and a tank shell are not, and a
      two-octave world noise across them draws the horizontal banding design doc
-     2.3 warned about. Substances 3 and up switch it off. */
-  float grainWeight = mix(uGrain.x, uGrain.y, band) * grainFall * (1.0 - step(2.5, vMat));
+     2.3 warned about. Substances 3 to 9 switch it off. Round 1's island deck,
+     substance 10, is ground again: roads and well pads under the planting, and
+     catalogue 6.6's whole complaint about it was that it read as one field.
+     The gate is open-ended upward: 10 AND any future index above it keep the
+     grain; a painted substance 11+ must extend the second step. */
+  float painted = step(2.5, vMat) * (1.0 - step(9.5, vMat));
+  float grainWeight = mix(uGrain.x, uGrain.y, band) * grainFall * (1.0 - painted);
   float lit = clamp((vShade - 0.62) * 1.818 + (grain - 0.5) * grainWeight, 0.0, 1.0);
 
   /* Two lights on a reflectance, which is the whole of the round-4d grade. The

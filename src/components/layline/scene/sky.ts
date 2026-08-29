@@ -91,7 +91,17 @@ export const VENUE_TOWER = "#77787b"; // downtown Long Beach, precast and blue-g
  * band as a container stack 12 m over the apron, so the port ramp painted 57
  * tanks as boxes. The asset carries a substance index per vertex on those two
  * layers instead, which is what these six index into. */
-export const VENUE_ISLE_ROCK = "#7c7b70"; // Catalina boulder armour on the island rims
+/* Round 1 (catalogue 6.2). Catalogue 6.2 is explicit that no source found states
+ * the petrology or the colour of Pebbly Beach stone, so this has to come from
+ * imagery. Round 5's value was a 62/20/10/8 mix of two pixels off one photograph
+ * plus a concrete cap and a shadow guess, and it rendered the armour as beach
+ * sand. swatches.json measures each island's own rim instead, in an 8 m band
+ * centred on that island's own measured crown distance, over 11,386 to 12,938
+ * NAIP pixels apiece: rgb(117,116,102) / (92,101,82) / (98,99,76) / (107,108,78),
+ * per-channel median rgb(103,105,80), inverted at lit = sin(22 deg) because NAIP
+ * is nadir. Darker and greener than the mix by 20 levels of luminance, which is
+ * the difference between armour stone and a beach. */
+export const VENUE_ISLE_ROCK = "#5e6253"; // Catalina boulder armour on the island rims
 export const VENUE_ISLE_VEG = "#454e3c"; // THUMS palms, shrub mass and irrigated slope
 export const VENUE_HERO_PALE = "#7e898e"; // screen towers, the bridge towers, ship upperworks
 /* Round 0 (catalogue 7.4 and 10.2). The Spruce Goose dome is white aluminium
@@ -107,6 +117,32 @@ export const VENUE_HERO_PALE = "#7e898e"; // screen towers, the bridge towers, s
  * measured pixel in that frame is #BFD5DF), both POLB crane frames, inverted
  * at lit 0.70. */
 export const VENUE_HERO_WHITE = "#8c96a0"; // the dome and the harbour light, white
+/* Round 1 (catalogue 6.3, 6.4, 6.6), the island rebuild. VENUE_HERO_PALE cannot
+ * paint a THUMS screen any more, because round 5 derived it as a MIX of the
+ * tower's own white concrete (42 per cent), a whole-tower recommendation (26),
+ * its pale blue infill panel (14), white cladding (12) and a shaded reveal (6),
+ * and the blue is drawn as geometry now rather than averaged into the body. It
+ * also paints the bridge towers and the ship's upperworks, so it cannot follow
+ * the islands anywhere.
+ *
+ * Both island values below come from ONE frame, round-4d research.md section 5,
+ * File:Long Beach 01.jpg, a THUMS island from the water on a clear day with the
+ * sky sampled at #6B9CC2. Both are graded MEASURED there and they are the only
+ * pixels of a THUMS structure this project holds.
+ *
+ * One honest mismatch, recorded rather than tuned away: two first-person
+ * accounts call the towers "cream" [P1d, Five Star cover photograph] and the
+ * measured pixel is #B2BAB2, a neutral at 5 per cent saturation. The measurement
+ * wins; the scene's own warm sun (SUN_TINT) does the rest, rendering this
+ * reflectance at rgb(178,186,178) on a sunlit vertical and rgb(208,214,201)
+ * square on. No cream was mixed in to close the gap. */
+export const VENUE_ISLE_SCREEN = "#778387"; // THUMS sculpted screens and tower bodies
+export const VENUE_ISLE_PANEL = "#52778e"; // the blue panels up the sides of the towers
+/* The island deck under the planting: the per-channel median of the four
+ * islands' own NAIP deck regions (swatches.json, 38,065 to 53,255 px each,
+ * rgb(127,124,112) / (131,130,118) / (119,114,101) / (131,129,114)), inverted at
+ * lit = sin(22 deg) because NAIP is nadir and the surface is horizontal. */
+export const VENUE_ISLE_DECK = "#71736c"; // THUMS island deck, roads and pads
 export const VENUE_HERO_HULL = "#333338"; // Queen Mary hull plating, well masts
 export const VENUE_HERO_FUNNEL = "#753c31"; // Cunard funnel red under its black top band
 export const VENUE_TANK = "#80868b"; // tank paint, chalky off-white, with its rust and grime

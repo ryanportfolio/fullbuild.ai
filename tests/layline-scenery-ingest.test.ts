@@ -592,7 +592,9 @@ test("the scenery config copies the baker's venue definition exactly", () => {
 
   /* The baker pins island rings by OSM way id; the derivation must measure the
    * same four rings or its shoreline numbers describe other islands. */
-  const ways = [...baker.matchAll(/\{ way: (\d+), name: "(\w+)", segments: \d+ \}/g)].map((m) => ({
+  /* round 1 dropped the per-island `segments` count: the rim is resampled at a
+     fixed metre pitch now, so an island's ring vertex budget is not a config */
+  const ways = [...baker.matchAll(/\{ way: (\d+), name: "(\w+)" \}/g)].map((m) => ({
     way: Number(m[1]),
     name: m[2],
   }));

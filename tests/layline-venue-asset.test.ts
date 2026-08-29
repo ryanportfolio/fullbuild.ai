@@ -460,10 +460,31 @@ test("the substance byte ships on the port and hero layers and nowhere else", ()
      Round 0 added 7, white: the Spruce Goose dome and the Long Beach Harbor
      Light are both documented white and were drawing in the pale substance,
      which round 5 derived from the THUMS screen towers and which the grey
-     concrete bridge towers also take. */
+     concrete bridge towers also take.
+
+     Round 1 added three more with the island rebuild. 8 is the sculpted screen
+     concrete and 9 the blue panels on it: the pale substance cannot be either,
+     because it is a MIX of the two plus a shaded reveal, and the blue is drawn
+     as geometry now. 10 is the island deck, which is new surface: with the
+     planting drawn as 1,026 measured crowns there is nothing else capping the
+     island. Every count below is read off the shipped asset, not asserted from
+     a constant, and each one is exact by construction:
+       2 veg    1,085 crowns x 10 vertices (1,026 from trees.json plus the 59
+                masses.json components under 20 m2 that the crown extraction
+                had removed from trees.json in the first place)
+       9 panel  3 towers x 2 crossed slabs x 19 vertices
+       3 pale   drops 1,168 -> 339 because the islands stopped using it
+       4 dark   back to 181, the Queen Mary and the derricks, as it was */
   const heroes = substances.get(CLASS_HEROES)!;
-  assert.deepEqual([...heroes.keys()].sort((a, b) => a - b), [1, 2, 3, 4, 5, 7]);
+  assert.deepEqual([...heroes.keys()].sort((a, b) => a - b), [1, 2, 3, 4, 5, 7, 8, 9, 10]);
   assert.equal(heroes.get(7), 150);
+  assert.equal(heroes.get(1), 13298);
+  assert.equal(heroes.get(2), 10850);
+  assert.equal(heroes.get(3), 339);
+  assert.equal(heroes.get(4), 181);
+  assert.equal(heroes.get(8), 2230);
+  assert.equal(heroes.get(9), 114);
+  assert.equal(heroes.get(10), 653);
   assert.equal(heroes.get(0), undefined);
 });
 
@@ -642,12 +663,12 @@ test("the committed asset and the baker that made it are both pinned", () => {
      from the same cache are byte-identical. */
   assert.equal(
     sha256(bytes(ASSET)),
-    "a89c9847da68f9cd69eaaa157312143bb0d2948d0baa22cd7764b0c843e0cf15",
+    "2e56807325668e0b5b904d03a1c75534f346dcb785da019b42c070821c81b3a7",
     "the committed venue asset changed; rebake it and restate both hashes",
   );
   assert.equal(
     sha256(bytes(BAKER)),
-    "65f5f4e758889be395670ea6252092d3f15175b99e1f29dcfbaf184f3c08722f",
+    "126686a8e3c65e6d69c37f3df42770854ba2271903c803babb7817275933169f",
     "the baker changed; rebake the venue and restate both hashes",
   );
   const manifest = JSON.parse(
@@ -656,9 +677,20 @@ test("the committed asset and the baker that made it are both pinned", () => {
   /* the manifest is written by the same run, so it has to agree with the file
      beside it rather than with a number typed in later */
   assert.equal(manifest.stats.bytes, bytes(ASSET).length);
+  /* This number is a TRIPWIRE now, not a budget, and the change is disclosed
+     rather than quiet. Contract amendment 7 (owner, 2026-08-29, verbatim: "for
+     now lets just focus on the realism and not performance") suspends the A4
+     ceilings as acceptance criteria for the close-range realism rounds and says
+     not to thin realism work to fit one. Round 1 draws 1,026 individually
+     measured tree crowns, 674 rim facets swept from the measured shoreline
+     profile and 95 measured island structures where round 5 drew 4 vegetation
+     objects, 16 towers and 16 slabs, and that costs 210.7 KiB gzipped. The
+     ceiling is restated at the measured size plus 5 per cent so unnoticed
+     growth still fails; it is not a claim that 552.4 KiB is acceptable, and the
+     owner has said perf gets re-opened when the look is right. */
   assert.ok(
-    manifest.stats.bytes <= 350 * 1024,
-    `${manifest.stats.bytes} B over the 350 KiB asset ceiling`,
+    manifest.stats.bytes <= 580 * 1024,
+    `${manifest.stats.bytes} B over the 580 KiB asset tripwire`,
   );
   assert.equal(
     manifest.stats.triangles,

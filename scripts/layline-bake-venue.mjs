@@ -94,10 +94,10 @@ const VENUES = {
     heroes: {
       islands: [
         // GNIS/OSM island rings, doc 1.2. Order is the doc's priority order.
-        { way: 40500950, name: "Freeman", segments: 22 },
-        { way: 40500920, name: "White", segments: 20 },
-        { way: 40500949, name: "Chaffee", segments: 20 },
-        { way: 40500921, name: "Grissom", segments: 14 },
+        { way: 40500950, name: "Freeman" },
+        { way: 40500920, name: "White" },
+        { way: 40500949, name: "Chaffee" },
+        { way: 40500921, name: "Grissom" },
       ],
       /* THUMS camouflage towers the LA County LiDAR import already carries.
        * Round 5 draws them as hero geometry, so L2 must not extrude them too. */
@@ -217,20 +217,64 @@ const ISLE_DECK_MAX = 8;
  * from L1's batter width; the lip takes the median of the four measured lips,
  * 1.065 m, against 3.4. Both medians rather than means, because that is how the
  * product itself reduces a bin and because Grissom's 0.08 would drag a mean.
- * ISLE_RIM_W stays at 18 m: the measured rim is 3 to 5 m wide (White is back on
- * her deck 15 m inboard of a crown 12 m inboard) but narrowing it is the armour
- * stone round's job, not a colour-and-proportion round's. */
+ *
+ * Round 1 (catalogue 6.2) stops averaging the four islands together. Every
+ * island whose profile is in the product is now swept from ITS OWN bins, so
+ * these three are the fallback an island without a profile takes and the shape
+ * of the rim is measured per island rather than shared. ISLE_RIM_W drops from
+ * 18 m to the measured 2 m: the width from the crown to the first inboard bin
+ * back at the deck is 3 m on White, 2 on Chaffee, 2 on Freeman and 1 on
+ * Grissom (its crown bin is 9 and the strict `>` in rimProfile finds its deck
+ * return at 10; audit round-1 K1). All four profiles resolve a deck return, so
+ * the ISLE_RIM_W fallback fires on none of them; 2 m is the median of
+ * {3, 2, 2, 1} and stands ready for a venue whose profile cannot resolve one. */
 const ISLE_RIM_INSET = 10; // m inside the OSM waterline: shoreline.json median crownAtM
-const ISLE_RIM_W = 18; // m of rock rim between the lip and the planting
+const ISLE_RIM_W = 2; // m of rock rim inboard of the crown: shoreline.json, see above
 const ISLE_RIM_LIP = 1.07; // m of rim crown over the island deck: shoreline.json median lipM
-const ISLE_VEG_LOW = 9; // m of canopy over the deck at its thinnest
-const ISLE_VEG_SPAN = 10; // m more where the planting is dense
-const ISLE_CLUMPS = 3; // taller lumps that break the canopy's top edge
-const ISLE_TOWER_H = [52.6, 41, 34, 30]; // m, tallest first (52.6 = OSM Island White)
-const ISLE_TOWER_W = 16; // m across the slab face, from the 187 m2 OSM footprint
-const ISLE_TOWER_D = 11; // m through it
-const ISLE_SCREENS = 4; // sculpted screen panels per island
-const ISLE_SCREEN_H = 13; // m, over the deck
+/* Round 1 rebuilds the islands from the committed lidar and NAIP products
+ * (scripts/venue-data/<venue>/), so the vegetation, tower and screen constants
+ * round 5 invented are gone: the planting is trees.json's measured crowns, the
+ * towers and screens are masses.json's measured structures, and the rim is
+ * swept from shoreline.json's measured profile.
+ *
+ * What is left here is tessellation and the two shape calls no product carries.
+ *
+ * ISLE_RIM_STEP is a resolution, not a dimension: at 6 m a rim facet subtends
+ * 32 px at the owner's 200 m viewing distance under the 1056.2 px/rad focal
+ * length, which is enough for the armour to read as placed rock rather than as
+ * a ruled ribbon. It is NOT a stone size. The armour is documented at up to
+ * 5 tons, about 1.2 m of block [P1e], and the asset's positions are quantised
+ * to 1 m in x and z, so a single stone cannot be carried by this format at all.
+ *
+ * ISLE_TOWER_MIN_TOP separates the drilling-tower masses from everything else
+ * standing on the islands, and 40 m is the middle of the gap the measurement
+ * itself leaves: the tallest masses are 54.75, 54.62 and 51.59 m and the next
+ * one down is 34.65 m. Three towers on three islands, none on Freeman, which is
+ * the count catalogue 6.3 derives from the lidar and from OSM independently.
+ *
+ * ISLE_SCREEN_MIN_FOOT separates a wall from a mast at the same 20 m threshold
+ * masses.json itself was cut at: a 20 m2 footprint is a structure with extent,
+ * below it is a pole. It is a classification, not a dimension.
+ *
+ * ISLE_TOWER_TAPER and ISLE_SCREEN_BOW are the two INFERRED numbers in this
+ * round and both are flagged as such. The sources describe "one tapered cream
+ * tower" and walls that are "smooth, futuristic concrete, some curving inward,
+ * some outward" [P1d, Five Star cover photograph]; neither publishes a taper
+ * ratio or a radius, so these are the smallest values that read at 200 m. */
+const ISLE_RIM_STEP = 6; // m along the ring between rim facets
+const ISLE_DECK_LIFT = 0.4; // m the hero deck stands over the L1 terrain cap
+const ISLE_TOWER_MIN_TOP = 40; // m; masses.json tops above this are drilling towers
+const ISLE_SCREEN_MIN_FOOT = 20; // m2; masses.json footprints above this are walls
+const ISLE_TOWER_TAPER = 0.8; // fraction of the measured footprint at the top [INFERRED]
+const ISLE_SCREEN_BOW = 0.12; // sagitta as a fraction of wall length [INFERRED]
+const ISLE_SCREEN_THICK = 2; // m of wall section; the 1 m position lattice's floor
+const ISLE_CROWN_RING = 8; // vertices round a crown
+const ISLE_CROWN_NECK_LOW = 1.5; // height/radius at which a crown is widest low down
+const ISLE_CROWN_NECK_SPAN = 5; // more height/radius to carry the widest point to the top
+/* Samples along one offset ray in insetPoly. 32 puts the search step at 0.5 m
+ * for the 15 m offsets an island rim asks for, half the asset's own 1 m position
+ * lattice, so the answer is exact at the resolution anything is drawn at. */
+const ISLE_OFFSET_PROBES = 32;
 /* Queen Mary: 310.7 m LOA and 55.2 m to the funnel tops (Wikipedia); OSM way
  * 438331516 carries the hull outline and `height=10`, which is the hull to the
  * promenade deck. Everything above that is the superstructure.
@@ -339,6 +383,16 @@ const MAT_TANK = 6; // storage-tank paint, chalky off-white for solar reflectanc
  * which the grey-concrete bridge towers also take, so neither could be made
  * white without repainting the other two. */
 const MAT_WHITE = 7; // the dome and the harbour light, white
+/* Round 1 (catalogue 6.3, 6.4, 6.6). The THUMS screens and towers are cream
+ * concrete carrying blue panels; MAT_PALE cannot be either, because round 5
+ * derived it as a 42/26/14/12/6 MIX of the tower's own concrete, its blue infill
+ * panel and a shaded reveal, and it also paints the bridge towers and the ship's
+ * upperworks. Drawing the blue as geometry needs the two apart. The deck the
+ * planting stands on is a third: NAIP measures it at rgb(129,127,113), a warm
+ * grey that is neither the rim's rock nor the port apron. */
+const MAT_SCREEN = 8; // sculpted screen walls and tower bodies, smooth concrete
+const MAT_PANEL = 9; // the blue panels up the sides of the towers
+const MAT_DECK = 10; // the island deck under the planting
 const ATTR_BYTES = {
   [ATTR_FADE]: 1,
   [ATTR_SHADE]: 1,
@@ -360,7 +414,58 @@ if (!venue) {
   process.exit(1);
 }
 
+/* --------------------------------------------------- committed data products */
+
+/* USGS 3DEP lidar and NAIP orthoimagery, reduced once by
+ * scripts/layline-derive-scenery.mjs and COMMITTED under scripts/venue-data/,
+ * so the bake reads shape and colour off measurement without a network call and
+ * without a dependency. Every file carries its own frame block, its method, its
+ * parameters, a `valuesSha256` over the numbers it publishes, and a pointer into
+ * provenance.json, where every raw tile behind it is listed with its own sha256.
+ *
+ * These are OPTIONAL: a venue with no products bakes exactly as it did before,
+ * on the constants above. Absence is logged, never guessed around silently. */
+const DATA_DIR = join("scripts", "venue-data", venueId);
+function loadProduct(name) {
+  const path = join(DATA_DIR, `${name}.json`);
+  if (!existsSync(path)) return null;
+  const json = JSON.parse(readFileSync(path, "utf8"));
+  console.log(
+    `data product ${name}: schema ${json.schema}, values sha256 ${String(json.valuesSha256).slice(0, 16)}`,
+  );
+  return json;
+}
+const PRODUCTS = {
+  trees: loadProduct("trees"),
+  shoreline: loadProduct("shoreline"),
+  masses: loadProduct("masses"),
+};
+for (const [name, json] of Object.entries(PRODUCTS)) {
+  if (!json) console.log(`data product ${name}: ABSENT, falling back to constants`);
+}
+
 /* ------------------------------------------------------------------ frames */
+
+/* A product SAYS it is in this baker's course frame. That is a claim in a JSON
+ * file, and a silently rotated product would place 1,079 tree crowns in the
+ * water without any error at all, so the claim is checked rather than trusted.
+ * Origin and bearing must match exactly; the metres-per-degree pair is allowed
+ * a part in 10^4, which is 0.03 m over the 300 m half-width of an island. */
+function checkProductFrame(name, json) {
+  if (!json?.frame) return;
+  const f = json.frame;
+  const bad = [];
+  if (f.origin.lat !== venue.origin.lat || f.origin.lon !== venue.origin.lon) {
+    bad.push(`origin ${f.origin.lat},${f.origin.lon} vs ${venue.origin.lat},${venue.origin.lon}`);
+  }
+  if (f.bearingDeg !== venue.bearing) bad.push(`bearing ${f.bearingDeg} vs ${venue.bearing}`);
+  if (Math.abs(f.mPerLat / mPerLat - 1) > 1e-4) bad.push(`mPerLat ${f.mPerLat} vs ${mPerLat}`);
+  if (Math.abs(f.mPerLon / mPerLon - 1) > 1e-4) bad.push(`mPerLon ${f.mPerLon} vs ${mPerLon}`);
+  if (bad.length) {
+    console.error(`data product ${name}: frame does not match the bake frame: ${bad.join("; ")}`);
+    process.exit(1);
+  }
+}
 
 const lat0 = venue.origin.lat;
 const lon0 = venue.origin.lon;
@@ -369,6 +474,7 @@ const mPerLon = 111320 * Math.cos(lat0 * DEG);
 const bearingRad = venue.bearing * DEG;
 const cosB = Math.cos(bearingRad);
 const sinB = Math.sin(bearingRad);
+for (const [name, json] of Object.entries(PRODUCTS)) checkProductFrame(name, json);
 
 /** lat/lon -> course-frame metres { x: across, y: up the course axis }. */
 function project(lat, lon) {
@@ -2398,6 +2504,37 @@ function ringOf(way) {
   return ring;
 }
 
+/** Walk a closed ring and emit a point every `step` metres of arc, starting at
+ * ring[0]. Unlike reduceRing this does not respect the source's own vertices: an
+ * OSM island ring carries 39 vertices on White and 158 on Grissom for outlines
+ * of about the same length, so a per-vertex rim would be four times coarser on
+ * one island than on the next for no reason in the world. Even spacing makes the
+ * rim's facet size a property of the metre, which is what a stone is. */
+function resampleRing(ring, step) {
+  const out = [];
+  let next = 0;
+  let acc = 0;
+  for (let i = 0; i < ring.length; i++) {
+    const a = ring[i];
+    const b = ring[(i + 1) % ring.length];
+    const len = Math.hypot(b.x - a.x, b.y - a.y);
+    if (len < 1e-9) continue;
+    while (next < acc + len) {
+      const t = (next - acc) / len;
+      out.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+      next += step;
+    }
+    acc += len;
+  }
+  /* a final sample that landed back on the first one closes nothing and welds */
+  if (out.length > 2) {
+    const first = out[0];
+    const last = out[out.length - 1];
+    if (Math.hypot(last.x - first.x, last.y - first.y) < step * 0.5) out.pop();
+  }
+  return out;
+}
+
 /** Visvalingam: drop the vertex whose ear has the least area until `want`
  * remain. Douglas-Peucker cannot hit an exact vertex budget, and the budget is
  * what L2's 22 triangles per prism are bought with. */
@@ -2828,14 +2965,87 @@ function heroGround(x, y, fallback, cap) {
   return Math.min(h === null ? fallback : h, cap);
 }
 
-/** Polygon offset inward along the vertex bisector. Radial shrink toward a
- * centroid was the other candidate and it collapses the narrow end of an
- * elongated island; the bisector keeps a constant standoff from every edge,
- * which is what a rock rim actually is. The step is capped at 3d so a sharp
- * corner cannot throw a spike, and the whole offset backs off by half if it
- * eats the ring, which is the only failure mode a 60,000 m2 island has. */
+/** Nearest point on a closed ring's boundary to `p`, with the inward unit
+ * normal of the segment it landed on. `inside` is the even-odd crossing test, so
+ * the pair together is a signed distance to the boundary. */
+function nearestOnRing(ring, p) {
+  let best = Infinity;
+  let point = ring[0];
+  let normal = { x: 0, y: 0 };
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const a = ring[i];
+    const b = ring[j];
+    if (a.y > p.y !== b.y > p.y && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x) {
+      inside = !inside;
+    }
+  }
+  for (let i = 0; i < ring.length; i++) {
+    const a = ring[i];
+    const b = ring[(i + 1) % ring.length];
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const len2 = dx * dx + dy * dy;
+    if (len2 < 1e-12) continue;
+    let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2;
+    t = Math.max(0, Math.min(1, t));
+    const qx = a.x + dx * t;
+    const qy = a.y + dy * t;
+    const dist = Math.hypot(p.x - qx, p.y - qy);
+    if (dist < best) {
+      best = dist;
+      point = { x: qx, y: qy };
+      /* CCW ring: the inward normal of an edge is its left normal */
+      const len = Math.sqrt(len2);
+      normal = { x: -dy / len, y: dx / len };
+    }
+  }
+  return { point, normal, dist: best, inside };
+}
+
+/**
+ * Polygon offset along the vertex bisector, positive inward, negative outward.
+ *
+ * Radial shrink toward a centroid was the other candidate and it collapses the
+ * narrow end of an elongated island; the bisector keeps a constant standoff from
+ * every edge, which is what a rock rim actually is. The step is capped at 3d so
+ * a sharp corner cannot throw a spike, and the whole offset backs off by half if
+ * it eats the ring.
+ *
+ * ROUND-1 FIX (round-0 residual 8, catalogue 6.2 and 6.1). The bisector is a
+ * LOCAL construction: it only knows the two edges meeting at its own vertex. On
+ * an irregular outline that is not enough. Where the ring turns through nearly
+ * 180 degrees the bisector is nearly degenerate, `2d / |b|^2` blows up and the
+ * 3d cap lets the vertex travel up to three times the offset in a direction that
+ * has almost nothing to do with "inward"; where the outline is locally concave
+ * the offset can cross the far side of a neck. Both put a vertex OUTSIDE the
+ * source ring. Measured at old HEAD, the planting ring's maximum radius EQUALLED
+ * the rock rim's on all four islands (187.0 / 227.1 / 206.1 / 215.2 m), i.e. the
+ * 18 m rim had zero width where it was worst, and after round 0 that still held
+ * on Freeman.
+ *
+ * The fix is not a per-island tune and it is not a bigger cap. The bisector now
+ * only supplies a DIRECTION; how far to travel along it is decided by measuring
+ * against the WHOLE source ring. The ray from the source vertex is sampled at
+ * ISLE_OFFSET_PROBES points and the one kept is the sample that maximises
+ * `min(distance to the ring, |d|)` on the side the sign of `d` asks for, with
+ * ties going to the shortest travel (the loop replaces only on a strictly
+ * better score, so the first, nearest sample wins a tie and the ring is never
+ * over-inset). Where the island is locally wider than 2|d|
+ * that lands on exactly the asked offset, which is what the bisector gave
+ * before. Where it is not, it lands on the deepest point the ray can reach
+ * instead of crossing to the far side, and it can never leave the ring, because
+ * every candidate is tested for containment rather than assumed to be contained.
+ *
+ * The guarantee is therefore a property of the ring, not of the corner: no
+ * returned vertex is on the wrong side of the source, and the standoff is the
+ * largest the local geometry allows up to the one that was asked for. A vertex
+ * whose ray cannot get anywhere stays where it started, on the boundary, which
+ * pinches the offset ring rather than everting it.
+ */
 function insetPoly(ring, distance) {
   const target = signedArea(ring);
+  const sign = distance < 0 ? -1 : 1;
   for (let attempt = 0, d = distance; attempt < 4; attempt++, d /= 2) {
     const n = ring.length;
     const out = [];
@@ -2856,18 +3066,38 @@ function insetPoly(ring, distance) {
       const bx = n1.x + n2.x;
       const by = n1.y + n2.y;
       const len2 = bx * bx + by * by;
+      let q;
       if (len2 < 1e-9) {
-        out.push({ x: p.x, y: p.y });
-        continue;
+        q = { x: p.x, y: p.y };
+      } else {
+        /* offset along the bisector by d / cos(half angle) */
+        let step = (2 * d) / len2;
+        const reach = Math.abs(step) * Math.hypot(bx, by);
+        if (reach > 3 * Math.abs(d)) step *= (3 * Math.abs(d)) / reach;
+        q = { x: p.x + bx * step, y: p.y + by * step };
       }
-      /* offset along the bisector by d / cos(half angle) */
-      let step = (2 * d) / len2;
-      const reach = step * Math.hypot(bx, by);
-      if (reach > 3 * d) step *= (3 * d) / reach;
-      out.push({ x: p.x + bx * step, y: p.y + by * step });
+      /* how far along that ray to actually go, measured against the whole ring */
+      const want = Math.abs(d);
+      const rayX = q.x - p.x;
+      const rayY = q.y - p.y;
+      let bestU = 0;
+      let bestScore = -1;
+      for (let s = 1; s <= ISLE_OFFSET_PROBES; s++) {
+        const u = s / ISLE_OFFSET_PROBES;
+        const c = { x: p.x + rayX * u, y: p.y + rayY * u };
+        const near = nearestOnRing(ring, c);
+        if ((sign > 0) !== near.inside) continue;
+        const score = Math.min(near.dist, want);
+        if (score > bestScore + 1e-9) {
+          bestScore = score;
+          bestU = u;
+        }
+      }
+      out.push({ x: p.x + rayX * bestU, y: p.y + rayY * bestU });
     }
     const area = signedArea(out);
-    if (!(area > 0.25 * target)) ok = false;
+    const grew = sign < 0;
+    if (!(grew ? area > target : area > 0.25 * target)) ok = false;
     for (const p of out) if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) ok = false;
     if (ok) return out;
   }
@@ -2920,147 +3150,410 @@ function areaCentre(ring) {
 }
 
 /**
- * One THUMS island: a rock rim, a planted mass inside it, and the camouflage
- * towers standing out of the planting.
+ * One THUMS island, rebuilt in round 1 (catalogue 6.1 to 6.6) from the committed
+ * lidar and NAIP products rather than from constants.
  *
- * This is the round-4d handoff. The islands were terrain-layer flat caps at
- * 6 m, so the realism grade painted them the harbour-fill reflectance and they
- * read as tan slabs, worse than the grey they replaced. research.md section 5
- * says what they actually are from the water: "a low, dark green mass on a
- * grey-tan rock rim, with one or two tall pale towers standing above it", and
- * that the islands are greener and darker than everything around them. Three
- * substances, so three material indices; a height ramp cannot do it, because
- * the rim and the planting share a metre band.
+ * What the round-5 version drew, and why every part of it is gone:
+ *
+ *   - The planting was ONE extruded ring prism with a flat earcut lid plus three
+ *     boxes: four vegetation objects for an island the lidar counts 212 to 314
+ *     measured crowns on. The owner's word for the result was that nothing in
+ *     real life looks close to it. Now every crown in trees.json is drawn at its
+ *     own measured position, with its own measured height and crown radius.
+ *   - Four towers per island, sixteen across the venue, on an invented height
+ *     ladder [52.6, 41, 34, 30]. The lidar finds exactly three structures over
+ *     40 m in the whole group, one each on White, Grissom and Chaffee, and none
+ *     on Freeman, which is also what OSM carries. Now: three, at their measured
+ *     footprints and heights.
+ *   - Four flat 30 x 13 m slabs per island for the sculpted screen walls. Now
+ *     every masses.json structure with a footprint is drawn where the lidar
+ *     found it, at its measured extent and height.
+ *   - A two-quad rim ribbon 18 m wide with a 1.07 m lip and a vertical outer
+ *     wall, i.e. a plateau. Now the rim is swept from the island's OWN binned
+ *     shoreline profile: toe, waterline, mid batter, crown and the return to the
+ *     deck, each at its measured distance and its measured height, with the
+ *     crown broken by the spread the same bins measure.
+ *
+ * The deck under the planting is new geometry, and it is a consequence rather
+ * than a choice: with the planting drawn as individual crowns there is nothing
+ * left to cap the island with. It takes its own substance because NAIP measures
+ * it at rgb(129,127,113), which is neither the rim's rock nor the port apron.
+ *
+ * Datum, stated because it is the one place the render does not follow the
+ * measurement. The island deck stands at the DEM's MIN_SHORE_H floor, 6 m, while
+ * the lidar measures 4.13 to 4.25 m of freeboard from its own water plane
+ * (sea-level.json, 0.67 m) to the deck. The batter's measured SHAPE is drawn in
+ * true metres, so the profile's toe lands about 2 m above this scene's sea, and
+ * a skirt carries the rock from there down through the waterline. Re-datuming
+ * the island deck onto sea-level.json would move L1's cap under it too and is
+ * not a round-1 change.
  */
-function buildIsland(spec, allTowers) {
+function buildIsland(spec) {
   const raw = spec.ring;
   const centre = areaCentre(raw);
   const deck = heroGround(centre.x, centre.y, MIN_SHORE_H, ISLE_DECK_MAX);
-  const rimRing = insetPoly(raw, ISLE_RIM_INSET);
-  if (!rimRing) return 0;
-  const lip = reduceRing(rimRing, spec.segments);
-  const inner = insetPoly(lip, ISLE_RIM_W);
-  if (!inner) return 0;
-  const n = lip.length;
+  /* the hero deck stands clear of L1's own cap on the same island */
+  const deckY = deck + ISLE_DECK_LIFT;
   const before = current.indices.length;
-  const groundAtLip = lip.map((p) => heroGround(p.x, p.y, deck, ISLE_DECK_MAX));
+  const log = { rim: 0, crowns: 0, outside: 0, towers: 0, screens: 0, clumps: 0 };
+
+  /* ------------------------------------------------------------- the rim */
+
+  const rows = rimProfile(spec.shoreline, deckY);
+  const base = resampleRing(raw, ISLE_RIM_STEP);
+  const n = base.length;
+  const rings = rows.map((r) => (r.d === 0 ? base.map((p) => ({ x: p.x, y: p.y })) : insetPoly(base, r.d)));
+  if (rings.some((r) => !r)) return 0;
+
+  /* Break the rim. The armour is placed 5-ton block, not a poured ribbon, and
+   * the lidar measures the scatter directly: the crown bin's own z10-to-z90
+   * spread is 1.45 to 1.96 m across the four islands, so half of it is the
+   * amplitude a stone stands proud of its neighbour. The hash is the same
+   * position hash the cranes jitter on, so a rebake reproduces every stone. */
+  const jag = rings.map((ring, j) =>
+    ring.map((p, i) => {
+      if (rows[j].jag === 0) return { x: p.x, y: p.y, h: rows[j].y };
+      const s = base[i];
+      /* the row index enters the hash. Sharing one draw per ring vertex across
+       * the profile rows moves a whole column up or down together and scallops
+       * the batter into a smooth wave; giving every (vertex, row) its own draw
+       * breaks the surface, which is what placed block does. */
+      const a = (hash01(s.x * 7 + j * 131, s.y * 7 - j * 57) - 0.5) * 2;
+      const b = (hash01(s.x + j * 311, s.y - j * 173) - 0.5) * 2;
+      /* radial nudge along the vertex's own inward direction, so a stone
+       * pushes out of the face rather than sliding along it */
+      const inX = p.x - s.x;
+      const inY = p.y - s.y;
+      const len = Math.hypot(inX, inY) || 1;
+      const push = b * rows[j].jag * 0.8;
+      return {
+        x: p.x - (inX / len) * push,
+        y: p.y - (inY / len) * push,
+        h: rows[j].y + a * rows[j].jag,
+      };
+    }),
+  );
 
   withMat(MAT_ROCK, () => {
-    for (let i = 0; i < n; i++) {
-      const a = lip[i];
-      const b = lip[(i + 1) % n];
-      const ai = inner[i];
-      const bi = inner[(i + 1) % n];
-      const ha = groundAtLip[i] + ISLE_RIM_LIP;
-      const hb = groundAtLip[(i + 1) % n] + ISLE_RIM_LIP;
-      /* the outer face runs below the island cap, so the rim is never a band
-       * hovering over its own shadow at a grazing angle (D3) */
-      const outward = norm3(v3(a.x - centre.x, 0, a.y - centre.y));
-      quadTo(
-        v3(a.x, groundAtLip[i] - 2.5, a.y),
-        v3(b.x, groundAtLip[(i + 1) % n] - 2.5, b.y),
-        v3(b.x, hb, b.y),
-        v3(a.x, ha, a.y),
-        outward,
-      );
-      quadTo(
-        v3(a.x, ha, a.y),
-        v3(b.x, hb, b.y),
-        v3(bi.x, deck + 0.4, bi.y),
-        v3(ai.x, deck + 0.4, ai.y),
-        v3(0, 1, 0),
-      );
+    for (let j = 0; j < jag.length - 1; j++) {
+      const lo = jag[j];
+      const hi = jag[j + 1];
+      for (let i = 0; i < n; i++) {
+        const k = (i + 1) % n;
+        /* outward hint: away from the island centre, which is what every face
+         * of a rim is, batter and crown alike */
+        const hint = norm3(v3(lo[i].x - centre.x, 0.35, lo[i].y - centre.y));
+        quadTo(
+          v3(lo[i].x, lo[i].h, lo[i].y),
+          v3(lo[k].x, lo[k].h, lo[k].y),
+          v3(hi[k].x, hi[k].h, hi[k].y),
+          v3(hi[i].x, hi[i].h, hi[i].y),
+          hint,
+        );
+        log.rim++;
+      }
     }
   });
 
-  /* The planting. Its top edge is what the island's silhouette is made of
-   * below the towers, so the canopy height varies per vertex off the same
-   * position hash the cranes use, and three clumps break the line above it. */
-  const canopy = inner.map(
-    (p) => deck + ISLE_VEG_LOW + hash01(p.x * 3, p.y * 3) * ISLE_VEG_SPAN,
-  );
-  withMat(MAT_VEG, () => {
-    for (let i = 0; i < n; i++) {
-      const a = inner[i];
-      const b = inner[(i + 1) % n];
-      quadTo(
-        v3(a.x, deck, a.y),
-        v3(b.x, deck, b.y),
-        v3(b.x, canopy[(i + 1) % n], b.y),
-        v3(a.x, canopy[i], a.y),
-        norm3(v3(a.x - centre.x, 0, a.y - centre.y)),
-      );
-    }
-    const cap = earcut(inner);
-    const top = inner.map((p, i) => vertex(p.x, canopy[i], p.y, SHADE_FLAT));
+  /* ------------------------------------------------------------ the deck */
+
+  const deckRing = jag[jag.length - 1];
+  withMat(MAT_DECK, () => {
+    const flat = deckRing.map((p) => ({ x: p.x, y: p.y }));
+    const cap = earcut(flat);
+    const top = flat.map((p) => vertex(p.x, deckY, p.y, SHADE_FLAT));
     for (let i = 0; i < cap.length; i += 3) {
       triangle(top[cap[i]], top[cap[i + 1]], top[cap[i + 2]]);
     }
-    for (let k = 0; k < ISLE_CLUMPS; k++) {
-      const at = inner[Math.round(((k + 0.5) * n) / ISLE_CLUMPS) % n];
-      const p = { x: (at.x + centre.x) / 2, y: (at.y + centre.y) / 2 };
-      const base = deck + 1;
-      member(
-        v3(p.x, base, p.y),
-        v3(p.x, deck + ISLE_VEG_LOW + ISLE_VEG_SPAN + 4 + hash01(p.x, p.y) * 4, p.y),
-        v3(1, 0, 0),
-        26,
-        20,
-        18,
-        14,
-      );
+  });
+
+  /* Where anything standing on this island has its feet. Inboard of the rim's
+   * inner edge that is the deck; on the rim it is the profile's own height at
+   * that distance, so a crown on the armour sits on the armour. */
+  const seat = (x, y) => {
+    const near = nearestOnRing(raw, { x, y });
+    const d = near.inside ? near.dist : -near.dist;
+    const last = rows[rows.length - 1];
+    if (d >= last.d) return deckY;
+    for (let j = rows.length - 1; j > 0; j--) {
+      const hi = rows[j];
+      const lo = rows[j - 1];
+      if (d >= lo.d && hi.d > lo.d) {
+        const t = (d - lo.d) / (hi.d - lo.d);
+        return lo.y + (hi.y - lo.y) * t;
+      }
+    }
+    return rows[0].y;
+  };
+
+  /* --------------------------------------------------------- the planting */
+
+  const crowns = spec.crowns ?? [];
+  withMat(MAT_VEG, () => {
+    for (const [cx, cy, height, radius] of crowns) {
+      if (!nearestOnRing(raw, { x: cx, y: cy }).inside) {
+        log.outside++;
+        continue;
+      }
+      buildCrown(cx, cy, seat(cx, cy), height, radius);
+      log.crowns++;
     }
   });
 
-  /* Towers, seeded from OSM where the LiDAR import found one and placed on the
-   * ring where it did not. A placed tower sits at 45 per cent of the way from
-   * the island centre to a ring vertex, which is inside the planting on a
-   * star-shaped ring by construction. */
-  const seeded = allTowers.filter((t) => spec.towerIds.includes(t.id));
-  const towers = seeded.map((t, i) => ({ x: t.x, y: t.y, height: t.height, rot: i }));
-  for (let k = 0; k < n && towers.length < ISLE_TOWER_H.length; k++) {
-    const at = lip[Math.round((k * n) / ISLE_TOWER_H.length) % n];
-    const p = { x: centre.x + (at.x - centre.x) * 0.45, y: centre.y + (at.y - centre.y) * 0.45 };
-    if (towers.some((t) => Math.hypot(t.x - p.x, t.y - p.y) < 40)) continue;
-    towers.push({ x: p.x, y: p.y, height: ISLE_TOWER_H[towers.length], rot: k });
-  }
-  withMat(MAT_PALE, () => {
-    for (const t of towers) {
-      const base = heroGround(t.x, t.y, deck, ISLE_DECK_MAX) - 1;
-      const top = base + 1 + t.height;
-      const set = base + (top - base) * 0.62;
-      const angle = (t.rot * Math.PI) / 5 + hash01(t.x, t.y);
-      const across = v3(Math.cos(angle), 0, Math.sin(angle));
-      member(v3(t.x, base, t.y), v3(t.x, set, t.y), across, ISLE_TOWER_W, ISLE_TOWER_D);
-      member(
-        v3(t.x, set, t.y),
-        v3(t.x, top, t.y),
-        across,
-        ISLE_TOWER_W * 0.72,
-        ISLE_TOWER_D * 0.75,
-      );
+  /* ----------------------------------------------- towers, screens, masts */
+
+  const { axis } = longAxis(raw);
+  for (const m of spec.masses ?? []) {
+    const foot = seat(m.x, m.y);
+    if (m.top >= ISLE_TOWER_MIN_TOP) {
+      buildScreenTower(m, foot, axis);
+      log.towers++;
+    } else if (m.footprintM2 >= ISLE_SCREEN_MIN_FOOT) {
+      buildScreenWall(m, foot);
+      log.screens++;
+    } else {
+      /* Under 20 m2 the lidar has stopped resolving a structure. masses.json is
+       * eight-connected CHM cells over 20 m and nothing more, and at a 3 x 3 to
+       * 5 x 4 m plan that is equally a vent stack and a clump of tall palms:
+       * neither the product nor any source in the catalogue separates them.
+       * What IS known is that trees.json deliberately REMOVED every crown
+       * standing inside one of these components (283 -> 250 crowns on White,
+       * 357 -> 314 on Grissom, 229 -> 212 on Chaffee, 328 -> 303 on Freeman),
+       * so drawing nothing here leaves a hole the planting was cut out of, and
+       * the reference puts "more than 300 palms, roughly one palm per well" on
+       * each island [P1b]. They go back as planting at their own measured
+       * height, with a radius from their own measured footprint. Round 1 drew
+       * them as dark steel first and it read as a forest of black towers over
+       * the canopy, which is a claim about an industrial structure that no
+       * source makes; this is the smaller claim. Two of the 59 stand at 34.65
+       * and 33.82 m, well over the 20.18 m tallest measured crown, and they are
+       * the two most likely to really be masts. */
+      withMat(MAT_VEG, () => {
+        buildCrown(m.x, m.y, foot, m.top, Math.sqrt(m.footprintM2 / Math.PI));
+      });
+      log.clumps++;
     }
-    /* The sculpted screen walls: the thing the islands were built around, and
-     * the reason the silhouette is not a rig. Panels stand on the rim's inner
-     * lip between the towers. */
-    for (let k = 0; k < ISLE_SCREENS; k++) {
-      const i = Math.round(((k + 0.5) * n) / ISLE_SCREENS) % n;
-      const a = inner[i];
-      const b = inner[(i + 1) % n];
-      const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-      const along = v3((b.x - a.x) / len, 0, (b.y - a.y) / len);
-      const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-      const base = heroGround(mid.x, mid.y, deck, ISLE_DECK_MAX) - 1;
+  }
+
+  console.log(
+    `  island ${spec.name}: ${n} rim facets x ${rows.length - 1} bands, ` +
+      `${log.crowns} crowns (${log.outside} outside the ring dropped), ` +
+      `${log.towers} tower, ${log.screens} screen walls, ${log.clumps} mass clumps`,
+  );
+  return (current.indices.length - before) / 3;
+}
+
+/**
+ * The rim's cross-section, outboard to inboard, as [{ d, y, jag }] where `d` is
+ * the signed distance from the island's own OSM ring (negative outboard) and `y`
+ * is a world height.
+ *
+ * With shoreline.json this is measurement: the product bins class 2 and 20
+ * ground z by that same signed distance, so the toe, the waterline, the mid
+ * batter, the crown and the return to the deck are read straight out of it and
+ * the batter angle is whatever the bins say it is (17.0 to 23.2 degrees across
+ * the four islands). Heights are taken RELATIVE to the product's own deck median
+ * so the lidar's vertical datum never has to agree with the DEM's.
+ *
+ * Without it, the round-0 constants draw the two-quad ribbon they were measured
+ * for, and nothing is invented to fill the gap.
+ */
+function rimProfile(sh, deckY) {
+  if (!sh) {
+    return [
+      { d: ISLE_RIM_INSET, y: deckY - 2.9, jag: 0 },
+      { d: ISLE_RIM_INSET, y: deckY + ISLE_RIM_LIP, jag: 0 },
+      { d: ISLE_RIM_INSET + ISLE_RIM_W, y: deckY, jag: 0 },
+    ];
+  }
+  const bins = sh.profile;
+  const zAt = (d) => {
+    let best = bins[0];
+    for (const b of bins) {
+      if (Math.abs(b.distanceM - d) < Math.abs(best.distanceM - d)) best = b;
+    }
+    return best.z50 - sh.deckZ;
+  };
+  /* the most outboard bin still against the island, not a stray 40 m out */
+  const toe = bins.filter((b) => b.distanceM >= -6 && b.distanceM <= 0)[0] ?? bins[0];
+  const toeD = toe.distanceM;
+  const crown = sh.crownAtM;
+  /* where the profile is back on the deck, inboard of the crown. The strict
+   * `>` means the return is the first bin PAST the crown at deck height; on
+   * this venue's data every island resolves one (Grissom's at 10, one bin past
+   * its crown at 9), so the ISLE_RIM_W fallback below never fires here. */
+  const back = bins.find((b) => b.distanceM > crown && b.z50 <= sh.deckZ + 0.15);
+  const deckAt = back ? back.distanceM : crown + ISLE_RIM_W;
+  const mid = Math.round((toeD + crown) / 2);
+  const crownBin = bins.find((b) => b.distanceM === crown);
+  const spread = crownBin ? (crownBin.z90 - crownBin.z10) / 2 : 0.5;
+  const jag = Math.min(1.2, Math.max(0.3, spread));
+  /* Below the product's last usable bin the batter is CONTINUED at this island's
+   * own measured slope until it reaches this scene's sea, and only then dropped
+   * vertically out of sight. The bins stop where they do because deeper water
+   * returns no ground, not because the rock stops; a vertical wall there is the
+   * "plate laid on the sea" the catalogue names, and the slope is measured.
+   *
+   * It costs footprint, and the number is stated rather than buried. The lidar
+   * puts 4.13 to 4.25 m between its own water plane and the island deck, this
+   * scene puts the deck on the DEM's 6 m floor, so the toe has about 2.2 m
+   * further to fall here than it does in Long Beach, and at ratios of 2.34 to
+   * 3.27 that is 5.5 to 7.4 m of extra run. Each island therefore reaches 9 to
+   * 12 m further out than its OSM ring, against radii of 153 to 190 m. */
+  const toeY = deckY + zAt(toeD);
+  const seaAt = toeD - Math.max(0, toeY) * sh.batter.ratio;
+  const rows = [
+    { d: seaAt, y: -2, jag: 0 },
+    { d: seaAt, y: 0, jag: jag * 0.5 },
+    { d: toeD, y: toeY, jag: jag * 0.7 },
+    { d: 0, y: deckY + zAt(0), jag },
+    { d: mid, y: deckY + zAt(mid), jag },
+    { d: crown, y: deckY + sh.lipM, jag },
+    { d: deckAt, y: deckY, jag: 0 },
+  ];
+  /* the sweep needs the distances non-decreasing; a 1 m bin grid can put mid on
+   * the waterline when the crown is close in. NOTE: this compares against the
+   * ORIGINAL predecessor, not the last kept row, so two consecutive inversions
+   * could slip a decreasing pair through; all four islands in this venue's data
+   * yield strictly non-decreasing rows, so the case is unreachable here. */
+  return rows.filter((r, i) => i === 0 || r.d >= rows[i - 1].d);
+}
+
+/**
+ * One measured tree crown: a spindle from the ground through a serrated ring at
+ * the crown's own radius to a point at its own height.
+ *
+ * trees.json carries a position, a height above local ground and a crown radius
+ * per crown and nothing else, so the form has to come from somewhere and this is
+ * where the round is honest about it: the SHAPE is a reading of the reference
+ * ("tall palms over massed bushes", palm/oleander/sandalwood/fig/acacia [P1b]),
+ * driven entirely by the one measured quantity that separates the two, the
+ * height-to-radius ratio. A ratio of 1.5 puts the widest part at 42 per cent of
+ * the height, which is a shrub; 6.5 puts it at 80 per cent, which is a palm.
+ * There is no threshold and no category: the ratio moves the ring continuously.
+ *
+ * The serration is worth its four bytes. The asset quantises x and z to 1 m and
+ * y to 0.1 m, so a 2.2 m median crown radius is two cells across the lattice and
+ * anything carved in plan collapses; alternating the ring's HEIGHT keeps the
+ * silhouette broken at ten times the resolution.
+ */
+function buildCrown(cx, cy, ground, height, radius) {
+  const r = Math.max(1, radius);
+  const ratio = height / Math.max(radius, 0.1);
+  const f =
+    0.42 +
+    0.38 *
+      Math.min(1, Math.max(0, (ratio - ISLE_CROWN_NECK_LOW) / ISLE_CROWN_NECK_SPAN));
+  const neck = ground + height * f;
+  const top = ground + height;
+  const serrate = Math.min(0.35 * r, 0.12 * height);
+  const ring = [];
+  for (let i = 0; i < ISLE_CROWN_RING; i++) {
+    const a = (i / ISLE_CROWN_RING) * Math.PI * 2;
+    const x = cx + Math.cos(a) * r;
+    const y = cy + Math.sin(a) * r;
+    const h = neck + (i % 2 === 0 ? serrate : -serrate);
+    const nrm = norm3(v3(Math.cos(a), 0.45, Math.sin(a)));
+    ring.push(vertex(x, h, y, shadeOf(nrm.x, nrm.h, nrm.y)));
+  }
+  const apex = vertex(cx, top, cy, shadeOf(0, 1, 0));
+  const foot = vertex(cx, ground, cy, shadeOf(0, -1, 0));
+  for (let i = 0; i < ISLE_CROWN_RING; i++) {
+    const k = (i + 1) % ISLE_CROWN_RING;
+    triangle(ring[i], ring[k], apex);
+    triangle(ring[k], ring[i], foot);
+  }
+}
+
+/**
+ * A camouflage tower: one of the three masses.json structures over 40 m.
+ *
+ * Footprint, height and position are measured. Two things are not, and both are
+ * flagged: the taper, from the Five Star cover photograph's "one tapered cream
+ * tower", and the blue panels, which the sources put "up the sides" [P1d] and
+ * describe as "large royal-blue rectangular panels" without ever giving a count.
+ * Two crossed slabs put one panel on each face, which is the smallest claim that
+ * can be made and still leave the facade something to read at 60 m. The
+ * catalogue's instruction not to invent a panel COUNT is why there is exactly
+ * one per face rather than a rhythm of them.
+ */
+function buildScreenTower(m, foot, axis) {
+  const w = Math.max(4, m.widthM);
+  const d = Math.max(4, m.depthM);
+  const top = foot + m.top;
+  const across = v3(axis.x, 0, axis.y);
+  withMat(MAT_SCREEN, () => {
+    member(
+      v3(m.x, foot - 1, m.y),
+      v3(m.x, top, m.y),
+      across,
+      w,
+      d,
+      w * ISLE_TOWER_TAPER,
+      d * ISLE_TOWER_TAPER,
+    );
+  });
+  withMat(MAT_PANEL, () => {
+    const lo = foot + m.top * 0.12;
+    const hi = foot + m.top * 0.9;
+    /* 1 m proud of each face: the asset's positions are 1 m in x and z, so a
+     * panel that stands off by less than that does not exist in the file */
+    member(v3(m.x, lo, m.y), v3(m.x, hi, m.y), across, w * 0.55, d + 2);
+    member(v3(m.x, lo, m.y), v3(m.x, hi, m.y), across, w + 2, d * 0.55);
+  });
+}
+
+/**
+ * One sculpted screen wall: a masses.json structure under 40 m with a footprint
+ * of at least 20 m2.
+ *
+ * Position, LENGTH and height are measured. Thickness is not, and cannot be: a
+ * canopy height model is a top-down surface, so the plan bbox of a connected
+ * component is what the thing SHADOWS, not its section, and filling that bbox
+ * with a solid turns a 15 x 16 m component into a building. Round 1 drew it
+ * that way first and the islands came back as a cream skyline. A wall gets the
+ * thinnest section the asset's 1 m position lattice can carry instead, and its
+ * length off the component's long axis.
+ *
+ * The bow is not measured either: the sources describe walls of "smooth,
+ * futuristic concrete, some curving inward, some curving outward" [P1d] with no
+ * radius anywhere, so the sagitta is a fraction of the wall's own measured
+ * length and the SIGN comes off the position hash, so some curve in and some
+ * curve out, and a rebake gets the same ones.
+ */
+function buildScreenWall(m, foot) {
+  const long = m.widthM >= m.depthM;
+  const len = Math.max(4, Math.max(m.widthM, m.depthM));
+  const thick = ISLE_SCREEN_THICK;
+  const top = foot + m.top;
+  const dir = long ? { x: 1, y: 0 } : { x: 0, y: 1 };
+  const nrm = { x: -dir.y, y: dir.x };
+  const bow = ISLE_SCREEN_BOW * len * (hash01(m.x, m.y) < 0.5 ? -1 : 1);
+  const segs = 4;
+  const at = (t) => {
+    const s = (t - 0.5) * len;
+    /* a parabola through the two ends with `bow` of sagitta at the middle */
+    const off = bow * (1 - 4 * (t - 0.5) * (t - 0.5));
+    return { x: m.x + dir.x * s + nrm.x * off, y: m.y + dir.y * s + nrm.y * off };
+  };
+  withMat(MAT_SCREEN, () => {
+    for (let k = 0; k < segs; k++) {
+      const a = at(k / segs);
+      const b = at((k + 1) / segs);
+      const mx = (a.x + b.x) / 2;
+      const my = (a.y + b.y) / 2;
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const l = Math.hypot(dx, dy) || 1;
       member(
-        v3(mid.x, base, mid.y),
-        v3(mid.x, base + ISLE_SCREEN_H + hash01(mid.x, mid.y) * 5, mid.y),
-        along,
-        Math.min(30, len * 0.8),
-        3,
+        v3(mx, foot - 1, my),
+        v3(mx, top, my),
+        v3(dx / l, 0, dy / l),
+        l * 1.08,
+        thick,
       );
     }
   });
-  return (current.indices.length - before) / 3;
 }
 
 /** The Queen Mary: a hull from her own OSM outline, two tiers of upperworks and
@@ -3348,29 +3841,30 @@ function buildDerricks(nodes) {
 }
 
 /** Everything design doc 9 curates, in one layer and one draw. */
-function buildHeroes(coastWays, massingWays, anchors) {
+function buildHeroes(coastWays, anchors) {
   const h = venue.heroes;
   if (!h) return;
   const byId = new Map(anchors.map((el) => [el.id, el]));
-  const towers = massingWays
-    .filter((way) => h.islandTowers.includes(way.id))
-    .map((way) => {
-      const c = areaCentre(ringOf(way));
-      const height = Number.parseFloat(way.tags.height);
-      return { id: way.id, x: c.x, y: c.y, height };
-    });
   const counts = [];
   for (const island of h.islands) {
     const way = coastWays.find((w) => w.id === island.way);
     if (!way) continue;
     const ring = ringOf(way);
     if (signedArea(ring) < 0) ring.reverse();
-    const towerIds = towers
-      .filter((t) => Math.hypot(t.x - areaCentre(ring).x, t.y - areaCentre(ring).y) < 260)
-      .map((t) => t.id);
+    /* Products key on the island's own OSM way id, so a renamed island or a
+     * reordered VENUES block cannot mis-join a crown cloud to a shoreline. */
+    const treeSet = PRODUCTS.trees?.islands.find((i) => i.osmWay === island.way);
+    const shoreSet = PRODUCTS.shoreline?.islands.find((i) => i.osmWay === island.way);
+    const massSet = PRODUCTS.masses?.patches.find((p) => p.name === treeSet?.name);
     counts.push([
       `island ${island.name}`,
-      buildIsland({ ring, segments: island.segments, towerIds }, towers),
+      buildIsland({
+        name: island.name,
+        ring,
+        crowns: treeSet?.crowns ?? null,
+        shoreline: shoreSet ?? null,
+        masses: massSet?.masses ?? null,
+      }),
     ]);
   }
   counts.push(["queen mary", buildQueenMary(byId.get(h.queenMary))]);
@@ -3753,7 +4247,7 @@ into(L_TERRAIN, () => {
 buildTerrainIndex();
 into(L_MASSING, () => buildMassing(massingWays));
 into(L_PORT, () => buildPort(craneNodes.concat(craneWays), infraWays, rings, boxes));
-into(L_HEROES, () => buildHeroes(coastWays, massingWays, heroAnchors));
+into(L_HEROES, () => buildHeroes(coastWays, heroAnchors));
 await prefetchCurtainDem();
 into(L_CURTAIN, () => buildCurtain());
 writeAsset();
