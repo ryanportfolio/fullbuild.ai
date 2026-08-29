@@ -37,6 +37,43 @@ export const GLINT = "#ffd9a0";
 export const WHITECAP = "#eaf2f5";
 export const SHORE = "#16212a"; // the bluff and terminals, under their own haze
 
+/* Venue materials, San Pedro Bay (round 4d).
+ *
+ * Contract amendment 5 replaced the closed-palette rule with a reference rule:
+ * every venue colour is the real material, sourced, and the venue is lit rather
+ * than tinted. These seven are REFLECTANCES, not screen colours: each is what a
+ * colour chart would read off the material under equal-energy white, and
+ * VenueShore multiplies them by the sun and the sky to get a pixel. Reading them
+ * as if they were the rendered result is wrong by roughly the illuminant.
+ *
+ * Provenance for every one of them, with the source photographs and the derived
+ * numbers, is .tmp/venue-audit/round4d/provenance.md. Only VenueShore reads
+ * them; the sky, the water and the boats are untouched. */
+export const VENUE_SKY_FILL = "#8196ad"; // the sky dome's own hemispherical average, derived
+export const VENUE_APRON = "#7e7d74"; // harbour fill, armour stone, apron, waterfront green
+export const VENUE_SCRUB = "#847a63"; // dry coastal sage scrub over Monterey Fm bluffs
+export const VENUE_YARD = "#777677"; // container stacks over the concrete apron
+export const VENUE_STEEL = "#727575"; // POLB gantry cranes, the mixed liveries of a bank
+export const VENUE_BLOCK = "#939293"; // industrial massing, tilt-up and sheet metal
+export const VENUE_TOWER = "#77787b"; // downtown Long Beach, precast and blue-green glass
+
+/* The far horizon curtain has no lighting model: it draws a ridge as a fraction
+ * of the way from the sky toward a tint, so these three are APPEARANCES rather
+ * than reflectances, and they are solved rather than picked. Each measured
+ * ridge in research.md came with the sky sampled in the same frame, so the
+ * exposure divides out and the ratio transfers to this scene's brighter sky;
+ * .tmp/venue-audit/round4d/curtain-solve.mjs inverts the curtain's own mix for
+ * the tint each ratio implies at that range's extinction.
+ *
+ * Both are plain blue. The first round-4d pass used a blue-violet for the far
+ * band on the received wisdom that distance goes violet, and the measurements
+ * refused it: every sampled ridge came back at hue 199 to 213, blue with a
+ * cyan lean, because 80 to 87 per cent of the extinction over this basin is
+ * aerosol rather than Rayleigh. */
+export const VENUE_RIDGE_NEAR = "#5e78af"; // Palos Verdes at 10 to 17 km
+export const VENUE_RIDGE_FAR = "#8fcbe5"; // the San Gabriels at 54 to 90 km
+export const VENUE_HAZE_LOW = "#cdd2d2"; // the near-neutral aerosol veil a ridge's foot sits in
+
 /** Unit vector from the scene toward the sun, in world space. */
 export function sunDirection(): Vector3 {
   const elevation = SUN_ELEVATION * DEG;
