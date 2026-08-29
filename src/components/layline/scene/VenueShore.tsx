@@ -15,6 +15,11 @@ import {
   VENUE_APRON,
   VENUE_BLOCK,
   VENUE_HAZE_LOW,
+  VENUE_HERO_FUNNEL,
+  VENUE_HERO_HULL,
+  VENUE_HERO_PALE,
+  VENUE_ISLE_ROCK,
+  VENUE_ISLE_VEG,
   VENUE_RIDGE_FAR,
   VENUE_RIDGE_NEAR,
   VENUE_SCRUB,
@@ -42,13 +47,15 @@ import {
 /* Round 4d lengthens the far term from 1/9,000 to 1/12,800 and thins the near
  * one from 0.15 to 0.07.
  *
- * The far constant is measured rather than tuned. The clear-day transmittance
- * table in .tmp/venue-audit/round4d/research.md reads 0.36 at 13 km and 0.015
- * at 54 km over this basin, and both solve to the same extinction, 1/12,700 to
- * 1/12,900. Koschmieder puts that at a 50 km meteorological visual range, which
- * is the day the far band's own inventory assumes: Mount Wilson at 54 km and
- * Baldy at 76 km are in it, and neither is visible on the 35 km day 1/9,000
- * describes.
+ * The far constant comes from a stated visual range, not from a fitted curve
+ * and not from an instrument. The input is the clear-day meteorological visual
+ * range for this basin, 40 to 60 km; the midpoint 50 km is the chosen day, and
+ * Koschmieder (V = 3.912 / beta) turns it into 1/12,780, rounded to 1/12,800.
+ * The transmittance table in .tmp/venue-audit/round4d/research.md (0.36 at
+ * 13 km, 0.015 at 54 km) was computed from that same assumed range, so it
+ * checks the arithmetic and corroborates nothing. What 50 km buys is the day
+ * the far band's own inventory assumes: Mount Wilson at 54 km and Baldy at
+ * 76 km are in it, and neither is visible on the 35 km day 1/9,000 describes.
  *
  * The near term's weight was a fixed 15 per cent bite that never decayed, so
  * every fragment past about 2 km lost a sixth of its colour to a term meant for
@@ -100,6 +107,10 @@ const AMB_GAIN = 0.44;
 const GRAIN_TERRAIN = new Vector2(0.26, 0.28);
 const GRAIN_MASSING = new Vector2(0.12, 0.1);
 const GRAIN_PORT = new Vector2(0.24, 0);
+/* The hero layer runs the grain flat, because its own substances decide where
+ * it applies: the island rim and the planting take it, the painted verticals
+ * above them switch it off in the shader. */
+const GRAIN_HERO = new Vector2(0.2, 0.2);
 
 /* Waterline, in metres of world y. The bake puts the shore crest at 6 m and
  * every land surface at or above it, so a band keyed on height alone can only
@@ -121,6 +132,7 @@ const MAGIC_LVN3 = 0x334e564c; // "LVN3", the layered container
 const CLASS_TERRAIN = 1;
 const CLASS_MASSING = 2;
 const CLASS_PORT = 3;
+const CLASS_HEROES = 4;
 
 /* What each layer is made of, and where inside itself it changes material.
  *
@@ -138,7 +150,11 @@ const CLASS_PORT = 3;
  * The one substance this cannot separate is the tank farm: storage tanks are
  * 6 to 25 m and share that band with the container blocks, so they take the
  * yard's colour instead of white. Separating them needs a per-vertex material
- * byte and a rebake; round 4d chose not to spend that. */
+ * byte and a rebake; round 4d chose not to spend that, and round 5 spends it
+ * only on the hero layer, which needs it for a different reason: a rock rim, a
+ * planted mass and a screen tower all live inside twenty metres on a THUMS
+ * island, so height cannot tell them apart at all. The tank farm keeps the
+ * yard's colour, still. */
 const MATERIALS: Record<number, { lo: Color; hi: Color; ramp: Vector2; grain: Vector2 }> = {
   [CLASS_TERRAIN]: {
     lo: new Color(VENUE_APRON),
@@ -158,8 +174,32 @@ const MATERIALS: Record<number, { lo: Color; hi: Color; ramp: Vector2; grain: Ve
     ramp: new Vector2(22, 48),
     grain: GRAIN_PORT,
   },
+  /* The hero layer never reaches the ramp: every one of its vertices carries a
+   * substance index of 1 or more. The pair is here so the uniform is defined
+   * and so a hero emitted without an index would land on the island rock rather
+   * than on a terrain colour. */
+  [CLASS_HEROES]: {
+    lo: new Color(VENUE_ISLE_ROCK),
+    hi: new Color(VENUE_ISLE_ROCK),
+    ramp: new Vector2(14, 85),
+    grain: GRAIN_HERO,
+  },
 };
 const MATERIAL_FALLBACK = MATERIALS[CLASS_TERRAIN];
+
+/* The hero substances, indexed by the `aMat` byte the baker writes. Index 0 is
+ * "no hero material, use the layer's height ramp", which is what every vertex
+ * outside the hero layer carries, so the five below are 1 to 5 and the shader
+ * selects between them without an array lookup or a branch.
+ *
+ * Every one is a reflectance derived the round-4d way, measured appearance
+ * inverted through the render chain: .tmp/venue-audit/round5/mix-heroes.mjs
+ * prints the derivation and provenance.md holds the sources. */
+const HERO_ROCK = new Color(VENUE_ISLE_ROCK);
+const HERO_VEG = new Color(VENUE_ISLE_VEG);
+const HERO_PALE = new Color(VENUE_HERO_PALE);
+const HERO_HULL = new Color(VENUE_HERO_HULL);
+const HERO_FUNNEL = new Color(VENUE_HERO_FUNNEL);
 
 /* Both lights reach the shader normalised to luminance 1, so the two gains
  * above read as an irradiance ratio and can be checked against a clear sky
@@ -183,6 +223,7 @@ const ATTR_FADE = 1;
 const ATTR_SHADE = 2;
 const ATTR_DIST = 4;
 const ATTR_BASE = 8;
+const ATTR_MAT = 16;
 
 /* The curtain's own constants, and every one of them is load-bearing.
  *
@@ -282,6 +323,11 @@ const VenueShoreMaterial = shaderMaterial(
     uAlbedoHi: MATERIAL_FALLBACK.hi,
     uRamp: MATERIAL_FALLBACK.ramp,
     uGrain: MATERIAL_FALLBACK.grain,
+    uHeroRock: HERO_ROCK,
+    uHeroVeg: HERO_VEG,
+    uHeroPale: HERO_PALE,
+    uHeroHull: HERO_HULL,
+    uHeroFunnel: HERO_FUNNEL,
     uHaze: HAZE_NEAR,
     uHazeFar: HAZE_FAR,
     uHazeMix: HAZE_NEAR_WEIGHT,
@@ -289,15 +335,18 @@ const VenueShoreMaterial = shaderMaterial(
   /* glsl */ `
 attribute float aFade;
 attribute float aShade;
+attribute float aMat;
 
 varying vec3 vWorld;
 varying float vFade;
 varying float vShade;
+varying float vMat;
 
 void main() {
   vWorld = (modelMatrix * vec4(position, 1.0)).xyz;
   vFade = aFade;
   vShade = aShade * 1.9921875;
+  vMat = aMat;
   gl_Position = projectionMatrix * viewMatrix * vec4(vWorld, 1.0);
 }
 `,
@@ -305,11 +354,17 @@ void main() {
 varying vec3 vWorld;
 varying float vFade;
 varying float vShade;
+varying float vMat;
 uniform vec3 uWhitecap;
 uniform vec3 uSunLight;
 uniform vec3 uSkyFill;
 uniform vec3 uAlbedoLo;
 uniform vec3 uAlbedoHi;
+uniform vec3 uHeroRock;
+uniform vec3 uHeroVeg;
+uniform vec3 uHeroPale;
+uniform vec3 uHeroHull;
+uniform vec3 uHeroFunnel;
 uniform vec2 uRamp;
 uniform vec2 uGrain;
 uniform float uHaze;
@@ -348,18 +403,38 @@ void main() {
   float dist = length(toEye);
   vec3 haze = laylineSky(normalize(toEye), 0.0);
 
-  /* Which substance this fragment is, inside a layer that is one draw call:
-     the terrain runs harbour fill to hillside, the port runs container yard to
-     gantry steel, and world height is the only separator the asset carries. */
+  /* Which substance this fragment is, inside a layer that is one draw call.
+     Two mechanisms, and the layer picks which one it uses.
+
+     World height is the separator for the classes the baker cannot label: the
+     terrain runs harbour fill to hillside, the port runs container yard to
+     gantry steel. It works there because those pairs really do sit at
+     different heights.
+
+     It fails completely on a hero. A THUMS island puts a boulder rim, a dark
+     green planted mass and a pale screen tower inside the same twenty metres,
+     which is why the round-4d grade painted the islands harbour-fill tan and
+     they read as slabs. So the hero layer carries one byte per vertex saying
+     what the surface is made of, and 0 means "no hero substance here, use the
+     ramp", which is what every vertex in every other layer carries. The select
+     is four mixes rather than a branch or an array lookup: both of those are
+     portability traps in GLSL ES 1.00 and this costs three cycles. */
   float band = smoothstep(uRamp.x, uRamp.y, vWorld.y);
-  vec3 albedo = mix(uAlbedoLo, uAlbedoHi, band);
+  vec3 heroLow = mix(uHeroRock, uHeroVeg, step(1.5, vMat));
+  vec3 heroMid = mix(uHeroPale, uHeroHull, step(3.5, vMat));
+  vec3 hero = mix(mix(heroLow, heroMid, step(2.5, vMat)), uHeroFunnel, step(4.5, vMat));
+  vec3 albedo = mix(mix(uAlbedoLo, uAlbedoHi, band), hero, step(0.5, vMat));
 
   /* The bake writes 0.62 for a face turned fully away from the sun and 1.17
    * for one square on, so this recovers N.L and the grain rides on it. */
   float grain =
     shoreNoise(vWorld.xz * 0.009) * 0.62 + shoreNoise(vWorld.xz * 0.027) * 0.38;
   float grainFall = 1.0 - smoothstep(3000.0, 9000.0, dist);
-  float grainWeight = mix(uGrain.x, uGrain.y, band) * grainFall;
+  /* Ground grain is a terrain texture. Rock and planting are ground and take
+     it; painted concrete, hull plate and a funnel are not, and a two-octave
+     world noise across them draws the horizontal banding design doc 2.3 warned
+     about. Substances 3 and up switch it off. */
+  float grainWeight = mix(uGrain.x, uGrain.y, band) * grainFall * (1.0 - step(2.5, vMat));
   float lit = clamp((vShade - 0.62) * 1.818 + (grain - 0.5) * grainWeight, 0.0, 1.0);
 
   /* Two lights on a reflectance, which is the whole of the round-4d grade. The
@@ -590,6 +665,19 @@ function parseLayer(
     geometry.setAttribute("aBase", new BufferAttribute(new Uint8Array(buffer, at, vertCount).slice(), 1));
     at += vertCount;
   }
+  /* The shore shader declares `aMat` and every shore layer therefore has to
+   * supply it, whether or not its block carries the channel. An unbound
+   * attribute reads back whatever the driver left in the default vertex
+   * attribute, which is not a value this code gets to define, so the layers
+   * without the channel get an explicit run of zeros: "no hero substance,
+   * use the height ramp". One byte per vertex on the client, none on the
+   * wire. */
+  if (attrMask & ATTR_MAT) {
+    geometry.setAttribute("aMat", new BufferAttribute(new Uint8Array(buffer, at, vertCount).slice(), 1));
+    at += vertCount;
+  } else if (attrMask & ATTR_SHADE) {
+    geometry.setAttribute("aMat", new BufferAttribute(new Uint8Array(vertCount), 1));
+  }
   const indices = wideIndex
     ? new Uint32Array(buffer, indexAt, indexCount)
     : new Uint16Array(buffer, indexAt, indexCount);
@@ -655,9 +743,10 @@ function parseVenueMesh(buffer: ArrayBuffer): VenueLayer[] {
 /**
  * The venue's real coast: static meshes baked offline from OpenStreetMap and
  * Terrarium elevation, drawn with the same flat-colour-into-haze material as
- * the procedural shore they replace. One draw call per semantic layer, four
- * today (horizon curtain, terrain, urban massing, port infrastructure), nothing
- * per frame: the geometry is immutable and every uniform is set once at mount.
+ * the procedural shore they replace. One draw call per semantic layer, five
+ * today (horizon curtain, terrain, urban massing, port infrastructure, hero
+ * landmarks), nothing per frame: the geometry is immutable and every uniform is
+ * set once at mount.
  * The curtain reads `cameraPosition`, which three.js already maintains.
  *
  * The fetch is the one asynchronous thing in the scene, so its arrival has to

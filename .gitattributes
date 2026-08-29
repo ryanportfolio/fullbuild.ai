@@ -1,2 +1,5 @@
 # Shell scripts must stay LF. CRLF breaks bash on Windows (git-bash) checkouts.
 *.sh text eol=lf
+# Baked venue manifests are generated LF; autocrlf must not rewrite them
+# (a CRLF round trip desyncs the file from the baker output; round-5b audit N2).
+public/prototype/layline/venues/*.json text eol=lf

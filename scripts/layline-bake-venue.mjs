@@ -22,9 +22,10 @@
  *
  * The output carries semantic layers (design doc 2.1), one merged mesh and one
  * draw call each: L1 near terrain, L2 urban massing, L3 port infrastructure,
- * L5 far horizon curtain. Layers exist so the runtime can vary the material per
- * class (L2 and L3 run with the ground grain off, L5 runs its own shader) and
- * so a later round can skip a class per rig.
+ * L4 hero landmarks, L5 far horizon curtain. Layers exist so the runtime can
+ * vary the material per class (L2 and L3 run with the ground grain off, L4
+ * carries a material index per vertex, L5 runs its own shader) and so a later
+ * round can skip a class per rig.
  *
  * LVN3 layout, little endian, after gunzip:
  *   u32 magic 0x334e564c  ("LVN3")
@@ -35,7 +36,8 @@
  *     u8  material   0 shore, 1 curtain
  *     u8  drawOrder  ascending
  *     u8  attrMask   bit0 aFade, bit1 aShade, bit2 aDist (i16), bit3 aBase (u8;
- *                    bit0 base vertex, bit1 far band)
+ *                    bit0 base vertex, bit1 far band), bit4 aMat (u8; 0 = take
+ *                    the layer's own height ramp, 1..5 = a hero substance)
  *     u8  yUnit      y quantisation denominator; 10 means 0.1 m
  *     u8  idx32      1 if this layer's indices are u32
  *     u8  pad
@@ -48,6 +50,7 @@
  *     u8  shade[vertCount]   hillshade, 128 = flat colour, /128 multiplies it
  *     i16 dist[vertCount]    true horizontal range in 4 m units (curtain only)
  *     u8  base[vertCount]    0 ridge / 255 base vertex (curtain only)
+ *     u8  mat[vertCount]     hero substance index (heroes only)
  *     pad to 4 bytes
  *     u16|u32 idx[indexCount]
  *
@@ -73,6 +76,38 @@ const VENUES = {
       "Map data (c) OpenStreetMap contributors, ODbL",
       "Elevation: Mapzen Terrarium tiles via AWS Open Data",
     ],
+    /* L4 hero anchors (design doc 9). A hero is curated, so its footprint and
+     * its orientation are pinned to named OSM elements rather than searched
+     * for: the ids below were resolved once, by hand, and are recorded with
+     * their tags in .tmp/venue-audit/round5/provenance.md. Pinning by id also
+     * makes Q5 the smallest of the five queries and keeps the bake
+     * reproducible against an edit to any nearby feature.
+     *
+     * `islands` and `islandTowers` are already inside the Q1 and Q2 bodies, so
+     * they are read from those rather than refetched. */
+    heroes: {
+      islands: [
+        // GNIS/OSM island rings, doc 1.2. Order is the doc's priority order.
+        { way: 40500950, name: "Freeman", segments: 22 },
+        { way: 40500920, name: "White", segments: 20 },
+        { way: 40500949, name: "Chaffee", segments: 20 },
+        { way: 40500921, name: "Grissom", segments: 14 },
+      ],
+      /* THUMS camouflage towers the LA County LiDAR import already carries.
+       * Round 5 draws them as hero geometry, so L2 must not extrude them too. */
+      islandTowers: [441318136, 1382215822, 248607358],
+      queenMary: 438331516,
+      gateway: 1433959973,
+      lionsLighthouse: 1054968664,
+      longBeachLight: 566859523,
+      /* The Spruce Goose dome is the outer way of OSM relation 6573072, "Long
+       * Beach Cruise Terminal", `alt_name=Spruce Goose dome`. Design doc 1.2
+       * carried an [EST] position 300 m away, which would have put a 122 m
+       * dome inside the Queen Mary's hull; this is the real footprint. */
+      dome: 721199801,
+      /* Signal Hill oil field, the box the doc's derrick cluster sits in. */
+      derrickBox: { south: 33.79, west: -118.19, north: 33.815, east: -118.145 },
+    },
   },
 };
 
@@ -147,6 +182,63 @@ const DECK_MAX_H = 12;
 const TANK_MAX_H = 25; // tank farms may sit inland, but not on a spike
 const MASS_GROUND_MAX = 40; // DEM fallback for the 8 buildings with no OSM ele
 
+/* L4, hero landmarks (design doc 9). Every dimension below is at or under a
+ * published figure for the thing it draws; the sources, the rendered value and
+ * the pixel height each one buys are tabulated in
+ * .tmp/venue-audit/round5/provenance.md.
+ *
+ * The THUMS towers are the one line item the doc flagged against the approved
+ * dimension policy: published heights are 175 ft (53.3 m, AOGHS) and 180 ft
+ * (54.9 m, Long Beach Business Journal), and OSM's LiDAR import independently
+ * measures 52.6 m of tower on Island White standing on ground at 6.0 m. The
+ * bake uses the MEASURED 52.6 m for every unsourced tower rather than the
+ * 54.9 m ceiling, so nothing here needs per-feature approval. */
+/* The islands' own OSM rings carry `ele` 0, 0, 0 and 3, so their decks stand
+ * within a metre or two of the MIN_SHORE_H the coast is floored at. Nothing on
+ * an island is allowed a higher datum than this. */
+const ISLE_DECK_MAX = 8;
+const ISLE_RIM_INSET = 22; // m inside the OSM waterline: clear of L1's 8-18 m batter
+const ISLE_RIM_W = 18; // m of rock rim between the lip and the planting
+const ISLE_RIM_LIP = 3.4; // m of rim crown over the island deck
+const ISLE_VEG_LOW = 9; // m of canopy over the deck at its thinnest
+const ISLE_VEG_SPAN = 10; // m more where the planting is dense
+const ISLE_CLUMPS = 3; // taller lumps that break the canopy's top edge
+const ISLE_TOWER_H = [52.6, 41, 34, 30]; // m, tallest first (52.6 = OSM Island White)
+const ISLE_TOWER_W = 16; // m across the slab face, from the 187 m2 OSM footprint
+const ISLE_TOWER_D = 11; // m through it
+const ISLE_SCREENS = 4; // sculpted screen panels per island
+const ISLE_SCREEN_H = 13; // m, over the deck
+/* Queen Mary: 310.7 m LOA and 55.2 m to the funnel tops (Wikipedia); OSM way
+ * 438331516 carries the hull outline and `height=10`, which is the hull to the
+ * promenade deck. Everything above that is the superstructure. */
+const QM_HULL_TOP = 10;
+const QM_HULL_BOTTOM = -3;
+const QM_DECK1 = 30;
+const QM_DECK2 = 38;
+const QM_FUNNEL_TOP = 55.2;
+/* Long Beach International Gateway: 157 m towers, 62 m of deck clearance and a
+ * 305 m main span (Wikipedia). OSM way 1433959973 gives the alignment. */
+const GATEWAY_TOWER_H = 157;
+const GATEWAY_DECK_H = 62;
+const GATEWAY_SPAN = 305;
+const GATEWAY_DECK_W = 30;
+/* Spruce Goose dome: 122 m clear span, 35 m high (Structurae). Position comes
+ * from the real OSM footprint, way 721199801, the outer way of relation
+ * 6573072; the doc's [EST] position it replaces was 300 m off. */
+const DOME_R = 61;
+const DOME_H = 35;
+const DOME_SEGMENTS = 12;
+/* Long Beach Light: OSM node 566859523 carries `height=13`, against the doc's
+ * 15 m estimate. The sourced figure wins. */
+const ROBOT_H = 13;
+/* Signal Hill: OSM has 214 `man_made=petroleum_well` nodes over the field. The
+ * doc asks for 6 to 8 silhouettes on the 111 m hill. Mast height is the one
+ * unsourced number in this layer: 18 m sits under the low end of the 80 ft
+ * historic derrick range and reads at 2.7 px from the course. [EST] */
+const DERRICK_COUNT = 7;
+const DERRICK_H = 18;
+const DERRICK_SPACING = 120; // m; the field is denser than the screen can resolve
+
 /* L5, the far horizon curtain (design doc 5). Everything the inventory names
  * beyond the 10.5 km clip disc is profile, never terrain: Palos Verdes at
  * 16.7 km, Catalina at 47 km, the San Gabriels and the Santa Anas at 54 to
@@ -184,7 +276,25 @@ const ATTR_DIST = 4; // i16, 4 m units
 const ATTR_BASE = 8;
 const COLUMN_BASE = 1;
 const COLUMN_FAR = 2;
-const ATTR_BYTES = { [ATTR_FADE]: 1, [ATTR_SHADE]: 1, [ATTR_DIST]: 2, [ATTR_BASE]: 1 };
+/* u8 hero substance index. 0 means "no hero material here, use the layer's own
+ * height ramp", which is what every other layer's vertices carry, so the byte
+ * only ever ships on L4. The five substances are the ones design doc 9 and the
+ * round-4d colour research between them actually name; VenueShore.tsx holds the
+ * matching reflectances and the same numbering. */
+const ATTR_MAT = 16;
+const MAT_RAMP = 0;
+const MAT_ROCK = 1; // island rock rim, Catalina boulder armour
+const MAT_VEG = 2; // island planting, palms and shrub mass
+const MAT_PALE = 3; // screen towers, the dome, lighthouses, ship upperworks
+const MAT_DARK = 4; // ship hull, derrick and bridge steel
+const MAT_ACCENT = 5; // Cunard funnel red
+const ATTR_BYTES = {
+  [ATTR_FADE]: 1,
+  [ATTR_SHADE]: 1,
+  [ATTR_DIST]: 2,
+  [ATTR_BASE]: 1,
+  [ATTR_MAT]: 1,
+};
 const Y_UNIT = 10; // y quantised in 0.1 m
 
 const DEG = Math.PI / 180;
@@ -302,6 +412,24 @@ const fetchInfrastructure = () =>
 );out geom;`,
     `overpass-q3-${venueId}.json`,
   );
+
+/* Q5, hero anchors: the named OSM elements design doc 9 curates a landmark on
+ * top of, plus the Signal Hill oil field. Pinned by id rather than searched by
+ * tag, so a rename or a retag upstream cannot silently move a hero; the well
+ * nodes are the one part that has to come by area, because the doc asks for a
+ * cluster and no single well is the landmark. */
+const fetchHeroAnchors = () => {
+  const h = venue.heroes;
+  const box = h.derrickBox;
+  return cachedPost(
+    `[out:json][timeout:180];(
+  way(id:${h.queenMary},${h.gateway},${h.lionsLighthouse},${h.dome});
+  node(id:${h.longBeachLight});
+  node["man_made"="petroleum_well"](${box.south},${box.west},${box.north},${box.east});
+);out geom;`,
+    `overpass-q5-${venueId}.json`,
+  );
+};
 
 /* ------------------------------------------------- terrarium PNG elevation */
 
@@ -448,10 +576,85 @@ async function prefetchDem() {
   console.log(`DEM: ${jobs.length} terrarium tiles at z${DEM_ZOOM}`);
 }
 
+/* Places where the DEM is known to be wrong and a published ground height
+ * exists, filled in from the venue's hero anchors before any geometry is built.
+ *
+ * z11 Terrarium is 64 m per sample and the archived probe
+ * (.tmp/venue-cache/provenance/dem-readings.json) measures what it does to the
+ * THUMS islands: Island Grissom reads -27 to +153 m with a mean of 23.1 over a
+ * 300 m box, Island White -114 to +20. They are 10-acre artificial islands
+ * whose own OSM rings carry `ele` 0 and 3. Left alone, L1 draws Grissom as a
+ * 23 m mound, and round 5's hero towers then stand on top of that and reach
+ * 77 m against a 53 m published tower. This is the clamp design doc 4.1
+ * predicted would be needed and never wrote. */
+const heightClamps = [];
+function clampedGroundRing(ring) {
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (const p of ring) {
+    minX = Math.min(minX, p.x);
+    maxX = Math.max(maxX, p.x);
+    minY = Math.min(minY, p.y);
+    maxY = Math.max(maxY, p.y);
+  }
+  return { ring, minX, maxX, minY, maxY };
+}
+function insideRing(box, x, y) {
+  if (x < box.minX || x > box.maxX || y < box.minY || y > box.maxY) return false;
+  const ring = box.ring;
+  let hit = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const a = ring[i];
+    const b = ring[j];
+    if (a.y > y !== b.y > y && x < ((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x) hit = !hit;
+  }
+  return hit;
+}
+
+/* Even-odd containment is undefined for a point that lies exactly on the ring,
+ * and the island coastlines ARE clamp rings, so their own shore vertices land
+ * there: of Grissom's 13, five test outside and eight inside. `RING_ON_TOL` is
+ * float slack, not a design distance; the ring the coast builder walks and the
+ * ring the clamp was built from come from the same project() calls, so an
+ * on-ring vertex sits at distance 0 and everything else is metres away. */
+const RING_ON_TOL = 1e-3;
+function onOrInsideRing(box, x, y) {
+  if (insideRing(box, x, y)) return true;
+  if (
+    x < box.minX - RING_ON_TOL ||
+    x > box.maxX + RING_ON_TOL ||
+    y < box.minY - RING_ON_TOL ||
+    y > box.maxY + RING_ON_TOL
+  ) {
+    return false;
+  }
+  const ring = box.ring;
+  const p = { x, y };
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    if (pointSegDist(p, ring[j], ring[i]) <= RING_ON_TOL) return true;
+  }
+  return false;
+}
+
+/** The lowest cap covering a point, or Infinity where no clamp claims it. */
+function clampCapAt(x, y) {
+  let cap = Infinity;
+  for (const clamp of heightClamps) {
+    if (onOrInsideRing(clamp.box, x, y)) cap = Math.min(cap, clamp.max);
+  }
+  return cap;
+}
+
 /** Ground height in course-frame metres. */
 function groundAt(x, y) {
   const { lat, lon } = unproject(x, y);
-  return demAt(lat, lon);
+  const h = demAt(lat, lon);
+  for (const clamp of heightClamps) {
+    if (insideRing(clamp.box, x, y)) return Math.min(h, clamp.max);
+  }
+  return h;
 }
 
 /* -------------------------------------------------- coastline ring assembly */
@@ -954,18 +1157,24 @@ function newLayer(classId, name, drawOrder, material = 0) {
     /* Which channels this layer's block carries, in the container's fixed
      * order. The shore layers pay for fade and shade; the curtain pays for a
      * true range and a base flag instead and would waste a byte per vertex on
-     * either of the other two. */
-    attrMask: material === 1 ? ATTR_DIST | ATTR_BASE : ATTR_FADE | ATTR_SHADE,
+     * either of the other two. Heroes pay one byte more for the substance
+     * index, because a height ramp cannot tell a rock rim from the planting
+     * standing on it (round-4d residual 6.1). */
+    attrMask:
+      material === 1
+        ? ATTR_DIST | ATTR_BASE
+        : ATTR_FADE | ATTR_SHADE | (classId === 4 ? ATTR_MAT : 0),
     positions: [],
     fades: [],
     shades: [],
     dists: [],
     bases: [],
+    mats: [],
     indices: [],
     vertexIndex: new Map(),
     /* Morton order pays on a mesh of scattered small solids and costs nothing
      * on one that is already a monotone sweep (design doc 2.2). */
-    morton: !process.env.BAKE_NO_MORTON && (classId === 2 || classId === 3),
+    morton: !process.env.BAKE_NO_MORTON && (classId === 2 || classId === 3 || classId === 4),
   };
 }
 
@@ -976,8 +1185,9 @@ const LAYERS = [
   newLayer(1, "terrain", 10),
   newLayer(2, "massing", 20),
   newLayer(3, "port", 21),
+  newLayer(4, "heroes", 22),
 ];
-const [L_CURTAIN, L_TERRAIN, L_MASSING, L_PORT] = LAYERS;
+const [L_CURTAIN, L_TERRAIN, L_MASSING, L_PORT, L_HEROES] = LAYERS;
 let current = L_TERRAIN;
 
 function into(layer, build) {
@@ -987,6 +1197,20 @@ function into(layer, build) {
     return build();
   } finally {
     current = previous;
+  }
+}
+
+/* The substance every vertex emitted inside `build` is made of. Stamped on the
+ * vertex rather than passed down through `face` and `member`, because those two
+ * are shared with L2 and L3 and neither has any use for the channel. */
+let currentMat = MAT_RAMP;
+function withMat(mat, build) {
+  const previous = currentMat;
+  currentMat = mat;
+  try {
+    return build();
+  } finally {
+    currentMat = previous;
   }
 }
 
@@ -1025,13 +1249,17 @@ function vertex(x, h, y, shade = SHADE_FLAT) {
   const qx = Math.round(x);
   const qh = Math.round(h * 10);
   const qz = Math.round(-y);
-  const key = `${qx},${qh},${qz},${shade}`;
+  /* the substance joins the dedup key: two hero faces that meet along an edge
+   * but are made of different things do not share a vertex, the same rule
+   * faceting already applies to the shade byte */
+  const key = `${qx},${qh},${qz},${shade},${currentMat}`;
   let index = current.vertexIndex.get(key);
   if (index === undefined) {
     index = current.positions.length / 3;
     current.positions.push(qx, qh, qz);
     current.fades.push(Math.round(fadeAt(x, y) * 255));
     current.shades.push(shade);
+    current.mats.push(currentMat);
     current.vertexIndex.set(key, index);
   }
   return index;
@@ -1077,7 +1305,17 @@ function triangle(a, b, c) {
  * short distance inland, so a bluff behind a beach still shapes the coast
  * wall. Clamped well below the hills: the wall is the waterline face, the
  * relief surface behind it owns the skyline. Inland is the left side of the
- * boundary direction. */
+ * boundary direction.
+ *
+ * The height clamp is owned by the VERTEX, not by the samples. An edge normal
+ * leaves the polygon at a sharp corner, and on a 180 m island a 100 m step off
+ * the corner clears the ring entirely, so the samples come back holding the
+ * unclamped z11 spike the clamp exists to kill: round 5 left Grissom's western
+ * corner reading 88.3 m (drawn 25.0 m after the crest cap) beside eight
+ * neighbours the clamp had already flattened to 6.0 m. Capping the result by
+ * the vertex's own region fixes that without moving any ground outside a ring:
+ * every other coast vertex is metres clear of every clamp ring, so its cap is
+ * Infinity. */
 function shoreHeight(ring, i) {
   const a = ring[i];
   const b = ring[(i + 1) % ring.length];
@@ -1090,7 +1328,7 @@ function shoreHeight(ring, i) {
   for (const off of [40, 100]) {
     h = Math.max(h, groundAt(a.x + nx * off, a.y + ny * off));
   }
-  return Math.min(Math.max(h, MIN_SHORE_H), 90);
+  return Math.min(Math.max(Math.min(h, clampCapAt(a.x, a.y)), MIN_SHORE_H), 90);
 }
 
 /**
@@ -1668,6 +1906,7 @@ function buildRelief(boxes) {
  */
 function buildBreakwaters(ways, coastlineIds) {
   const HEIGHT = 5;
+  const CREST_VARY = 0.7; // m of crest undulation either side of HEIGHT
   const BASE_HALF = 30;
   const CREST_HALF = 9;
   let built = 0;
@@ -1694,20 +1933,40 @@ function buildBreakwaters(ways, coastlineIds) {
       const len = Math.hypot(nx, ny) || 1;
       return { x: nx / len, y: ny / len };
     });
+    /* Crest height along the mole, and the whole of the round-5 change here.
+     *
+     * D6 was a ruler-straight waterline; round 2 fixed the plan view and left
+     * the elevation ruled, so 3 km of rubble mound draws one perfectly flat
+     * line. A real armour-stone crest is not flat: it is placed stone with a
+     * metre of tolerance and decades of settlement. The offset is a hash of the
+     * quantised vertex position, so it is reproducible and independent of the
+     * order the ways arrive in, then smoothed once along the line so the crest
+     * undulates over 100 m rather than jittering per vertex. The mean is the
+     * 5 m the bake already used and Appendix C flags as unverified: this varies
+     * it, it does not raise it. At the 2.1 to 3.2 km the near arm sits at, the
+     * +/-0.7 m band is +/-0.3 px, which is what takes the hard edge off. */
+    const raw = line.map((p) => HEIGHT + (hash01(p.x, p.y) - 0.5) * 2 * CREST_VARY);
+    const crest = raw.map((h, i) => {
+      const a = raw[Math.max(i - 1, 0)];
+      const b = raw[Math.min(i + 1, raw.length - 1)];
+      return (a + 2 * h + b) / 4;
+    });
     const strip = (halfA, hA, halfB, hB, side, shade) => {
       for (let i = 0; i < line.length - 1; i++) {
         const p = line[i];
         const q = line[i + 1];
         const np = normals[i];
         const nq = normals[i + 1];
-        const a0 = vertex(p.x + np.x * halfA * side, hA, p.y + np.y * halfA * side, shade(i));
-        const b0 = vertex(q.x + nq.x * halfA * side, hA, q.y + nq.y * halfA * side, shade(i));
-        const a1 = vertex(p.x + np.x * halfB * side, hB, p.y + np.y * halfB * side, shade(i));
-        const b1 = vertex(q.x + nq.x * halfB * side, hB, q.y + nq.y * halfB * side, shade(i));
+        const a0 = vertex(p.x + np.x * halfA * side, hA(i), p.y + np.y * halfA * side, shade(i));
+        const b0 = vertex(q.x + nq.x * halfA * side, hA(i + 1), q.y + nq.y * halfA * side, shade(i));
+        const a1 = vertex(p.x + np.x * halfB * side, hB(i), p.y + np.y * halfB * side, shade(i));
+        const b1 = vertex(q.x + nq.x * halfB * side, hB(i + 1), q.y + nq.y * halfB * side, shade(i));
         triangle(a0, b0, b1);
         triangle(a0, b1, a1);
       }
     };
+    const flat = (h) => () => h;
+    const at = (i) => crest[i];
     /* a flank normal leans out by the rise and up by the run */
     const flankShade = (i, side) => {
       const p = line[Math.min(i, line.length - 2)];
@@ -1721,19 +1980,19 @@ function buildBreakwaters(ways, coastlineIds) {
     };
     for (const side of [1, -1]) {
       /* skirt below the waterline, then the flank up to the crest */
-      strip(BASE_HALF, BASE_Y, BASE_HALF, 0, side, (i) => flankShade(i, side));
-      strip(BASE_HALF, 0, CREST_HALF, HEIGHT, side, (i) => flankShade(i, side));
+      strip(BASE_HALF, flat(BASE_Y), BASE_HALF, flat(0), side, (i) => flankShade(i, side));
+      strip(BASE_HALF, flat(0), CREST_HALF, at, side, (i) => flankShade(i, side));
     }
-    strip(CREST_HALF, HEIGHT, -CREST_HALF, HEIGHT, 1, () => SHADE_FLAT);
+    strip(CREST_HALF, at, -CREST_HALF, at, 1, () => SHADE_FLAT);
     /* close both ends so the mound is never seen through */
-    for (const at of [0, line.length - 1]) {
-      const p = line[at];
-      const n = normals[at];
+    for (const end of [0, line.length - 1]) {
+      const p = line[end];
+      const n = normals[end];
       const cap = (half, h) => vertex(p.x + n.x * half, h, p.y + n.y * half, SHADE_FLAT);
       const b0 = cap(BASE_HALF, 0);
       const b1 = cap(-BASE_HALF, 0);
-      const c0 = cap(CREST_HALF, HEIGHT);
-      const c1 = cap(-CREST_HALF, HEIGHT);
+      const c0 = cap(CREST_HALF, crest[end]);
+      const c1 = cap(-CREST_HALF, crest[end]);
       triangle(b0, b1, c1);
       triangle(b0, c1, c0);
     }
@@ -2042,8 +2301,13 @@ function buildMassing(ways) {
   let prisms = 0;
   let fromEle = 0;
   let footVerts = 0;
+  /* The THUMS camouflage towers are in this query too, and L4 draws them as
+   * curated heroes with the island rim and planting around them. Extruding
+   * them here as well would put two towers in the same 187 m2 footprint. */
+  const heroTowers = new Set(venue.heroes?.islandTowers ?? []);
   const picked = [];
   for (const way of ways) {
+    if (heroTowers.has(way.id)) continue;
     const height = Number.parseFloat(way.tags?.height);
     if (!Number.isFinite(height) || height < MASS_MIN_H) continue;
     let ring = ringOf(way);
@@ -2108,7 +2372,8 @@ function buildMassing(ways) {
   }
   console.log(
     `massing: ${prisms} prisms of ${ways.length} candidates, ${fromEle} on OSM ele ground, ` +
-      `${(footVerts / Math.max(prisms, 1)).toFixed(1)} footprint verts each`,
+      `${(footVerts / Math.max(prisms, 1)).toFixed(1)} footprint verts each, ` +
+      `${heroTowers.size} THUMS towers left to L4`,
   );
 }
 
@@ -2369,6 +2634,570 @@ function buildPort(cranePoints, infra, rings, boxes) {
   );
 }
 
+/* --------------------------------------------------- L4, hero landmarks */
+
+/**
+ * The ground a hero stands on: the drawn L1 surface under it, `fallback` where
+ * L1 draws nothing there (open water, where the Queen Mary floats and the
+ * bridge towers stand in the channel), and never above `cap`.
+ *
+ * The cap is what keeps a landmark's rendered height honest. L1's relief is a
+ * 64 m DEM and the harbour is full of spikes it cannot resolve (design doc 4.1:
+ * -361 m at the Queen Mary berth, +85 m on the Pier G wharf, +153 m over Island
+ * Grissom). Taking the surface as the datum lets one bad sample add twenty
+ * metres to a sourced dimension. Taking the lower of the two instead can only
+ * ever bury a hero, which is invisible; the other direction is a tower that
+ * exceeds its own published height, which the dimension policy forbids.
+ */
+function heroGround(x, y, fallback, cap) {
+  const h = terrainHeightAt(x, y);
+  return Math.min(h === null ? fallback : h, cap);
+}
+
+/** Polygon offset inward along the vertex bisector. Radial shrink toward a
+ * centroid was the other candidate and it collapses the narrow end of an
+ * elongated island; the bisector keeps a constant standoff from every edge,
+ * which is what a rock rim actually is. The step is capped at 3d so a sharp
+ * corner cannot throw a spike, and the whole offset backs off by half if it
+ * eats the ring, which is the only failure mode a 60,000 m2 island has. */
+function insetPoly(ring, distance) {
+  const target = signedArea(ring);
+  for (let attempt = 0, d = distance; attempt < 4; attempt++, d /= 2) {
+    const n = ring.length;
+    const out = [];
+    let ok = true;
+    for (let i = 0; i < n; i++) {
+      const p = ring[i];
+      const a = ring[(i - 1 + n) % n];
+      const b = ring[(i + 1) % n];
+      /* CCW ring: the inward normal of an edge is its left normal */
+      const inward = (from, to) => {
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        const len = Math.hypot(dx, dy) || 1;
+        return { x: -dy / len, y: dx / len };
+      };
+      const n1 = inward(a, p);
+      const n2 = inward(p, b);
+      const bx = n1.x + n2.x;
+      const by = n1.y + n2.y;
+      const len2 = bx * bx + by * by;
+      if (len2 < 1e-9) {
+        out.push({ x: p.x, y: p.y });
+        continue;
+      }
+      /* offset along the bisector by d / cos(half angle) */
+      let step = (2 * d) / len2;
+      const reach = step * Math.hypot(bx, by);
+      if (reach > 3 * d) step *= (3 * d) / reach;
+      out.push({ x: p.x + bx * step, y: p.y + by * step });
+    }
+    const area = signedArea(out);
+    if (!(area > 0.25 * target)) ok = false;
+    for (const p of out) if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) ok = false;
+    if (ok) return out;
+  }
+  return null;
+}
+
+/** One quad with its geometric normal, flipped to agree with `hint` so a face
+ * always looks the way it is meant to be lit. */
+function quadTo(p0, p1, p2, p3, hint) {
+  let normal = norm3(cross3(sub3(p1, p0), sub3(p3, p0)));
+  if (dot3(normal, hint) < 0) normal = mul3(normal, -1);
+  face(p0, p1, p2, p3, normal);
+}
+
+/** The longest chord of a ring, as a unit direction. A ship, a bridge and an
+ * island all have one axis that matters and no tag carries it. */
+function longAxis(ring) {
+  let best = { x: 1, y: 0 };
+  let longest = 0;
+  for (let i = 0; i < ring.length; i++) {
+    for (let j = i + 1; j < ring.length; j++) {
+      const dx = ring[j].x - ring[i].x;
+      const dy = ring[j].y - ring[i].y;
+      const len = Math.hypot(dx, dy);
+      if (len > longest) {
+        longest = len;
+        best = { x: dx / len, y: dy / len };
+      }
+    }
+  }
+  return { axis: best, length: longest };
+}
+
+/** Area centroid, not the vertex mean: an OSM ring puts most of its vertices
+ * where the surveyor found detail, and the mean drifts toward that end. */
+function areaCentre(ring) {
+  let a2 = 0;
+  let cx = 0;
+  let cy = 0;
+  for (let i = 0; i < ring.length; i++) {
+    const p = ring[i];
+    const q = ring[(i + 1) % ring.length];
+    const cross = p.x * q.y - q.x * p.y;
+    a2 += cross;
+    cx += (p.x + q.x) * cross;
+    cy += (p.y + q.y) * cross;
+  }
+  if (Math.abs(a2) < 1e-6) return centroidOf(ring);
+  return { x: cx / (3 * a2), y: cy / (3 * a2) };
+}
+
+/**
+ * One THUMS island: a rock rim, a planted mass inside it, and the camouflage
+ * towers standing out of the planting.
+ *
+ * This is the round-4d handoff. The islands were terrain-layer flat caps at
+ * 6 m, so the realism grade painted them the harbour-fill reflectance and they
+ * read as tan slabs, worse than the grey they replaced. research.md section 5
+ * says what they actually are from the water: "a low, dark green mass on a
+ * grey-tan rock rim, with one or two tall pale towers standing above it", and
+ * that the islands are greener and darker than everything around them. Three
+ * substances, so three material indices; a height ramp cannot do it, because
+ * the rim and the planting share a metre band.
+ */
+function buildIsland(spec, allTowers) {
+  const raw = spec.ring;
+  const centre = areaCentre(raw);
+  const deck = heroGround(centre.x, centre.y, MIN_SHORE_H, ISLE_DECK_MAX);
+  const rimRing = insetPoly(raw, ISLE_RIM_INSET);
+  if (!rimRing) return 0;
+  const lip = reduceRing(rimRing, spec.segments);
+  const inner = insetPoly(lip, ISLE_RIM_W);
+  if (!inner) return 0;
+  const n = lip.length;
+  const before = current.indices.length;
+  const groundAtLip = lip.map((p) => heroGround(p.x, p.y, deck, ISLE_DECK_MAX));
+
+  withMat(MAT_ROCK, () => {
+    for (let i = 0; i < n; i++) {
+      const a = lip[i];
+      const b = lip[(i + 1) % n];
+      const ai = inner[i];
+      const bi = inner[(i + 1) % n];
+      const ha = groundAtLip[i] + ISLE_RIM_LIP;
+      const hb = groundAtLip[(i + 1) % n] + ISLE_RIM_LIP;
+      /* the outer face runs below the island cap, so the rim is never a band
+       * hovering over its own shadow at a grazing angle (D3) */
+      const outward = norm3(v3(a.x - centre.x, 0, a.y - centre.y));
+      quadTo(
+        v3(a.x, groundAtLip[i] - 2.5, a.y),
+        v3(b.x, groundAtLip[(i + 1) % n] - 2.5, b.y),
+        v3(b.x, hb, b.y),
+        v3(a.x, ha, a.y),
+        outward,
+      );
+      quadTo(
+        v3(a.x, ha, a.y),
+        v3(b.x, hb, b.y),
+        v3(bi.x, deck + 0.4, bi.y),
+        v3(ai.x, deck + 0.4, ai.y),
+        v3(0, 1, 0),
+      );
+    }
+  });
+
+  /* The planting. Its top edge is what the island's silhouette is made of
+   * below the towers, so the canopy height varies per vertex off the same
+   * position hash the cranes use, and three clumps break the line above it. */
+  const canopy = inner.map(
+    (p) => deck + ISLE_VEG_LOW + hash01(p.x * 3, p.y * 3) * ISLE_VEG_SPAN,
+  );
+  withMat(MAT_VEG, () => {
+    for (let i = 0; i < n; i++) {
+      const a = inner[i];
+      const b = inner[(i + 1) % n];
+      quadTo(
+        v3(a.x, deck, a.y),
+        v3(b.x, deck, b.y),
+        v3(b.x, canopy[(i + 1) % n], b.y),
+        v3(a.x, canopy[i], a.y),
+        norm3(v3(a.x - centre.x, 0, a.y - centre.y)),
+      );
+    }
+    const cap = earcut(inner);
+    const top = inner.map((p, i) => vertex(p.x, canopy[i], p.y, SHADE_FLAT));
+    for (let i = 0; i < cap.length; i += 3) {
+      triangle(top[cap[i]], top[cap[i + 1]], top[cap[i + 2]]);
+    }
+    for (let k = 0; k < ISLE_CLUMPS; k++) {
+      const at = inner[Math.round(((k + 0.5) * n) / ISLE_CLUMPS) % n];
+      const p = { x: (at.x + centre.x) / 2, y: (at.y + centre.y) / 2 };
+      const base = deck + 1;
+      member(
+        v3(p.x, base, p.y),
+        v3(p.x, deck + ISLE_VEG_LOW + ISLE_VEG_SPAN + 4 + hash01(p.x, p.y) * 4, p.y),
+        v3(1, 0, 0),
+        26,
+        20,
+        18,
+        14,
+      );
+    }
+  });
+
+  /* Towers, seeded from OSM where the LiDAR import found one and placed on the
+   * ring where it did not. A placed tower sits at 45 per cent of the way from
+   * the island centre to a ring vertex, which is inside the planting on a
+   * star-shaped ring by construction. */
+  const seeded = allTowers.filter((t) => spec.towerIds.includes(t.id));
+  const towers = seeded.map((t, i) => ({ x: t.x, y: t.y, height: t.height, rot: i }));
+  for (let k = 0; k < n && towers.length < ISLE_TOWER_H.length; k++) {
+    const at = lip[Math.round((k * n) / ISLE_TOWER_H.length) % n];
+    const p = { x: centre.x + (at.x - centre.x) * 0.45, y: centre.y + (at.y - centre.y) * 0.45 };
+    if (towers.some((t) => Math.hypot(t.x - p.x, t.y - p.y) < 40)) continue;
+    towers.push({ x: p.x, y: p.y, height: ISLE_TOWER_H[towers.length], rot: k });
+  }
+  withMat(MAT_PALE, () => {
+    for (const t of towers) {
+      const base = heroGround(t.x, t.y, deck, ISLE_DECK_MAX) - 1;
+      const top = base + 1 + t.height;
+      const set = base + (top - base) * 0.62;
+      const angle = (t.rot * Math.PI) / 5 + hash01(t.x, t.y);
+      const across = v3(Math.cos(angle), 0, Math.sin(angle));
+      member(v3(t.x, base, t.y), v3(t.x, set, t.y), across, ISLE_TOWER_W, ISLE_TOWER_D);
+      member(
+        v3(t.x, set, t.y),
+        v3(t.x, top, t.y),
+        across,
+        ISLE_TOWER_W * 0.72,
+        ISLE_TOWER_D * 0.75,
+      );
+    }
+    /* The sculpted screen walls: the thing the islands were built around, and
+     * the reason the silhouette is not a rig. Panels stand on the rim's inner
+     * lip between the towers. */
+    for (let k = 0; k < ISLE_SCREENS; k++) {
+      const i = Math.round(((k + 0.5) * n) / ISLE_SCREENS) % n;
+      const a = inner[i];
+      const b = inner[(i + 1) % n];
+      const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+      const along = v3((b.x - a.x) / len, 0, (b.y - a.y) / len);
+      const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      const base = heroGround(mid.x, mid.y, deck, ISLE_DECK_MAX) - 1;
+      member(
+        v3(mid.x, base, mid.y),
+        v3(mid.x, base + ISLE_SCREEN_H + hash01(mid.x, mid.y) * 5, mid.y),
+        along,
+        Math.min(30, len * 0.8),
+        3,
+      );
+    }
+  });
+  return (current.indices.length - before) / 3;
+}
+
+/** The Queen Mary: a hull from her own OSM outline, two tiers of upperworks and
+ * three funnels. 310.7 m LOA and 55.2 m to the funnel tops (Wikipedia); the
+ * OSM way carries `height=10`, the hull to the promenade deck. */
+function buildQueenMary(way) {
+  if (!way) return 0;
+  const before = current.indices.length;
+  const full = ringOf(way);
+  if (signedArea(full) < 0) full.reverse();
+  const hull = reduceRing(full, 16);
+  const centre = areaCentre(hull);
+  const { axis, length } = longAxis(hull);
+  const u = v3(axis.x, 0, axis.y);
+  let beam = 0;
+  for (const p of hull) {
+    beam = Math.max(beam, Math.abs((p.x - centre.x) * -axis.y + (p.y - centre.y) * axis.x) * 2);
+  }
+  withMat(MAT_DARK, () => {
+    const n = hull.length;
+    for (let i = 0; i < n; i++) {
+      const a = hull[i];
+      const b = hull[(i + 1) % n];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len = Math.hypot(dx, dy) || 1;
+      face(
+        v3(a.x, QM_HULL_BOTTOM, a.y),
+        v3(b.x, QM_HULL_BOTTOM, b.y),
+        v3(b.x, QM_HULL_TOP, b.y),
+        v3(a.x, QM_HULL_TOP, a.y),
+        v3(dy / len, 0, -dx / len),
+      );
+    }
+  });
+  withMat(MAT_PALE, () => {
+    const cap = earcut(hull);
+    const deck = hull.map((p) => vertex(p.x, QM_HULL_TOP, p.y, SHADE_FLAT));
+    for (let i = 0; i < cap.length; i += 3) {
+      triangle(deck[cap[i]], deck[cap[i + 1]], deck[cap[i + 2]]);
+    }
+    const along = (t, h) => v3(centre.x + axis.x * t, h, centre.y + axis.y * t);
+    /* member() centres its prism on the a-b line, so the line runs at the
+     * middle of each tier and `wide` is the tier's height */
+    const tier = (from, to, half, width) =>
+      member(
+        along(-half, (from + to) / 2),
+        along(half, (from + to) / 2),
+        v3(0, 1, 0),
+        to - from,
+        width,
+      );
+    tier(QM_HULL_TOP, QM_DECK1, length * 0.31, beam * 0.72);
+    tier(QM_DECK1, QM_DECK2, length * 0.22, beam * 0.5);
+  });
+  withMat(MAT_ACCENT, () => {
+    /* +/- 0.12 of 310.7 m is 37 m of spacing, which is what the three funnels
+     * actually stand at. At 0.08 they were 25 m apart and 14 m wide, so at
+     * 3.4 km they merged into one 4 px red mark instead of three. */
+    for (const t of [-0.12, 0, 0.12]) {
+      const p = { x: centre.x + axis.x * t * length, y: centre.y + axis.y * t * length };
+      member(
+        v3(p.x, QM_DECK2 - 1, p.y),
+        v3(p.x, QM_FUNNEL_TOP, p.y),
+        u,
+        14,
+        10,
+        12,
+        9,
+      );
+    }
+  });
+  return (current.indices.length - before) / 3;
+}
+
+/** The Long Beach International Gateway: two 157 m towers over a 305 m main
+ * span with the deck 62 m over the channel (Wikipedia). The approach ramps run
+ * out to where L1 has ground under them, so no part of the deck ends in the
+ * air; the stay cables are one tapered wedge per fan, never strands, because a
+ * single stay at 6.6 km is 0.005 px of width. */
+function buildGateway(way) {
+  if (!way) return 0;
+  const before = current.indices.length;
+  const outline = ringOf(way);
+  const centre = areaCentre(outline);
+  const { axis } = longAxis(outline);
+  const u = v3(axis.x, 0, axis.y);
+  const at = (t) => ({ x: centre.x + axis.x * t, y: centre.y + axis.y * t });
+  const RAMP = 900;
+  const deckAt = (t) => {
+    const p = at(t);
+    const ground = heroGround(p.x, p.y, 0, DECK_MAX_H);
+    const arch = GATEWAY_DECK_H * (1 - Math.pow(Math.min(Math.abs(t) / RAMP, 1), 1.7));
+    return Math.max(arch, ground + 4);
+  };
+  withMat(MAT_PALE, () => {
+    const SEGMENTS = 10;
+    for (let i = 0; i < SEGMENTS; i++) {
+      const t0 = -RAMP + (2 * RAMP * i) / SEGMENTS;
+      const t1 = -RAMP + (2 * RAMP * (i + 1)) / SEGMENTS;
+      const a = at(t0);
+      const b = at(t1);
+      member(
+        v3(a.x, deckAt(t0), a.y),
+        v3(b.x, deckAt(t1), b.y),
+        v3(0, 1, 0),
+        6,
+        GATEWAY_DECK_W,
+      );
+    }
+    for (const side of [-1, 1]) {
+      const t = (side * GATEWAY_SPAN) / 2;
+      const p = at(t);
+      const foot = heroGround(p.x, p.y, 0, DECK_MAX_H) - 1;
+      const deck = deckAt(t);
+      member(v3(p.x, foot, p.y), v3(p.x, deck, p.y), u, 13, 13, 11, 11);
+      member(v3(p.x, deck, p.y), v3(p.x, GATEWAY_TOWER_H, p.y), u, 11, 11, 6, 6);
+      /* one wedge per stay fan: 1.2 m at the tower head, 110 m of deck at the
+       * far end, so the fan has volume from every heading and cannot vanish
+       * edge-on the way a plane would */
+      for (const dir of [-1, 1]) {
+        const anchor = at(t + dir * 120);
+        member(
+          v3(p.x, GATEWAY_TOWER_H - 6, p.y),
+          v3(anchor.x, deckAt(t + dir * 120) + 2, anchor.y),
+          v3(0, 1, 0),
+          1.2,
+          1.2,
+          1.2,
+          110,
+        );
+      }
+    }
+  });
+  return (current.indices.length - before) / 3;
+}
+
+/** The Spruce Goose dome: 122 m clear span, 35 m high (Structurae), as a
+ * 12-segment cap on the real footprint of OSM way 721199801.
+ *
+ * OSM's own LiDAR tags on the parent relation read `height=39.4`, `ele=44.0`.
+ * The lower Structurae figure is the one drawn, so nothing here exceeds a
+ * source; both are recorded in provenance. */
+function buildDome(way) {
+  if (!way) return 0;
+  const before = current.indices.length;
+  const c = areaCentre(ringOf(way));
+  const ground = heroGround(c.x, c.y, MIN_SHORE_H, DECK_MAX_H);
+  const RINGS = 3;
+  withMat(MAT_PALE, () => {
+    for (let r = 0; r < RINGS; r++) {
+      const t0 = r / RINGS;
+      const t1 = (r + 1) / RINGS;
+      /* a spherical cap: radius falls as cos, height rises as sin */
+      const r0 = DOME_R * Math.cos((t0 * Math.PI) / 2);
+      const r1 = DOME_R * Math.cos((t1 * Math.PI) / 2);
+      const h0 = ground + DOME_H * Math.sin((t0 * Math.PI) / 2);
+      const h1 = ground + DOME_H * Math.sin((t1 * Math.PI) / 2);
+      for (let i = 0; i < DOME_SEGMENTS; i++) {
+        const a0 = (i / DOME_SEGMENTS) * Math.PI * 2;
+        const a1 = ((i + 1) / DOME_SEGMENTS) * Math.PI * 2;
+        const p = (radius, angle, h) =>
+          v3(c.x + Math.cos(angle) * radius, h, c.y + Math.sin(angle) * radius);
+        if (r1 === 0 || r === RINGS - 1) {
+          const shade = shadeOf(Math.cos((a0 + a1) / 2) * 0.4, 1, Math.sin((a0 + a1) / 2) * 0.4);
+          triangle(
+            vertex(c.x + Math.cos(a0) * r0, h0, c.y + Math.sin(a0) * r0, shade),
+            vertex(c.x + Math.cos(a1) * r0, h0, c.y + Math.sin(a1) * r0, shade),
+            vertex(c.x, ground + DOME_H, c.y, shade),
+          );
+          continue;
+        }
+        const mid = (a0 + a1) / 2;
+        quadTo(
+          p(r0, a0, h0),
+          p(r0, a1, h0),
+          p(r1, a1, h1),
+          p(r1, a0, h1),
+          norm3(v3(Math.cos(mid) * (DOME_H / DOME_R), 1, Math.sin(mid) * (DOME_H / DOME_R))),
+        );
+      }
+    }
+  });
+  return (current.indices.length - before) / 3;
+}
+
+/** The Long Beach Light, the "Robot Light": a block on columns standing in the
+ * water at the harbour entrance. OSM node 566859523 carries `height=13`, which
+ * is the figure used; design doc 1.2's 15 m was an estimate. It is the only
+ * vertical inside 10 km on heading 0. */
+function buildRobotLight(node) {
+  if (!node) return 0;
+  const before = current.indices.length;
+  const p = project(node.lat, node.lon);
+  const height = Number.parseFloat(node.tags?.height);
+  const top = Number.isFinite(height) ? height : ROBOT_H;
+  /* the light stands on a caisson at the harbour entrance, not on a hill: L1
+   * puts one 24 m relief spike under this exact point (a 64 m DEM sample of
+   * the breakwater head), and the cap is what keeps the light off it */
+  const ground = heroGround(p.x, p.y, 0, MIN_SHORE_H);
+  withMat(MAT_PALE, () => {
+    /* the columns are 0.15 px of width at 3.6 km, so the stand is one block:
+     * what survives at this range is a pale vertical over the breakwater line */
+    member(v3(p.x, ground - 1, p.y), v3(p.x, ground + top * 0.55, p.y), v3(1, 0, 0), 9, 9);
+    member(
+      v3(p.x, ground + top * 0.55, p.y),
+      v3(p.x, ground + top, p.y),
+      v3(1, 0, 0),
+      13,
+      11,
+    );
+  });
+  return (current.indices.length - before) / 3;
+}
+
+/** Lions Lighthouse: OSM way 1054968664, `height=20`, a slim tapered tower
+ * inside the downtown cluster. */
+function buildLionsLighthouse(way) {
+  if (!way) return 0;
+  const before = current.indices.length;
+  const ring = ringOf(way);
+  const c = areaCentre(ring);
+  const height = Number.parseFloat(way.tags?.height);
+  const top = Number.isFinite(height) ? height : 20;
+  const ground = heroGround(c.x, c.y, MIN_SHORE_H, DECK_MAX_H);
+  withMat(MAT_PALE, () => {
+    member(v3(c.x, ground - 1, c.y), v3(c.x, ground + top, c.y), v3(1, 0, 0), 7, 7, 4, 4);
+  });
+  return (current.indices.length - before) / 3;
+}
+
+/**
+ * Signal Hill: a cluster of well masts on the 111 m hill, which is what makes
+ * that hill read as Signal Hill rather than as a hill (design doc 1.5,
+ * heading 3). Positions are real: OSM carries 214 `man_made=petroleum_well`
+ * nodes over the field, and the cluster is the highest of them under a spacing
+ * filter, because the field is far denser than 7 km of air can resolve. Mast
+ * height is the one estimate in this layer.
+ */
+function buildDerricks(nodes) {
+  const before = current.indices.length;
+  const candidates = nodes
+    .map((node) => {
+      const p = project(node.lat, node.lon);
+      /* on the hill the DEM is the surface and there is nothing to cap: the
+       * cluster filter below already rejects anything under 40 m */
+      return { ...p, h: heroGround(p.x, p.y, 0, Infinity) };
+    })
+    .filter((p) => inside(p) && p.h > 40)
+    .sort((a, b) => b.h - a.h || a.x - b.x || a.y - b.y);
+  const placed = [];
+  for (const p of candidates) {
+    if (placed.length >= DERRICK_COUNT) break;
+    if (placed.some((q) => Math.hypot(q.x - p.x, q.y - p.y) < DERRICK_SPACING)) continue;
+    placed.push(p);
+  }
+  withMat(MAT_DARK, () => {
+    for (const p of placed) {
+      member(
+        v3(p.x, p.h - 1, p.y),
+        v3(p.x, p.h + DERRICK_H, p.y),
+        v3(1, 0, 0),
+        6,
+        6,
+        1.6,
+        1.6,
+      );
+    }
+  });
+  console.log(`derricks: ${placed.length} of ${candidates.length} wells over 40 m`);
+  return (current.indices.length - before) / 3;
+}
+
+/** Everything design doc 9 curates, in one layer and one draw. */
+function buildHeroes(coastWays, massingWays, anchors) {
+  const h = venue.heroes;
+  if (!h) return;
+  const byId = new Map(anchors.map((el) => [el.id, el]));
+  const towers = massingWays
+    .filter((way) => h.islandTowers.includes(way.id))
+    .map((way) => {
+      const c = areaCentre(ringOf(way));
+      const height = Number.parseFloat(way.tags.height);
+      return { id: way.id, x: c.x, y: c.y, height };
+    });
+  const counts = [];
+  for (const island of h.islands) {
+    const way = coastWays.find((w) => w.id === island.way);
+    if (!way) continue;
+    const ring = ringOf(way);
+    if (signedArea(ring) < 0) ring.reverse();
+    const towerIds = towers
+      .filter((t) => Math.hypot(t.x - areaCentre(ring).x, t.y - areaCentre(ring).y) < 260)
+      .map((t) => t.id);
+    counts.push([
+      `island ${island.name}`,
+      buildIsland({ ring, segments: island.segments, towerIds }, towers),
+    ]);
+  }
+  counts.push(["queen mary", buildQueenMary(byId.get(h.queenMary))]);
+  counts.push(["gateway", buildGateway(byId.get(h.gateway))]);
+  counts.push(["spruce goose dome", buildDome(byId.get(h.dome))]);
+  counts.push(["robot light", buildRobotLight(byId.get(h.longBeachLight))]);
+  counts.push(["lions lighthouse", buildLionsLighthouse(byId.get(h.lionsLighthouse))]);
+  counts.push([
+    "signal hill derricks",
+    buildDerricks(anchors.filter((el) => el.type === "node" && el.tags?.man_made === "petroleum_well")),
+  ]);
+  for (const [name, tris] of counts) console.log(`  hero ${name}: ${tris} tris`);
+}
+
 /* ------------------------------------------------------------------ output */
 
 /** Interleave the low 16 bits of a value into every third bit, so three of
@@ -2409,6 +3238,7 @@ function mortonSort(layer) {
   const shades = layer.shades.length ? new Array(n) : [];
   const dists = layer.dists.length ? new Array(n) : [];
   const bases = layer.bases.length ? new Array(n) : [];
+  const mats = layer.mats.length ? new Array(n) : [];
   for (let k = 0; k < n; k++) {
     const from = order[k];
     positions[k * 3] = layer.positions[from * 3];
@@ -2418,12 +3248,14 @@ function mortonSort(layer) {
     if (shades.length) shades[k] = layer.shades[from];
     if (dists.length) dists[k] = layer.dists[from];
     if (bases.length) bases[k] = layer.bases[from];
+    if (mats.length) mats[k] = layer.mats[from];
   }
   layer.positions = positions;
   layer.fades = fades;
   layer.shades = shades;
   layer.dists = dists;
   layer.bases = bases;
+  layer.mats = mats;
   for (let i = 0; i < layer.indices.length; i++) layer.indices[i] = to[layer.indices[i]];
 }
 
@@ -2437,7 +3269,7 @@ function writeAsset() {
     const vertCount = layer.positions.length / 3;
     const use32 = vertCount > 65535;
     let perVertex = 6; // the three Int16 position slots every layer carries
-    for (const bit of [ATTR_FADE, ATTR_SHADE, ATTR_DIST, ATTR_BASE]) {
+    for (const bit of [ATTR_FADE, ATTR_SHADE, ATTR_DIST, ATTR_BASE, ATTR_MAT]) {
       if (layer.attrMask & bit) perVertex += ATTR_BYTES[bit];
     }
     const head = vertCount * perVertex;
@@ -2490,6 +3322,9 @@ function writeAsset() {
     }
     if (layer.attrMask & ATTR_BASE) {
       for (let k = 0; k < layer.bases.length; k++) buffer.writeUInt8(layer.bases[k], at++);
+    }
+    if (layer.attrMask & ATTR_MAT) {
+      for (let k = 0; k < layer.mats.length; k++) buffer.writeUInt8(layer.mats[k], at++);
     }
     at += pad;
     for (let k = 0; k < layer.indices.length; k++) {
@@ -2577,7 +3412,11 @@ const massingWays = (await fetchMassing()).elements.filter(
 const infraWays = (await fetchInfrastructure()).elements.filter(
   (e) => e.type === "way" && e.geometry,
 );
-console.log(`overpass Q2/Q3: ${massingWays.length} tall buildings, ${infraWays.length} infra ways`);
+const heroAnchors = venue.heroes ? (await fetchHeroAnchors()).elements : [];
+console.log(
+  `overpass Q2/Q3/Q5: ${massingWays.length} tall buildings, ${infraWays.length} infra ways, ` +
+    `${heroAnchors.length} hero anchors`,
+);
 await prefetchDem();
 
 const coastWays = overpass.elements.filter(
@@ -2598,6 +3437,16 @@ const craneWays = overpass.elements
     return { x: cx, y: cy };
   });
 const coastlineIds = new Set(coastWays.map((w) => w.id));
+/* Before any height is sampled: the THUMS islands' own published ground, so
+ * the z11 spikes over them cannot reach L1 or the heroes standing on it. */
+for (const island of venue.heroes?.islands ?? []) {
+  const way = coastWays.find((w) => w.id === island.way);
+  if (!way) continue;
+  const ele = Number.parseFloat(way.tags?.ele);
+  const max = Math.max(Number.isFinite(ele) ? ele : 0, MIN_SHORE_H);
+  heightClamps.push({ name: island.name, max, box: clampedGroundRing(ringOf(way)) });
+  console.log(`height clamp: ${island.name} island capped at ${max} m (OSM ele ${way.tags?.ele})`);
+}
 console.log(
   `overpass: ${coastWays.length} coastline ways, ${breakwaterWays.length} breakwaters, ${
     craneNodes.length + craneWays.length
@@ -2702,6 +3551,7 @@ into(L_TERRAIN, () => {
 buildTerrainIndex();
 into(L_MASSING, () => buildMassing(massingWays));
 into(L_PORT, () => buildPort(craneNodes.concat(craneWays), infraWays, rings, boxes));
+into(L_HEROES, () => buildHeroes(coastWays, massingWays, heroAnchors));
 await prefetchCurtainDem();
 into(L_CURTAIN, () => buildCurtain());
 writeAsset();
