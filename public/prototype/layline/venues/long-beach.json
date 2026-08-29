@@ -18,6 +18,11 @@
     "Elevation: Mapzen Terrarium tiles via AWS Open Data",
     "Terrain: USGS 3DEP and NASA SRTM, courtesy of the U.S. Geological Survey"
   ],
+  "products": {
+    "trees": "7770434cc03e916c9111a8f67aa2eee24cbad48a50ec5cb68ef98edfea51ab75",
+    "shoreline": "1ce6bc6c336c1a7c02314f55061a6074521bd9814df1f614798fbbb6de3e4bdf",
+    "masses": "480df59f80a57d925449d5af3d9d8a0ed994347f48c2e65312a080f1a29291e2"
+  },
   "stats": {
     "vertices": 66249,
     "triangles": 66931,

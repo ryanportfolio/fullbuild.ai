@@ -668,7 +668,7 @@ test("the committed asset and the baker that made it are both pinned", () => {
   );
   assert.equal(
     sha256(bytes(BAKER)),
-    "126686a8e3c65e6d69c37f3df42770854ba2271903c803babb7817275933169f",
+    "75c7970b1183e4c0b416e2af8bfec59ad61dd06d4aba5e47b8f717e7250e4faf",
     "the baker changed; rebake the venue and restate both hashes",
   );
   const manifest = JSON.parse(
@@ -696,4 +696,19 @@ test("the committed asset and the baker that made it are both pinned", () => {
     manifest.stats.triangles,
     manifest.stats.layers.reduce((sum: number, l: { triangles: number }) => sum + l.triangles, 0),
   );
+  /* The bake consumes the committed data products directly, so the manifest
+     pins each one by its valuesSha256. Refreshing a product without rebaking
+     leaves this stale and fails here; layline-scenery-ingest.test.ts already
+     holds each file's declared valuesSha256 honest against a recompute, so the
+     two tests together close the chain product -> bake -> shipped asset. */
+  for (const name of ["trees", "shoreline", "masses"] as const) {
+    const doc = JSON.parse(
+      readFileSync(new URL(`../scripts/venue-data/long-beach/${name}.json`, import.meta.url), "utf8"),
+    );
+    assert.equal(
+      manifest.products[name],
+      doc.valuesSha256,
+      `${name}.json changed since the venue was baked; rebake and recommit the asset`,
+    );
+  }
 });

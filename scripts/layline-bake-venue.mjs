@@ -423,8 +423,11 @@ if (!venue) {
  * parameters, a `valuesSha256` over the numbers it publishes, and a pointer into
  * provenance.json, where every raw tile behind it is listed with its own sha256.
  *
- * These are OPTIONAL: a venue with no products bakes exactly as it did before,
- * on the constants above. Absence is logged, never guessed around silently. */
+ * These are OPTIONAL for a venue without hero islands: such a venue bakes
+ * exactly as it did before, on the constants above, and absence is logged.
+ * A venue that DOES declare hero islands requires all three (round 1 removed
+ * the constant-based island builders, so a missing product would silently bake
+ * bare islands); buildHeroes fails the bake loudly instead. */
 const DATA_DIR = join("scripts", "venue-data", venueId);
 function loadProduct(name) {
   const path = join(DATA_DIR, `${name}.json`);
@@ -3851,19 +3854,36 @@ function buildHeroes(coastWays, anchors) {
     if (!way) continue;
     const ring = ringOf(way);
     if (signedArea(ring) < 0) ring.reverse();
-    /* Products key on the island's own OSM way id, so a renamed island or a
-     * reordered VENUES block cannot mis-join a crown cloud to a shoreline. */
+    /* Products key on the island's own OSM way id (masses on the island label,
+     * its own key, so a missing tree product cannot sever the mass join), so a
+     * renamed island or a reordered VENUES block cannot mis-join a crown cloud
+     * to a shoreline. Round 1 removed the constant-based island builders, so an
+     * island with a missing product would silently bake bare; fail the bake
+     * loudly instead (codex round-1 P2). */
     const treeSet = PRODUCTS.trees?.islands.find((i) => i.osmWay === island.way);
     const shoreSet = PRODUCTS.shoreline?.islands.find((i) => i.osmWay === island.way);
-    const massSet = PRODUCTS.masses?.patches.find((p) => p.name === treeSet?.name);
+    const massSet = PRODUCTS.masses?.patches.find((p) => p.kind === "island" && p.island === island.name);
+    if (!treeSet || !shoreSet || !massSet) {
+      const missing = [
+        !treeSet && "trees",
+        !shoreSet && "shoreline",
+        !massSet && "masses",
+      ].filter(Boolean);
+      console.error(
+        `island ${island.name}: no ${missing.join(", ")} data; the constant-based island ` +
+          `builders are gone, so this would bake a bare island. Restore the product or ` +
+          `remove the island from VENUES.`,
+      );
+      process.exit(1);
+    }
     counts.push([
       `island ${island.name}`,
       buildIsland({
         name: island.name,
         ring,
-        crowns: treeSet?.crowns ?? null,
-        shoreline: shoreSet ?? null,
-        masses: massSet?.masses ?? null,
+        crowns: treeSet.crowns,
+        shoreline: shoreSet,
+        masses: massSet.masses,
       }),
     ]);
   }
@@ -4037,6 +4057,15 @@ function writeAsset() {
       } km (AWS Open Data)`,
     },
     attribution: venue.attribution,
+    /* The committed data products this bake consumed, each pinned by its own
+     * valuesSha256, so a product refresh cannot ship stale baked geometry:
+     * tests/layline-venue-asset.test.ts holds this block and the committed
+     * files to agree (codex round-1 P2). */
+    products: Object.fromEntries(
+      Object.entries(PRODUCTS)
+        .filter(([, json]) => json)
+        .map(([name, json]) => [name, json.valuesSha256]),
+    ),
     stats: {
       vertices: vertCount,
       triangles: triCount,
