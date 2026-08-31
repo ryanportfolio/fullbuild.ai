@@ -30,6 +30,11 @@ export const ATTR_SHADE = 2;
 export const ATTR_DIST = 4;
 export const ATTR_BASE = 8;
 export const ATTR_MAT = 16;
+/* Round 2, both baked by the same pass in the baker: what the sun can see of
+ * a vertex past the venue's own triangles, and how much of its hemisphere
+ * nearby geometry closes off. Both normalised, so the shader reads 0..1. */
+export const ATTR_SUN = 32;
+export const ATTR_AO = 64;
 
 export type VenueLayer = {
   classId: number;
@@ -96,6 +101,22 @@ function parseLayer(
     at += vertCount;
   } else if (attrMask & ATTR_SHADE) {
     geometry.setAttribute("aMat", new BufferAttribute(new Uint8Array(vertCount), 1));
+  }
+  /* The same contract as aMat and for the same reason, with the opposite
+   * default: a shore layer whose block predates round 2 (the LVN2 fallback
+   * asset, or an LVN3 baked before the occlusion pass existed) is fully lit and
+   * fully open rather than unlit and fully closed, so an older asset renders as
+   * it always did instead of turning black. */
+  for (const [bit, name] of [
+    [ATTR_SUN, "aSun"],
+    [ATTR_AO, "aAo"],
+  ] as const) {
+    if (attrMask & bit) {
+      geometry.setAttribute(name, new BufferAttribute(new Uint8Array(buffer, at, vertCount).slice(), 1, true));
+      at += vertCount;
+    } else if (attrMask & ATTR_SHADE) {
+      geometry.setAttribute(name, new BufferAttribute(new Uint8Array(vertCount).fill(255), 1, true));
+    }
   }
   const indices = wideIndex
     ? new Uint32Array(buffer, indexAt, indexCount)

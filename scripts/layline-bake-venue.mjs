@@ -37,7 +37,8 @@
  *     u8  drawOrder  ascending
  *     u8  attrMask   bit0 aFade, bit1 aShade, bit2 aDist (i16), bit3 aBase (u8;
  *                    bit0 base vertex, bit1 far band), bit4 aMat (u8; 0 = take
- *                    the layer's own height ramp, 1..6 = a named substance)
+ *                    the layer's own height ramp, 1..6 = a named substance),
+ *                    bit5 aSun (u8), bit6 aAo (u8)
  *     u8  yUnit      y quantisation denominator; 10 means 0.1 m
  *     u8  idx32      1 if this layer's indices are u32
  *     u8  pad
@@ -51,6 +52,10 @@
  *     i16 dist[vertCount]    true horizontal range in 4 m units (curtain only)
  *     u8  base[vertCount]    0 ridge / 255 base vertex (curtain only)
  *     u8  mat[vertCount]     named substance index (port and heroes)
+ *     u8  sun[vertCount]     0..255, the fraction of the solar disc the vertex
+ *                            sees past the venue's own triangles (round 2)
+ *     u8  ao[vertCount]      0..255, the fraction of the hemisphere its normal
+ *                            opens that nearby geometry leaves open (round 2)
  *     pad to 4 bytes
  *     u16|u32 idx[indexCount]
  *
@@ -393,12 +398,22 @@ const MAT_WHITE = 7; // the dome and the harbour light, white
 const MAT_SCREEN = 8; // sculpted screen walls and tower bodies, smooth concrete
 const MAT_PANEL = 9; // the blue panels up the sides of the towers
 const MAT_DECK = 10; // the island deck under the planting
+/* Round 2. Two more bytes on every shore layer, both computed by
+ * bakeOcclusion() below against the venue's own triangles: what the sun can
+ * see of a vertex, and what the sky can. aShade carries a face's own
+ * orientation and has no way to carry what stands in front of it, which is
+ * why a tower here threw nothing on the ground it stands on. The curtain
+ * takes neither: its vertices are directions, not places. */
+const ATTR_SUN = 32;
+const ATTR_AO = 64;
 const ATTR_BYTES = {
   [ATTR_FADE]: 1,
   [ATTR_SHADE]: 1,
   [ATTR_DIST]: 2,
   [ATTR_BASE]: 1,
   [ATTR_MAT]: 1,
+  [ATTR_SUN]: 1,
+  [ATTR_AO]: 1,
 };
 const Y_UNIT = 10; // y quantised in 0.1 m
 
@@ -1354,13 +1369,21 @@ function newLayer(classId, name, drawOrder, material = 0) {
     attrMask:
       material === 1
         ? ATTR_DIST | ATTR_BASE
-        : ATTR_FADE | ATTR_SHADE | (classId === 3 || classId === 4 ? ATTR_MAT : 0),
+        : ATTR_FADE |
+          ATTR_SHADE |
+          ATTR_SUN |
+          ATTR_AO |
+          (classId === 3 || classId === 4 ? ATTR_MAT : 0),
     positions: [],
     fades: [],
     shades: [],
     dists: [],
     bases: [],
     mats: [],
+    /* filled in one pass at the end of the bake, once every builder has run:
+     * a tower cannot be asked what it shades while half the venue is missing */
+    suns: [],
+    aos: [],
     indices: [],
     vertexIndex: new Map(),
     /* Morton order pays on a mesh of scattered small solids and costs nothing
@@ -3899,6 +3922,749 @@ function buildHeroes(coastWays, anchors) {
   for (const [name, tris] of counts) console.log(`  hero ${name}: ${tris} tris`);
 }
 
+/* --------------------------------------------------- baked sun and ambient */
+
+/**
+ * What stands between a surface and the light, measured once, offline.
+ *
+ * `aShade` carries the Lambert term, which is what a face's own orientation
+ * does to the sun. What it cannot carry is what stands BETWEEN a face and the
+ * sun, so every tower here has a lit side and a shaded side and throws nothing
+ * across the ground it stands on, every crown floats over a rim it does not
+ * darken, and a rim meets the water with no contact shadow at all. That absence
+ * is most of what reads as a slab.
+ *
+ * Two more bytes a vertex close it. `aSun` is the fraction of the solar disc a
+ * vertex can see past the venue's own triangles; `aAo` is how much of the
+ * hemisphere its normal opens is closed off by geometry within arm's reach. The
+ * shader multiplies the direct term by the first and the sky fill by the
+ * second, so a frame pays for one more attribute fetch and nothing else: no
+ * light, no pass, no shadow map, no per-frame work.
+ */
+
+/* Every value below is the mean over the surface the VERTEX IS RESPONSIBLE
+ * FOR, not the value at the vertex point, and on this mesh that distinction
+ * decides whether the islands read at all. A THUMS island deck is one earcut
+ * cap whose only vertices sit on its ring, so a point sample at a rim corner
+ * (which the rim rocks genuinely do shadow) interpolated across a 26,000 m2
+ * triangle painted the entire deck black: measured, and the first thing the
+ * round-2 captures showed. Sampling the vertex's own support instead makes the
+ * estimate exactly as sharp as the mesh is and no sharper. A 6.0 m island
+ * facet keeps its contact shadow; a 26,000 m2 cap gets the mean light that
+ * really falls on it.
+ *
+ * The samples are spread over the incident triangles in proportion to area and
+ * weighted by the vertex's own linear basis function, which is the same hat the
+ * rasteriser interpolates the attribute back out with. */
+const SUPPORT_SAMPLES = 16;
+
+/* The sun is a disc, not a point. Its mean angular semi-diameter seen from
+ * Earth is 16.0 arcmin (MEASURED, the astronomical constant: 15.99' at mean
+ * distance), so a shadow edge is a penumbra 2 d tan(16') wide at distance d
+ * from whatever casts it, 3.7 m at the 399 m these rays reach. Each support
+ * sample takes one ray at its own jittered point on the disc, so a vertex
+ * spends SUPPORT_SAMPLES rays covering the disc and its own surface at once.
+ * The disc is not a softening knob: widening it past 16 arcmin would be
+ * inventing a light this scene does not have, and the measured consequence is
+ * small either way (round-2 report: point-sampled, eight disc samples differed
+ * from a single centre ray on 170 of 47,462 sunward vertices). */
+const SUN_ANG_RADIUS = (16.0 / 60) * DEG;
+/* Ambient occlusion at contact scale, cosine-weighted over the hemisphere the
+ * vertex normal opens, with each blocker weighted by 1 - t / AO_RANGE so it
+ * fades out with distance instead of stopping at a hard radius.
+ *
+ * The range is what keeps this a contact term rather than a sky view factor,
+ * and that distinction is load-bearing. VenueShore's ambient is ONE isotropic
+ * sky fill whose gain (AMB_GAIN 0.44) was fixed in round 4d against measured
+ * sunlit-to-shaded pairs, and its own comment says the constant stands in for
+ * the interreflection between a stack and the apron under it. An unbounded
+ * occlusion term would count the open ground itself as an occluder of every
+ * vertical face, halve the ambient on all of them, and push the rendered
+ * sunlit-to-shaded ratio from 3.2 to about 6 against a measurement of 2.6 to
+ * 3.4. Bounded at contact scale it leaves an isolated wall alone and darkens
+ * what is actually tucked under something.
+ *
+ * 18 m is DERIVED from the venue's own measured planting: trees.json's 1,079
+ * crowns have a p90 height of 17.46 m over their deck, so a crown darkens the
+ * deck under it out to the height it stands at and no further. The sweep behind
+ * that pick is in the round-2 report; with the distance falloff the channel is
+ * close to insensitive to it (mean over the terrain layer 0.937 at 6 m, 0.894
+ * at 18, 0.861 at 60).
+ *
+ * The ray count is MEASURED rather than picked. Each support sample fires a
+ * jittered 4 x 3 grid of strata, 192 rays over the 16 samples, and rebaking the
+ * whole venue at a different seed then moves the ambient byte by the p95 in the
+ * round-2 report. Stratifying in two dimensions is worth more than multiplying
+ * rays: point-sampled, 64 rays on an 8 x 8 grid measured a p95 of 0.035 where
+ * 96 rays on a stratified radius and a golden-ratio azimuth measured 0.067. */
+const AO_AZIMUTHS = 4;
+const AO_RADII = 3;
+const AO_RAYS = AO_AZIMUTHS * AO_RADII;
+const AO_RANGE = 18;
+/* Arbitrary, fixed, and written into the manifest. The jitter inside both
+ * sample sets is a hash of the vertex index and this seed rather than a step of
+ * a running generator, so it does not depend on the order vertices are visited
+ * in, two bakes agree byte for byte, and a bake run at another seed shows up in
+ * the manifest rather than only in the pixels. */
+const OCCLUSION_SEED = 0x6c61794c; // "layL"
+/* Off the surface the ray starts on, along the face normal of the triangle the
+ * sample landed in. */
+const RAY_EPS = 0.05;
+/* Derived off the mesh inside the pass and reported in the manifest beside the
+ * seed, because it is a property of this venue's extent rather than a setting. */
+let occlusionRange = 0;
+
+/** The occluder set, the two channels, and the log lines that say what they
+ * came out at. Runs after every builder and before `writeAsset`, so what it
+ * casts against is the whole shipped venue rather than one layer's share. */
+function bakeOcclusion() {
+  /* The curtain is not geometry: its position slots are directions its own
+   * vertex shader relocates around the camera every frame, so it can neither
+   * cast nor receive. Everything else casts on everything else, which is the
+   * point: a downtown tower in L2 shades the wharf under it in L1, an island
+   * screen in L4 shades its own deck. */
+  const shore = LAYERS.filter((layer) => layer.material === 0 && layer.indices.length > 0);
+  let vertTotal = 0;
+  let triTotal = 0;
+  for (const layer of shore) {
+    vertTotal += layer.positions.length / 3;
+    triTotal += layer.indices.length / 3;
+  }
+  if (vertTotal === 0) return;
+
+  /* one flat vertex table across the layers, in world metres */
+  const px = new Float64Array(vertTotal);
+  const py = new Float64Array(vertTotal);
+  const pz = new Float64Array(vertTotal);
+  const shadeByte = new Uint8Array(vertTotal);
+  const firstVertex = new Map();
+  let at = 0;
+  for (const layer of shore) {
+    firstVertex.set(layer, at);
+    const n = layer.positions.length / 3;
+    for (let i = 0; i < n; i++) {
+      px[at + i] = layer.positions[i * 3];
+      py[at + i] = layer.positions[i * 3 + 1] / Y_UNIT;
+      pz[at + i] = layer.positions[i * 3 + 2];
+      shadeByte[at + i] = layer.shades[i];
+    }
+    at += n;
+  }
+  const tri = new Int32Array(triTotal * 3);
+  let writeAt = 0;
+  for (const layer of shore) {
+    const off = firstVertex.get(layer);
+    for (let k = 0; k < layer.indices.length; k++) tri[writeAt++] = off + layer.indices[k];
+  }
+
+  /* The sun in world axes. `SUN` above is bake space (x, up, courseY) and the
+   * scene maps course y onto -z, the same mapping `vertex` applies to a
+   * position, so this is the one place the two frames meet and sky.ts's own
+   * sunDirection() is what it has to agree with. */
+  const sunX = SUN.x;
+  const sunY = SUN.h;
+  const sunZ = -SUN.y;
+
+  /* Vertex normals, area-weighted over the incident triangles. The mesh has no
+   * normal channel and never needed one: `shadeOf` was handed a normal by the
+   * builder and only the Lambert byte survived. */
+  const nx = new Float64Array(vertTotal);
+  const ny = new Float64Array(vertTotal);
+  const nz = new Float64Array(vertTotal);
+  for (let f = 0; f < triTotal; f++) {
+    const a = tri[f * 3];
+    const b = tri[f * 3 + 1];
+    const c = tri[f * 3 + 2];
+    const ux = px[b] - px[a];
+    const uy = py[b] - py[a];
+    const uz = pz[b] - pz[a];
+    const vx = px[c] - px[a];
+    const vy = py[c] - py[a];
+    const vz = pz[c] - pz[a];
+    /* twice the area times the unit normal, so the sum is area-weighted */
+    const gx = uy * vz - uz * vy;
+    const gy = uz * vx - ux * vz;
+    const gz = ux * vy - uy * vx;
+    nx[a] += gx;
+    ny[a] += gy;
+    nz[a] += gz;
+    nx[b] += gx;
+    ny[b] += gy;
+    nz[b] += gz;
+    nx[c] += gx;
+    ny[c] += gy;
+    nz[c] += gz;
+  }
+
+  /* Which way round that normal points is not settled by the winding: the
+   * material is DoubleSide, so no builder was ever forced to agree with any
+   * other, and just over half of these come back inside out. The shade byte
+   * settles it without a guess. `shadeOf` writes max(N.L, 0) through a fixed
+   * ramp, so a vertex above the floor byte was given a sun-facing normal and
+   * one at the floor was given a normal facing away; flipping the
+   * reconstruction to agree recovers the sign the builder used, and with it the
+   * back-facing test below. */
+  const SHADE_FLOOR = shadeOf(0, -1, 0);
+  let flipped = 0;
+  let degenerate = 0;
+  let agrees = 0;
+  let flatTotal = 0;
+  let flatAgrees = 0;
+  /* how far the incident faces of a vertex disagree with each other: a vertex
+   * whose faces are coplanar has an exact normal and has to reproduce its shade
+   * byte, one on a crease has a faceted average of several and cannot */
+  const spread = new Float64Array(vertTotal);
+  for (let f = 0; f < triTotal; f++) {
+    const a = tri[f * 3];
+    const b = tri[f * 3 + 1];
+    const c = tri[f * 3 + 2];
+    const ux = px[b] - px[a];
+    const uy = py[b] - py[a];
+    const uz = pz[b] - pz[a];
+    const vx = px[c] - px[a];
+    const vy = py[c] - py[a];
+    const vz = pz[c] - pz[a];
+    let gx = uy * vz - uz * vy;
+    let gy = uz * vx - ux * vz;
+    let gz = ux * vy - uy * vx;
+    const glen = Math.hypot(gx, gy, gz) || 1;
+    gx /= glen;
+    gy /= glen;
+    gz /= glen;
+    for (const v of [a, b, c]) {
+      const len = Math.hypot(nx[v], ny[v], nz[v]) || 1;
+      const cosine = Math.abs((nx[v] * gx + ny[v] * gy + nz[v] * gz) / len);
+      const off = 1 - Math.min(1, cosine);
+      if (off > spread[v]) spread[v] = off;
+    }
+  }
+  for (const layer of shore) {
+    const off = firstVertex.get(layer);
+    const n = layer.positions.length / 3;
+    for (let i = 0; i < n; i++) {
+      const v = off + i;
+      let len = Math.hypot(nx[v], ny[v], nz[v]);
+      if (len === 0) {
+        /* no incident triangle, or a fold whose faces cancel exactly: stand the
+         * hemisphere up and let the shade byte turn it over below */
+        nx[v] = 0;
+        ny[v] = 1;
+        nz[v] = 0;
+        len = 1;
+        degenerate++;
+      }
+      nx[v] /= len;
+      ny[v] /= len;
+      nz[v] /= len;
+      const shade = layer.shades[i];
+      const lambert = nx[v] * sunX + ny[v] * sunY + nz[v] * sunZ;
+      if ((shade > SHADE_FLOOR && lambert < 0) || (shade <= SHADE_FLOOR && lambert > 0)) {
+        nx[v] = -nx[v];
+        ny[v] = -ny[v];
+        nz[v] = -nz[v];
+        flipped++;
+      }
+      const back = nx[v] * sunX + ny[v] * sunY + nz[v] * sunZ;
+      const predicted = Math.max(
+        0,
+        Math.min(255, Math.round((0.62 + 0.55 * Math.max(back, 0)) * 128)),
+      );
+      const exact = Math.abs(predicted - shade) <= 1;
+      if (exact) agrees++;
+      /* 1 - cos(1 degree) = 1.52e-4 */
+      if (spread[v] <= 1.52e-4) {
+        flatTotal++;
+        if (exact) flatAgrees++;
+      }
+    }
+  }
+
+  /* Triangles a ray must not hit: the ones incident to the vertex it leaves
+   * from, AND the ones incident to any vertex standing at the same place. The
+   * second half is not optional. The dedup key carries the shade byte and the
+   * substance, so a crease is a PAIR of vertices at one position with disjoint
+   * triangle sets, and without this a grazing sun ray leaves one of them and
+   * hits the other's face 3 cm away. Round 2 measured that at 1,988 vertices
+   * before the group was added. */
+  const groupKey = new Map();
+  const group = new Int32Array(vertTotal);
+  let groupCount = 0;
+  for (let v = 0; v < vertTotal; v++) {
+    const key = `${px[v]},${Math.round(py[v] * Y_UNIT)},${pz[v]}`;
+    let id = groupKey.get(key);
+    if (id === undefined) {
+      id = groupCount++;
+      groupKey.set(key, id);
+    }
+    group[v] = id;
+  }
+  const memberAt = new Int32Array(groupCount + 1);
+  for (let v = 0; v < vertTotal; v++) memberAt[group[v] + 1]++;
+  for (let g = 0; g < groupCount; g++) memberAt[g + 1] += memberAt[g];
+  const member = new Int32Array(vertTotal);
+  {
+    const cursor = Int32Array.from(memberAt.subarray(0, groupCount));
+    for (let v = 0; v < vertTotal; v++) member[cursor[group[v]]++] = v;
+  }
+  const incidentAt = new Int32Array(vertTotal + 1);
+  for (let k = 0; k < tri.length; k++) incidentAt[tri[k] + 1]++;
+  for (let v = 0; v < vertTotal; v++) incidentAt[v + 1] += incidentAt[v];
+  const incident = new Int32Array(tri.length);
+  {
+    const cursor = Int32Array.from(incidentAt.subarray(0, vertTotal));
+    for (let f = 0; f < triTotal; f++) {
+      incident[cursor[tri[f * 3]]++] = f;
+      incident[cursor[tri[f * 3 + 1]]++] = f;
+      incident[cursor[tri[f * 3 + 2]]++] = f;
+    }
+  }
+
+  /* How far a shadow ray has to travel before it can be given up on. DERIVED,
+   * and exactly rather than approximately: the sun stands at SUN_EL, so a
+   * caster whose top is at height t can shade a receiver at height r no further
+   * than (t - r) / tan(SUN_EL) away. Taking t as the tallest vertex in the mesh
+   * and r as the lowest makes the cast EXHAUSTIVE rather than truncated: past
+   * this range nothing in this venue can stand between a vertex and the sun.
+   * Measured off the mesh rather than typed in, so a taller venue lengthens its
+   * own rays. */
+  let topY = -Infinity;
+  let lowY = Infinity;
+  for (let v = 0; v < vertTotal; v++) {
+    if (py[v] > topY) topY = py[v];
+    if (py[v] < lowY) lowY = py[v];
+  }
+  const RAY_RANGE = Math.ceil((topY - lowY) / Math.tan(SUN_EL));
+  occlusionRange = RAY_RANGE;
+
+  /* A bounding-volume hierarchy over the triangles, median split on the widest
+   * axis of the centroid spread. The venue is 21 km across and holds triangles
+   * from 6 m island facets to a 6.8 km2 harbour cap, so a uniform grid needs
+   * either cells the cap spans by the thousand or cells far too coarse for an
+   * island; a hierarchy carries both without a special case. Ties in the split
+   * are broken by triangle index, so the tree is a function of the mesh and not
+   * of the sort implementation. */
+  const LEAF = 8;
+  const order = new Int32Array(triTotal);
+  const cx = new Float64Array(triTotal);
+  const cy = new Float64Array(triTotal);
+  const cz = new Float64Array(triTotal);
+  for (let f = 0; f < triTotal; f++) {
+    order[f] = f;
+    const a = tri[f * 3];
+    const b = tri[f * 3 + 1];
+    const c = tri[f * 3 + 2];
+    cx[f] = (px[a] + px[b] + px[c]) / 3;
+    cy[f] = (py[a] + py[b] + py[c]) / 3;
+    cz[f] = (pz[a] + pz[b] + pz[c]) / 3;
+  }
+  const nodeBox = [];
+  const nodeA = [];
+  const nodeB = [];
+  const nodeStart = [];
+  const nodeCount = [];
+  function buildNode(start, count) {
+    const node = nodeA.length;
+    nodeA.push(-1);
+    nodeB.push(-1);
+    nodeStart.push(start);
+    nodeCount.push(count);
+    let mnx = Infinity;
+    let mny = Infinity;
+    let mnz = Infinity;
+    let mxx = -Infinity;
+    let mxy = -Infinity;
+    let mxz = -Infinity;
+    let ax0 = Infinity;
+    let ay0 = Infinity;
+    let az0 = Infinity;
+    let ax1 = -Infinity;
+    let ay1 = -Infinity;
+    let az1 = -Infinity;
+    for (let i = start; i < start + count; i++) {
+      const f = order[i];
+      for (let k = 0; k < 3; k++) {
+        const v = tri[f * 3 + k];
+        if (px[v] < mnx) mnx = px[v];
+        if (py[v] < mny) mny = py[v];
+        if (pz[v] < mnz) mnz = pz[v];
+        if (px[v] > mxx) mxx = px[v];
+        if (py[v] > mxy) mxy = py[v];
+        if (pz[v] > mxz) mxz = pz[v];
+      }
+      if (cx[f] < ax0) ax0 = cx[f];
+      if (cy[f] < ay0) ay0 = cy[f];
+      if (cz[f] < az0) az0 = cz[f];
+      if (cx[f] > ax1) ax1 = cx[f];
+      if (cy[f] > ay1) ay1 = cy[f];
+      if (cz[f] > az1) az1 = cz[f];
+    }
+    nodeBox.push(mnx, mny, mnz, mxx, mxy, mxz);
+    if (count <= LEAF) return node;
+    const spanX = ax1 - ax0;
+    const spanY = ay1 - ay0;
+    const spanZ = az1 - az0;
+    const key = spanX >= spanY && spanX >= spanZ ? cx : spanY >= spanZ ? cy : cz;
+    const slice = Array.from(order.subarray(start, start + count)).sort(
+      (a, b) => key[a] - key[b] || a - b,
+    );
+    order.set(slice, start);
+    const half = count >> 1;
+    nodeA[node] = buildNode(start, half);
+    nodeB[node] = buildNode(start + half, count - half);
+    return node;
+  }
+  buildNode(0, triTotal);
+  /* the traversal below runs a few million times, so the tree moves out of the
+   * growable arrays it was built in */
+  const box = Float64Array.from(nodeBox);
+  const childA = Int32Array.from(nodeA);
+  const childB = Int32Array.from(nodeB);
+  const leafAt = Int32Array.from(nodeStart);
+  const leafCount = Int32Array.from(nodeCount);
+
+  /* One mark per vertex rather than a search: `stamp[f] === mark` says triangle
+   * f touches the place this ray leaves from. */
+  const stamp = new Int32Array(triTotal);
+  const stack = new Int32Array(96);
+
+  /** Distance to the nearest triangle along the ray, or Infinity. `any` stops
+   * at the first hit, which is all a shadow ray needs and most of what it
+   * costs; the ambient rays want the distance and pay for it inside a much
+   * shorter tmax. */
+  function cast(ox, oy, oz, dx, dy, dz, tmax, mark, any) {
+    const ix = 1 / (dx || 1e-12);
+    const iy = 1 / (dy || 1e-12);
+    const iz = 1 / (dz || 1e-12);
+    let best = Infinity;
+    let top = 0;
+    stack[top++] = 0;
+    while (top > 0) {
+      const node = stack[--top];
+      const slab = node * 6;
+      let t0 = 0;
+      let t1 = best < tmax ? best : tmax;
+      let a = (box[slab] - ox) * ix;
+      let b = (box[slab + 3] - ox) * ix;
+      if (a > b) {
+        const swap = a;
+        a = b;
+        b = swap;
+      }
+      if (a > t0) t0 = a;
+      if (b < t1) t1 = b;
+      a = (box[slab + 1] - oy) * iy;
+      b = (box[slab + 4] - oy) * iy;
+      if (a > b) {
+        const swap = a;
+        a = b;
+        b = swap;
+      }
+      if (a > t0) t0 = a;
+      if (b < t1) t1 = b;
+      a = (box[slab + 2] - oz) * iz;
+      b = (box[slab + 5] - oz) * iz;
+      if (a > b) {
+        const swap = a;
+        a = b;
+        b = swap;
+      }
+      if (a > t0) t0 = a;
+      if (b < t1) t1 = b;
+      if (t0 > t1) continue;
+      if (childA[node] >= 0) {
+        stack[top++] = childA[node];
+        stack[top++] = childB[node];
+        continue;
+      }
+      const start = leafAt[node];
+      const end = start + leafCount[node];
+      for (let i = start; i < end; i++) {
+        const f = order[i];
+        if (stamp[f] === mark) continue;
+        const va = tri[f * 3];
+        const vb = tri[f * 3 + 1];
+        const vc = tri[f * 3 + 2];
+        const e1x = px[vb] - px[va];
+        const e1y = py[vb] - py[va];
+        const e1z = pz[vb] - pz[va];
+        const e2x = px[vc] - px[va];
+        const e2y = py[vc] - py[va];
+        const e2z = pz[vc] - pz[va];
+        /* Moller-Trumbore, two-sided: nothing in this mesh promises a
+         * consistent winding, and a wall lit from behind still stops light. */
+        const pvx = dy * e2z - dz * e2y;
+        const pvy = dz * e2x - dx * e2z;
+        const pvz = dx * e2y - dy * e2x;
+        const det = e1x * pvx + e1y * pvy + e1z * pvz;
+        if (det > -1e-9 && det < 1e-9) continue;
+        const inv = 1 / det;
+        const tvx = ox - px[va];
+        const tvy = oy - py[va];
+        const tvz = oz - pz[va];
+        const u = (tvx * pvx + tvy * pvy + tvz * pvz) * inv;
+        if (u < 0 || u > 1) continue;
+        const qvx = tvy * e1z - tvz * e1y;
+        const qvy = tvz * e1x - tvx * e1z;
+        const qvz = tvx * e1y - tvy * e1x;
+        const vv = (dx * qvx + dy * qvy + dz * qvz) * inv;
+        if (vv < 0 || u + vv > 1) continue;
+        const hit = (e2x * qvx + e2y * qvy + e2z * qvz) * inv;
+        if (hit > 1e-4 && hit < best && hit < tmax) {
+          if (any) return hit;
+          best = hit;
+        }
+      }
+    }
+    return best;
+  }
+
+  /* Stateless jitter: a hash of the vertex, the sample slot and the seed. */
+  function hash32(value) {
+    let a = value | 0;
+    a = (a ^ 61) ^ (a >>> 16);
+    a = (a + (a << 3)) | 0;
+    a = a ^ (a >>> 4);
+    a = Math.imul(a, 0x27d4eb2d);
+    a = a ^ (a >>> 15);
+    return a >>> 0;
+  }
+  const jitter = (v, salt) =>
+    hash32((v ^ Math.imul(salt + 1, 0x9e3779b1)) ^ OCCLUSION_SEED) / 4294967296;
+
+  /* Per-triangle area and face normal: the support sampler picks a triangle in
+   * proportion to the first and leaves the surface along the second. */
+  const faceArea = new Float64Array(triTotal);
+  const faceNx = new Float64Array(triTotal);
+  const faceNy = new Float64Array(triTotal);
+  const faceNz = new Float64Array(triTotal);
+  for (let f = 0; f < triTotal; f++) {
+    const a = tri[f * 3];
+    const b = tri[f * 3 + 1];
+    const c = tri[f * 3 + 2];
+    const ux = px[b] - px[a];
+    const uy = py[b] - py[a];
+    const uz = pz[b] - pz[a];
+    const vx = px[c] - px[a];
+    const vy = py[c] - py[a];
+    const vz = pz[c] - pz[a];
+    const gx = uy * vz - uz * vy;
+    const gy = uz * vx - ux * vz;
+    const gz = ux * vy - uy * vx;
+    const len = Math.hypot(gx, gy, gz);
+    faceArea[f] = len / 2;
+    faceNx[f] = len === 0 ? 0 : gx / len;
+    faceNy[f] = len === 0 ? 1 : gy / len;
+    faceNz[f] = len === 0 ? 0 : gz / len;
+  }
+
+  /* The solar disc's own frame, once. */
+  const helperY = Math.abs(sunY) < 0.99 ? 1 : 0;
+  const helperX = 1 - helperY;
+  let sTx = helperY * sunZ;
+  let sTy = -helperX * sunZ;
+  let sTz = helperX * sunY - helperY * sunX;
+  {
+    const len = Math.hypot(sTx, sTy, sTz);
+    sTx /= len;
+    sTy /= len;
+    sTz /= len;
+  }
+  const sBx = sunY * sTz - sunZ * sTy;
+  const sBy = sunZ * sTx - sunX * sTz;
+  const sBz = sunX * sTy - sunY * sTx;
+
+  const GOLDEN = 0.6180339887498949;
+  const sun = new Uint8Array(vertTotal);
+  const ao = new Uint8Array(vertTotal);
+  let backFacing = 0;
+  let fullSun = 0;
+  let noSun = 0;
+  let partial = 0;
+  let unsupported = 0;
+  for (let v = 0; v < vertTotal; v++) {
+    /* Triangles a ray must not hit: the ones incident to this vertex AND the
+     * ones incident to any vertex standing at the same place. */
+    const mark = v + 1;
+    const grp = group[v];
+    for (let m = memberAt[grp]; m < memberAt[grp + 1]; m++) {
+      const twin = member[m];
+      for (let i = incidentAt[twin]; i < incidentAt[twin + 1]; i++) stamp[incident[i]] = mark;
+    }
+    const from = incidentAt[v];
+    const to = incidentAt[v + 1];
+    let support = 0;
+    for (let i = from; i < to; i++) support += faceArea[incident[i]];
+    if (support === 0) {
+      /* nothing to average over: an unused vertex, or one whose faces are all
+       * degenerate. Full light rather than none, so it can only ever be
+       * invisible rather than a black speck. */
+      sun[v] = 0;
+      ao[v] = 255;
+      unsupported++;
+      continue;
+    }
+
+    let sunNum = 0;
+    let sunDen = 0;
+    let aoNum = 0;
+    let aoDen = 0;
+    /* aShade has the last word on whether this vertex takes direct light at
+     * all. It has to: a builder is free to hand shadeOf a smooth normal that is
+     * not any of its triangles' geometric normals (a crown ring does exactly
+     * that), so a face whose geometry leans a thousandth of a degree sunward
+     * can sit under a vertex the shading calls fully turned away. Measured on
+     * the shipped mesh the gate suppresses 2,519 vertices of 61,997, 2,428 of
+     * them on the hero layer (audit-corrected; support sampling puts sample
+     * faces tens of degrees off the vertex normal, so this is no edge case).
+     * Letting the ray cast light one of them would put a sun byte on a surface
+     * aShade multiplies to near zero, and the grain term riding inside the
+     * same clamp could then add up to 9.5% of the direct term on heroes: two
+     * channels disagreeing about the same face, visibly. */
+    const takesSun = shadeByte[v] > SHADE_FLOOR;
+    let sunward = false;
+    for (let k = 0; k < SUPPORT_SAMPLES; k++) {
+      /* stratified along the support's own area, so a vertex that carries one
+       * huge cap and five small facets spends its samples where the surface is */
+      const target = ((k + jitter(v, k)) / SUPPORT_SAMPLES) * support;
+      let f = incident[to - 1];
+      let acc = 0;
+      for (let i = from; i < to; i++) {
+        acc += faceArea[incident[i]];
+        if (acc >= target) {
+          f = incident[i];
+          break;
+        }
+      }
+      const a = tri[f * 3];
+      const b = tri[f * 3 + 1];
+      const c = tri[f * 3 + 2];
+      const r1 = jitter(v, SUPPORT_SAMPLES + k);
+      const r2 = jitter(v, 2 * SUPPORT_SAMPLES + k);
+      const root = Math.sqrt(r1);
+      const l0 = 1 - root;
+      const l1 = root * (1 - r2);
+      const l2 = root * r2;
+      /* the hat weight: this vertex's own barycentric coordinate at the sample,
+       * which is exactly the weight the rasteriser will give it back */
+      const weight = a === v ? l0 : b === v ? l1 : l2;
+      if (weight <= 0) continue;
+      const sx = l0 * px[a] + l1 * px[b] + l2 * px[c];
+      const sy = l0 * py[a] + l1 * py[b] + l2 * py[c];
+      const sz = l0 * pz[a] + l1 * pz[b] + l2 * pz[c];
+      /* the face's own normal, turned to the side the vertex normal opens */
+      let fx = faceNx[f];
+      let fy = faceNy[f];
+      let fz = faceNz[f];
+      if (fx * nx[v] + fy * ny[v] + fz * nz[v] < 0) {
+        fx = -fx;
+        fy = -fy;
+        fz = -fz;
+      }
+      const ox = sx + fx * RAY_EPS;
+      const oy = sy + fy * RAY_EPS;
+      const oz = sz + fz * RAY_EPS;
+
+      sunDen += weight;
+      const lambert = fx * sunX + fy * sunY + fz * sunZ;
+      if (takesSun && lambert > 0) {
+        /* A face turned away from the sun takes no direct light whatever stands
+         * in front of it, and aShade already says so; skipping the cast there is
+         * the same answer for nothing. */
+        sunward = true;
+        const radial = (k + jitter(v, 3 * SUPPORT_SAMPLES + k)) / SUPPORT_SAMPLES;
+        const phi =
+          2 * Math.PI * ((k * GOLDEN + jitter(v, 4 * SUPPORT_SAMPLES + k)) % 1);
+        const r = SUN_ANG_RADIUS * Math.sqrt(radial);
+        const discX = r * Math.cos(phi);
+        const discY = r * Math.sin(phi);
+        let dx = sunX + sTx * discX + sBx * discY;
+        let dy = sunY + sTy * discX + sBy * discY;
+        let dz = sunZ + sTz * discX + sBz * discY;
+        const len = Math.hypot(dx, dy, dz);
+        dx /= len;
+        dy /= len;
+        dz /= len;
+        if (cast(ox, oy, oz, dx, dy, dz, RAY_RANGE, mark, true) === Infinity) {
+          sunNum += weight;
+        }
+      }
+
+      /* the hemisphere this face opens */
+      const upY = Math.abs(fy) < 0.99 ? 1 : 0;
+      const upX = 1 - upY;
+      let tx = upY * fz;
+      let ty = -upX * fz;
+      let tz = upX * fy - upY * fx;
+      const tlen = Math.hypot(tx, ty, tz) || 1;
+      tx /= tlen;
+      ty /= tlen;
+      tz /= tlen;
+      const bx = fy * tz - fz * ty;
+      const by = fz * tx - fx * tz;
+      const bz = fx * ty - fy * tx;
+      let closed = 0;
+      for (let j = 0; j < AO_RAYS; j++) {
+        /* cosine-weighted on a jittered grid, so the estimator is the sample
+         * mean itself with nothing to carry but the distance falloff */
+        const salt = 5 * SUPPORT_SAMPLES + (k * AO_RAYS + j) * 2;
+        const ia = j % AO_AZIMUTHS;
+        const ir = (j / AO_AZIMUTHS) | 0;
+        const u1 = (ir + jitter(v, salt)) / AO_RADII;
+        const phi = (2 * Math.PI * (ia + jitter(v, salt + 1))) / AO_AZIMUTHS;
+        const rr = Math.sqrt(u1);
+        const up = Math.sqrt(Math.max(0, 1 - u1));
+        const lx = rr * Math.cos(phi);
+        const ly = rr * Math.sin(phi);
+        const dx = tx * lx + bx * ly + fx * up;
+        const dy = ty * lx + by * ly + fy * up;
+        const dz = tz * lx + bz * ly + fz * up;
+        const hit = cast(ox, oy, oz, dx, dy, dz, AO_RANGE, mark, false);
+        if (hit < AO_RANGE) closed += 1 - hit / AO_RANGE;
+      }
+      aoNum += weight * Math.max(0, 1 - closed / AO_RAYS);
+      aoDen += weight;
+    }
+
+    const sunV = sunDen > 0 ? sunNum / sunDen : 0;
+    sun[v] = Math.round(sunV * 255);
+    ao[v] = aoDen > 0 ? Math.round((aoNum / aoDen) * 255) : 255;
+    if (!sunward) backFacing++;
+    else if (sun[v] === 255) fullSun++;
+    else if (sun[v] === 0) noSun++;
+    else partial++;
+  }
+
+  for (const layer of shore) {
+    const off = firstVertex.get(layer);
+    const n = layer.positions.length / 3;
+    layer.suns = Array.from(sun.subarray(off, off + n));
+    layer.aos = Array.from(ao.subarray(off, off + n));
+  }
+
+  const mean = (a) => a.reduce((s, x) => s + x, 0) / a.length / 255;
+  console.log(
+    `occlusion: ${vertTotal} verts against ${triTotal} tris, shadow rays <= ${RAY_RANGE} m ` +
+      `(mesh spans ${lowY.toFixed(1)} to ${topY.toFixed(1)} m at sun elevation 22), ambient ` +
+      `<= ${AO_RANGE} m, seed 0x${OCCLUSION_SEED.toString(16)}, ${SUPPORT_SAMPLES} support ` +
+      `samples a vertex x ${AO_RAYS} ambient rays`,
+  );
+  console.log(
+    `  normals: ${flipped} flipped to agree with the shade byte, ${degenerate} degenerate, ` +
+      `${agrees} of ${vertTotal} reproduce their shade byte within 1 level ` +
+      `(${flatAgrees} of ${flatTotal} where the incident faces are coplanar)`,
+  );
+  console.log(
+    `  sun: ${backFacing} back-facing (0 by orientation), ${fullSun} fully lit, ` +
+      `${noSun} fully shadowed, ${partial} part lit, ${unsupported} without support`,
+  );
+  for (const layer of shore) {
+    console.log(
+      `  layer ${layer.classId} ${layer.name}: mean sun ${mean(layer.suns).toFixed(3)}, ` +
+        `mean ambient ${mean(layer.aos).toFixed(3)}`,
+    );
+  }
+}
+
 /* ------------------------------------------------------------------ output */
 
 /** Interleave the low 16 bits of a value into every third bit, so three of
@@ -3940,6 +4706,8 @@ function mortonSort(layer) {
   const dists = layer.dists.length ? new Array(n) : [];
   const bases = layer.bases.length ? new Array(n) : [];
   const mats = layer.mats.length ? new Array(n) : [];
+  const suns = layer.suns.length ? new Array(n) : [];
+  const aos = layer.aos.length ? new Array(n) : [];
   for (let k = 0; k < n; k++) {
     const from = order[k];
     positions[k * 3] = layer.positions[from * 3];
@@ -3950,6 +4718,8 @@ function mortonSort(layer) {
     if (dists.length) dists[k] = layer.dists[from];
     if (bases.length) bases[k] = layer.bases[from];
     if (mats.length) mats[k] = layer.mats[from];
+    if (suns.length) suns[k] = layer.suns[from];
+    if (aos.length) aos[k] = layer.aos[from];
   }
   layer.positions = positions;
   layer.fades = fades;
@@ -3957,20 +4727,33 @@ function mortonSort(layer) {
   layer.dists = dists;
   layer.bases = bases;
   layer.mats = mats;
+  layer.suns = suns;
+  layer.aos = aos;
   for (let i = 0; i < layer.indices.length; i++) layer.indices[i] = to[layer.indices[i]];
 }
 
 /** LVN3: the LVN2 body, once per layer, behind a layer table. Nothing about
  * how a layer's bytes are laid out changed, so the decoder is one loop around
  * the parser that already shipped. */
+/** The Morton reorder over every layer that asked for one.
+ *
+ * It runs before the occlusion pass rather than inside `writeAsset`, and that
+ * order is load-bearing rather than tidy. The pass jitters its sample sets on
+ * the vertex index, so keying it to the order the asset actually SHIPS in is
+ * what lets both channels be recomputed from the .bin alone by anyone who
+ * wants to check them. Sorted afterwards, they could only ever be checked
+ * against the baker's own memory. */
+function sortLayers() {
+  for (const layer of LAYERS) if (layer.morton && layer.indices.length > 0) mortonSort(layer);
+}
+
 function writeAsset() {
   const layers = LAYERS.filter((layer) => layer.indices.length > 0);
-  for (const layer of layers) if (layer.morton) mortonSort(layer);
   const blocks = layers.map((layer) => {
     const vertCount = layer.positions.length / 3;
     const use32 = vertCount > 65535;
     let perVertex = 6; // the three Int16 position slots every layer carries
-    for (const bit of [ATTR_FADE, ATTR_SHADE, ATTR_DIST, ATTR_BASE, ATTR_MAT]) {
+    for (const bit of [ATTR_FADE, ATTR_SHADE, ATTR_DIST, ATTR_BASE, ATTR_MAT, ATTR_SUN, ATTR_AO]) {
       if (layer.attrMask & bit) perVertex += ATTR_BYTES[bit];
     }
     const head = vertCount * perVertex;
@@ -4027,6 +4810,12 @@ function writeAsset() {
     if (layer.attrMask & ATTR_MAT) {
       for (let k = 0; k < layer.mats.length; k++) buffer.writeUInt8(layer.mats[k], at++);
     }
+    if (layer.attrMask & ATTR_SUN) {
+      for (let k = 0; k < layer.suns.length; k++) buffer.writeUInt8(layer.suns[k], at++);
+    }
+    if (layer.attrMask & ATTR_AO) {
+      for (let k = 0; k < layer.aos.length; k++) buffer.writeUInt8(layer.aos[k], at++);
+    }
     at += pad;
     for (let k = 0; k < layer.indices.length; k++) {
       if (use32) buffer.writeUInt32LE(layer.indices[k], at);
@@ -4057,6 +4846,18 @@ function writeAsset() {
       } km (AWS Open Data)`,
     },
     attribution: venue.attribution,
+    /* What bakeOcclusion() was run with. The seed is the only input to the
+     * two channels that is not the mesh itself, so it is recorded here: a
+     * rebake at a different seed changes bytes for no visible reason, and
+     * this is where that shows up. */
+    occlusion: {
+      seed: OCCLUSION_SEED,
+      supportSamples: SUPPORT_SAMPLES,
+      ambientRaysPerSample: AO_RAYS,
+      ambientRange: AO_RANGE,
+      sunAngularRadiusDeg: Number((SUN_ANG_RADIUS / DEG).toFixed(4)),
+      sunRange: occlusionRange,
+    },
     /* The committed data products this bake consumed, each pinned by its own
      * valuesSha256, so a product refresh cannot ship stale baked geometry:
      * tests/layline-venue-asset.test.ts holds this block and the committed
@@ -4279,4 +5080,9 @@ into(L_PORT, () => buildPort(craneNodes.concat(craneWays), infraWays, rings, box
 into(L_HEROES, () => buildHeroes(coastWays, heroAnchors));
 await prefetchCurtainDem();
 into(L_CURTAIN, () => buildCurtain());
+/* Every builder has run, so the venue is a fixed set of triangles now and can
+ * be asked what it shades. The sort comes first so the occlusion pass keys its
+ * jitter to the shipped vertex order. */
+sortLayers();
+bakeOcclusion();
 writeAsset();

@@ -18,11 +18,13 @@ import { gunzipSync } from "node:zlib";
 import { readFileSync } from "node:fs";
 
 import {
+  ATTR_AO,
   ATTR_BASE,
   ATTR_DIST,
   ATTR_FADE,
   ATTR_MAT,
   ATTR_SHADE,
+  ATTR_SUN,
   CLASS_CURTAIN,
   CLASS_HEROES,
   CLASS_MASSING,
@@ -69,8 +71,10 @@ const ATTR_BYTES: Record<number, number> = {
   [ATTR_DIST]: 2,
   [ATTR_BASE]: 1,
   [ATTR_MAT]: 1,
+  [ATTR_SUN]: 1,
+  [ATTR_AO]: 1,
 };
-const CHANNEL_ORDER = [ATTR_FADE, ATTR_SHADE, ATTR_DIST, ATTR_BASE, ATTR_MAT];
+const CHANNEL_ORDER = [ATTR_FADE, ATTR_SHADE, ATTR_DIST, ATTR_BASE, ATTR_MAT, ATTR_SUN, ATTR_AO];
 
 /** An LVN3 body written the way the baker's header comment says to write one,
  * from scratch: this is the second implementation the format has, so a reader
@@ -177,11 +181,17 @@ test("LVN3 decodes the layer table and hands every layer its own channels", () =
       classId: CLASS_HEROES,
       material: MATERIAL_SHORE,
       drawOrder: 22,
-      attrMask: ATTR_FADE | ATTR_SHADE | ATTR_MAT,
+      attrMask: ATTR_FADE | ATTR_SHADE | ATTR_MAT | ATTR_SUN | ATTR_AO,
       yUnit: 10,
       idx32: false,
       positions: [1, 20, -3, 4, 50, -6, 7, 80, -9],
-      channels: { [ATTR_FADE]: [255, 128, 0], [ATTR_SHADE]: [80, 128, 200], [ATTR_MAT]: [1, 4, 6] },
+      channels: {
+        [ATTR_FADE]: [255, 128, 0],
+        [ATTR_SHADE]: [80, 128, 200],
+        [ATTR_MAT]: [1, 4, 6],
+        [ATTR_SUN]: [0, 96, 255],
+        [ATTR_AO]: [12, 200, 255],
+      },
       indices: [0, 1, 2],
     },
     {
@@ -218,8 +228,17 @@ test("LVN3 decodes the layer table and hands every layer its own channels", () =
   assert.deepEqual(array(hero, "aFade"), [255, 128, 0]);
   assert.deepEqual(array(hero, "aShade"), [80, 128, 200]);
   assert.deepEqual(array(hero, "aMat"), [1, 4, 6]);
+  /* the round-2 channels sit AFTER the substance byte in the block, so reading
+     them at all proves the reader walked the new channel order rather than
+     landing on the index block */
+  assert.deepEqual(array(hero, "aSun"), [0, 96, 255]);
+  assert.deepEqual(array(hero, "aAo"), [12, 200, 255]);
   assert.equal(hero.getAttribute("aFade")?.normalized, true);
   assert.equal(hero.getAttribute("aShade")?.normalized, true);
+  /* both are fractions the shader multiplies a light by, so both are
+     normalised; an unnormalised aSun would read 255 as 255 suns */
+  assert.equal(hero.getAttribute("aSun")?.normalized, true);
+  assert.equal(hero.getAttribute("aAo")?.normalized, true);
   /* the substance index is an integer the shader compares against, never a
      0..1 fraction: a normalised aMat would decode 6 as 0.0235 */
   assert.equal(hero.getAttribute("aMat")?.normalized, false);
@@ -232,9 +251,12 @@ test("LVN3 decodes the layer table and hands every layer its own channels", () =
   assert.equal(curtain.getAttribute("aFade"), undefined);
   assert.equal(curtain.getAttribute("aShade"), undefined);
   assert.equal(curtain.getAttribute("aMat"), undefined);
+  /* and it neither casts nor receives: its vertices are directions, not places */
+  assert.equal(curtain.getAttribute("aSun"), undefined);
+  assert.equal(curtain.getAttribute("aAo"), undefined);
 });
 
-test("a shore layer with no aMat channel still binds an explicit run of zeros", () => {
+test("a shore layer with no aMat, aSun or aAo channel binds the safe defaults", () => {
   const buffer = writeLVN3([
     {
       classId: CLASS_TERRAIN,
@@ -252,6 +274,11 @@ test("a shore layer with no aMat channel still binds an explicit run of zeros", 
   /* An unbound attribute reads back whatever the driver left behind, which
      would select a hero substance at random on the terrain. */
   assert.deepEqual(array(geometry, "aMat"), [0, 0, 0]);
+  /* The occlusion pair defaults the other way: 255 through a normalised byte is
+     1.0, so a layer baked before round 2 is fully lit and fully open and draws
+     as it always did. Zeros here would render it black. */
+  assert.deepEqual(array(geometry, "aSun"), [255, 255, 255]);
+  assert.deepEqual(array(geometry, "aAo"), [255, 255, 255]);
 });
 
 test("aDist is signed and read at two bytes a vertex", () => {
@@ -389,6 +416,9 @@ test("the LVN2 branch still parses the single-layer asset round 2 shipped", () =
   /* LVN2 predates the substance byte, so the fallback run has to be there or
      the shore shader reads an unbound attribute on the fallback asset. */
   assert.deepEqual(array(geometry, "aMat"), [0, 0, 0, 0]);
+  /* and it predates the occlusion pair by two more rounds */
+  assert.deepEqual(array(geometry, "aSun"), [255, 255, 255, 255]);
+  assert.deepEqual(array(geometry, "aAo"), [255, 255, 255, 255]);
   assert.deepEqual(Array.from(geometry.getIndex()?.array ?? []), [0, 1, 2, 0, 2, 3]);
 });
 
@@ -434,6 +464,43 @@ test("the committed asset carries the five layers the runtime draws", () => {
     if (index!.array.constructor.name === "Uint16Array") {
       assert.ok(count <= 65536, `layer ${layer.classId} has ${count} verts under u16 indices`);
     }
+  }
+});
+
+test("the occlusion pair ships on every shore layer, and never lights a back face", () => {
+  const layers = parseVenueMesh(asset());
+  for (const layer of layers) {
+    const sun = layer.geometry.getAttribute("aSun");
+    const ao = layer.geometry.getAttribute("aAo");
+    if (layer.classId === CLASS_CURTAIN) {
+      assert.equal(sun, undefined, "the curtain carries a sun channel");
+      assert.equal(ao, undefined, "the curtain carries an ambient channel");
+      continue;
+    }
+    const shade = layer.geometry.getAttribute("aShade")!.array;
+    assert.ok(sun !== undefined && ao !== undefined, `layer ${layer.classId} lost a channel`);
+    assert.equal(sun!.count, shade.length);
+    assert.equal(ao!.count, shade.length);
+    /* The bake writes shade = round((0.62 + 0.55 * max(N.L, 0)) * 128), so 79 is
+       the byte a face turned away from the sun takes. Such a face takes no
+       direct light however open the sky in front of it is, and the pass skips
+       the ray cast on exactly that ground: if it ever shipped a positive sun
+       byte there, the skip and the shading would have parted company. */
+    for (let i = 0; i < shade.length; i++) {
+      if (shade[i] > 79) continue;
+      assert.equal(sun!.array[i], 0, `layer ${layer.classId} vertex ${i} is lit through its back`);
+    }
+    /* Both channels are means over each vertex's own support, so both have to
+       VARY. A pass that fell back to a constant, or one that degenerated into a
+       binary mask, would satisfy everything above this and would be exactly the
+       failure the round's first captures showed. */
+    const sunLevels = new Set(sun!.array);
+    const aoLevels = new Set(ao!.array);
+    /* Floors raised per audit: the shipped layers measure 243-256 distinct sun
+       levels and 146-254 ambient. 100 leaves ample slack while still firing
+       long before a channel could degenerate toward a mask. */
+    assert.ok(sunLevels.size >= 100, `layer ${layer.classId} sun takes ${sunLevels.size} values`);
+    assert.ok(aoLevels.size >= 100, `layer ${layer.classId} ambient takes ${aoLevels.size} values`);
   }
 });
 
@@ -663,12 +730,12 @@ test("the committed asset and the baker that made it are both pinned", () => {
      from the same cache are byte-identical. */
   assert.equal(
     sha256(bytes(ASSET)),
-    "2e56807325668e0b5b904d03a1c75534f346dcb785da019b42c070821c81b3a7",
+    "ade1bd2a8f49744208ef4976bd1f73b491940e7bbb07248f29c577ac6051ceb6",
     "the committed venue asset changed; rebake it and restate both hashes",
   );
   assert.equal(
     sha256(bytes(BAKER)),
-    "75c7970b1183e4c0b416e2af8bfec59ad61dd06d4aba5e47b8f717e7250e4faf",
+    "38c2daf57a4fcfcef067bcfdf6f8cd165ed6c76cbef6b6fa308deb9d9c86314e",
     "the baker changed; rebake the venue and restate both hashes",
   );
   const manifest = JSON.parse(
@@ -677,21 +744,37 @@ test("the committed asset and the baker that made it are both pinned", () => {
   /* the manifest is written by the same run, so it has to agree with the file
      beside it rather than with a number typed in later */
   assert.equal(manifest.stats.bytes, bytes(ASSET).length);
-  /* This number is a TRIPWIRE now, not a budget, and the change is disclosed
+  /* This number is a TRIPWIRE, not a budget, and every move of it is disclosed
      rather than quiet. Contract amendment 7 (owner, 2026-08-29, verbatim: "for
      now lets just focus on the realism and not performance") suspends the A4
      ceilings as acceptance criteria for the close-range realism rounds and says
-     not to thin realism work to fit one. Round 1 draws 1,026 individually
-     measured tree crowns, 674 rim facets swept from the measured shoreline
-     profile and 95 measured island structures where round 5 drew 4 vegetation
-     objects, 16 towers and 16 slabs, and that costs 210.7 KiB gzipped. The
-     ceiling is restated at the measured size plus 5 per cent so unnoticed
-     growth still fails; it is not a claim that 552.4 KiB is acceptable, and the
-     owner has said perf gets re-opened when the look is right. */
+     not to thin realism work to fit one. Round 1 restated it at 580 KiB for
+     1,026 measured tree crowns and 674 measured rim facets. Round 2 adds two
+     bytes a vertex on the four shore layers, 61,997 vertices: 121.1 KiB raw and
+     71.5 KiB gzipped of baked sun visibility and ambient occlusion, which is
+     what stops the venue reading as slabs. Both are per-vertex means over each
+     vertex's own support, so neither compresses the way a mask would: measured
+     by flattening one channel at a time, the sun channel costs 28.2 KiB
+     gzipped and the ambient one 43.6 KiB, and quantising both to 32 levels was
+     measured at 3.7 per cent off the total and rejected as buying less than
+     the error it costs. The measured size is 623.9 KiB, up 12.9 per cent, and
+     the tripwire is restated at that plus 5 per cent so unnoticed growth still
+     fails. It is not a claim that 623.9 KiB is acceptable; the owner has said
+     perf gets re-opened when the look is right. */
   assert.ok(
-    manifest.stats.bytes <= 580 * 1024,
-    `${manifest.stats.bytes} B over the 580 KiB asset tripwire`,
+    manifest.stats.bytes <= 660 * 1024,
+    `${manifest.stats.bytes} B over the 660 KiB asset tripwire`,
   );
+  /* The occlusion pass has one input that is not the mesh, and this is where a
+     rebake at another seed or another sampling constant has to be restated. */
+  assert.deepEqual(manifest.occlusion, {
+    seed: 0x6c61794c,
+    supportSamples: 16,
+    ambientRaysPerSample: 12,
+    ambientRange: 18,
+    sunAngularRadiusDeg: 0.2667,
+    sunRange: 399,
+  });
   assert.equal(
     manifest.stats.triangles,
     manifest.stats.layers.reduce((sum: number, l: { triangles: number }) => sum + l.triangles, 0),

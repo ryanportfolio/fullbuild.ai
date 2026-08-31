@@ -327,7 +327,16 @@ const CURTAIN_FOOT_K = 0.25;
  * exactly and `lit` below is the Lambert term itself, not a stylistic ramp.
  * That is what lets the shading be a light rather than a lift toward the sky:
  * a horizontal face under a 22 degree sun sits at sin(22) = 0.375 because the
- * geometry says so. */
+ * geometry says so.
+ *
+ * Round 2 adds the half a Lambert term cannot hold: what stands BETWEEN a face
+ * and its light. aSun is the fraction of the solar disc the baker's ray cast
+ * found unblocked by the venue's own triangles, aAo how much of the vertex's
+ * own hemisphere nearby geometry closes off, and the two multiply the two
+ * lights the line below adds. Both are baked, so the cost per frame is one
+ * more attribute fetch each and nothing else: no light, no pass, no shadow
+ * map. `scripts/layline-bake-venue.mjs` (bakeOcclusion) holds the derivation
+ * and both sampling constants. */
 const VenueShoreMaterial = shaderMaterial(
   {
     uSunDir: sunDirection(),
@@ -360,17 +369,23 @@ const VenueShoreMaterial = shaderMaterial(
 attribute float aFade;
 attribute float aShade;
 attribute float aMat;
+attribute float aSun;
+attribute float aAo;
 
 varying vec3 vWorld;
 varying float vFade;
 varying float vShade;
 varying float vMat;
+/* x sun visibility, y ambient openness: one varying rather than two, because
+   they are read together and never apart. */
+varying vec2 vOccl;
 
 void main() {
   vWorld = (modelMatrix * vec4(position, 1.0)).xyz;
   vFade = aFade;
   vShade = aShade * 1.9921875;
   vMat = aMat;
+  vOccl = vec2(aSun, aAo);
   gl_Position = projectionMatrix * viewMatrix * vec4(vWorld, 1.0);
 }
 `,
@@ -379,6 +394,7 @@ varying vec3 vWorld;
 varying float vFade;
 varying float vShade;
 varying float vMat;
+varying vec2 vOccl;
 uniform vec3 uWhitecap;
 uniform vec3 uSunLight;
 uniform vec3 uSkyFill;
@@ -476,7 +492,13 @@ void main() {
      grain; a painted substance 11+ must extend the second step. */
   float painted = step(2.5, vMat) * (1.0 - step(9.5, vMat));
   float grainWeight = mix(uGrain.x, uGrain.y, band) * grainFall * (1.0 - painted);
-  float lit = clamp((vShade - 0.62) * 1.818 + (grain - 0.5) * grainWeight, 0.0, 1.0);
+  /* The sun term, and then what the bake found standing in front of it. The
+     grain rides inside the multiply rather than outside it, because it varies
+     how much light a patch of ground takes and a patch in shadow takes none of
+     it: a face the tower beside it has cut off is not a patchy face, it is a
+     dark one. */
+  float lit =
+    clamp((vShade - 0.62) * 1.818 + (grain - 0.5) * grainWeight, 0.0, 1.0) * vOccl.x;
 
   /* Two lights on a reflectance, which is the whole of the round-4d grade. The
      shipped shader ran one ramp from a near-black SHORE to the horizon sky, so
@@ -487,7 +509,18 @@ void main() {
      is what a box needs to read as a box before any texture exists. Because
      both terms are positive multiples of the same albedo, no face can invert
      against the sun direction: illumination is monotonic in lit per channel. */
-  vec3 land = albedo * (uSunLight * lit + uSkyFill);
+  /* The ambient is one isotropic fill and its gain was fixed against measured
+     sunlit-to-shaded pairs, so the occlusion that scales it is a CONTACT term
+     and not a sky view factor: the baker fades a blocker out over 18 m, which
+     leaves a wall standing in the open at 1.0 and only darkens what is
+     genuinely tucked under something. Measured over the shipped asset the
+     means are 0.884 terrain, 0.904 massing, 0.781 port, 0.721 heroes
+     (audit-corrected). The median terrain vertex sits at 1.0, so its
+     sunlit-to-shaded ratio is exactly round 4d's 3.21, and 76% of terrain,
+     52% of massing, 35% of port and 34% of heroes stay inside the measured
+     2.6-3.4 band; what falls outside is genuinely occluded structure, which
+     the band's open-pair photographs never measured. */
+  vec3 land = albedo * (uSunLight * lit + uSkyFill * vOccl.y);
 
   /* The shore face runs from the sea at y = 0 up to the crest: darken the foot
    * of it the way a wet revetment darkens, and lay one bright line where the

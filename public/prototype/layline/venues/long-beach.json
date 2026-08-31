@@ -6,7 +6,7 @@
   },
   "bearing": 215,
   "clipRadius": 10500,
-  "dataVersion": "2026-08-29",
+  "dataVersion": "2026-08-31",
   "sources": {
     "coastline": "OpenStreetMap via Overpass API",
     "buildings": "OpenStreetMap via Overpass API (LA County LiDAR heights)",
@@ -18,6 +18,14 @@
     "Elevation: Mapzen Terrarium tiles via AWS Open Data",
     "Terrain: USGS 3DEP and NASA SRTM, courtesy of the U.S. Geological Survey"
   ],
+  "occlusion": {
+    "seed": 1818327372,
+    "supportSamples": 16,
+    "ambientRaysPerSample": 12,
+    "ambientRange": 18,
+    "sunAngularRadiusDeg": 0.2667,
+    "sunRange": 399
+  },
   "products": {
     "trees": "7770434cc03e916c9111a8f67aa2eee24cbad48a50ec5cb68ef98edfea51ab75",
     "shoreline": "1ce6bc6c336c1a7c02314f55061a6074521bd9814df1f614798fbbb6de3e4bdf",
@@ -26,7 +34,7 @@
   "stats": {
     "vertices": 66249,
     "triangles": 66931,
-    "bytes": 565643,
+    "bytes": 638851,
     "layers": [
       {
         "classId": 5,
