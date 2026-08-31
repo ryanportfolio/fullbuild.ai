@@ -594,6 +594,19 @@ export function LaylineScene({
     );
   }
 
+  /* The lazy venue chunk resolves only after this component's first commit,
+   * and the store boots at "absent", which `captureReady` counts as ready
+   * because a race with no venue is legitimately ready with none. A capture
+   * started in that window would file an empty harbour as a finished frame,
+   * so the mode marks the venue loading before its chunk exists; the mounted
+   * module's own effect takes the state over from there (round-3 codex P1,
+   * which also applied to the streamed mode). */
+  useEffect(() => {
+    if ((streamed || autogenOrigin !== null) && useReplay.getState().venueAsset === "absent") {
+      useReplay.getState().setVenueAsset("loading");
+    }
+  }, [streamed, autogenOrigin]);
+
   /* The gate is one per document and outlives every canvas mounted into it,
    * same as the ready flag below. A lost context or a scrolled-away observer
    * left behind by the last visit would keep this one dark, so the record goes

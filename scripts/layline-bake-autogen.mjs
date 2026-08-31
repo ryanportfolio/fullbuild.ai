@@ -2370,7 +2370,11 @@ const totalBytes = Buffer.byteLength(manifestText) + glbBuf.length;
 out(`manifest ${Buffer.byteLength(manifestText)} B`);
 out(`asset total ${totalBytes} B of the 25000000 B budget (${round((totalBytes / 25e6) * 100, 2)}%)`);
 if (totalBytes > 25e6) {
+  /* The oversized files stay on disk for diagnosis, but the run must not look
+   * like a success: an automated rebake that cannot tell a contract-violating
+   * output from a valid one would ship it (round-3 codex P2). */
   out(`BUDGET EXCEEDED by ${totalBytes - 25e6} B`);
+  throw new Error(`asset total ${totalBytes} B exceeds the 25000000 B budget`);
 }
 
 /* ------------------------------------------------------------- verify */
