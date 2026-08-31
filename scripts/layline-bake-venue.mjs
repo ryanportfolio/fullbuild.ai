@@ -3934,12 +3934,13 @@ function buildHeroes(coastWays, anchors) {
  * darken, and a rim meets the water with no contact shadow at all. That absence
  * is most of what reads as a slab.
  *
- * Two more bytes a vertex close it. `aSun` is the fraction of the solar disc a
- * vertex can see past the venue's own triangles; `aAo` is how much of the
- * hemisphere its normal opens is closed off by geometry within arm's reach. The
- * shader multiplies the direct term by the first and the sky fill by the
- * second, so a frame pays for one more attribute fetch and nothing else: no
- * light, no pass, no shadow map, no per-frame work.
+ * Two more bytes a vertex close it. `aSun` is the fraction of the solar disc
+ * the sunward part of a vertex's own support can see past the venue's own
+ * triangles, a visibility term with no orientation left in it; `aAo` is how
+ * much of the hemisphere its normal opens is closed off by geometry within
+ * arm's reach. The shader multiplies the direct term by the first and the sky
+ * fill by the second, so a frame pays for one more attribute fetch and nothing
+ * else: no light, no pass, no shadow map, no per-frame work.
  */
 
 /* Every value below is the mean over the surface the VERTEX IS RESPONSIBLE
@@ -4513,9 +4514,13 @@ function bakeOcclusion() {
      * not any of its triangles' geometric normals (a crown ring does exactly
      * that), so a face whose geometry leans a thousandth of a degree sunward
      * can sit under a vertex the shading calls fully turned away. Measured on
-     * the shipped mesh the gate suppresses 2,519 vertices of 61,997, 2,428 of
-     * them on the hero layer (audit-corrected; support sampling puts sample
-     * faces tens of degrees off the vertex normal, so this is no edge case).
+     * the shipped mesh the gate suppresses 2,524 vertices of 61,997, 2,433 of
+     * them on the hero layer (support sampling puts sample faces tens of
+     * degrees off the vertex normal, so this is no edge case). Round 2's
+     * audit-corrected count on the same mesh was 2,519 / 2,428; the five that
+     * joined are vertices whose ungated byte rounded to 0 under the old
+     * all-samples denominator and rounds to 1 or more under the sunward-only
+     * one, so the gate now has something to suppress there.
      * Letting the ray cast light one of them would put a sun byte on a surface
      * aShade multiplies to near zero, and the grain term riding inside the
      * same clamp could then add up to 9.5% of the direct term on heroes: two
@@ -4564,13 +4569,27 @@ function bakeOcclusion() {
       const oy = sy + fy * RAY_EPS;
       const oz = sz + fz * RAY_EPS;
 
-      sunDen += weight;
       const lambert = fx * sunX + fy * sunY + fz * sunZ;
-      if (takesSun && lambert > 0) {
-        /* A face turned away from the sun takes no direct light whatever stands
-         * in front of it, and aShade already says so; skipping the cast there is
-         * the same answer for nothing. */
+      /* The average is over the SUNWARD PART of the support and nothing else,
+       * which is why the denominator carries the same test as the numerator. A
+       * face turned away from the sun takes no direct light whatever stands in
+       * front of it, and aShade already says so; leaving such a sample in the
+       * denominator made aSun fall on a mixed support for ORIENTATION rather
+       * than for occlusion, and the shader multiplies aSun into a Lambert term
+       * built from the SHADING normal, so orientation was counted twice
+       * wherever one vertex carries faces on both sides of the terminator: a
+       * crown ring, a rim at grazing sun, a batter meeting its deck. Measured
+       * on the round-2 asset before this change: 9,751 vertices of 61,997 carry
+       * such a support, 6,091 of them lit, and 4,603 sun bytes were depressed
+       * by it, every one of them too dark (rms 80.6 levels over the moved set,
+       * p50 66, p95 143, max 212; hero layer 4,279 of the 4,603). */
+      if (lambert > 0) {
+        sunDen += weight;
+        /* the support has a sunward part, so aSun below is a real average
+         * rather than the empty-support convention */
         sunward = true;
+      }
+      if (takesSun && lambert > 0) {
         const radial = (k + jitter(v, 3 * SUPPORT_SAMPLES + k)) / SUPPORT_SAMPLES;
         const phi =
           2 * Math.PI * ((k * GOLDEN + jitter(v, 4 * SUPPORT_SAMPLES + k)) % 1);
@@ -4625,6 +4644,20 @@ function bakeOcclusion() {
       aoDen += weight;
     }
 
+    /* Empty support: not one face of it is turned toward the sun, so the
+     * visibility average is 0/0 and the byte is a convention. It is 0, not 255.
+     * 255 is the pure-visibility reading and it would be the right one if the
+     * shader's direct term were exactly zero on a face turned away. It is not:
+     * `lit` clamps (vShade - 0.62) * 1.818 + (grain - 0.5) * grainWeight, and at
+     * the floor shade byte 79 the Lambert half is only -0.0051 while the grain
+     * half reaches +0.140 on terrain and +0.100 on heroes, so a 255 here would
+     * pour up to 13.5 % of the full direct term onto surfaces every one of whose
+     * faces points away from the sun. 0 says what aShade says, in the one place
+     * the shader's clamp cannot round back up. This is an agreeing zero on a
+     * vertex with no sunward surface at all, not the proportional orientation
+     * term the denominator used to carry; measured, 10,887 vertices of 61,997
+     * land here and all of them already read 0, so the convention moves no
+     * byte and the whole of this round's diff is the mixed supports above. */
     const sunV = sunDen > 0 ? sunNum / sunDen : 0;
     sun[v] = Math.round(sunV * 255);
     ao[v] = aoDen > 0 ? Math.round((aoNum / aoDen) * 255) : 255;

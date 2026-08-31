@@ -331,12 +331,14 @@ const CURTAIN_FOOT_K = 0.25;
  *
  * Round 2 adds the half a Lambert term cannot hold: what stands BETWEEN a face
  * and its light. aSun is the fraction of the solar disc the baker's ray cast
- * found unblocked by the venue's own triangles, aAo how much of the vertex's
- * own hemisphere nearby geometry closes off, and the two multiply the two
- * lights the line below adds. Both are baked, so the cost per frame is one
- * more attribute fetch each and nothing else: no light, no pass, no shadow
- * map. `scripts/layline-bake-venue.mjs` (bakeOcclusion) holds the derivation
- * and both sampling constants. */
+ * found unblocked by the venue's own triangles, averaged over the SUNWARD part
+ * of the vertex's own support so that no orientation is left in it (the shader
+ * multiplies it into a Lambert term that already carries orientation); aAo is
+ * how much of the vertex's own hemisphere nearby geometry closes off. The two
+ * multiply the two lights the line below adds. Both are baked, so the cost per
+ * frame is one more attribute fetch each and nothing else: no light, no pass,
+ * no shadow map. `scripts/layline-bake-venue.mjs` (bakeOcclusion) holds the
+ * derivation and both sampling constants. */
 const VenueShoreMaterial = shaderMaterial(
   {
     uSunDir: sunDirection(),

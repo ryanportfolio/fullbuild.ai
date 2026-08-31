@@ -730,12 +730,12 @@ test("the committed asset and the baker that made it are both pinned", () => {
      from the same cache are byte-identical. */
   assert.equal(
     sha256(bytes(ASSET)),
-    "ade1bd2a8f49744208ef4976bd1f73b491940e7bbb07248f29c577ac6051ceb6",
+    "2c44b057914e14d984f81f4409681f25136cbab6be2c31415aa569228c8c5151",
     "the committed venue asset changed; rebake it and restate both hashes",
   );
   assert.equal(
     sha256(bytes(BAKER)),
-    "38c2daf57a4fcfcef067bcfdf6f8cd165ed6c76cbef6b6fa308deb9d9c86314e",
+    "4870537dd3310244d1d055cd0dd922440a47cd20d418338aa63986f7688ff238",
     "the baker changed; rebake the venue and restate both hashes",
   );
   const manifest = JSON.parse(
@@ -751,19 +751,30 @@ test("the committed asset and the baker that made it are both pinned", () => {
      not to thin realism work to fit one. Round 1 restated it at 580 KiB for
      1,026 measured tree crowns and 674 measured rim facets. Round 2 adds two
      bytes a vertex on the four shore layers, 61,997 vertices: 121.1 KiB raw and
-     71.5 KiB gzipped of baked sun visibility and ambient occlusion, which is
+     69.4 KiB gzipped of baked sun visibility and ambient occlusion, which is
      what stops the venue reading as slabs. Both are per-vertex means over each
      vertex's own support, so neither compresses the way a mask would: measured
-     by flattening one channel at a time, the sun channel costs 28.2 KiB
+     by flattening one channel at a time, the sun channel costs 26.3 KiB
      gzipped and the ambient one 43.6 KiB, and quantising both to 32 levels was
-     measured at 3.7 per cent off the total and rejected as buying less than
-     the error it costs. The measured size is 623.9 KiB, up 12.9 per cent, and
-     the tripwire is restated at that plus 5 per cent so unnoticed growth still
-     fails. It is not a claim that 623.9 KiB is acceptable; the owner has said
-     perf gets re-opened when the look is right. */
+     measured at 3.4 per cent off the total and rejected as buying less than
+     the error it costs. The measured size is 622.0 KiB, up 12.6 per cent on
+     round 1's 552.4 KiB, and the tripwire is that plus 5 per cent so unnoticed
+     growth still fails. It is not a claim that 622.0 KiB is acceptable; the
+     owner has said perf gets re-opened when the look is right.
+
+     Two restatements since round 2, both disclosed rather than quiet. The size
+     fell 1,974 B when round 2b took orientation out of the sun channel's
+     denominator, all of it in the sun channel (28.2 KiB gzipped before, 26.3
+     after): the fix can only raise a sun byte, and it raised 4,603 of them, so
+     2,250 more vertices now sit at the flat 255 the fully-lit run compresses
+     into. And the ceiling itself is corrected: round 2 wrote "that plus 5 per
+     cent" and then pinned 660 KiB, which is 5.8 per cent over its own measured
+     623.9 KiB, an arithmetic slip the round-2 audit REFUTED. 654 KiB is the
+     stated rule applied to the measured number, so this is a tightening of
+     6 KiB, not a loosening. */
   assert.ok(
-    manifest.stats.bytes <= 660 * 1024,
-    `${manifest.stats.bytes} B over the 660 KiB asset tripwire`,
+    manifest.stats.bytes <= 654 * 1024,
+    `${manifest.stats.bytes} B over the 654 KiB asset tripwire`,
   );
   /* The occlusion pass has one input that is not the mesh, and this is where a
      rebake at another seed or another sampling constant has to be restated. */
