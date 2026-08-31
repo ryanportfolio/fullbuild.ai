@@ -684,7 +684,7 @@ function drawable(layer: VenueLayer): boolean {
  * thing to show when the real coast could not be loaded. Open water would read
  * as a deliberate choice; this reads as a coast.
  */
-function FallbackShore() {
+export function FallbackShore() {
   const geometry = useMemo(shorelineGeometry, []);
   useEffect(() => () => geometry.dispose(), [geometry]);
   /* The frame request runs AFTER this mesh is committed, so the drawn frame it

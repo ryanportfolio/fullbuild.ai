@@ -112,6 +112,15 @@ export default async function LaylineRacesPage({
         type="font/woff2"
         crossOrigin="anonymous"
       />
+      {/* The streamed venue's first request is a cross-origin fetch to Google,
+          and it cannot start until DNS, TCP and TLS to a host the browser has
+          never seen are all done. This opens that connection while the document
+          is still parsing, so the root tileset request pays for none of it.
+          Only when the query string actually asks for streamed tiles: a
+          speculative connection nobody uses is a wasted socket. */}
+      {params.venue === "tiles" && (
+        <link rel="preconnect" href="https://tile.googleapis.com" crossOrigin="anonymous" />
+      )}
 
       {/* Three panes, three ways in. Each link parks in the same corner and
           only the focused one is on screen, so the row costs no space. */}
