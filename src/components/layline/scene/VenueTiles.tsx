@@ -1239,6 +1239,11 @@ export function VenueTiles({
      * value read here is the one the water is drawn at this frame. */
     const [cx, cz] = seaCentre(camera.position.x, camera.position.z);
     (sea.current as SeaUniforms).uSeaCentre.value.set(cx, cz);
+    /* A gated frame draws nothing, so traversing the tileset for it only
+     * burns CPU and schedules downloads nobody sees. The wake doors below
+     * dirty the gate whenever the tileset itself needs a frame, so skipping
+     * here cannot starve streaming: the next wanted frame traverses. */
+    if (!sceneGate.willRender) return;
     tiles.setResolutionFromRenderer(camera, gl);
     tiles.update();
   }, 0);

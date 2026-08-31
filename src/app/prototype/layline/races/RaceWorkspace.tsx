@@ -457,7 +457,11 @@ export function RaceWorkspace({
   const select = (id: string) => {
     if (id === raceId) return;
     setPendingRaceId(id);
-    router.replace(`${pathname}?race=${id}`, { scroll: false });
+    /* Keep every other query parameter: `venue=tiles` and its tuning knobs
+     * would otherwise vanish on the first race switch. */
+    const params = new URLSearchParams(window.location.search);
+    params.set("race", id);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const togglePin = (id: string) => {

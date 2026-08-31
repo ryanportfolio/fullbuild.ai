@@ -116,13 +116,17 @@ export function readVenueMode(search: string): VenueMode {
   const movingTarget = moving === null ? Number.NaN : Number(moving);
   const near = params.get("near");
   const miss = Number(params.get("miss"));
+  const water = params.get("water") !== "0";
   return {
     tiles: params.get("venue") === "tiles",
-    water: params.get("water") !== "0",
+    water,
     errorTarget: Number.isFinite(error) && error > 0 ? error : undefined,
     seaLevel: Number.isFinite(seaLevel) ? seaLevel : undefined,
-    seaClip: Number.isFinite(seaClip) && seaClip >= 0 ? seaClip : undefined,
-    seaMask: Number.isFinite(seaMask) && seaMask >= 0 ? seaMask : undefined,
+    /* `water=0` exists to show Google's own sea; with the replay water gone
+     * the clip and mask would discard that sea too and leave holes, so both
+     * default OFF there. An explicit `seaclip=`/`mask=` still wins. */
+    seaClip: Number.isFinite(seaClip) && seaClip >= 0 ? seaClip : water ? undefined : 0,
+    seaMask: Number.isFinite(seaMask) && seaMask >= 0 ? seaMask : water ? undefined : 0,
     seaHaze: Number.isFinite(seaHaze) && seaHaze >= 0 ? seaHaze : undefined,
     fadeMs: Number.isFinite(fadeMs) && fadeMs >= 0 ? fadeMs : undefined,
     flatSea: params.get("flat") === "1",
