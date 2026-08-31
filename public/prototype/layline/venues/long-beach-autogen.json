@@ -1,0 +1,521 @@
+{
+  "id": "long-beach-autogen",
+  "origin": {
+    "lat": 33.742,
+    "lon": -118.155,
+    "yDatum": 0
+  },
+  "seaDatumNavd88M": 0.65,
+  "bearing": 215,
+  "axes": "glTF/three: x = course-frame x metres, y = metres above the venue sea datum, z = -course-frame y. 1 unit = 1 m, Y up. Identical to the LVN3 asset's world frame, so the runtime adds this at the identity transform.",
+  "extentM": 2400,
+  "coverage": {
+    "centreLon": -118.191496,
+    "centreLat": 33.766813,
+    "sideM": 2400,
+    "mercatorBox": [
+      -13158460.662,
+      3996090.011,
+      -13155573.64,
+      3998977.033
+    ],
+    "courseBoxM": {
+      "x0": 2674.1,
+      "y0": -1974.57,
+      "x1": 6008,
+      "y1": 1355.22
+    },
+    "areaKm2": 5.76,
+    "landKm2": 4.3438,
+    "landPct": 75.41,
+    "note": "The venue clip disc is 10500 m; this asset covers a square about the downtown waterfront lens target only. Everything outside it stays the LVN3 baked asset's job."
+  },
+  "nodes": [
+    "ground",
+    "roofs",
+    "walls",
+    "trees"
+  ],
+  "nodeDetail": [
+    {
+      "name": "ground",
+      "role": "hole-filled lidar ground with the OSM water cut, NAIP drape",
+      "primitives": 1,
+      "triangles": 527436,
+      "vertices": 267394,
+      "materials": [
+        "ground-naip"
+      ],
+      "dracoBytes": 434099,
+      "dracoMethod": "edgebreaker"
+    },
+    {
+      "name": "roofs",
+      "role": "flat caps at the 90th-percentile lidar surface height, NAIP drape",
+      "primitives": 1,
+      "triangles": 25437,
+      "vertices": 30877,
+      "materials": [
+        "roof-naip"
+      ],
+      "dracoBytes": 127122,
+      "dracoMethod": "edgebreaker"
+    },
+    {
+      "name": "walls",
+      "role": "procedural facades, one primitive per palette and band, COLOR_0 tinted from each building's roof NAIP median",
+      "primitives": 10,
+      "triangles": 119702,
+      "vertices": 239404,
+      "materials": [
+        "wall-glassTower-upper",
+        "wall-glassTower-base",
+        "wall-midriseCommercial-upper",
+        "wall-midriseCommercial-base",
+        "wall-residential-upper",
+        "wall-residential-base",
+        "wall-parking-upper",
+        "wall-parking-base",
+        "wall-industrial-upper",
+        "wall-industrial-base"
+      ],
+      "dracoBytes": 547642,
+      "dracoMethod": "edgebreaker"
+    },
+    {
+      "name": "trees",
+      "role": "crossed alpha-masked billboards at lidar-derived crown positions and heights",
+      "primitives": 1,
+      "triangles": 39536,
+      "vertices": 79072,
+      "materials": [
+        "canopy"
+      ],
+      "dracoBytes": 235554,
+      "dracoMethod": "edgebreaker"
+    }
+  ],
+  "stats": {
+    "bytes": 5814060,
+    "gzipBytes": 5696033,
+    "triangles": 712111,
+    "textureBytes": 4456742,
+    "geometryBytes": 1344417,
+    "drawCalls": 13
+  },
+  "sha256": "0bb4b4137c3c20a7050dafd11f02acb70bd39d77fc3d5630dad0da84ef965b78",
+  "sources": {
+    "lidar": "USGS 3DEP CA_LosAngeles_1_B23 via Entwine EPT on AWS Open Data, depth <= 12, 1910 nodes, 14.47 pts/m2 over land",
+    "imagery": "NAIP 2022-05-11 at 0.6 m via The National Map ImageServer, 16 crops pinned by esriMosaicLockRaster",
+    "footprints": "OpenStreetMap building=* with geometry via Overpass, 2720 extruded",
+    "water": "OpenStreetMap natural=water areas, waterway=dock, landuse=basin, natural=coastline and man_made=breakwater/pier via Overpass"
+  },
+  "sourceDetail": {
+    "lidar": {
+      "collection": "CA_LosAngeles_1_B23",
+      "provider": "USGS 3DEP via the Entwine EPT octree on AWS Open Data (usgs-lidar-public)",
+      "endpoint": "https://s3-us-west-2.amazonaws.com/usgs-lidar-public",
+      "verticalDatum": "NAVD88 (Geoid18)",
+      "acquired": "2023-10-03",
+      "maxDepth": 12,
+      "nodes": 1910,
+      "lazBytes": 349348059,
+      "pointsInBox": 62839834,
+      "licence": "US Government public domain; USGS asks that products carry the National Geospatial Program acknowledgment."
+    },
+    "imagery": {
+      "provider": "NAIP 2022 via The National Map USGSNAIPImagery ImageServer (keyless; the AWS NAIP buckets are requester-pays and 403 an unsigned request)",
+      "service": "https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPImagery/ImageServer",
+      "pin": "esriMosaicLockRaster, one OBJECTID per crop",
+      "quads": [
+        {
+          "id": 16095,
+          "name": "m_3311815_se_11_060_20220511",
+          "acquired": "2022-05-11"
+        },
+        {
+          "id": 16096,
+          "name": "m_3311815_sw_11_060_20220511",
+          "acquired": "2022-05-11"
+        }
+      ],
+      "crops": 16,
+      "pngBytes": 24407214,
+      "nativeGroundSampleM": 0.6,
+      "licence": "Public domain with attribution (USGS/USDA)."
+    },
+    "footprints": {
+      "provider": "OpenStreetMap via Overpass",
+      "file": "overpass/long-beach-buildings-afe1ed1b3647.json",
+      "sha256": "35ffd5ede5a6e12481f778aeae94ee45457305fc154840c5c35a62cb06b5c399",
+      "bytes": 14417700,
+      "licence": "ODbL 1.0, (c) OpenStreetMap contributors"
+    },
+    "water": {
+      "provider": "OpenStreetMap via Overpass: natural=water areas, waterway=dock, landuse=basin, natural=coastline, man_made=breakwater/pier",
+      "files": [
+        {
+          "file": "overpass/long-beach-coast-ce62c56beadb.json",
+          "sha256": "042315f55a53409ed0fe40bc312335f33610fca337bb96f60f1e06c55bd9ca53",
+          "bytes": 217277
+        },
+        {
+          "file": "overpass/long-beach-pier-91fdc841d23d.json",
+          "sha256": "a3c42fbc49712f4dcec7e2203a58216b9f7ed88c38e3d686740412c180ff2d87",
+          "bytes": 101346
+        },
+        {
+          "file": "overpass/long-beach-water-f4e1eb5a2b4f.json",
+          "sha256": "12a623bb45ad6d85019e9da7e16a037effb803725fef7be58614a7b91c150fce",
+          "bytes": 50999
+        }
+      ],
+      "rule": "breakwater (45 m half-width) and pier (6 m, closed areas dilated 3 m) corridors stamp land; then any mapped water area is water; then the nearest coastline segment decides by its side, land on the left of a to b. Coastline alone misclassifies Rainbow Harbour as land.",
+      "licence": "ODbL 1.0, (c) OpenStreetMap contributors"
+    }
+  },
+  "bake": {
+    "seed": 1635087471,
+    "densityPtsPerM2": 10.9097,
+    "densityPtsPerM2OverLand": 14.4667,
+    "texelSizeM": 0.5859,
+    "rasterCellM": 1,
+    "waterProbeCellM": 2,
+    "meshCellM": 4,
+    "atlasPx": 4096,
+    "naipGrid": 4,
+    "jpegQuality": 92,
+    "textureCodec": "JPEG (mozjpeg) for colour, PNG for the alpha-cut canopy. KTX2/Basis is NOT used: three vendors the Basis transcoder only, there is no encoder in node_modules and no toktx/basisu on this machine.",
+    "dracoBits": {
+      "position": 15,
+      "normal": 8,
+      "texcoord": 12,
+      "color": 8
+    },
+    "toolVersions": {
+      "node": "v24.15.0",
+      "draco3d": "1.5.7",
+      "sharp": "0.34.5",
+      "three": "0.171.0"
+    }
+  },
+  "runtime": {
+    "loader": "GLTFLoader + DRACOLoader. No KTX2Loader is needed: the textures are JPEG/PNG.",
+    "decoderPath": "/prototype/layline/decoders/draco/",
+    "transform": "identity; the file is already in the venue's world frame",
+    "vertexColours": "the walls carry a float COLOR_0 tint whose components run up to 1.8, so it brightens as well as darkens. Materials must enable vertex colours."
+  },
+  "quality": {
+    "waterCutVsLidarVoid": {
+      "bothLand": 4277250,
+      "bothWater": 1026546,
+      "osmWaterLidarHit": 389689,
+      "osmLandLidarVoid": 66515,
+      "agreementPct": 92.08
+    },
+    "groundFill": {
+      "landHoles": 1490708,
+      "unresolved": 79804,
+      "unresolvedPctOfLand": 1.84
+    },
+    "buildingHeightVsOsmTag": {
+      "n": 2401,
+      "meanErrorM": 0.4,
+      "meanAbsErrorM": 1.17,
+      "medianAbsErrorM": 0.44,
+      "p90AbsErrorM": 2.83,
+      "maxAbsErrorM": 78.45
+    },
+    "buildingsBySource": {
+      "lidar": 2557,
+      "osm-height-tag": 163
+    },
+    "buildingsByPalette": {
+      "parking": 17,
+      "glassTower": 36,
+      "midriseCommercial": 641,
+      "residential": 2019,
+      "industrial": 7
+    },
+    "facadeAreaM2": 2544324,
+    "wallTintsFromNaip": 2561,
+    "treeCount": 9884,
+    "lidarClassHistogramPct": {
+      "1": 54.54,
+      "2": 42.948,
+      "7": 0.019,
+      "9": 1.99,
+      "17": 0.463,
+      "18": 0.007,
+      "20": 0.034
+    },
+    "notes": [
+      "Facade texture is procedural, not photographic. A nadir orthophoto contains no wall pixels; the spike measured a 92x to 171x texel stretch over these buildings on the drape arm and 12.7x to 23.7x less vertical detail in the rendered frame.",
+      "The NAIP drape bakes the 2022-05-11 midday light, its shadows and its parked vehicles into the ground and roofs. They will not respond to the scene's sun.",
+      "Roofs are flat caps at the 90th-percentile surface height. Pitched roofs, parapets and plant rooms are in the point cloud and not in this mesh.",
+      "Absolute elevation carries about 1 m of datum uncertainty: the sea datum is one venue constant, and this collection's own class-9 median swings 1.14 m between flight lines."
+    ]
+  },
+  "attribution": [
+    "Map data (c) OpenStreetMap contributors, ODbL",
+    "Elevation and imagery: map services and data available from U.S. Geological Survey, National Geospatial Program",
+    "Orthoimagery: NAIP, USGS/USDA, public domain, via The National Map"
+  ],
+  "inputs": {
+    "osm": [
+      {
+        "file": "overpass/long-beach-coast-ce62c56beadb.json",
+        "bytes": 217277,
+        "sha256": "042315f55a53409ed0fe40bc312335f33610fca337bb96f60f1e06c55bd9ca53",
+        "retrieved": "2026-08-31"
+      },
+      {
+        "file": "overpass/long-beach-pier-91fdc841d23d.json",
+        "bytes": 101346,
+        "sha256": "a3c42fbc49712f4dcec7e2203a58216b9f7ed88c38e3d686740412c180ff2d87",
+        "retrieved": "2026-08-31"
+      },
+      {
+        "file": "overpass/long-beach-water-f4e1eb5a2b4f.json",
+        "bytes": 50999,
+        "sha256": "12a623bb45ad6d85019e9da7e16a037effb803725fef7be58614a7b91c150fce",
+        "retrieved": "2026-08-31"
+      },
+      {
+        "file": "overpass/long-beach-buildings-afe1ed1b3647.json",
+        "bytes": 14417700,
+        "sha256": "35ffd5ede5a6e12481f778aeae94ee45457305fc154840c5c35a62cb06b5c399",
+        "retrieved": "2026-08-31"
+      }
+    ],
+    "naip": [
+      {
+        "file": "naip/m_3311815_sw_11_060_20220511-lock16096-1024px-2c41285013ae.png",
+        "bytes": 1562352,
+        "sha256": "86ba96b54b9a1dde6af256449eef43e463dc3ee452f8ef94b8e245afb6be2bbc",
+        "quad": "m_3311815_sw_11_060_20220511",
+        "objectId": 16096,
+        "coverage": "box",
+        "bbox": [
+          -13158460.662,
+          3996090.011,
+          -13157738.907,
+          3996811.766
+        ]
+      },
+      {
+        "file": "naip/m_3311815_sw_11_060_20220511-lock16096-1024px-416a2855edff.png",
+        "bytes": 1173614,
+        "sha256": "7249190f428989ba178b62a4720f97a91ed505479016aa0c9c3474918695686e",
+        "quad": "m_3311815_sw_11_060_20220511",
+        "objectId": 16096,
+        "coverage": "box",
+        "bbox": [
+          -13157738.907,
+          3996090.011,
+          -13157017.151,
+          3996811.766
+        ]
+      },
+      {
+        "file": "naip/m_3311815_sw_11_060_20220511-lock16096-1024px-e09c1adc3aa3.png",
+        "bytes": 1476797,
+        "sha256": "568222e5c2c58b9f21c739516dc43268d3de1c5d5782457a4d4f7c3d4f26d991",
+        "quad": "m_3311815_sw_11_060_20220511",
+        "objectId": 16096,
+        "coverage": "box",
+        "bbox": [
+          -13157017.151,
+          3996090.011,
+          -13156295.396,
+          3996811.766
+        ]
+      },
+      {
+        "file": "naip/m_3311815_se_11_060_20220511-lock16095-1024px-10091ee0a983.png",
+        "bytes": 1033380,
+        "sha256": "94f828804b587791298b189e31a9eae0125d30f0fd9fc5328d96938717d41159",
+        "quad": "m_3311815_se_11_060_20220511",
+        "objectId": 16095,
+        "coverage": "box",
+        "bbox": [
+          -13156295.396,
+          3996090.011,
+          -13155573.64,
+          3996811.766
+        ]
+      },
+      {
+        "file": "naip/m_3311815_sw_11_060_20220511-lock16096-1024px-5b558b33e762.png",
+        "bytes": 1578313,
+        "sha256": "e0d3e7373a58f704a16acbbb7f3066accff5b3cef5cc5601afc571e655fc48f4",
+        "quad": "m_3311815_sw_11_060_20220511",
+        "objectId": 16096,
+        "coverage": "box",
+        "bbox": [
+          -13158460.662,
+          3996811.766,
+          -13157738.907,
+          3997533.522
+        ]
+      },
+      {
+        "file": "naip/m_3311815_sw_11_060_20220511-lock16096-1024px-4bddbed47f2d.png",
+        "bytes": 1716116,
+        "sha256": "f345b3549070650560e4122f2acb244d4ee2318daf1cbe84db47eae069a0dff9",
+        "quad": "m_3311815_sw_11_060_20220511",
+        "objectId": 16096,
+        "coverage": "box",
+        "bbox": [
+          -13157738.907,
+          3996811.766,
+          -13157017.151,
+          3997533.522
+        ]
+      },
+      {
+        "file": "naip/m_3311815_sw_11_060_20220511-lock16096-1024px-28a50b31c27b.png",
+        "bytes": 1515671,
+        "sha256": "3d8dddff4898acdc0e5fe4605f387d78d751b066a1f8d42498fd9510d178845d",
+        "quad": "m_3311815_sw_11_060_20220511",
+        "objectId": 16096,
+        "coverage": "box",
+        "bbox": [
+          -13157017.151,
+          3996811.766,
+          -13156295.396,
+          3997533.522
+        ]
+      },
+      {
+        "file": "naip/m_3311815_se_11_060_20220511-lock16095-1024px-80796b57e44a.png",
+        "bytes": 1215948,
+        "sha256": "de64a921ba810359413c4b9b048ce143d86089a94cdc92cd681c2f7020a48b8a",
+        "quad": "m_3311815_se_11_060_20220511",
+        "objectId": 16095,
+        "coverage": "box",
+        "bbox": [
+          -13156295.396,
+          3996811.766,
+          -13155573.64,
+          3997533.522
+        ]
+      },
+      {
+        "file": "naip/m_3311815_sw_11_060_20220511-lock16096-1024px-6532c9eb8e6b.png",
+        "bytes": 1689410,
+        "sha256": "6a29b3e1962b0e48bb96c12fa4a47aa313ed33d50d6aee4b94b508065ab2932c",
+        "quad": "m_3311815_sw_11_060_20220511",
+        "objectId": 16096,
+        "coverage": "box",
+        "bbox": [
+          -13158460.662,
+          3997533.522,
+          -13157738.907,
+          3998255.277
+        ]
+      },
+      {
+        "file": "naip/m_3311815_sw_11_060_20220511-lock16096-1024px-41478444a575.png",
+        "bytes": 1595184,
+        "sha256": "e6ba7eae4838b2757e7e57a382d26537f2ce09ed7eb9ea4f3e1eb22a5eea5ebd",
+        "quad": "m_3311815_sw_11_060_20220511",
+        "objectId": 16096,
+        "coverage": "box",
+        "bbox": [
+          -13157738.907,
+          3997533.522,
+          -13157017.151,
+          3998255.277
+        ]
+      },
+      {
+        "file": "naip/m_3311815_sw_11_060_20220511-lock16096-1024px-5b931433a58f.png",
+        "bytes": 1588632,
+        "sha256": "bbe05ca0f35a79dc3e8b1595c9b21e3ab8816520998c1a8ccdc4509d0326a56e",
+        "quad": "m_3311815_sw_11_060_20220511",
+        "objectId": 16096,
+        "coverage": "box",
+        "bbox": [
+          -13157017.151,
+          3997533.522,
+          -13156295.396,
+          3998255.277
+        ]
+      },
+      {
+        "file": "naip/m_3311815_se_11_060_20220511-lock16095-1024px-7e89069668aa.png",
+        "bytes": 1684509,
+        "sha256": "a95baa5f46882940cf1c74012f698079b5f4cd07399cdb00d1c870f774d8e45e",
+        "quad": "m_3311815_se_11_060_20220511",
+        "objectId": 16095,
+        "coverage": "box",
+        "bbox": [
+          -13156295.396,
+          3997533.522,
+          -13155573.64,
+          3998255.277
+        ]
+      },
+      {
+        "file": "naip/m_3311815_sw_11_060_20220511-lock16096-1024px-2b8b90579df4.png",
+        "bytes": 1702497,
+        "sha256": "45b741b0185d537100dc857805ef967cefe0ca45b883e583bdba4e1aafa861ed",
+        "quad": "m_3311815_sw_11_060_20220511",
+        "objectId": 16096,
+        "coverage": "box",
+        "bbox": [
+          -13158460.662,
+          3998255.277,
+          -13157738.907,
+          3998977.033
+        ]
+      },
+      {
+        "file": "naip/m_3311815_sw_11_060_20220511-lock16096-1024px-f9e68e350a8d.png",
+        "bytes": 1639347,
+        "sha256": "2602f86135158a629d78d8ddfb50b852e1256d9d3ee6a2dd5ddbf825fe7580eb",
+        "quad": "m_3311815_sw_11_060_20220511",
+        "objectId": 16096,
+        "coverage": "box",
+        "bbox": [
+          -13157738.907,
+          3998255.277,
+          -13157017.151,
+          3998977.033
+        ]
+      },
+      {
+        "file": "naip/m_3311815_sw_11_060_20220511-lock16096-1024px-4c5e0e87efbd.png",
+        "bytes": 1553196,
+        "sha256": "da39e089b96eda89ed316c7207883e138caadc6d507cd2bed9d59dcef29fdc65",
+        "quad": "m_3311815_sw_11_060_20220511",
+        "objectId": 16096,
+        "coverage": "box",
+        "bbox": [
+          -13157017.151,
+          3998255.277,
+          -13156295.396,
+          3998977.033
+        ]
+      },
+      {
+        "file": "naip/m_3311815_se_11_060_20220511-lock16095-1024px-b5b5eff92643.png",
+        "bytes": 1682248,
+        "sha256": "dd446f5eea1f1617cd5b09887a30591eb4dbe1635f84dabfc808bc6e1e94de8c",
+        "quad": "m_3311815_se_11_060_20220511",
+        "objectId": 16095,
+        "coverage": "box",
+        "bbox": [
+          -13156295.396,
+          3998255.277,
+          -13155573.64,
+          3998977.033
+        ]
+      }
+    ],
+    "lidarNodes": 1910,
+    "lidarBytes": 349348059,
+    "provenanceLog": ".tmp/autogen-prod/cache/provenance/lidar-naip.tsv"
+  }
+}

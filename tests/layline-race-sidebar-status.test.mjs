@@ -48,7 +48,12 @@ test("race switching keeps one route and store authority", () => {
   assert.match(workspace, /const \[pendingRaceId, setPendingRaceId\] = useState<string \| null>\(null\)/);
   assert.match(workspace, /setPendingRaceId\(id\)/);
   assert.match(workspace, /pendingRaceId === null/);
-  assert.match(workspace, /router\.replace\(`\$\{pathname\}\?race=\$\{id\}`, \{ scroll: false \}\)/);
+  /* Restated 2026-08-30: select() now carries the other query parameters
+     (venue=tiles and its knobs survive a race switch), so the pin follows the
+     same contract in its new shape: race set on the params, one replace, no
+     scroll. */
+  assert.match(workspace, /params\.set\("race", id\)/);
+  assert.match(workspace, /router\.replace\(`\$\{pathname\}\?\$\{params\.toString\(\)\}`, \{ scroll: false \}\)/);
   assert.match(store, /selectRace:[\s\S]*briefDone: false/);
 });
 

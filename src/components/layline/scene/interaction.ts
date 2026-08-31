@@ -22,6 +22,17 @@ export const PITCH_MIN = 0.06;
 export const PITCH_MAX = 1.4;
 export const DIST_MIN = 12;
 export const DIST_MAX = 900;
+/* How far the orbit centre may slide from what it is anchored on: the followed
+ * boat while `follow` is on, the course origin otherwise. Pan used to
+ * accumulate without a bound, and everything downstream assumes it does not.
+ * The sky dome is a 7,000 m sphere on the course origin, so a long enough drag
+ * put the eye outside its own sky; the venue's horizon curtain is drawn on a
+ * shell around the eye and has to sit behind terrain that reaches 10,500 m from
+ * the origin, which is only true while the eye stays near it. 2,500 m is a
+ * quarter of the bake disc: far enough to walk the camera along the harbour
+ * front, close enough that the eye stays inside 3,700 m of the origin once the
+ * 100 m course leg and the 900 m stand-off are added. */
+export const PAN_MAX = 2500;
 /* The lens never goes under the sea state the water shader draws. */
 export const EYE_FLOOR = 1.4;
 /* Seconds a framing move takes. Long enough to read as travel, short enough
@@ -187,12 +198,21 @@ export function pan(camera: FreeformCamera, dx: number, dy: number, scale: numbe
   const awayZ = -Math.cos(camera.yaw);
   const mx = -(rightX * dx * scale) + awayX * dy * scale;
   const mz = -(rightZ * dx * scale) + awayZ * dy * scale;
+  /* Clamped on the composed offset, not on the gesture: bounding each delta
+   * would still let a hundred small drags walk the centre anywhere, which is
+   * exactly how it got out of the venue before. Beyond the limit the centre
+   * slides along the boundary rather than stopping dead, so a drag that is
+   * mostly along the edge still tracks the pointer. */
   if (camera.follow) {
-    camera.ox += mx;
-    camera.oz += mz;
+    const reach = Math.hypot(camera.ox + mx, camera.oz + mz);
+    const k = reach > PAN_MAX ? PAN_MAX / reach : 1;
+    camera.ox = (camera.ox + mx) * k;
+    camera.oz = (camera.oz + mz) * k;
   } else {
-    camera.tx += mx;
-    camera.tz += mz;
+    const reach = Math.hypot(camera.tx + mx, camera.tz + mz);
+    const k = reach > PAN_MAX ? PAN_MAX / reach : 1;
+    camera.tx = (camera.tx + mx) * k;
+    camera.tz = (camera.tz + mz) * k;
   }
   camera.left = 0;
 }

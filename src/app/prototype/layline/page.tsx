@@ -209,6 +209,24 @@ export default function LaylinePage() {
           <strong>View source</strong>
         </Link>
         <span aria-hidden="true">·</span>
+        {/* The shore geometry is baked from OSM coastline data and Mapzen
+            terrain tiles; ODbL and the terrain tiles' own terms both ask for
+            credit anywhere that data is shown. Mapzen is the tile set, not the
+            survey: over the continental US it composites USGS 3DEP at zoom 10
+            and above and NASA SRTM from zoom 7, and its attribution page asks
+            for both by name, courtesy of the U.S. Geological Survey. */}
+        <Link href="https://www.openstreetmap.org/copyright">
+          <span>Scenery data © OpenStreetMap contributors</span>
+        </Link>
+        <span aria-hidden="true">·</span>
+        <Link href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md">
+          <span>Elevation from Mapzen terrain tiles</span>
+        </Link>
+        <span aria-hidden="true">·</span>
+        <Link href="https://www.usgs.gov/3d-elevation-program">
+          <span>Terrain from USGS 3DEP and NASA SRTM, courtesy of the U.S. Geological Survey</span>
+        </Link>
+        <span aria-hidden="true">·</span>
         <Link className={styles.homeLink} href="/">
           <RailLogo className={styles.footerHouseMark} />
           <span>fullbuild.ai</span>

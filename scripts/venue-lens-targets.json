@@ -1,0 +1,216 @@
+{
+  "venue": "long-beach",
+  "origin": {
+    "lat": 33.742,
+    "lon": -118.155
+  },
+  "bearing": 215,
+  "frame": "world: x across the course, z = -(up the course), y up. Same frame the asset ships in.",
+  "derivedAt": "2026-08-29",
+  "targets": [
+    {
+      "name": "breakwater",
+      "x": 1229,
+      "z": -3379,
+      "radius": 320,
+      "ground": -4,
+      "top": 19,
+      "aimY": 4,
+      "range": 3596,
+      "assetVertices": 54,
+      "dists": [
+        145,
+        350,
+        830
+      ],
+      "derivedFrom": "OSM way 4883616 (Middle Breakwater), longest man_made=breakwater in the cache at 11336 m, aimed at its middle vertex; reach stated at 320 m because a mole has no radius"
+    },
+    {
+      "name": "crane-bank",
+      "x": 3390,
+      "z": -2161,
+      "radius": 542,
+      "ground": -4,
+      "top": 91.6,
+      "aimY": 29.5,
+      "range": 4020,
+      "assetVertices": 5028,
+      "dists": [
+        220,
+        500,
+        1200
+      ],
+      "derivedFrom": "largest cluster of L3 vertices above 50 m, which on this layer is gantry crane and nothing else at 150 m bins: 2823 vertices, next largest 981"
+    },
+    {
+      "name": "dome",
+      "x": 3167,
+      "z": -972,
+      "radius": 97,
+      "ground": -4,
+      "top": 44,
+      "aimY": 12.8,
+      "range": 3312,
+      "assetVertices": 129,
+      "dists": [
+        45,
+        105,
+        255
+      ],
+      "derivedFrom": "OSM way 721199801 (Spruce Goose dome, outer way of OSM relation 6573072), mean of the way's vertices; cache overpass-q5-long-beach.json"
+    },
+    {
+      "name": "downtown",
+      "x": 4342,
+      "z": 309,
+      "radius": 962,
+      "ground": -1.5,
+      "top": 132.6,
+      "aimY": 45.4,
+      "range": 4353,
+      "assetVertices": 2255,
+      "dists": [
+        220,
+        500,
+        1200
+      ],
+      "derivedFrom": "largest cluster of L2 vertices above 60 m, the urban massing tall enough to be a tower at 250 m bins: 339 vertices, next largest 62"
+    },
+    {
+      "name": "gateway",
+      "x": 6471,
+      "z": -1449,
+      "radius": 308,
+      "ground": -4,
+      "top": 157,
+      "aimY": 52.4,
+      "range": 6632,
+      "assetVertices": 203,
+      "dists": [
+        140,
+        340,
+        800
+      ],
+      "derivedFrom": "OSM way 1433959973 (Long Beach International Gateway, man_made=bridge), area centroid of the closed ring; cache overpass-q5-long-beach.json"
+    },
+    {
+      "name": "island-chaffee",
+      "x": -1342,
+      "z": 649,
+      "radius": 161,
+      "ground": -4,
+      "top": 58,
+      "aimY": 17.7,
+      "range": 1491,
+      "assetVertices": 5613,
+      "dists": [
+        75,
+        175,
+        420
+      ],
+      "derivedFrom": "OSM way 40500949 (Chaffee Island, GNIS 255464), area centroid of the closed ring; cache overpass-long-beach.json"
+    },
+    {
+      "name": "island-freeman",
+      "x": 533,
+      "z": -446,
+      "radius": 191,
+      "ground": -4,
+      "top": 31,
+      "aimY": 8.3,
+      "range": 695,
+      "assetVertices": 7090,
+      "dists": [
+        85,
+        210,
+        495
+      ],
+      "derivedFrom": "OSM way 40500950 (Freeman Island, GNIS 242469), area centroid of the closed ring; cache overpass-long-beach.json"
+    },
+    {
+      "name": "island-grissom",
+      "x": 3114,
+      "z": 164,
+      "radius": 183,
+      "ground": -4,
+      "top": 61,
+      "aimY": 18.8,
+      "range": 3118,
+      "assetVertices": 7912,
+      "dists": [
+        85,
+        200,
+        475
+      ],
+      "derivedFrom": "OSM way 40500921 (Grissom Island, GNIS 243043), area centroid of the closed ring; cache overpass-long-beach.json"
+    },
+    {
+      "name": "island-white",
+      "x": 1026,
+      "z": 737,
+      "radius": 183,
+      "ground": -4,
+      "top": 61.2,
+      "aimY": 18.8,
+      "range": 1263,
+      "assetVertices": 6725,
+      "dists": [
+        80,
+        200,
+        475
+      ],
+      "derivedFrom": "OSM way 40500920 (White Island, GNIS 1667935), area centroid of the closed ring; cache overpass-long-beach.json"
+    },
+    {
+      "name": "queen-mary",
+      "x": 3320,
+      "z": -859,
+      "radius": 164,
+      "ground": -4,
+      "top": 55.2,
+      "aimY": 16.7,
+      "range": 3430,
+      "assetVertices": 291,
+      "dists": [
+        75,
+        180,
+        425
+      ],
+      "derivedFrom": "OSM way 438331516 (The Queen Mary, historic=ship), area centroid of the closed ring; cache overpass-q5-long-beach.json"
+    },
+    {
+      "name": "signal-hill",
+      "x": 4314,
+      "z": 4838,
+      "radius": 216,
+      "ground": 69.8,
+      "top": 118.6,
+      "aimY": 86.9,
+      "range": 6482,
+      "assetVertices": 171,
+      "dists": [
+        95,
+        240,
+        560
+      ],
+      "derivedFrom": "centroid and extent of the 133 L4 hero vertices inside the baker's derrickBox (33.790..33.815 N, -118.190..-118.145 E), which is where it scatters the oil-field derricks"
+    },
+    {
+      "name": "tank-farm",
+      "x": 2743,
+      "z": 4801,
+      "radius": 179,
+      "ground": 23,
+      "top": 50.8,
+      "aimY": 32.7,
+      "range": 5529,
+      "assetVertices": 837,
+      "dists": [
+        80,
+        195,
+        465
+      ],
+      "derivedFrom": "largest cluster of L3 vertices carrying the storage-tank substance byte (MAT_TANK = 6) at 120 m bins: 816 vertices, next largest 408"
+    }
+  ]
+}

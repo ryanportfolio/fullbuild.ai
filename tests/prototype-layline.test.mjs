@@ -409,7 +409,8 @@ test('the race library rail and workspace keep their interaction contracts', asy
   assert.match(workspace, />\s*Clear\s*<\/button>/);
   assert.match(workspace, /Search hides \$\{hiddenBySearch\} races/);
   assert.doesNotMatch(workspace, /stays loaded\. Search hides its row/);
-  assert.match(workspace, /router\.replace\(`\$\{pathname\}\?race=\$\{id\}`/);
+  /* Restated 2026-08-30 for the params-preserving select(). */
+  assert.match(workspace, /router\.replace\(`\$\{pathname\}\?\$\{params\.toString\(\)\}`/);
 
   /* Pin and archive are separate named buttons beside the row button. Archive
      is a real disclosure, and archiving the loaded race opens it without a

@@ -70,3 +70,81 @@ animation and the two hashes are stable values rather than a continuum.
 `shape-rendering: geometricPrecision` changes nothing (verified: identical
 hashes). Do not demand a byte-identical hash for this view; the panels view is
 byte-identical across four runs and still worth pinning.
+
+## Freeform inherits the entering rig's field of view (2026-08-28)
+
+`seedFreeformFromShot` (`interaction.ts`) copies `shot.fov` into the freeform
+camera: enter from tactical and the scene renders at 45 deg (1056.2 px/rad),
+from tv at 40 (1202.0 px/rad), from chase at 55. The battery cycles
+chase, tv, tactical before freeform, so its shots use 45; a probe that goes
+straight to freeform gets 40, and the same asserted yaw/pitch/dist puts a
+ridge 23 px away from where the battery's constant predicts. Pixel arithmetic
+is only comparable within one entry route. Every capture script must print
+its route and focal constant into its own JSON.
+
+## Capture posing is API-only (2026-08-28)
+
+`window.__layline.camera({yaw, pitch, dist})` poses the freeform camera
+absolutely, clamped to pointer limits, echoed back through `info()`. Synthetic
+pointer drags under-rotate under load (owner-observed) and are banned for
+posing. A still press is never safe on the canvas: on water it toggles
+playback, on a boat it selects (`pressOutcome`). `__layline.ui(false)` bares
+the scene (visibility, no reflow) for environment crops. The animated dither
+advances per drawn frame: hash-compare only captures with identical scripted
+frame counts; pixel-diff otherwise.
+
+## Ready follows the drawn venue frame; tactical never settles frozen (2026-08-29)
+
+Round 6 rewired readiness: `window.__layline.ready` = webglOk plus a venue
+tri-state (absent/loading/rendered/failed), and `rendered` is written only by
+the last venue layer's `onAfterRender`. On a venue race, ready flips exactly
+when `info().drawCalls` reaches 53 and is never true at 48: a capture behind
+ready genuinely contains the coast. Two sharp edges. (1) On the failure path
+ready is true only after the procedural fallback arc's own drawn frame
+(`failed` is not ready; the arc's onAfterRender promotes it to `fallback`,
+fixed after codex round-6 P1: previously a paused replay could sit ready with
+no coast drawn at all). A capture that needs the REAL coast must still check
+draw calls: ready + fallback contains the arc, not the venue. (2) The settled
+tactical rig drops the venue
+(49 draws / 81,962 tris live, keyed on the composed shot reaching mix >= 1),
+but a FROZEN page never completes the hand-over: `rig("tactical")` after
+`freeze()` holds all five venue draws indefinitely. A capture wanting the
+settled tactical framing must thaw, wait at least 2.5 s, then re-freeze.
+Also: `npm run build` tears the running dev server's `.next` (document 200,
+stylesheets/chunks 404 or 500); restart the server and re-run the server
+gate before any capture that follows a build.
+
+## venue-lens mask vs readiness, and lens after settled tactical (2026-08-29)
+
+`__layline.show({venueLayers: [...]})` (dev-only inspection door) hides venue
+layer meshes by visibility, and readiness is latched by the LAST venue layer's
+`onAfterRender`: an invisible mesh never renders, so an early venue mask could
+strand `ready` at `loading` forever. FIXED after codex review of f9944a0d:
+the mask DEFERS venue-layer hiding until the venue's first drawn frame (or a
+promotion without one, e.g. settled tactical), then applies the pending mask
+itself and requests one frame so a frozen page shows it (verified headed:
+mask before ready, ready rises, draws settle at the masked 49). Related fix,
+same review: layer meshes (re)mounting on a frozen page request their own
+frame, so `lens()` aimed at the coast right after a SETTLED tactical rig
+dropped it now draws the venue (49 -> 54 draws, verified). Capture scripts
+still must not assume the FIRST frame after such a lens() contains the coast:
+wait on `info().drawCalls`. Also from the lens audit: production elimination
+of the lens/show doors is asserted by source inspection (every door behind
+`process.env.NODE_ENV !== "production"`); a build-level proof
+(`NEXT_DIST_DIR=.next-audit npm run build` + grep client chunks for
+`api.lens`/`setShowMask`) is owed at the next quiet-worktree gate run since
+`npm run build` tears a live dev server's `.next`.
+
+## Read the frame counter BEFORE posing the lens (2026-08-29, survey lane)
+
+Custom lens drivers must sample `info().frames` BEFORE calling
+`__layline.lens(...)`, then wait for the counter to pass that sample. Reading
+the counter after the call races the draw the lens itself scheduled: the wait
+returns immediately, the screenshot is of the PREVIOUS pose, and the failure
+is silent because `info().lens` readback still reports the commanded pose
+exactly (it echoes module state, not the drawn frame). Observed: seven
+byte-identical shots of the default camera, all "readback exact". Defense in
+depth: also assert each shot's bytes differ from its predecessor's (the
+survey driver does). scripts/venue-lens.mjs itself samples before posing and
+is not affected; commit b1b69e23 fixed the renderer-side half of this hazard
+(remount frame request).

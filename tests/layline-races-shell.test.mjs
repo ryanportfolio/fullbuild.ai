@@ -35,7 +35,8 @@ test("the race workspace opens as a replay-first shell with two accessible drawe
     "the replay lost its library autoplay contract",
   );
   assert.ok(
-    workspace.includes("router.replace(`${pathname}?race=${id}`, { scroll: false })"),
+    /* Restated 2026-08-30 for the params-preserving select(). */
+    workspace.includes("router.replace(`${pathname}?${params.toString()}`, { scroll: false })"),
     "race switching no longer keeps the workspace in place",
   );
 });
