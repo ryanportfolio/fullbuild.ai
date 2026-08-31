@@ -26,7 +26,12 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFil
 import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 
-export const CACHE_ROOT = ".tmp/venue-cache";
+/* `LAYLINE_VENUE_CACHE_ROOT` lets a second pipeline keep its own cache under its
+ * own byte cap without sharing this one; unset, the path is what it always was.
+ * Read once at module load, so a caller that wants the override must set the
+ * variable before the first `import` of this module resolves (the autogen baker
+ * sets it and then imports dynamically). */
+export const CACHE_ROOT = process.env.LAYLINE_VENUE_CACHE_ROOT || ".tmp/venue-cache";
 const MANIFEST = join(CACHE_ROOT, "provenance", "lidar-naip.tsv");
 const MANIFEST_HEADER = "sha256\tbytes\tfile\turl\tretrieved\n";
 

@@ -13,3 +13,10 @@ scripts/venue-data/**/*.json text eol=lf
 scripts/lib/laz-perf/laz-perf.js -text
 scripts/lib/laz-perf/laz-perf.wasm -text
 scripts/lib/laz-perf/COPYING -text
+# Vendored three.js Draco/Basis decoders are sha256-compared against the
+# node_modules originals by tests/layline-venue-autogen.test.ts; autocrlf=true
+# would grow the .js files by their newline count on a Windows checkout and
+# fail that test (round-3 audit F1), hence -text for every byte.
+public/prototype/layline/decoders/** -text
+# Baked autogen venues are binary glTF; never candidates for eol rewriting.
+public/prototype/layline/venues/*.glb -text

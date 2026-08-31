@@ -41,11 +41,21 @@ const VenueTiles = lazy(() =>
   import("./VenueTiles").then((m) => ({ default: m.VenueTiles })),
 );
 
+/* And the same arrangement for the machine-generated venue, which is the only
+ * importer of three's GLTF, Draco and KTX2 loaders and of the decoder binaries
+ * under `public/prototype/layline/decoders/`: without `?venue=autogen` its
+ * chunk is never fetched and no decoder is ever asked for. */
+const VenueAutogen = lazy(() =>
+  import("./VenueAutogen").then((m) => ({ default: m.VenueAutogen })),
+);
+
 /* Which venue the query string is asking for.
  *
  * `?venue=tiles` streams Google Photorealistic 3D Tiles instead of the baked
- * coast (spike, amendment 8); anything else, including no parameter at all,
- * keeps the baked venue. Two knobs ride along for the spike's own captures:
+ * coast (spike, amendment 8) and `?venue=autogen` draws the machine-generated
+ * glTF venue instead; anything else, including no parameter at all, keeps the
+ * baked venue, and the two modes are values of one parameter so they cannot both
+ * be asked for. Two knobs ride along for the spike's own captures:
  * `water=0` drops the replay's sea plane so the photogrammetry's own water is
  * what is judged, and `err=<px>` sets the tileset's screen-space error target.
  *
@@ -56,6 +66,10 @@ const VenueTiles = lazy(() =>
  * commit and start a fetch nobody wanted. */
 export interface VenueMode {
   tiles: boolean;
+  /* `?venue=autogen` draws the machine-generated glTF venue instead of the
+   * hand-baked LVN coast. One value of one parameter, no knobs of its own: the
+   * asset's own settings live in its manifest, not in the query string. */
+  autogen: boolean;
   water: boolean;
   errorTarget: number | undefined;
   /* Ellipsoid height the tiles frame is pinned at, for re-measuring the sea
@@ -119,6 +133,7 @@ export function readVenueMode(search: string): VenueMode {
   const water = params.get("water") !== "0";
   return {
     tiles: params.get("venue") === "tiles",
+    autogen: params.get("venue") === "autogen",
     water,
     errorTarget: Number.isFinite(error) && error > 0 ? error : undefined,
     seaLevel: Number.isFinite(seaLevel) ? seaLevel : undefined,
@@ -567,6 +582,17 @@ export function LaylineScene({
         : "?venue=tiles asked for streamed tiles but this race has no georeferenced venue; drawing the procedural shore",
     );
   }
+  /* The machine-generated venue is placed against the race's own anchor and
+   * refuses a manifest that carries a different one, so a race with no
+   * georeferenced venue has nothing to check against and keeps the coast it
+   * already had. */
+  const autogenOrigin =
+    venue.current.autogen && scenery !== undefined ? scenery.origin : null;
+  if (venue.current.autogen && autogenOrigin === null && typeof window !== "undefined") {
+    console.warn(
+      "?venue=autogen asked for the machine-generated venue but this race has no georeferenced venue; drawing the procedural shore",
+    );
+  }
 
   /* The gate is one per document and outlives every canvas mounted into it,
    * same as the ready flag below. A lost context or a scrolled-away observer
@@ -643,6 +669,13 @@ export function LaylineScene({
             tierName={tier.current.name}
             lit={venue.current.lit}
           />
+        </Suspense>
+      ) : autogenOrigin !== null ? (
+        /* Same `fallback={null}` reasoning as the streamed venue: while the
+           lazy chunk loads the venue tri-state already reports `loading`, so
+           readiness stays honest with no mesh on screen. */
+        <Suspense fallback={null}>
+          <VenueAutogen origin={autogenOrigin} />
         </Suspense>
       ) : (
         scenery !== undefined && <VenueShore asset={scenery.asset} />
