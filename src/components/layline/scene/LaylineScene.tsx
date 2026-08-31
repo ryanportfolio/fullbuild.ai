@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, lazy, useEffect, useRef } from "react";
+import { Suspense, lazy, useEffect, useLayoutEffect, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { NeutralToneMapping } from "three";
 import type { RaceData } from "@/lib/layline/types";
@@ -600,11 +600,26 @@ export function LaylineScene({
    * started in that window would file an empty harbour as a finished frame,
    * so the mode marks the venue loading before its chunk exists; the mounted
    * module's own effect takes the state over from there (round-3 codex P1,
-   * which also applied to the streamed mode). */
-  useEffect(() => {
+   * which also applied to the streamed mode). Layout effect, not passive:
+   * the Canvas can draw its first frame between commit and a passive effect,
+   * and one drawn frame is enough for `webglOk` to restore the false ready.
+   * Safe here because the scene mounts with `ssr: false` (LaylineApp).
+   *
+   * The cleanup guards the other direction: the store outlives every canvas
+   * mounted into the document, and a scene torn down while the chunk is still
+   * suspended has no mounted venue module to reset the state, which would
+   * leave the next venueless race at `loading` and ready never true. Only the
+   * provisional state is cleared; a mounted module's own cleanup has already
+   * run (children first) and settled the field itself. */
+  useLayoutEffect(() => {
     if ((streamed || autogenOrigin !== null) && useReplay.getState().venueAsset === "absent") {
       useReplay.getState().setVenueAsset("loading");
     }
+    return () => {
+      if (useReplay.getState().venueAsset === "loading") {
+        useReplay.getState().setVenueAsset("absent");
+      }
+    };
   }, [streamed, autogenOrigin]);
 
   /* The gate is one per document and outlives every canvas mounted into it,
