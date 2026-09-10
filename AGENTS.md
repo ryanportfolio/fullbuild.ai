@@ -12,6 +12,7 @@ This is the Codex boundary for repositories using the AI Operating System starte
 ## Capabilities
 
 - Inspect tools exposed in the current session before using subagents, browser control, connectors, or interactive input. Config flags alone are not proof.
+- Browser per session, never shared. The official playwright plugin holds one persistent profile; a second connection fails with "Browser is already in use ... use --isolated" and deadlocks. Parallel or subagent browser work uses `@playwright/mcp --isolated` (in-memory profile; copy `.mcp.json` from claude-starter) or `scripts/lib/launch-chrome.mjs`.
 - Spawn subagents with fresh context (`fork_turns: "none"`) and a self-contained brief by default. Inherit conversation history only when the task specifically benefits from it. Independent reviewers always start fresh; report a capability gap if the exposed runtime cannot provide this.
 - For local web UI testing in Codex, use the in-app Codex Browser first. Use standalone Playwright only when Codex Browser cannot perform a necessary check or the user explicitly requests Playwright. This rule is Codex-only and does not change Claude Code's verification workflow.
 - Serial fallback is valid only when independence is not part of the deliverable. `impartial-review`, `advocate`, and `why` require fresh independent context; if unavailable, report the gap.
