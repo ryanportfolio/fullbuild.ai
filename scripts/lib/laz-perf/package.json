@@ -1,0 +1,6 @@
+{
+  "//": "The repo root sets \"type\": \"module\", which would make Node read the emscripten glue in laz-perf.js as ESM and hand back an empty namespace instead of the createLazPerf factory. This scope marks that one directory CommonJS so the vendored file keeps the name and the bytes upstream ships. Not an npm package: nothing installs from here.",
+  "name": "layline-vendored-laz-perf",
+  "private": true,
+  "type": "commonjs"
+}

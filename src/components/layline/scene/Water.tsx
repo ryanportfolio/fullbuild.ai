@@ -38,10 +38,75 @@ const RINGS = [
   { cells: 16, spacing: 640, hole: 2 },
 ];
 
+/* One more ring, over the streamed venue only, and it is there to cover
+ * Google's sea rather than to be looked at.
+ *
+ * The tileset draws the whole bay out to the camera's far plane at 16,000 m,
+ * and its own flat teal water with it. The clip in `VenueTiles` can only take
+ * that water where the replay's sea is drawn to replace it, so wherever the
+ * clipmap stopped, at 5,120 m, Google's sea came back: a hard teal wedge across
+ * the far half of every shoreline framing (`deep-island-low-0.png`), which is
+ * the defect the owner reported. MEASURED: over two settled views, every
+ * near-horizontal surface standing more than 0.8 m clear of the sea inside the
+ * whole loaded tileset lay between 8 and 20 km from the origin, and none at all
+ * lay inside 5 km (`.tmp/tiles-fix/locate.json`).
+ *
+ * 26 cells of 1,280 m reach 16,640 m, just past the far plane, and the hole of
+ * 8 cells is exactly the sixth ring's 5,120 m half-side, so the two nest with no
+ * gap. It costs 729 vertices and 1,224 triangles, carries no wave detail worth
+ * the name at that spacing, and by then the haze has taken the surface to the
+ * sky colour anyway. The baked venue does not get it: its course frame is flat,
+ * its coast was baked to meet a 5,120 m sea, and its look is already approved. */
+const RING_HORIZON = { cells: 26, spacing: 1280, hole: 8 };
+
+export function seaRings(curved: boolean): typeof RINGS {
+  return curved ? [...RINGS, RING_HORIZON] : RINGS;
+}
+
+/* Half the side of the square the sea covers, in metres. */
+export function seaReach(curved: boolean): number {
+  const last = seaRings(curved)[seaRings(curved).length - 1];
+  return (last.cells * last.spacing) / 2;
+}
+
 /* The coarsest spacing that carries displacement. Snapping the whole clipmap to
  * it keeps every vertex on a fixed world lattice, so the surface never slides
  * underneath the swell as the camera moves. */
-const SNAP = 16;
+export const SNAP = 16;
+
+/* Where the clipmap is centred this frame: the camera, snapped to the lattice.
+ * The streamed venue reads the same function so its clip square and this mesh
+ * are the same square. */
+export function seaCentre(x: number, z: number): [number, number] {
+  return [Math.round(x / SNAP) * SNAP, Math.round(z / SNAP) * SNAP];
+}
+
+/* The sea surface, shared by the water and by the streamed venue's clip.
+ *
+ * Over the baked venue the sea is flat: the course frame is a plane by
+ * construction and the coast was baked into it. Over the STREAMED venue it is
+ * not. `ReorientationPlugin` lays an ECEF tileset on the tangent plane at the
+ * course origin, so a surface that is level in the real world falls away from
+ * y = 0 as the square of the range, -r^2 / 2R: 0.31 m at 2 km, 1.26 m at 4 km,
+ * 7.87 m at 10 km. Verified against the plugin's own object frame, which agrees
+ * with that model to 0.02 m at 10 km and 0.08 m at 20 km
+ * (`.tmp/tiles-fix/tangent.mjs`).
+ *
+ * A flat sea over a tangent-plane venue therefore stands metres ABOVE the sea
+ * the tiles were captured on, and drowns every low shore inside that band: the
+ * marina basins, the port apron and the whole far plain. `uSeaCurve` is 1 over
+ * the streamed venue and 0 over the baked one, so the baked look is unchanged
+ * to the bit. */
+export const SEA_GLSL = /* glsl */ `
+uniform float uSeaCurve;
+
+/* 1 / 2R for the WGS84 mean radius, 6,371,008.8 m. */
+#define LAYLINE_INV_2R 7.848053e-8
+
+float laylineSeaY(vec2 xz) {
+  return -uSeaCurve * dot(xz, xz) * LAYLINE_INV_2R;
+}
+`;
 
 const waterVertex = /* glsl */ `
 uniform float uTime;
@@ -55,6 +120,7 @@ attribute vec4 aStitch;
 varying vec3 vWorld;
 varying vec2 vBase;
 
+${SEA_GLSL}
 ${WAVE_GLSL}
 
 /* Where the surface ends up for one point on the plane, world space. The
@@ -63,6 +129,8 @@ ${WAVE_GLSL}
  * a corner on every vertex, so the fragment stage works it out for itself. */
 vec3 laylineSurface(vec2 plane) {
   vec3 base = (modelMatrix * vec4(plane.x, 0.0, plane.y, 1.0)).xyz;
+  /* The sea, not the plane the mesh was built on: see SEA_GLSL. */
+  base.y += laylineSeaY(base.xz);
   vec3 disp;
   float jac;
   vec3 nrm;
@@ -106,6 +174,7 @@ varying vec3 vWorld;
 varying vec2 vBase;
 
 ${SKY_GLSL}
+${SEA_GLSL}
 ${WAVE_GLSL}
 
 const float LAYLINE_PI = 3.141592653589793;
@@ -208,12 +277,16 @@ void main() {
 
   vec3 sky = laylineSky(reflect(-V, N), 0.0);
   /* Troughs sit in the deep colour and crests lift toward the mid one, which is
-     what gives the surface form where the specular has none to give. */
-  float lift = clamp(vWorld.y / 0.45, -1.0, 1.0);
+     what gives the surface form where the specular has none to give. Measured
+     from the sea, not from y = 0: over the streamed venue the surface falls
+     with range and a colour ramp read off the raw height would take the whole
+     far half of the frame to the crest colour. */
+  float wave = vWorld.y - laylineSeaY(vBase);
+  float lift = clamp(wave / 0.45, -1.0, 1.0);
   vec3 body = mix(uDeep, uMid, clamp(0.30 + 0.55 * lift + 0.32 * pow(1.0 - NoV, 2.0), 0.0, 1.0));
   /* Light coming through the back of a crest. One dot product, and it is the
      cue that sells how big the water is. */
-  body += uSss * clamp(vWorld.y / 0.34, 0.0, 1.0) * pow(max(dot(V, -uSunDir), 0.0), 3.0);
+  body += uSss * clamp(wave / 0.34, 0.0, 1.0) * pow(max(dot(V, -uSunDir), 0.0), 3.0);
 
   /* Two lobes off the one sun: a narrow one for the disc and a wide one for the
      sheen the sky spreads around it. The narrow one is clamped at roughly the
@@ -290,6 +363,7 @@ const WaterMaterial = shaderMaterial(
     uSunPower: 3.4,
     uFoamBias: 0.80,
     uHaze: HAZE_RHO,
+    uSeaCurve: 0,
   },
   waterVertex,
   waterFragment,
@@ -303,18 +377,19 @@ declare module "@react-three/fiber" {
   }
 }
 
-function clipmapGeometry(): BufferGeometry {
+function clipmapGeometry(curved: boolean): BufferGeometry {
+  const rings = seaRings(curved);
   const positions: number[] = [];
   const stitch: number[] = [];
   const indices: number[] = [];
-  for (let index = 0; index < RINGS.length; index++) {
-    const ring = RINGS[index];
+  for (let index = 0; index < rings.length; index++) {
+    const ring = rings[index];
     const half = (ring.cells * ring.spacing) / 2;
     const holeHalf = (ring.hole * ring.spacing) / 2;
     /* The ring outside this one owns the far half of every boundary edge, and
      * its spacing is what a vertex on that edge has to line up with. The
      * outermost ring borders nothing, so it stitches to nothing. */
-    const coarse = index + 1 < RINGS.length ? RINGS[index + 1].spacing : 0;
+    const coarse = index + 1 < rings.length ? rings[index + 1].spacing : 0;
     const stride = ring.cells + 1;
     const slots = new Int32Array(stride * stride).fill(-1);
     const vertex = (i: number, j: number): number => {
@@ -368,8 +443,8 @@ function clipmapGeometry(): BufferGeometry {
  * run off the replay clock rather than the render clock, so a frozen page holds
  * a still sea and a stepped one moves it by exactly the milliseconds asked for.
  */
-export function Water({ race }: { race: RaceData }) {
-  const geometry = useMemo(clipmapGeometry, []);
+export function Water({ race, curved = false }: { race: RaceData; curved?: boolean }) {
+  const geometry = useMemo(() => clipmapGeometry(curved), [curved]);
   const wind = useMemo(() => swellDirection(race), [race]);
   const mesh = useRef<Mesh>(null);
   const material = useRef<InstanceType<typeof WaterMaterial>>(null);
@@ -386,12 +461,10 @@ export function Water({ race }: { race: RaceData }) {
     const target = material.current;
     if (surface === null || target === null) return;
     target.uniforms.uTime.value = useReplay.getState().t;
+    target.uniforms.uSeaCurve.value = curved ? 1 : 0;
     const camera = state.camera.position;
-    surface.position.set(
-      Math.round(camera.x / SNAP) * SNAP,
-      0,
-      Math.round(camera.z / SNAP) * SNAP,
-    );
+    const [cx, cz] = seaCentre(camera.x, camera.z);
+    surface.position.set(cx, 0, cz);
     surface.updateMatrix();
   }, -90);
 

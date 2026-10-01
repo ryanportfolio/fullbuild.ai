@@ -30,12 +30,139 @@ export const SKY_ZENITH = "#33628c";
 export const SKY_HORIZON = "#d9e6ee";
 export const SUN_TINT = "#f3ddc0";
 export const SUN_DISC = "#ffdfae";
-export const WATER_DEEP = "#0a2a44";
-export const WATER_MID = "#12456b";
+/* The two body colours are San Pedro Bay's own, not an ocean's (catalogue 5.4).
+ * Inside the federal breakwater the circulation is poor enough to trap urban
+ * runoff and the Los Angeles River plume, and the venue's colour oracle agrees:
+ * the NAIP 2022 median over open water AT THE COURSE ORIGIN is rgb(44,69,61), a
+ * dark green-grey. Four island water regions corroborate it within a few levels
+ * (scripts/venue-data/long-beach/swatches.json, points[openWater] and
+ * regions[*.water]).
+ *
+ * These two are not reflectances the way the venue materials below are: Water
+ * .tsx adds `body` as upwelling radiance rather than multiplying it by a light,
+ * so the inversion stops at the tone map. .tmp/round0-constants/mix-round0.mjs
+ * solves the shader's own nadir condition (NoV = 1, Fresnel at its 0.02 floor,
+ * mix weight 0.30) for the pair, holding the shipped per-channel ratio M/D so
+ * the trough-to-crest contrast that gives the surface its form is untouched.
+ * The result renders rgb(44,69,61) byte-exact at that condition. */
+export const WATER_DEEP = "#3d4741";
+export const WATER_MID = "#567066";
 export const WATER_SCATTER = "#1c6b53"; // light through the back of a crest
 export const GLINT = "#ffd9a0";
 export const WHITECAP = "#eaf2f5";
 export const SHORE = "#16212a"; // the bluff and terminals, under their own haze
+
+/* Venue materials, San Pedro Bay (round 4d).
+ *
+ * Contract amendment 5 replaced the closed-palette rule with a reference rule:
+ * every venue colour is the real material, sourced, and the venue is lit rather
+ * than tinted. These seven are REFLECTANCES, not screen colours: each is what a
+ * colour chart would read off the material under equal-energy white, and
+ * VenueShore multiplies them by the sun and the sky to get a pixel. Reading them
+ * as if they were the rendered result is wrong by roughly the illuminant.
+ *
+ * Provenance for every one of them, with the source photographs and the derived
+ * numbers, is .tmp/venue-audit/round4d/provenance.md. Only VenueShore reads
+ * them; the sky, the water and the boats are untouched. */
+export const VENUE_SKY_FILL = "#8196ad"; // the sky dome's own hemispherical average, derived
+/* Round 0 (catalogue 8.3) replaced the six-part photograph mix this constant
+ * shipped with by the venue's own measurement: the NAIP median over the Pier J
+ * apron is rgb(159,165,164), a cool grey, where the mix rendered rgb(146,140,
+ * 124), a warm tan. NAIP is nadir, so the measured surface is horizontal and
+ * the inversion runs at lit = sin(22 deg). This is the terrain layer's low
+ * band, so it repaints every made ground at the waterline, not only Pier J. */
+export const VENUE_APRON = "#889195"; // harbour fill, armour stone, apron, waterfront green
+export const VENUE_SCRUB = "#847a63"; // dry coastal sage scrub over Monterey Fm bluffs
+export const VENUE_YARD = "#777677"; // container stacks over the concrete apron
+export const VENUE_STEEL = "#727575"; // POLB gantry cranes, the mixed liveries of a bank
+export const VENUE_BLOCK = "#939293"; // industrial massing, tilt-up and sheet metal
+export const VENUE_TOWER = "#77787b"; // downtown Long Beach, precast and blue-green glass
+
+/* Named substances, San Pedro Bay (rounds 5 and 6). Same rule and the same
+ * derivation as the seven above: REFLECTANCES, inverted out of measured
+ * photograph pixels through the render chain by
+ * .tmp/venue-audit/round5/mix-heroes.mjs and .tmp/venue-audit/round6/
+ * mix-tank.mjs, sources in each round's provenance.md.
+ *
+ * These exist because a height ramp cannot separate them. A THUMS island puts
+ * a rock rim, a planted mass and a screen tower inside the same twenty metres,
+ * and the round-4d grade consequently painted all four islands the harbour-fill
+ * reflectance and they read as tan slabs. A storage tank is 6 to 25 m, the same
+ * band as a container stack 12 m over the apron, so the port ramp painted 57
+ * tanks as boxes. The asset carries a substance index per vertex on those two
+ * layers instead, which is what these six index into. */
+/* Round 1 (catalogue 6.2). Catalogue 6.2 is explicit that no source found states
+ * the petrology or the colour of Pebbly Beach stone, so this has to come from
+ * imagery. Round 5's value was a 62/20/10/8 mix of two pixels off one photograph
+ * plus a concrete cap and a shadow guess, and it rendered the armour as beach
+ * sand. swatches.json measures each island's own rim instead, in an 8 m band
+ * centred on that island's own measured crown distance, over 11,386 to 12,938
+ * NAIP pixels apiece: rgb(117,116,102) / (92,101,82) / (98,99,76) / (107,108,78),
+ * per-channel median rgb(103,105,80), inverted at lit = sin(22 deg) because NAIP
+ * is nadir. Darker and greener than the mix by 20 levels of luminance, which is
+ * the difference between armour stone and a beach. */
+export const VENUE_ISLE_ROCK = "#5e6253"; // Catalina boulder armour on the island rims
+export const VENUE_ISLE_VEG = "#454e3c"; // THUMS palms, shrub mass and irrigated slope
+export const VENUE_HERO_PALE = "#7e898e"; // screen towers, the bridge towers, ship upperworks
+/* Round 0 (catalogue 7.4 and 10.2). The Spruce Goose dome is white aluminium
+ * panel and the Long Beach Harbor Light is a white concrete box tower; both
+ * were drawing in VENUE_HERO_PALE, which round 5 derived as a THUMS screen-
+ * tower mix carrying 14 per cent of a pale BLUE infill panel. They cannot take
+ * that constant white without repainting sixteen screen towers and a bridge
+ * whose towers are grey concrete, so they get their own index instead. No pixel
+ * of either structure is measured anywhere in this project, so this is the
+ * weakest provenance of round 0: it is the mean of the two nearest white paint
+ * values in round-4d research.md section 2, one MEASURED (#DEDFDF, machinery
+ * house) and one INFERRED (#C8CCCB, crane livery with haze removed; the
+ * measured pixel in that frame is #BFD5DF), both POLB crane frames, inverted
+ * at lit 0.70. */
+export const VENUE_HERO_WHITE = "#8c96a0"; // the dome and the harbour light, white
+/* Round 1 (catalogue 6.3, 6.4, 6.6), the island rebuild. VENUE_HERO_PALE cannot
+ * paint a THUMS screen any more, because round 5 derived it as a MIX of the
+ * tower's own white concrete (42 per cent), a whole-tower recommendation (26),
+ * its pale blue infill panel (14), white cladding (12) and a shaded reveal (6),
+ * and the blue is drawn as geometry now rather than averaged into the body. It
+ * also paints the bridge towers and the ship's upperworks, so it cannot follow
+ * the islands anywhere.
+ *
+ * Both island values below come from ONE frame, round-4d research.md section 5,
+ * File:Long Beach 01.jpg, a THUMS island from the water on a clear day with the
+ * sky sampled at #6B9CC2. Both are graded MEASURED there and they are the only
+ * pixels of a THUMS structure this project holds.
+ *
+ * One honest mismatch, recorded rather than tuned away: two first-person
+ * accounts call the towers "cream" [P1d, Five Star cover photograph] and the
+ * measured pixel is #B2BAB2, a neutral at 5 per cent saturation. The measurement
+ * wins; the scene's own warm sun (SUN_TINT) does the rest, rendering this
+ * reflectance at rgb(178,186,178) on a sunlit vertical and rgb(208,214,201)
+ * square on. No cream was mixed in to close the gap. */
+export const VENUE_ISLE_SCREEN = "#778387"; // THUMS sculpted screens and tower bodies
+export const VENUE_ISLE_PANEL = "#52778e"; // the blue panels up the sides of the towers
+/* The island deck under the planting: the per-channel median of the four
+ * islands' own NAIP deck regions (swatches.json, 38,065 to 53,255 px each,
+ * rgb(127,124,112) / (131,130,118) / (119,114,101) / (131,129,114)), inverted at
+ * lit = sin(22 deg) because NAIP is nadir and the surface is horizontal. */
+export const VENUE_ISLE_DECK = "#71736c"; // THUMS island deck, roads and pads
+export const VENUE_HERO_HULL = "#333338"; // Queen Mary hull plating, well masts
+export const VENUE_HERO_FUNNEL = "#753c31"; // Cunard funnel red under its black top band
+export const VENUE_TANK = "#80868b"; // tank paint, chalky off-white, with its rust and grime
+
+/* The far horizon curtain has no lighting model: it draws a ridge as a fraction
+ * of the way from the sky toward a tint, so these three are APPEARANCES rather
+ * than reflectances, and they are solved rather than picked. Each measured
+ * ridge in research.md came with the sky sampled in the same frame, so the
+ * exposure divides out and the ratio transfers to this scene's brighter sky;
+ * .tmp/venue-audit/round4d/curtain-solve.mjs inverts the curtain's own mix for
+ * the tint each ratio implies at that range's extinction.
+ *
+ * Both are plain blue. The first round-4d pass used a blue-violet for the far
+ * band on the received wisdom that distance goes violet, and the measurements
+ * refused it: every sampled ridge came back at hue 199 to 213, blue with a
+ * cyan lean, because 80 to 87 per cent of the extinction over this basin is
+ * aerosol rather than Rayleigh. */
+export const VENUE_RIDGE_NEAR = "#5e78af"; // Palos Verdes at 10 to 17 km
+export const VENUE_RIDGE_FAR = "#8fcbe5"; // the San Gabriels at 54 to 90 km
+export const VENUE_HAZE_LOW = "#cdd2d2"; // the near-neutral aerosol veil a ridge's foot sits in
 
 /** Unit vector from the scene toward the sun, in world space. */
 export function sunDirection(): Vector3 {

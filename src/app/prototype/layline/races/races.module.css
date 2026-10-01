@@ -331,12 +331,28 @@
 .searchCount,
 .loadedNotice,
 .emptyRows,
-.archiveEmpty {
+.archiveEmpty,
+.dataCredit {
   margin: 0;
   color: var(--ink-dim);
   font-family: var(--font-martian), monospace;
   font-size: 9px;
   line-height: 14px;
+}
+
+/* ODbL credit for the baked shore geometry, kept at the bottom of the panel
+ * where the library's own utility text lives. */
+.dataCredit {
+  padding-top: 10px;
+}
+
+.dataCredit a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.dataCredit a:hover {
+  color: var(--ink);
 }
 
 .loadedNotice {

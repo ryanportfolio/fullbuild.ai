@@ -9,6 +9,9 @@ import { FIX_HZ } from "@/lib/layline/types";
 import type { Pose, RaceData, ReplayMode, RigName } from "@/lib/layline/types";
 import { useReplay } from "../store";
 import { requestSceneFrame, sceneGate } from "./gate";
+/* Aliased: `lens` is already a local word here for the projection a rig frames
+ * through, and the capture camera is a different thing entirely. */
+import { lens as captureLens } from "./inspect";
 import {
   distanceFor,
   freeform,
@@ -358,6 +361,11 @@ const INTRO = { radius: 160, seconds: 1.6 };
 
 /* SETTLE. One rig hands over to the next and stops; nothing here loops. */
 const BLEND_SECONDS = 1.2;
+
+/* What the store was last told about whether the venue can be in frame. Module
+ * scope so the frame loop tests it without a store read, and so the write only
+ * happens on the frame the answer changes. */
+let venueWasInFrame = true;
 
 /** What a rig composes from: the boat as the lens sees it, not as it is. */
 interface Display {
@@ -1235,6 +1243,12 @@ export function CameraRigs({ race }: { race: RaceData }) {
     move.held = false;
     move.blendT = Number.NEGATIVE_INFINITY;
     move.introT = Number.NaN;
+    /* Module scope outlives any one canvas, same as sceneGate and renderStats,
+     * so the mirror the frame loop compares against goes back to its opening
+     * value here. A stale `false` left by a previous visit that ended on the
+     * tactical rig would keep the next visit's coast out of the scene. */
+    venueWasInFrame = true;
+    replay.setVenueInFrame(true);
   }, [move]);
 
   useEffect(
@@ -1519,6 +1533,50 @@ export function CameraRigs({ race }: { race: RaceData }) {
       else if (move.from === "freeform") shootFreeform(display[followIndex], stand, leaving);
       else standToShot(station, leaving);
       mixShot(leaving, arriving, mix, shot);
+    }
+
+    /* Whether the venue's baked coast can be in this frame at all.
+     *
+     * The settled tactical rig stands 160 m up at 72 degrees of pitch with a
+     * 45 degree lens, so its highest corner ray still points 39 degrees down and
+     * the farthest water it frames is about 200 m from the eye. The nearest real
+     * land in this venue is 715 m out. Design doc 2.1 is why the layers are
+     * split at all: "tactical drops L1 through L5".
+     *
+     * Keyed on the composed shot, not on the rig name. The rig flips at the
+     * START of a 1.2 second hand-over that the coast is still in frame for, so
+     * dropping the scenery there is a pop in the middle of the flight. `mix >= 1`
+     * is the same test the shot itself uses one line down to decide it has
+     * landed. One boolean compare per frame; the store is written on the two
+     * frames a year it actually changes. */
+    /* The capture lens, if one is standing (dev only: NODE_ENV is a literal
+     * here, so a production build drops both reads and the branch with them).
+     * It is applied to the camera rather than to the shot, which is what keeps
+     * it from leaking anywhere: `shot` is what the freeform camera is seeded
+     * from and what the next hand-over leaves from, so writing an unclamped
+     * inspection pose into it would corrupt the visitor's camera the moment
+     * the lens was put down. Nothing under `interaction.ts` is touched. */
+    const inspecting = process.env.NODE_ENV !== "production" && captureLens.active;
+
+    /* The lens can stand anywhere, including inside the coast the settled
+     * tactical rig drops, so a lens on the scene is its own reason to keep the
+     * venue mounted. */
+    const venueInFrame = inspecting || !(move.to === "tactical" && mix >= 1);
+    if (venueInFrame !== venueWasInFrame) {
+      venueWasInFrame = venueInFrame;
+      replay.setVenueInFrame(venueInFrame);
+    }
+
+    if (inspecting) {
+      camera.position.set(captureLens.ex, captureLens.ey, captureLens.ez);
+      aim.set(captureLens.ax, captureLens.ay, captureLens.az);
+      camera.lookAt(aim);
+      if (camera.fov !== captureLens.fov) {
+        camera.fov = captureLens.fov;
+        camera.updateProjectionMatrix();
+      }
+      camera.updateMatrixWorld();
+      return;
     }
 
     camera.position.set(shot.ex, shot.ey, shot.ez);
