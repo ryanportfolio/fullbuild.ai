@@ -1,0 +1,171 @@
+<svg viewBox="0 0 960 664" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bad implementation versus Harness Firmware: six memory-discipline problems and the firmware mechanism answering each">
+  <title>Bad implementation vs Harness Firmware</title>
+  <style>
+    .display { font-family: "Unbounded", system-ui, sans-serif; text-transform: uppercase; letter-spacing: 0.14em; }
+    .mono    { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; letter-spacing: 0.12em; }
+    .body    { font-family: system-ui, "Segoe UI", sans-serif; }
+
+    .row       { opacity: 0; animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+    .hdr       { opacity: 0; animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+    .r0 { animation-delay: 0.55s; } .r1 { animation-delay: 1.00s; }
+    .r2 { animation-delay: 1.45s; } .r3 { animation-delay: 1.90s; }
+    .r4 { animation-delay: 2.35s; } .r5 { animation-delay: 2.80s; }
+
+    .x-mark { stroke-dasharray: 20; stroke-dashoffset: 20; animation: draw 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+    .check  { stroke-dasharray: 30; stroke-dashoffset: 30; animation: draw 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+    .x0 { animation-delay: 0.85s; } .c0 { animation-delay: 1.05s; }
+    .x1 { animation-delay: 1.30s; } .c1 { animation-delay: 1.50s; }
+    .x2 { animation-delay: 1.75s; } .c2 { animation-delay: 1.95s; }
+    .x3 { animation-delay: 2.20s; } .c3 { animation-delay: 2.40s; }
+    .x4 { animation-delay: 2.65s; } .c4 { animation-delay: 2.85s; }
+    .x5 { animation-delay: 3.10s; } .c5 { animation-delay: 3.30s; }
+
+    .pulse { animation: glowpulse 3.2s ease-in-out 3.8s infinite; }
+
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes draw { to { stroke-dashoffset: 0; } }
+    @keyframes glowpulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .row, .hdr { animation: none; opacity: 1; }
+      .x-mark, .check { animation: none; stroke-dashoffset: 0; }
+      .pulse { animation: none; opacity: 0.8; }
+    }
+  </style>
+
+  <defs>
+    <pattern id="hfc-grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M0 0H48M0 0V48" fill="none" stroke="#E8F4EA" stroke-opacity="0.075"/>
+      <path d="M22 24h4M24 22v4" stroke="#E8F4EA" stroke-opacity="0.12" fill="none"/>
+    </pattern>
+    <pattern id="hfc-hatch" width="8" height="8" patternUnits="userSpaceOnUse">
+      <path d="M-2 8L8-2M2 10L10 2" stroke="#E8F4EA" stroke-opacity="0.10"/>
+    </pattern>
+    <filter id="hfc-glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- panel -->
+  <rect x="0" y="0" width="960" height="664" fill="#070B0C"/>
+  <rect x="0" y="0" width="960" height="664" fill="url(#hfc-grid)"/>
+  <rect x="0.5" y="0.5" width="959" height="663" fill="none" stroke="#E8F4EA" stroke-opacity="0.14"/>
+
+  <!-- column headers -->
+  <g class="hdr" style="animation-delay:0.1s">
+    <text x="28" y="46" class="mono" font-size="13" fill="#E8F4EA" fill-opacity="0.55">BAD IMPLEMENTATION</text>
+    <line x1="28" y1="60" x2="452" y2="60" stroke="#E8F4EA" stroke-opacity="0.2"/>
+  </g>
+  <g class="hdr" style="animation-delay:0.3s">
+    <text x="508" y="46" class="display" font-size="13" fill="#A6FF5E" filter="url(#hfc-glow)">HARNESS FIRMWARE</text>
+    <line x1="508" y1="60" x2="932" y2="60" stroke="#A6FF5E" stroke-opacity="0.45"/>
+  </g>
+
+  <!-- center divider -->
+  <line x1="480" y1="28" x2="480" y2="636" stroke="#E8F4EA" stroke-opacity="0.1" stroke-dasharray="1 6"/>
+
+  <!-- rows: y starts 84, row height 96 -->
+
+  <!-- row 1 -->
+  <g class="row r0">
+    <rect x="28" y="84" width="424" height="80" fill="url(#hfc-hatch)" opacity="0.5"/>
+    <rect x="28.5" y="84.5" width="423" height="79" fill="none" stroke="#E8F4EA" stroke-opacity="0.1"/>
+    <g stroke="#E8F4EA" stroke-opacity="0.7" stroke-width="2.2" stroke-linecap="round" fill="none">
+      <path class="x-mark x0" d="M50 112 L64 126"/><path class="x-mark x0" d="M64 112 L50 126"/>
+    </g>
+    <text x="84" y="115" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">Memory hides in a per-machine file</text>
+    <text x="84" y="136" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">nobody reviews</text>
+
+    <rect x="508.5" y="84.5" width="423" height="79" fill="none" stroke="#A6FF5E" stroke-opacity="0.22"/>
+    <path class="check c0" d="M528 118 L536 127 L552 106" stroke="#A6FF5E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#hfc-glow)"/>
+    <text x="566" y="115" class="body" font-size="15" fill="#E8F4EA">Knowledge committed to the repo,</text>
+    <text x="566" y="136" class="body" font-size="15" fill="#E8F4EA">reviewed like code on every machine</text>
+  </g>
+
+  <!-- row 2 -->
+  <g class="row r1">
+    <rect x="28" y="176" width="424" height="80" fill="url(#hfc-hatch)" opacity="0.5"/>
+    <rect x="28.5" y="176.5" width="423" height="79" fill="none" stroke="#E8F4EA" stroke-opacity="0.1"/>
+    <g stroke="#E8F4EA" stroke-opacity="0.7" stroke-width="2.2" stroke-linecap="round" fill="none">
+      <path class="x-mark x1" d="M50 204 L64 218"/><path class="x-mark x1" d="M64 204 L50 218"/>
+    </g>
+    <text x="84" y="207" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">The agent decides alone</text>
+    <text x="84" y="228" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">what to save</text>
+
+    <rect x="508.5" y="176.5" width="423" height="79" fill="none" stroke="#A6FF5E" stroke-opacity="0.22"/>
+    <path class="check c1" d="M528 210 L536 219 L552 198" stroke="#A6FF5E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#hfc-glow)"/>
+    <text x="566" y="207" class="body" font-size="15" fill="#E8F4EA">Every save passes three tests,</text>
+    <text x="566" y="228" class="body" font-size="15" fill="#E8F4EA">confirmed by a person</text>
+  </g>
+
+  <!-- row 3 -->
+  <g class="row r2">
+    <rect x="28" y="268" width="424" height="80" fill="url(#hfc-hatch)" opacity="0.5"/>
+    <rect x="28.5" y="268.5" width="423" height="79" fill="none" stroke="#E8F4EA" stroke-opacity="0.1"/>
+    <g stroke="#E8F4EA" stroke-opacity="0.7" stroke-width="2.2" stroke-linecap="round" fill="none">
+      <path class="x-mark x2" d="M50 296 L64 310"/><path class="x-mark x2" d="M64 296 L50 310"/>
+    </g>
+    <text x="84" y="299" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">Written three times more often</text>
+    <text x="84" y="320" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">than read</text>
+
+    <rect x="508.5" y="268.5" width="423" height="79" fill="none" stroke="#A6FF5E" stroke-opacity="0.22"/>
+    <path class="check c2" d="M528 302 L536 311 L552 290" stroke="#A6FF5E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#hfc-glow)"/>
+    <text x="566" y="299" class="body" font-size="15" fill="#E8F4EA">An audit counts reads and flags</text>
+    <text x="566" y="320" class="body" font-size="15" fill="#E8F4EA">what is never read</text>
+  </g>
+
+  <!-- row 4 -->
+  <g class="row r3">
+    <rect x="28" y="360" width="424" height="80" fill="url(#hfc-hatch)" opacity="0.5"/>
+    <rect x="28.5" y="360.5" width="423" height="79" fill="none" stroke="#E8F4EA" stroke-opacity="0.1"/>
+    <g stroke="#E8F4EA" stroke-opacity="0.7" stroke-width="2.2" stroke-linecap="round" fill="none">
+      <path class="x-mark x3" d="M50 388 L64 402"/><path class="x-mark x3" d="M64 388 L50 402"/>
+    </g>
+    <text x="84" y="391" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">Stale snapshots steer</text>
+    <text x="84" y="412" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">later sessions</text>
+
+    <rect x="508.5" y="360.5" width="423" height="79" fill="none" stroke="#A6FF5E" stroke-opacity="0.22"/>
+    <path class="check c3" d="M528 394 L536 403 L552 382" stroke="#A6FF5E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#hfc-glow)"/>
+    <text x="566" y="391" class="body" font-size="15" fill="#E8F4EA">Moments banned at save time; entries</text>
+    <text x="566" y="412" class="body" font-size="15" fill="#E8F4EA">dated, replaced when stale</text>
+  </g>
+
+  <!-- row 5 -->
+  <g class="row r4">
+    <rect x="28" y="452" width="424" height="80" fill="url(#hfc-hatch)" opacity="0.5"/>
+    <rect x="28.5" y="452.5" width="423" height="79" fill="none" stroke="#E8F4EA" stroke-opacity="0.1"/>
+    <g stroke="#E8F4EA" stroke-opacity="0.7" stroke-width="2.2" stroke-linecap="round" fill="none">
+      <path class="x-mark x4" d="M50 480 L64 494"/><path class="x-mark x4" d="M64 480 L50 494"/>
+    </g>
+    <text x="84" y="483" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">Rules pile up as prose</text>
+    <text x="84" y="504" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">nobody enforces</text>
+
+    <rect x="508.5" y="452.5" width="423" height="79" fill="none" stroke="#A6FF5E" stroke-opacity="0.22"/>
+    <path class="check c4" d="M528 486 L536 495 L552 474" stroke="#A6FF5E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#hfc-glow)"/>
+    <text x="566" y="483" class="body" font-size="15" fill="#E8F4EA">Machine-enforced checks first;</text>
+    <text x="566" y="504" class="body" font-size="15" fill="#E8F4EA">prose is the fallback</text>
+  </g>
+
+  <!-- row 6 -->
+  <g class="row r5">
+    <rect x="28" y="544" width="424" height="80" fill="url(#hfc-hatch)" opacity="0.5"/>
+    <rect x="28.5" y="544.5" width="423" height="79" fill="none" stroke="#E8F4EA" stroke-opacity="0.1"/>
+    <g stroke="#E8F4EA" stroke-opacity="0.7" stroke-width="2.2" stroke-linecap="round" fill="none">
+      <path class="x-mark x5" d="M50 572 L64 586"/><path class="x-mark x5" d="M64 572 L50 586"/>
+    </g>
+    <text x="84" y="575" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">Instructions list don'ts,</text>
+    <text x="84" y="596" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">give no direction</text>
+
+    <rect x="508.5" y="544.5" width="423" height="79" fill="none" stroke="#A6FF5E" stroke-opacity="0.22"/>
+    <path class="check c5" d="M528 578 L536 587 L552 566" stroke="#A6FF5E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#hfc-glow)"/>
+    <text x="566" y="575" class="body" font-size="15" fill="#E8F4EA">A direction block: what the product</text>
+    <text x="566" y="596" class="body" font-size="15" fill="#E8F4EA">refuses to compromise on</text>
+  </g>
+
+  <!-- footer caption -->
+  <g class="row r5">
+    <text x="28" y="648" class="mono" font-size="11" fill="#E8F4EA" fill-opacity="0.35">MEMORY DISCIPLINE / SIX PROBLEMS, SIX MECHANISMS</text>
+    <circle class="pulse" cx="924" cy="644" r="3" fill="#A6FF5E" filter="url(#hfc-glow)"/>
+  </g>
+</svg>

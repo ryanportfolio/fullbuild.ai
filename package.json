@@ -11,7 +11,9 @@
     "typecheck": "tsc --noEmit",
     "test": "npm run test:mjs && npm run test:ts",
     "test:mjs": "node --test \"tests/**/*.test.mjs\"",
-    "test:ts": "node --import tsx --test \"tests/**/*.test.ts\""
+    "test:ts": "node --import tsx --test \"tests/**/*.test.ts\"",
+    "preview:harness-firmware": "node scripts/serve-prototype.mjs --port 4327",
+    "capture:harness-firmware": "node scripts/capture-harness-firmware-concept.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.0",

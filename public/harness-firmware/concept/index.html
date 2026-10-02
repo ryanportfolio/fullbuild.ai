@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Harness Firmware · local design concept</title>
+  <meta name="description" content="How Harness Firmware makes AI better at software engineering through planning, bounded execution, proof, review, recovery, and human judgment.">
+  <meta name="theme-color" content="#070B0C">
+  <link rel="icon" type="image/svg+xml" href="/harness-firmware/assets/favicon.svg">
+  <link rel="stylesheet" href="/harness-firmware/concept/concept.css">
+  <script type="module" src="/harness-firmware/concept/concept.js"></script>
+</head>
+<body>
+  <a class="skip-link mono" href="#main">Skip to content</a>
+
+  <header class="instrument-rail">
+    <div class="brand mono">
+      <a class="brand-mark" href="/" aria-label="fullbuild.ai home">
+        <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+          <path d="M4 82H96" fill="none" stroke="currentColor" stroke-width="2.43" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M16 82V46L34 30L52 46V82M52 46H84V82M52 46L70 30L84 44M22 78L36 64M22 68L34 56M22 58L30 50M16 24V88M8 40H60" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M52 46H84V82H52Z" fill="currentColor"/>
+        </svg>
+      </a>
+      <a class="brand-name" href="#hero" aria-label="Harness Firmware page top">HARNESS FIRMWARE</a>
+    </div>
+    <nav class="rail-nav mono" aria-label="Concept sections">
+      <a href="#task">TASK</a>
+      <a href="#loop">LOOP</a>
+      <a href="#long-horizon">LONG WORK</a>
+      <a href="#skills">SKILLS</a>
+      <a href="#technical">DETAILS</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero grid-field" id="hero">
+      <canvas class="hero-field" data-hero-field aria-hidden="true"></canvas>
+      <div class="hero-copy">
+        <p class="kicker mono">HARNESS FIRMWARE · HOW I ENGINEER WITH AI</p>
+        <h1 class="hero-title" data-fit-heading data-phaser-title data-phaser-target="hero" aria-label="Harness Firmware makes AI better"><span data-fit-line>Harness Firmware</span><span data-fit-line>makes AI</span><span data-fit-line data-phaser-mask>better</span></h1>
+        <p class="hero-intro">It loads the right project knowledge, bounds each task, checks real evidence, calls fresh reviewers, and keeps recovery paths when a plan fails. I set the goals, permissions, quality bar, and release decision.</p>
+        <div class="hero-actions">
+          <a class="action primary" href="#task">Follow one task</a>
+          <a class="action" href="https://github.com/ryanportfolio/Harness-Firmware">Inspect the source</a>
+        </div>
+        <p class="concept-status mono"><span aria-hidden="true"></span>LOCAL CONCEPT · CLAIMS STAY EVIDENCE-BOUND</p>
+      </div>
+
+      <figure class="system-plate" data-system-plate data-plate-phase="retained" aria-labelledby="system-plate-title">
+        <figcaption id="system-plate-title" class="mono">THE SYSTEM AROUND THE MODEL</figcaption>
+        <div class="plate-row plate-human" data-plate-station="human"><span class="plate-code mono">HUMAN</span><strong>Goal · tradeoffs · authority</strong><small>Chooses what good means and what may happen</small></div>
+        <div class="plate-route" data-plate-route="human-system" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="plate-row plate-system" data-plate-station="system"><span class="plate-code mono">SYSTEM</span><strong>Context · skills · limits</strong><small>Changes the conditions under which the model works</small></div>
+        <div class="plate-route" data-plate-route="system-model" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="plate-row plate-model" data-plate-station="model"><span class="plate-code mono">MODEL</span><strong>Plan · implement · inspect</strong><small>Works on one clearly scoped problem at a time</small></div>
+        <div class="plate-route" data-plate-route="model-proof" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="plate-row plate-proof" data-plate-station="proof"><span class="plate-code mono">PROOF</span><strong>Tests · renders · fresh review</strong><small>Determines whether work advances or returns</small></div>
+        <svg class="plate-return-map" viewBox="0 0 48 300" aria-hidden="true"><path data-plate-return-path pathLength="1" d="M38 278V194Q38 180 24 180H10V104Q10 90 24 90H38V22"/><rect data-plate-return-packet x="33" y="273" width="10" height="10"/></svg>
+      </figure>
+    </section>
+
+    <section class="fact-strip" aria-label="What every new project gets" data-mechanism="facts">
+      <p class="fact-strip-label mono">WHAT EVERY NEW PROJECT GETS</p>
+      <div class="fact-grid">
+        <a class="fact-cell" data-proof="memory" href="#memory"><span class="fact-index mono">01</span><strong>MEMORY</strong><p><span class="fit-copy-line">project lessons</span> <span class="fit-copy-line">survive the chat</span></p><small class="mono"><span>VERSIONED WITH</span><span>EACH REPO</span></small></a>
+        <a class="fact-cell" data-proof="skills" href="#skills"><span class="fact-index mono">02</span><strong data-fact-key="skillCount">30</strong><p><span class="fit-copy-line">workflows ready</span> <span class="fit-copy-line">when needed</span></p><small class="mono">ON DEMAND · SOURCE LINKED</small></a>
+        <a class="fact-cell" data-proof="runtimes" href="#runtime-map"><span class="fact-index mono">03</span><strong data-fact-key="runtimeCount">2</strong><p><span class="fit-copy-line">Claude Code</span> <span class="fit-copy-line">and Codex</span></p><small class="mono">CLAUDE CODE · CODEX</small></a>
+        <a class="fact-cell" data-proof="source" href="https://github.com/ryanportfolio/Harness-Firmware"><span class="fact-index mono">04</span><strong data-fact-key="license">MIT</strong><p><span class="fit-copy-line">open source</span> <span class="fit-copy-line">and inspectable</span></p><small class="mono">GITHUB TEMPLATE</small></a>
+      </div>
+      <p class="fact-snapshot mono">SOURCE SNAPSHOT · <span data-fact-key="templateRev">2094fa7b</span></p>
+    </section>
+
+    <section class="story-section numbered-section" id="task" data-story>
+      <span class="chapter-number" aria-hidden="true">01</span>
+      <svg class="symbol-defs" width="0" height="0" aria-hidden="true" focusable="false">
+        <defs>
+          <pattern id="map-grid" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M0 0H48M0 0V48" class="map-grid-line"/><path d="M21 24H27M24 21V27" class="map-grid-tick"/></pattern>
+          <pattern id="map-hatch" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M-2 8L8-2M2 10L10 2" class="map-hatch-line"/></pattern>
+          <marker id="route-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L8 4L0 8Z" class="route-arrow-fill"/></marker>
+          <symbol id="system-map" viewBox="0 0 600 1320">
+            <rect class="map-ground" x="16" y="16" width="568" height="1288"/>
+            <rect class="map-grid" x="16" y="16" width="568" height="1288"/>
+            <g class="registration" aria-hidden="true"><path d="M16 42V16H42M558 16H584V42M16 1278V1304H42M558 1304H584V1278"/><path d="M300 16V28M300 1292V1304M16 660H28M572 660H584"/></g>
+
+            <g class="route-tracks" aria-hidden="true">
+              <path d="M300 106V144"/><path d="M300 220V258"/><path d="M300 334V372"/><path d="M300 448V486"/><path d="M300 562V600"/>
+              <path d="M300 624V642H180"/><path d="M300 624V642H420"/><path d="M180 724V772H300"/><path d="M420 724V772H300"/>
+              <path d="M300 772V800"/><path d="M300 772H566V974H510"/><path d="M90 844H34V296H90"/><path d="M300 888V936"/><path d="M300 1012V1050"/><path d="M300 1126V1164"/><path d="M90 1208H58V182H90"/>
+            </g>
+            <g class="state-routes" aria-hidden="true">
+              <path data-route="context" data-route-index="1" d="M300 106V144" marker-end="url(#route-arrow)"/>
+              <path data-route="bounded-work" data-route-index="2" d="M300 220V258" marker-end="url(#route-arrow)"/>
+              <path data-route="execution" data-route-index="3" d="M300 334V372" marker-end="url(#route-arrow)"/>
+              <path data-route="evidence" data-route-index="4" d="M300 448V486" marker-end="url(#route-arrow)"/>
+              <path data-route="review-fork" data-route-index="5" d="M300 562V600" marker-end="url(#route-arrow)"/>
+              <path data-route="review-fresh" data-route-index="5" d="M300 624V642H180" marker-end="url(#route-arrow)"/>
+              <path data-route="review-codex" data-route-index="5" d="M300 624V642H420" marker-end="url(#route-arrow)"/>
+              <path data-route="review-merge-fresh" data-route-index="5" d="M180 724V772H300"/>
+              <path data-route="review-merge-codex" data-route-index="5" d="M420 724V772H300"/>
+              <path data-route="repair" data-route-index="6" d="M300 772V800" marker-end="url(#route-arrow)"/>
+              <path data-route="clean-bypass" data-route-index="7" d="M300 772H566V974H510"/>
+              <path data-route="repair-return" data-route-index="6" d="M90 844H34V296H90" marker-end="url(#route-arrow)"/>
+              <path data-route="repair-complete" data-route-index="7" d="M300 888V936" marker-end="url(#route-arrow)"/>
+              <path data-route="release" data-route-index="8" d="M300 1012V1050" marker-end="url(#route-arrow)"/>
+              <path data-route="refine" data-route-index="9" d="M300 1126V1164" marker-end="url(#route-arrow)"/>
+              <path data-route="refine-return" data-route-index="9" d="M90 1208H58V182H90" marker-end="url(#route-arrow)"/>
+            </g>
+
+            <g class="map-node" data-node="intent" data-node-index="0"><rect x="90" y="30" width="420" height="76"/><text class="node-owner" x="112" y="55">HUMAN OWNED</text><text class="node-title" x="112" y="86">GOAL + LIMITS</text><path class="node-register" d="M486 42H498V54"/></g>
+            <g class="map-node" data-node="context" data-node-index="1"><rect x="90" y="144" width="420" height="76"/><text class="node-owner" x="112" y="169">SYSTEM ROUTED</text><text class="node-title" x="112" y="200">CONTEXT + SKILLS</text><path class="node-register" d="M486 156H498V168"/></g>
+            <g class="map-node" data-node="bounded-work" data-node-index="2"><rect x="90" y="258" width="420" height="76"/><text class="node-owner" x="112" y="283">MODEL WORK</text><text class="node-title" x="112" y="314">ONE BOUNDED CHANGE</text><path class="node-register" d="M486 270H498V282"/></g>
+            <g class="map-node" data-node="execution" data-node-index="3"><rect x="90" y="372" width="420" height="76"/><text class="node-owner" x="112" y="397">REAL CONDITIONS</text><text class="node-title" x="112" y="428">RUN THE SOFTWARE</text><path class="node-register" d="M486 384H498V396"/></g>
+            <g class="map-node" data-node="evidence" data-node-index="4"><rect x="90" y="486" width="420" height="76"/><text class="node-owner" x="112" y="511">EVIDENCE REGISTER</text><text class="node-title" x="112" y="542">TEST · RENDER · RUNTIME</text><path class="node-register" d="M486 498H498V510"/></g>
+
+            <g class="map-node review-node" data-node="review-fork" data-node-index="5">
+              <rect x="52" y="600" width="496" height="152"/>
+              <text class="node-owner" x="74" y="626">TWO WAYS TO CHALLENGE THE RESULT</text>
+              <g class="review-child review-fresh"><rect x="70" y="642" width="220" height="82"/><text x="88" y="670">FRESH CONTEXT</text><text x="88" y="700">WORKSPACE FIRST</text></g>
+              <g class="review-child review-codex"><rect x="310" y="642" width="220" height="82"/><text x="328" y="670">CODEX CLI</text><text x="328" y="700">WHEN AVAILABLE</text></g>
+            </g>
+            <g class="map-node" data-node="repair" data-node-index="6"><rect x="90" y="800" width="420" height="88"/><text class="node-owner" x="112" y="826">CONFIRMED FINDING</text><text class="node-title" x="112" y="852"><tspan x="112">REPAIR OR CHANGE</tspan><tspan x="112" dy="24">APPROACH</tspan></text><path class="node-register" d="M486 812H498V824"/></g>
+            <g class="map-node" data-node="reconcile" data-node-index="7"><rect x="90" y="936" width="420" height="76"/><text class="node-owner" x="112" y="961">CURRENT INTEGRATION</text><text class="node-title" x="112" y="990">RECONCILE LATEST MAIN</text><path class="node-register" d="M486 948H498V960"/></g>
+            <g class="map-node" data-node="release" data-node-index="8"><rect x="90" y="1050" width="420" height="76"/><text class="node-owner" x="112" y="1075">HUMAN OWNED</text><text class="node-title" x="112" y="1104">APPROVE · DEFER · RELEASE</text><path class="node-register" d="M486 1062H498V1074"/></g>
+            <g class="map-node" data-node="refine" data-node-index="9"><rect x="90" y="1164" width="420" height="88"/><text class="node-owner" x="112" y="1190">EXPLICIT MAINTENANCE</text><text class="node-title" x="112" y="1216"><tspan x="112">KEEP CONFIRMED</tspan><tspan x="112" dy="24">LESSONS</tspan></text><path class="node-register" d="M486 1176H498V1188"/></g>
+
+            <g class="route-labels" aria-hidden="true"><text x="458" y="920">NO FINDING</text><text transform="translate(60 640) rotate(-90)">REPAIR LOOP</text><text transform="translate(84 1030) rotate(-90)">RETAINED LESSON</text></g>
+          </symbol>
+        </defs>
+      </svg>
+
+      <div class="story-intro">
+        <p class="kicker mono">ONE TASK EARNS RELEASE</p>
+        <h2 class="story-title" aria-label="Watch the engineering system work"><span>Watch the</span><span class="engineering-word" data-engineering-word aria-hidden="true"><svg viewBox="0 0 1000 178" preserveAspectRatio="none"><g class="engineering-register"><path d="M2 22V2H22M978 2H998V22M2 156V176H22M978 176H998V156"/><path d="M500 2V18M500 160V176M2 89H18M982 89H998"/></g><text class="engineering-plot" x="24" y="132" textLength="952" lengthAdjust="spacingAndGlyphs">engineering</text><text class="engineering-checked" x="24" y="132" textLength="952" lengthAdjust="spacingAndGlyphs">engineering</text><path class="engineering-checkline" d="M24 151H976"/></svg></span><span>system work</span></h2>
+        <div class="state-key mono"><span class="key-construction">SYSTEM</span><span class="key-live">ACTIVE WORK</span><span class="key-kept">RETAINED</span><span class="key-return">FAILED PATH</span></div>
+      </div>
+
+      <div class="phone-viz map-frame">
+        <svg viewBox="0 0 600 1320" role="img" aria-labelledby="phone-map-title phone-map-desc" preserveAspectRatio="xMidYMid meet"><title id="phone-map-title">How one task earns release</title><desc id="phone-map-desc">A complete portrait system map from human intent through context, bounded work, execution, evidence, two review paths, repair, latest-main reconciliation, human release, and explicit refinement.</desc><use href="#system-map" width="600" height="1320"/></svg>
+        <p class="figure-caption mono">FIG 01 · HOW ONE TASK EARNS RELEASE · COMPLETE MAP</p>
+      </div>
+
+      <div class="story-grid">
+        <ol class="beats">
+          <li class="beat" data-beat="intent"><p class="beat-index mono">01 · HUMAN OWNED</p><h3>Define the task</h3><p class="beat-claim"><span>A person sets the goal,</span> <span>acceptance checks, authority,</span> <span>and stop conditions</span> <span>before model work starts</span></p><div class="beat-mechanism" data-beat-mechanism="intent"><svg class="beat-scene" viewBox="0 0 480 230" role="img" aria-label="Goal, proof, limits, and authority enter one task brief"><text class="scene-kicker" x="16" y="24">A TASK THAT CAN FAIL</text><g data-scene-step="2"><rect class="scene-plate" x="16" y="48" width="92" height="34"/><text x="62" y="70">GOAL</text><rect class="scene-plate" x="16" y="92" width="92" height="34"/><text x="62" y="114">PROOF</text><rect class="scene-plate" x="16" y="136" width="92" height="34"/><text x="62" y="158">LIMITS</text><rect class="scene-plate scene-authority" x="16" y="180" width="92" height="34"/><text x="62" y="202">AUTHORITY</text></g><g class="scene-rails" data-scene-step="1"><path d="M108 65H210V131H286"/><path d="M108 109H210"/><path d="M108 153H210"/><path d="M108 197H210V131"/></g><g data-scene-step="1"><path data-scene-route pathLength="1" d="M108 65H210V131H286"/><path data-scene-route pathLength="1" d="M108 109H210"/><path data-scene-route pathLength="1" d="M108 153H210"/><path data-scene-route pathLength="1" d="M108 197H210V131"/></g><g class="scene-result" data-scene-step="4"><rect class="scene-main" x="286" y="92" width="178" height="78"/><text class="scene-title" x="375" y="126">TASK BRIEF</text><text class="scene-small" x="375" y="150">FAILURE CONDITION SET</text></g><g class="scene-mobile"><text class="scene-kicker" x="16" y="26">A TASK THAT CAN FAIL</text><g data-scene-step="2"><rect class="scene-plate" x="16" y="52" width="100" height="42"/><text x="66" y="79">GOAL</text><rect class="scene-plate" x="126" y="52" width="100" height="42"/><text x="176" y="79">PROOF</text><rect class="scene-plate" x="16" y="106" width="100" height="42"/><text x="66" y="133">LIMITS</text><rect class="scene-plate scene-authority" x="126" y="106" width="100" height="42"/><text x="176" y="133">AUTHORITY</text></g><g class="scene-rails" data-scene-step="1"><path d="M226 73H258V127H292"/><path d="M226 127H292"/></g><g data-scene-step="1"><path data-scene-route pathLength="1" d="M226 73H258V127H292"/><path data-scene-route pathLength="1" d="M226 127H292"/></g><g class="scene-result" data-scene-step="4"><rect class="scene-main" x="292" y="78" width="172" height="98"/><text class="scene-title" x="378" y="120">TASK BRIEF</text><text class="scene-small" x="378" y="148">CAN FAIL</text><text class="scene-small" x="378" y="170">HAS LIMITS</text></g></g></svg><p class="mechanism-why">The model starts with a target it can miss and limits it cannot cross</p><nav class="mechanism-links" aria-label="Intent sources"><a data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/skills/long-horizon/SKILL.md">READ LONG HORIZON</a><a data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/skills/fable-mode/SKILL.md">SEE FABLE MODE</a></nav></div></li>
+          <li class="beat" data-beat="context"><p class="beat-index mono">02 · SYSTEM ROUTED</p><h3>Load what matters</h3><p class="beat-claim"><span>Small standing rules</span> <span>point to the project references</span> <span>and method relevant</span> <span>to this task</span></p><div class="beat-mechanism" data-beat-mechanism="context"><svg class="beat-scene" viewBox="0 0 480 230" role="img" aria-label="AGENTS dot MD routes only matching reference and skill files"><text class="scene-kicker" x="16" y="24">OPEN ONLY WHAT MATCHES</text><g data-scene-step="2"><rect class="scene-main" x="16" y="80" width="112" height="58"/><text class="scene-title" x="72" y="114">AGENTS.MD</text><path class="scene-register" d="M145 84H163V102M145 134H163V116"/><rect class="scene-router" x="178" y="80" width="78" height="58"/><text x="217" y="114">ROUTER</text><g class="scene-dim"><rect x="352" y="36" width="112" height="40"/><path d="M366 51H440M366 62H428"/><rect x="352" y="170" width="112" height="40"/><path d="M366 185H440M366 196H422"/></g></g><g class="scene-rails" data-scene-step="1"><path d="M128 109H178"/><path d="M256 109H308V98H352"/><path d="M256 109H308V144H352"/></g><g data-scene-step="1"><path data-scene-route pathLength="1" d="M128 109H178"/><path data-scene-route pathLength="1" d="M256 109H308V98H352"/><path data-scene-route pathLength="1" d="M256 109H308V144H352"/></g><g class="scene-result" data-scene-step="4"><rect class="scene-main" x="352" y="82" width="112" height="32"/><text x="408" y="103">REFERENCE</text><rect class="scene-main" x="352" y="128" width="112" height="32"/><text x="408" y="149">SKILL</text></g><g class="scene-mobile"><text class="scene-kicker" x="16" y="26">OPEN ONLY WHAT MATCHES</text><g data-scene-step="2"><rect class="scene-main" x="16" y="80" width="132" height="70"/><text x="82" y="121">AGENTS.MD</text><rect class="scene-router" x="184" y="86" width="100" height="58"/><text x="234" y="121">ROUTER</text><g class="scene-dim"><rect x="354" y="42" width="110" height="34"/><rect x="354" y="172" width="110" height="34"/></g></g><g class="scene-rails" data-scene-step="1"><path d="M148 115H184"/><path d="M284 115H322V96H354"/><path d="M322 115V140H354"/></g><g data-scene-step="1"><path data-scene-route pathLength="1" d="M148 115H184"/><path data-scene-route pathLength="1" d="M284 115H322V96H354"/><path data-scene-route pathLength="1" d="M322 115V140H354"/></g><g class="scene-result" data-scene-step="4"><rect class="scene-main" x="354" y="82" width="110" height="42"/><text x="409" y="109">REFERENCE</text><rect class="scene-main" x="354" y="130" width="110" height="42"/><text x="409" y="157">SKILL</text></g></g></svg><p class="mechanism-why">The task opens the few files it needs instead of loading every project note</p><nav class="mechanism-links" aria-label="Context sources"><a data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/AGENTS.md">INSPECT AGENTS.MD</a><a data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/skills/recall/SKILL.md">READ RECALL</a></nav></div></li>
+          <li class="beat" data-beat="bounded-work"><p class="beat-index mono">03 · MODEL WORK</p><h3>Build one bounded change</h3><p class="beat-claim"><span>A model plans and changes</span> <span>one inspectable slice</span> <span>before later work</span> <span>depends on it</span></p><div class="beat-mechanism" data-beat-mechanism="bounded-work"><svg class="beat-scene" viewBox="0 0 480 230" role="img" aria-label="One bounded slice reaches its check while the next slice waits"><text class="scene-kicker" x="16" y="24">ONE SLICE · ONE CHECK</text><g data-scene-step="2"><path class="scene-bracket" d="M16 54V184M16 54H32M16 184H32"/><rect class="scene-main" x="38" y="64" width="126" height="72"/><text class="scene-title" x="101" y="94">SLICE 01</text><path class="scene-diff" d="M56 110H102M56 122H142"/><rect class="scene-gate" x="218" y="70" width="78" height="62"/><text x="257" y="96">CHECK</text><text class="scene-small" x="257" y="116">PENDING</text><rect class="scene-plate scene-dim" x="354" y="70" width="110" height="62"/><text x="409" y="106">SLICE 02</text></g><g class="scene-rails" data-scene-step="1"><path d="M164 101H218"/><path d="M296 101H354"/></g><g data-scene-step="1"><path data-scene-route pathLength="1" d="M164 101H218"/></g><g class="scene-result" data-scene-step="4"><rect class="scene-check" x="224" y="144" width="66" height="28"/><text class="scene-small" x="257" y="163">INSPECT</text><path class="scene-stop" d="M325 76V126M337 76V126"/></g><g class="scene-mobile"><text class="scene-kicker" x="16" y="26">ONE SLICE · ONE CHECK</text><g data-scene-step="2"><path class="scene-bracket" d="M16 60V180M16 60H34M16 180H34"/><rect class="scene-main" x="40" y="76" width="132" height="78"/><text class="scene-title" x="106" y="108">SLICE 01</text><path class="scene-diff" d="M62 128H116M62 140H148"/><rect class="scene-gate" x="220" y="82" width="100" height="66"/><text x="270" y="120">CHECK</text><rect class="scene-plate scene-dim" x="364" y="82" width="100" height="66"/><text x="414" y="120">SLICE 02</text></g><g class="scene-rails" data-scene-step="1"><path d="M172 115H220"/><path d="M320 115H364"/></g><g data-scene-step="1"><path data-scene-route pathLength="1" d="M172 115H220"/></g><g class="scene-result" data-scene-step="4"><path class="scene-stop" d="M340 82V148M350 82V148"/><text class="scene-small" x="270" y="178">FIRST CHECK CLOSES THE GATE</text></g></g></svg><p class="mechanism-why">Small slices keep the diff inspectable before later work depends on it</p><nav class="mechanism-links" aria-label="Bounded work sources"><a data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/skills/long-horizon/SKILL.md">READ LONG HORIZON</a></nav></div></li>
+          <li class="beat" data-beat="execution"><p class="beat-index mono">04 · REAL CONDITIONS</p><h3>Run the software</h3><p class="beat-claim"><span>The change runs under</span> <span>the closest available</span> <span>real conditions</span></p><div class="beat-mechanism" data-beat-mechanism="execution"><svg class="beat-scene" viewBox="0 0 480 230" role="img" aria-label="One change runs through command, runtime, render, and an unverified slot"><text class="scene-kicker" x="16" y="24">CODE MEETS REAL CONDITIONS</text><g data-scene-step="2"><rect class="scene-main" x="16" y="83" width="104" height="58"/><text class="scene-title" x="68" y="117">CHANGE</text><rect class="scene-plate" x="182" y="46" width="112" height="40"/><text x="238" y="71">COMMAND</text><rect class="scene-plate" x="182" y="96" width="112" height="40"/><text x="238" y="121">RUNTIME</text><rect class="scene-plate" x="182" y="146" width="112" height="40"/><text x="238" y="171">RENDER</text></g><g class="scene-rails" data-scene-step="1"><path d="M120 112H150V66H182"/><path d="M150 112H182"/><path d="M150 112V166H182"/></g><g data-scene-step="1"><path data-scene-route pathLength="1" d="M120 112H150V66H182"/><path data-scene-route pathLength="1" d="M150 112H182"/><path data-scene-route pathLength="1" d="M150 112V166H182"/></g><g class="scene-result" data-scene-step="4"><rect class="scene-main" x="338" y="46" width="126" height="40"/><text x="401" y="71">OBSERVED</text><rect class="scene-main" x="338" y="96" width="126" height="40"/><text x="401" y="121">OBSERVED</text><rect class="scene-unverified" x="338" y="146" width="126" height="40"/><text x="401" y="171">UNVERIFIED</text></g><g class="scene-mobile"><text class="scene-kicker" x="16" y="26">CODE MEETS REAL CONDITIONS</text><g data-scene-step="2"><rect class="scene-main" x="16" y="82" width="112" height="70"/><text class="scene-title" x="72" y="123">CHANGE</text><rect class="scene-plate" x="188" y="44" width="126" height="44"/><text x="251" y="72">COMMAND</text><rect class="scene-plate" x="188" y="98" width="126" height="44"/><text x="251" y="126">RUNTIME</text><rect class="scene-plate" x="188" y="152" width="126" height="44"/><text x="251" y="180">RENDER</text></g><g class="scene-rails" data-scene-step="1"><path d="M128 117H158V66H188"/><path d="M158 117H188"/><path d="M158 117V174H188"/></g><g data-scene-step="1"><path data-scene-route pathLength="1" d="M128 117H158V66H188"/><path data-scene-route pathLength="1" d="M158 117H188"/><path data-scene-route pathLength="1" d="M158 117V174H188"/></g><g class="scene-result" data-scene-step="4"><rect class="scene-main" x="354" y="44" width="110" height="44"/><text x="409" y="72">OBSERVED</text><rect class="scene-main" x="354" y="98" width="110" height="44"/><text x="409" y="126">OBSERVED</text><rect class="scene-unverified" x="354" y="152" width="110" height="44"/><text x="409" y="180">UNVERIFIED</text></g></g></svg><p class="mechanism-why">The software has to behave outside the explanation that produced it</p><nav class="mechanism-links" aria-label="Execution sources"><a data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/CLAUDE.md">INSPECT VERIFICATION RULES</a><a data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/skills/fable-mode/SKILL.md">SEE FABLE MODE</a></nav></div></li>
+          <li class="beat" data-beat="evidence"><p class="beat-index mono">05 · PROOF</p><h3>Produce proof</h3><p class="beat-claim"><span>Each claim is checked</span> <span>at its own layer</span> <span>and recorded with a result</span></p><div class="beat-mechanism" data-beat-mechanism="evidence"><svg class="beat-scene" viewBox="0 0 480 230" role="img" aria-label="Before and after evidence reach one comparison and three honest verdicts"><text class="scene-kicker" x="16" y="24">BASELINE / TREATMENT / VERDICT</text><g data-scene-step="2"><rect class="scene-plate" x="16" y="58" width="104" height="44"/><text x="68" y="85">BEFORE</text><rect class="scene-plate" x="16" y="122" width="104" height="44"/><text x="68" y="149">AFTER</text><path class="scene-compare" d="M190 64L238 112L190 160L142 112Z"/><text x="190" y="108">COMPARE</text><text class="scene-small" x="190" y="128">MATCHED</text></g><g class="scene-rails" data-scene-step="1"><path d="M120 80H158L174 96"/><path d="M120 144H158L174 128"/><path d="M238 112H276"/></g><g data-scene-step="1"><path data-scene-route pathLength="1" d="M120 80H158L174 96"/><path data-scene-route pathLength="1" d="M120 144H158L174 128"/><path data-scene-route pathLength="1" d="M238 112H276"/></g><g data-scene-step="3"><rect class="scene-plate scene-dim" x="276" y="46" width="188" height="36"/><text x="370" y="69">NOT VERIFIED</text><rect class="scene-plate scene-dim" x="276" y="94" width="188" height="36"/><text x="370" y="117">INCONCLUSIVE</text></g><g class="scene-result" data-scene-step="4"><rect class="scene-main" x="276" y="142" width="188" height="44"/><text class="scene-title" x="370" y="170">VERIFIED</text></g><g class="scene-mobile"><text class="scene-kicker" x="16" y="26">BASELINE / TREATMENT / VERDICT</text><g data-scene-step="2"><rect class="scene-plate" x="16" y="64" width="118" height="48"/><text x="75" y="94">BEFORE</text><rect class="scene-plate" x="16" y="128" width="118" height="48"/><text x="75" y="158">AFTER</text><path class="scene-compare" d="M210 72L254 120L210 168L166 120Z"/><text class="scene-small" x="210" y="126">COMPARE</text></g><g class="scene-rails" data-scene-step="1"><path d="M134 88H174"/><path d="M134 152H174"/><path d="M254 120H300"/></g><g data-scene-step="1"><path data-scene-route pathLength="1" d="M134 88H174"/><path data-scene-route pathLength="1" d="M134 152H174"/><path data-scene-route pathLength="1" d="M254 120H300"/></g><g class="scene-result" data-scene-step="4"><rect class="scene-main" x="300" y="86" width="164" height="68"/><text class="scene-title" x="382" y="126">VERIFIED</text></g><text class="scene-small" x="382" y="182">NOT VERIFIED</text><text class="scene-small" x="382" y="208">INCONCLUSIVE</text></g></svg><p class="mechanism-why">A matched comparison can return verified, not verified, or inconclusive</p><nav class="mechanism-links" aria-label="Evidence sources"><a data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/skills/verify-this/SKILL.md">READ VERIFY THIS</a></nav></div></li>
+          <li class="beat review-beat" data-beat="review-fork"><p class="beat-index mono">06 · TWO REVIEW PATHS</p><h3>Challenge the result</h3><p class="beat-claim"><span>A fresh reviewer</span> <span>and a directly called</span> <span>different model challenge</span> <span>different blind spots</span></p><div class="beat-mechanism" data-beat-mechanism="review-fork"><svg class="beat-scene" viewBox="0 0 480 230" role="img" aria-label="One diff branches to a fresh workspace and a direct Claude to Codex review"><text class="scene-kicker" x="16" y="24">TWO WAYS TO CHALLENGE THE RESULT</text><g data-scene-step="2"><rect class="scene-main" x="16" y="88" width="82" height="52"/><text x="57" y="119">DIFF</text><rect class="scene-plate" x="152" y="44" width="132" height="42"/><text x="218" y="70">FRESH WORKSPACE</text><rect class="scene-plate" x="124" y="105" width="106" height="48"/><text class="scene-small" x="177" y="124"><tspan x="177">CLAUDE STARTS </tspan><tspan x="177" dy="15">CODEX</tspan></text><rect class="scene-plate" x="238" y="105" width="106" height="48"/><text class="scene-small" x="291" y="124"><tspan x="291">CODEX READS </tspan><tspan x="291" dy="15">REPO</tspan></text><rect class="scene-plate" x="352" y="105" width="112" height="48"/><text class="scene-small" x="408" y="124"><tspan x="408">CLAUDE CHECKS </tspan><tspan x="408" dy="15">FINDINGS</tspan></text></g><g class="scene-rails" data-scene-step="1"><path d="M98 114H112V65H152"/><path d="M98 114H124"/><path d="M230 129H238"/><path d="M344 129H352"/><path d="M284 65H446V172"/><path d="M408 153V172"/></g><g data-scene-step="1"><path data-scene-route pathLength="1" d="M98 114H112V65H152"/><path data-scene-route pathLength="1" d="M98 114H124"/><path data-scene-route pathLength="1" d="M230 129H238"/><path data-scene-route pathLength="1" d="M344 129H352"/></g><g class="scene-result" data-scene-step="4"><rect class="scene-main" x="318" y="172" width="146" height="40"/><text x="391" y="197">CHECKED FINDINGS</text></g><g class="scene-mobile"><text class="scene-kicker" x="16" y="26">TWO WAYS TO CHALLENGE THE RESULT</text><g data-scene-step="2"><rect class="scene-main" x="16" y="92" width="76" height="48"/><text x="54" y="122">DIFF</text><rect class="scene-plate" x="130" y="46" width="162" height="42"/><text x="211" y="73">FRESH WORKSPACE</text><rect class="scene-plate" x="110" y="112" width="104" height="58"/><text class="scene-small" x="162" y="128"><tspan x="162">CLAUDE</tspan><tspan x="162" dy="18">STARTS</tspan><tspan x="162" dy="18">CODEX</tspan></text><rect class="scene-plate" x="224" y="112" width="104" height="58"/><text class="scene-small" x="276" y="128"><tspan x="276">CODEX</tspan><tspan x="276" dy="18">READS</tspan><tspan x="276" dy="18">REPO</tspan></text><rect class="scene-plate" x="338" y="112" width="126" height="58"/><text class="scene-small" x="401" y="128"><tspan x="401">CLAUDE</tspan><tspan x="401" dy="18">CHECKS</tspan><tspan x="401" dy="18">FINDINGS</tspan></text></g><g class="scene-rails" data-scene-step="1"><path d="M92 116H110"/><path d="M92 116H108V67H130"/><path d="M214 141H224"/><path d="M328 141H338"/><path d="M292 67H444V192"/><path d="M401 170V192"/></g><g data-scene-step="1"><path data-scene-route pathLength="1" d="M92 116H110"/><path data-scene-route pathLength="1" d="M92 116H108V67H130"/><path data-scene-route pathLength="1" d="M214 141H224"/><path data-scene-route pathLength="1" d="M328 141H338"/></g><g class="scene-result" data-scene-step="4"><rect class="scene-main" x="274" y="184" width="190" height="36"/><text x="369" y="208">CHECKED FINDINGS</text></g></g></svg><p class="mechanism-why">Fresh context checks the work without the builder's explanation; Codex adds a different model without a pasted transcript or copied diff</p><nav class="mechanism-links" aria-label="Review sources"><a data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/skills/impartial-review/SKILL.md">READ IMPARTIAL REVIEW</a><a data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/skills/codex-review/SKILL.md">READ CODEX REVIEW</a></nav></div></li>
+          <li class="beat" data-beat="repair"><p class="beat-index mono">07 · RETURN PATH</p><h3>Repair or change approach</h3><p class="beat-claim"><span>Confirmed findings return</span> <span>to the smallest responsible step;</span> <span>repeated blockage changes</span> <span>the approach</span></p><div class="beat-mechanism" data-beat-mechanism="repair"><svg class="beat-scene" viewBox="0 0 480 230" role="img" aria-label="A failed path stays visible while a fresh executor takes a different route past a human gate"><text class="scene-kicker" x="16" y="24">DEAD END SAVED · ROUTE CHANGED</text><g data-scene-step="2"><rect class="scene-plate" x="16" y="62" width="112" height="44"/><text x="72" y="89">ATTEMPT 01</text><path class="scene-failure" d="M160 52L208 100M172 52L220 100M184 52L232 100"/><rect class="scene-dead-end" x="146" y="120" width="122" height="52"/><text x="207" y="151">DEAD END</text><path class="scene-strike" d="M158 162L256 130"/><rect class="scene-main" x="16" y="174" width="142" height="40"/><text x="87" y="199">FRESH EXECUTOR</text><rect class="scene-main scene-authority" x="334" y="52" width="130" height="54"/><text x="399" y="76">HUMAN</text><text x="399" y="94">DECISION</text></g><g class="scene-rails" data-scene-step="1"><path d="M128 84H184"/><path d="M158 194H300V154H334"/><path d="M399 132V106"/></g><g data-scene-step="1"><path data-scene-route pathLength="1" d="M128 84H184"/><path data-scene-route pathLength="1" d="M158 194H300V154H334"/><path data-scene-route pathLength="1" d="M399 132V106"/></g><g class="scene-result" data-scene-step="4"><rect class="scene-main" x="334" y="132" width="130" height="44"/><text x="399" y="159">NEW ROUTE</text></g><g class="scene-mobile"><text class="scene-kicker" x="16" y="26">DEAD END SAVED · ROUTE CHANGED</text><g data-scene-step="2"><rect class="scene-plate" x="16" y="52" width="126" height="44"/><text x="79" y="80">ATTEMPT 01</text><path class="scene-failure" d="M166 50L206 90M178 50L218 90M190 50L230 90"/><rect class="scene-dead-end" x="156" y="104" width="142" height="54"/><text x="227" y="136">DEAD END</text><path class="scene-strike" d="M170 148L284 114"/><rect class="scene-main" x="16" y="176" width="154" height="42"/><text x="93" y="203">FRESH EXECUTOR</text><rect class="scene-main scene-authority" x="338" y="48" width="126" height="52"/><text class="scene-small" x="401" y="70">HUMAN</text><text class="scene-small" x="401" y="89">DECISION</text></g><g class="scene-rails" data-scene-step="1"><path d="M142 74H190"/><path d="M170 197H316V147H338"/><path d="M401 124V100"/></g><g data-scene-step="1"><path data-scene-route pathLength="1" d="M142 74H190"/><path data-scene-route pathLength="1" d="M170 197H316V147H338"/><path data-scene-route pathLength="1" d="M401 124V100"/></g><g class="scene-result" data-scene-step="4"><rect class="scene-main" x="338" y="124" width="126" height="46"/><text x="401" y="153">NEW ROUTE</text></g></g></svg><p class="mechanism-why">Fresh executors get the confirmed lesson without inheriting the failed conversation</p><nav class="mechanism-links" aria-label="Repair sources"><a data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/skills/long-horizon/SKILL.md">READ LONG HORIZON</a><a data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/skills/fable-mode/SKILL.md">SEE FABLE MODE</a><a data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/reference/pitfalls.md">INSPECT PITFALLS.MD</a></nav></div></li>
+          <li class="beat" data-beat="reconcile"><p class="beat-index mono">08 · INTEGRATION</p><h3>Reconcile with latest main</h3><p class="beat-claim"><span>Passing work is checked</span> <span>against the current</span> <span>integration state</span></p><div class="beat-mechanism" data-beat-mechanism="reconcile"><svg class="beat-scene" viewBox="0 0 480 230" role="img" aria-label="A candidate on an older base joins latest main and gets checked again"><text class="scene-kicker" x="16" y="24">OLDER BASE ≠ CURRENT MAIN</text><g data-scene-step="2"><path class="scene-rail" d="M16 166H464"/><path class="scene-rail scene-dim" d="M16 76H224"/><rect class="scene-plate" x="24" y="48" width="112" height="48"/><text x="80" y="77">CANDIDATE</text><text class="scene-small" x="166" y="68">OLDER MAIN</text><path class="scene-revision" d="M214 154V178M276 154V178"/><text class="scene-small" x="245" y="198">MAIN MOVED</text><rect class="scene-main" x="292" y="138" width="116" height="56"/><text x="350" y="161">LATEST</text><text x="350" y="179">MAIN</text></g><g class="scene-rails" data-scene-step="1"><path d="M80 96V126H292V154"/><path d="M408 166H438"/></g><g data-scene-step="1"><path data-scene-route pathLength="1" d="M80 96V126H292V154"/><path data-scene-route pathLength="1" d="M408 166H438"/></g><g class="scene-result" data-scene-step="4"><rect class="scene-main" x="382" y="48" width="82" height="58"/><text class="scene-small" x="423" y="72">CHECK</text><text class="scene-small" x="423" y="90">AGAIN</text><path class="scene-checkmark" d="M416 118L424 126L440 108"/></g><g class="scene-mobile"><text class="scene-kicker" x="16" y="26">OLDER BASE ≠ CURRENT MAIN</text><g data-scene-step="2"><rect class="scene-plate" x="16" y="56" width="138" height="54"/><text x="85" y="89">CANDIDATE</text><text class="scene-small" x="85" y="134">OLDER BASE</text><path class="scene-rail" d="M16 174H464"/><path class="scene-revision" d="M186 160V188M238 160V188"/><text class="scene-small" x="212" y="212">MAIN MOVED</text><rect class="scene-main" x="278" y="142" width="126" height="64"/><text x="341" y="168">LATEST</text><text x="341" y="189">MAIN</text></g><g class="scene-rails" data-scene-step="1"><path d="M85 110V138H278V174"/><path d="M404 174H430V108"/></g><g data-scene-step="1"><path data-scene-route pathLength="1" d="M85 110V138H278V174"/><path data-scene-route pathLength="1" d="M404 174H430V108"/></g><g class="scene-result" data-scene-step="4"><rect class="scene-main" x="360" y="52" width="104" height="56"/><text class="scene-small" x="412" y="76">CHECK</text><text class="scene-small" x="412" y="96">AGAIN</text></g></g></svg><p class="mechanism-why">Passing evidence can expire when main moves, so the combined state gets checked again</p><nav class="mechanism-links" aria-label="Reconciliation sources"><a data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/skills/merge/SKILL.md">INSPECT MERGE RULES</a></nav></div></li>
+          <li class="beat" data-beat="release"><p class="beat-index mono">09 · HUMAN OWNED</p><h3>Return release to a human</h3><p class="beat-claim"><span>Technical completion stays separate</span> <span>from authority to affect</span> <span>shared systems or users</span></p><div class="beat-mechanism" data-beat-mechanism="release"><svg class="beat-scene" viewBox="0 0 480 230" role="img" aria-label="Passing checks stop at a human permission gate before approve, defer, or ship"><text class="scene-kicker" x="16" y="24">PASSING ≠ PERMISSION</text><g data-scene-step="2"><rect class="scene-plate" x="16" y="80" width="118" height="54"/><text x="75" y="103">CHECKS</text><text x="75" y="121">PASSED</text><path class="scene-gate-bars" d="M214 54V160M228 54V160"/><g class="scene-key"><circle cx="186" cy="72" r="13"/><path d="M199 72H236M218 72V84M228 72V82"/></g><text class="scene-small" x="221" y="180">HUMAN KEY</text></g><g class="scene-rails" data-scene-step="1"><path d="M134 107H214"/><path d="M228 107H278"/></g><g data-scene-step="1"><path data-scene-route pathLength="1" d="M134 107H214"/><path data-scene-route pathLength="1" d="M228 107H278"/></g><g class="scene-result" data-scene-step="4"><rect class="scene-main" x="278" y="48" width="186" height="38"/><text x="371" y="72">APPROVE</text><rect class="scene-plate" x="278" y="96" width="186" height="38"/><text x="371" y="120">DEFER</text><rect class="scene-main" x="278" y="144" width="186" height="38"/><text x="371" y="168">SHIP</text></g><g class="scene-mobile"><text class="scene-kicker" x="16" y="26">PASSING ≠ PERMISSION</text><g data-scene-step="2"><rect class="scene-plate" x="16" y="82" width="128" height="62"/><text x="80" y="108">CHECKS</text><text x="80" y="130">PASSED</text><path class="scene-gate-bars" d="M206 54V174M220 54V174"/><g class="scene-key"><circle cx="178" cy="72" r="14"/><path d="M192 72H230M212 72V86M222 72V84"/></g><text class="scene-small" x="213" y="198">HUMAN KEY</text></g><g class="scene-rails" data-scene-step="1"><path d="M144 113H206"/><path d="M220 113H278"/></g><g data-scene-step="1"><path data-scene-route pathLength="1" d="M144 113H206"/><path data-scene-route pathLength="1" d="M220 113H278"/></g><g class="scene-result" data-scene-step="4"><rect class="scene-main" x="278" y="50" width="186" height="42"/><text x="371" y="77">APPROVE</text><rect class="scene-plate" x="278" y="102" width="186" height="42"/><text x="371" y="129">DEFER</text><rect class="scene-main" x="278" y="154" width="186" height="42"/><text x="371" y="181">SHIP</text></g></g></svg><p class="mechanism-why">Passing checks show technical readiness; a person still decides what may affect shared systems or users</p><nav class="mechanism-links" aria-label="Release sources"><a data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/AGENTS.md">INSPECT AUTHORITY RULES</a><a data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/skills/merge/SKILL.md">READ MERGE</a></nav></div></li>
+          <li class="beat" data-beat="refine"><p class="beat-index mono">10 · EXPLICIT REFINEMENT</p><h3>Keep confirmed lessons deliberately</h3><div class="beat-mechanism" data-beat-mechanism="refine"><svg class="beat-scene" viewBox="0 0 480 230" role="img" aria-label="Confirmed friction becomes a reviewed diff, then a repository lesson for future work"><text class="scene-kicker" x="16" y="24">FRICTION → REVIEWED REPO CHANGE</text><g data-scene-step="2"><rect class="scene-plate" x="16" y="84" width="126" height="54"/><text class="scene-small" x="79" y="106">CONFIRMED</text><text class="scene-small" x="79" y="124">FRICTION</text><rect class="scene-main" x="184" y="84" width="112" height="54"/><text x="240" y="106">REVIEWED</text><text x="240" y="124">DIFF</text><rect class="scene-plate" x="338" y="50" width="126" height="42"/><text x="401" y="76">PITFALLS.MD</text><rect class="scene-plate" x="338" y="112" width="126" height="42"/><text x="401" y="138">SKILL.MD</text></g><g class="scene-rails" data-scene-step="1"><path d="M142 111H184"/><path d="M296 111H316V71H338"/><path d="M316 111V133H338"/><path d="M401 92V104H316V192H308"/><path d="M338 133H316V192H308"/><path d="M308 192H338"/></g><g data-scene-step="1"><path data-scene-route pathLength="1" d="M142 111H184"/><path data-scene-route pathLength="1" d="M296 111H316V71H338"/><path data-scene-route pathLength="1" d="M316 111V133H338"/><path data-scene-route pathLength="1" d="M401 92V104H316V192H308"/><path data-scene-route pathLength="1" d="M338 133H316V192H308"/><path data-scene-route pathLength="1" d="M308 192H338"/></g><g class="scene-result" data-scene-step="4"><rect class="scene-main" x="170" y="168" width="138" height="46"/><text class="scene-small" x="239" y="188">COMMITTED</text><text class="scene-small" x="239" y="207">REVISION</text><rect class="scene-main" x="338" y="168" width="126" height="46"/><text x="401" y="197">FUTURE WORK</text></g><g class="scene-mobile"><text class="scene-kicker" x="16" y="26">FRICTION → REVIEWED REPO CHANGE</text><g data-scene-step="2"><rect class="scene-plate" x="16" y="72" width="126" height="58"/><text class="scene-small" x="79" y="96">CONFIRMED</text><text class="scene-small" x="79" y="117">FRICTION</text><rect class="scene-main" x="178" y="72" width="126" height="58"/><text x="241" y="96">REVIEWED</text><text x="241" y="117">DIFF</text><rect class="scene-plate" x="338" y="48" width="126" height="42"/><text x="401" y="75">PITFALLS.MD</text><rect class="scene-plate" x="338" y="106" width="126" height="42"/><text x="401" y="133">SKILL.MD</text></g><g class="scene-rails" data-scene-step="1"><path d="M142 101H178"/><path d="M304 101H322V69H338"/><path d="M322 101V127H338"/><path d="M401 90V98H322V192H304"/><path d="M338 127H322V192H304"/><path d="M304 194H338"/></g><g data-scene-step="1"><path data-scene-route pathLength="1" d="M142 101H178"/><path data-scene-route pathLength="1" d="M304 101H322V69H338"/><path data-scene-route pathLength="1" d="M322 101V127H338"/><path data-scene-route pathLength="1" d="M401 90V98H322V192H304"/><path data-scene-route pathLength="1" d="M338 127H322V192H304"/><path data-scene-route pathLength="1" d="M304 194H338"/></g><g class="scene-result" data-scene-step="4"><rect class="scene-main" x="166" y="168" width="138" height="48"/><text class="scene-small" x="235" y="188">COMMITTED</text><text class="scene-small" x="235" y="208">REVISION</text><rect class="scene-main" x="338" y="168" width="126" height="48"/><text x="401" y="198">FUTURE WORK</text></g></g></svg><p class="mechanism-why">Only confirmed friction becomes a reviewed repository change that future work can retrieve</p><nav class="mechanism-links" aria-label="Refinement sources"><a data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/skills/refine/SKILL.md">READ REFINE</a><a data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/skills/recall/SKILL.md">READ RECALL</a><a data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/skills/sync-starter/SKILL.md">READ SYNC STARTER</a></nav></div></li>
+        </ol>
+
+        <figure class="desktop-viz map-frame" data-map-frame aria-labelledby="desktop-map-caption">
+          <div class="map-status mono"><span data-map-beat>01 · INTENT</span><span data-map-state>HUMAN OWNED</span></div>
+          <svg viewBox="0 0 1200 860" role="img" aria-labelledby="desktop-map-title desktop-map-desc" preserveAspectRatio="xMidYMid slice"><title id="desktop-map-title">How one task earns release</title><desc id="desktop-map-desc">A scroll-controlled system map showing human intent, context, bounded model work, execution, evidence, fresh and cross-model review, repair, current-main reconciliation, human release, and explicit refinement.</desc><g class="map-camera" data-map-camera><use href="#system-map" width="600" height="1320"/></g></svg>
+          <figcaption id="desktop-map-caption" class="figure-caption mono">FIG 01 · HOW ONE TASK EARNS RELEASE · SCROLL ROUTES THE TASK</figcaption>
+        </figure>
+      </div>
+      <noscript><p class="nojs-note mono">JAVASCRIPT IS OFF · THE COMPLETE SYSTEM MAP AND EVERY TASK STAGE REMAIN AVAILABLE</p></noscript>
+    </section>
+
+    <section class="loop-section numbered-section" id="loop" data-loop-sequence>
+      <span class="chapter-number" aria-hidden="true">02</span>
+      <div class="loop-scroll" data-loop-scroll>
+        <div class="loop-stage" data-loop-stage>
+          <header class="section-head"><p class="kicker mono">THE ENGINEERING LOOP</p><h2 class="loop-title" data-fit-heading aria-label="Plan, Prove, Ship"><span data-fit-line>Plan</span><span data-fit-line data-phaser-word data-phaser-target="prove">Prove</span><span data-fit-line>Ship</span></h2></header>
+          <figure class="loop-proof-chamber" data-loop-proof data-state="loop-static" aria-labelledby="loop-proof-copy">
+            <figcaption id="loop-proof-copy"><span class="loop-copy-text">Each step creates something the next step can check. Failure returns with evidence instead of disappearing behind a <span class="loop-copy-keep">confident answer.</span></span></figcaption>
+            <svg class="loop-proof-map loop-proof-map-wide" viewBox="0 0 460 540" aria-hidden="true">
+              <defs>
+                <pattern id="loop-grid-wide" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M0 0H32M0 0V32"/><path d="M13 16H19M16 13V19"/></pattern>
+                <pattern id="loop-failure-wide" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M-2 8L8-2M2 10L10 2"/></pattern>
+                <marker id="loop-arrow-cyan-wide" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8Z"/></marker>
+                <marker id="loop-arrow-green-wide" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8Z"/></marker>
+                <clipPath id="loop-claim-clip-wide"><rect x="-78" y="-29" width="156" height="58"/></clipPath>
+              </defs>
+              <g class="loop-plot-ground"><rect x="8" y="8" width="444" height="524"/><rect class="loop-plot-grid" x="8" y="8" width="444" height="524"/><path class="loop-register" d="M8 28V8H28M432 8H452V28M8 512V532H28M432 532H452V512M230 8V20M230 520V532"/></g>
+              <g class="loop-route-base"><path d="M212 91H214M325 208V234M325 310V364M325 442V474"/><path class="loop-return-base" d="M226 272H66V134H92"/><text class="loop-route-label" transform="translate(53 260) rotate(-90)">RETURN WITH EVIDENCE</text></g>
+              <g class="loop-route-retained"><path data-loop-retained-route="plan" d="M212 91H214"/><path data-loop-retained-route="prove" d="M325 208V234"/><path data-loop-retained-route="evidence" d="M325 310V364"/><path data-loop-retained-route="release" d="M325 442V474" marker-end="url(#loop-arrow-green-wide)"/></g>
+              <g class="loop-route-active"><path data-loop-active-route="forward" pathLength="1" d="M212 91H214" marker-end="url(#loop-arrow-cyan-wide)"/><path data-loop-active-route="return" pathLength="1" d="M226 272H66V134H92" marker-end="url(#loop-arrow-cyan-wide)"/><path data-loop-active-route="release" pathLength="1" d="M325 442V474" marker-end="url(#loop-arrow-cyan-wide)"/></g>
+              <g class="loop-return-residue"><path pathLength="1" d="M226 272H66V134H92"/><path class="loop-residue-hatch" d="M218 264H58V126H92V142H74V280H218Z"/></g>
+              <g class="loop-stations">
+                <g data-loop-station="plan"><rect x="1" y="48" width="211" height="86"/><text class="loop-station-code" x="15" y="73">PLAN</text><text class="loop-station-title" x="15" y="105">GOAL + PROOF BAR</text></g>
+                <g data-loop-station="prove"><rect x="214" y="36" width="222" height="172"/><text class="loop-station-code" x="232" y="62">PROVE</text><text class="loop-station-title" x="232" y="91">CHECK THE CLAIM</text></g>
+                <g data-loop-station="evidence"><rect x="226" y="234" width="198" height="76"/><text class="loop-station-code" x="244" y="260">EVIDENCE</text><text class="loop-station-title loop-evidence-empty" x="244" y="289">EMPTY SLOT</text><text class="loop-station-title loop-evidence-problem" x="244" y="289" textLength="160" lengthAdjust="spacingAndGlyphs">CONFIRMED PROBLEM</text><text class="loop-station-title loop-evidence-passed" x="244" y="289">CHECK PASSED</text></g>
+                <g data-loop-station="human"><rect x="226" y="364" width="198" height="78"/><rect class="loop-double-border" x="231" y="369" width="188" height="68"/><text class="loop-station-code" x="244" y="390">HUMAN DECISION</text><text class="loop-station-title" x="244" y="419" textLength="162" lengthAdjust="spacingAndGlyphs">RELEASE AUTHORITY</text></g>
+                <g data-loop-station="ship"><rect x="274" y="474" width="126" height="48"/><rect class="loop-blocked-hatch" x="274" y="474" width="126" height="48"/><text class="loop-station-title loop-ship-title" x="337" y="505">SHIP</text><text class="loop-station-code loop-blocked-label" x="337" y="505">BLOCKED</text></g>
+              </g>
+              <g class="loop-claim-rig" data-loop-claim-rig data-mode="retained" transform="translate(325 272)"><rect class="loop-packet" x="-9" y="-9" width="18" height="18"/><rect class="loop-claim-plate" x="-78" y="-29" width="156" height="58"/><text class="loop-claim-label" x="-62" y="-7">CLAIM</text><text class="loop-evidence-label" x="-62" y="14">CONFIRMED PROBLEM</text></g>
+              <g class="loop-scan-gate" data-loop-scan-gate transform="translate(325 126)" clip-path="url(#loop-claim-clip-wide)"><path d="M-62 0H62"/><rect x="-5" y="-29" width="10" height="58"/></g>
+              <g class="loop-return-token" data-loop-return-token transform="translate(66 218)"><rect x="-9" y="-9" width="18" height="18"/></g>
+              <g class="loop-human-gate" data-loop-human-gate><path class="loop-gate-bar loop-gate-left" d="M303 447H325"/><path class="loop-gate-bar loop-gate-right" d="M325 447H347"/><path class="loop-permission-key" d="M354 440H368V454H354ZM358 447H364"/></g>
+              <g class="loop-state-register">
+                <g data-loop-state-label="loop-plan"><text x="24" y="24">PLAN READY</text></g><g data-loop-state-label="loop-advance"><text x="24" y="24">WORK IN FLIGHT</text></g><g data-loop-state-label="loop-check"><text x="24" y="24">CHECKING CLAIM</text></g><g data-loop-state-label="loop-fail"><text x="24" y="24">CONFIRMED PROBLEM</text></g><g data-loop-state-label="loop-return"><text x="24" y="24">RETURN TO PLAN</text></g><g data-loop-state-label="loop-ship"><text x="24" y="24">HUMAN RELEASE</text></g><g data-loop-state-label="loop-static" data-visible="true" data-loop-dominant="true"><text x="24" y="24">RELEASED · FAILED PATH RETAINED</text></g>
+              </g>
+            </svg>
+            <svg class="loop-proof-map loop-proof-map-phone" viewBox="0 0 350 720" aria-hidden="true">
+              <defs>
+                <pattern id="loop-grid-phone" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M0 0H32M0 0V32"/><path d="M13 16H19M16 13V19"/></pattern>
+                <pattern id="loop-failure-phone" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M-2 8L8-2M2 10L10 2"/></pattern>
+                <marker id="loop-arrow-cyan-phone" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8Z"/></marker>
+                <marker id="loop-arrow-green-phone" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8Z"/></marker>
+                <clipPath id="loop-claim-clip-phone"><rect x="-125" y="-31" width="250" height="62"/></clipPath>
+              </defs>
+              <g class="loop-plot-ground"><rect x="4" y="4" width="342" height="712"/><rect class="loop-plot-grid" x="4" y="4" width="342" height="712"/><path class="loop-register" d="M4 24V4H24M326 4H346V24M4 696V716H24M326 716H346V696M175 4V16M175 704V716"/></g>
+              <g class="loop-route-base"><path d="M175 126V164M175 318V362M175 440V506M175 584V638"/><path class="loop-return-base" d="M48 401H14V126H24"/><text class="loop-route-label" transform="translate(8 350) rotate(-90)">RETURN WITH EVIDENCE</text></g>
+              <g class="loop-route-retained"><path data-loop-retained-route="plan" d="M175 126V164"/><path data-loop-retained-route="prove" d="M175 318V362"/><path data-loop-retained-route="evidence" d="M175 440V506"/><path data-loop-retained-route="release" d="M175 584V638" marker-end="url(#loop-arrow-green-phone)"/></g>
+              <g class="loop-route-active"><path data-loop-active-route="forward" pathLength="1" d="M175 126V164" marker-end="url(#loop-arrow-cyan-phone)"/><path data-loop-active-route="return" pathLength="1" d="M48 401H14V126H24" marker-end="url(#loop-arrow-cyan-phone)"/><path data-loop-active-route="release" pathLength="1" d="M175 584V638" marker-end="url(#loop-arrow-cyan-phone)"/></g>
+              <g class="loop-return-residue"><path pathLength="1" d="M48 401H14V126H24"/><path class="loop-residue-hatch" d="M48 393H22V134H24V118H6V409H48Z"/></g>
+              <g class="loop-stations">
+                <g data-loop-station="plan"><rect x="24" y="48" width="302" height="78"/><text class="loop-station-code" x="42" y="73">PLAN</text><text class="loop-station-title" x="42" y="105">GOAL + PROOF BAR</text></g>
+                <g data-loop-station="prove"><rect x="24" y="164" width="302" height="154"/><text class="loop-station-code" x="42" y="191">PROVE</text><text class="loop-station-title" x="42" y="223">CHECK THE CLAIM</text></g>
+                <g data-loop-station="evidence"><rect x="48" y="362" width="254" height="78"/><text class="loop-station-code" x="66" y="387">EVIDENCE</text><text class="loop-station-title loop-evidence-empty" x="66" y="418">EMPTY SLOT</text><text class="loop-station-title loop-evidence-problem" x="66" y="418">CONFIRMED PROBLEM</text><text class="loop-station-title loop-evidence-passed" x="66" y="418">CHECK PASSED</text></g>
+                <g data-loop-station="human"><rect x="48" y="506" width="254" height="78"/><rect class="loop-double-border" x="53" y="511" width="244" height="68"/><text class="loop-station-code" x="66" y="532">HUMAN DECISION</text><text class="loop-station-title" x="66" y="563">RELEASE AUTHORITY</text></g>
+                <g data-loop-station="ship"><rect x="84" y="638" width="182" height="58"/><rect class="loop-blocked-hatch" x="84" y="638" width="182" height="58"/><text class="loop-station-title loop-ship-title" x="175" y="674">SHIP</text><text class="loop-station-code loop-blocked-label" x="175" y="674">BLOCKED</text></g>
+              </g>
+              <g class="loop-claim-rig" data-loop-claim-rig data-mode="retained" transform="translate(175 401)"><rect class="loop-packet" x="-9" y="-9" width="18" height="18"/><rect class="loop-claim-plate" x="-125" y="-31" width="250" height="62"/><text class="loop-claim-label" x="-105" y="-8">CLAIM</text><text class="loop-evidence-label" x="-105" y="15">CONFIRMED PROBLEM</text></g>
+              <g class="loop-scan-gate" data-loop-scan-gate transform="translate(175 258)" clip-path="url(#loop-claim-clip-phone)"><path d="M-105 0H105"/><rect x="-5" y="-31" width="10" height="62"/></g>
+              <g class="loop-return-token" data-loop-return-token transform="translate(14 264)"><rect x="-9" y="-9" width="18" height="18"/></g>
+              <g class="loop-human-gate" data-loop-human-gate><path class="loop-gate-bar loop-gate-left" d="M153 611H175"/><path class="loop-gate-bar loop-gate-right" d="M175 611H197"/><path class="loop-permission-key" d="M204 604H218V618H204ZM208 611H214"/></g>
+              <g class="loop-state-register">
+                <g data-loop-state-label="loop-plan"><text x="24" y="24">PLAN READY</text></g><g data-loop-state-label="loop-advance"><text x="24" y="24">WORK IN FLIGHT</text></g><g data-loop-state-label="loop-check"><text x="24" y="24">CHECKING CLAIM</text></g><g data-loop-state-label="loop-fail"><text x="24" y="24">CONFIRMED PROBLEM</text></g><g data-loop-state-label="loop-return"><text x="24" y="24">RETURN TO PLAN</text></g><g data-loop-state-label="loop-ship"><text x="24" y="24">HUMAN RELEASE</text></g><g data-loop-state-label="loop-static" data-visible="true" data-loop-dominant="true"><text x="24" y="24">RELEASED · FAILED PATH RETAINED</text></g>
+              </g>
+            </svg>
+          </figure>
+        </div>
+      </div>
+      <ol class="loop-track" aria-label="Five-step engineering loop">
+        <li><span class="step-no mono">01</span><strong><span class="loop-line">Plan clearly</span></strong><small><span class="loop-line">Goal, scope,</span> <span class="loop-line">limits, acceptance</span></small></li>
+        <li><span class="step-no mono">02</span><strong><span class="loop-line">Build one</span> <span class="loop-line">bounded change</span></strong><small><span class="loop-line">Relevant context</span> <span class="loop-line">and method</span></small></li>
+        <li><span class="step-no mono">03</span><strong><span class="loop-line">Run it where</span> <span class="loop-line">it matters</span></strong><small><span class="loop-line">Closest available</span> <span class="loop-line">real conditions</span></small></li>
+        <li><span class="step-no mono">04</span><strong><span class="loop-line">Inspect real evidence</span></strong><small><span class="loop-line">Tests, renders,</span> <span class="loop-line">runtime behavior, review</span></small></li>
+        <li><span class="step-no mono">05</span><strong><span class="loop-line">Correct, approve,</span> <span class="loop-line">and ship</span></strong><small><span class="loop-line">Repair first,</span> <span class="loop-line">human authority last</span></small></li>
+      </ol>
+      <div class="return-line mono"><span aria-hidden="true">↰</span> CONFIRMED PROBLEM · RETURN TO THE SMALLEST RESPONSIBLE STEP</div>
+    </section>
+
+    <section class="equation-section grid-field numbered-section" aria-labelledby="equation-title">
+      <span class="chapter-number" aria-hidden="true">03</span>
+      <div class="section-head compact"><p class="kicker mono">WORKING HEURISTIC, NOT MEASURED MATH</p><h2 class="equation-title" id="equation-title" data-fit-heading aria-label="Three things shape the result"><span data-fit-line>Three things</span><span data-fit-line data-phaser-word data-phaser-target="result">shape the result</span></h2></div>
+      <div class="equation" aria-label="Plan quality times executor quality times verification quality leads to output quality"><article><span class="equation-symbol mono">P</span><h3>Plan quality</h3><p>Goals, project knowledge, constraints, acceptance, and the right-sized task.</p></article><span class="operator" aria-hidden="true">×</span><article><span class="equation-symbol mono">E</span><h3>Executor quality</h3><p>A capable model, relevant skills, bounded work, and durable state.</p></article><span class="operator" aria-hidden="true">×</span><article><span class="equation-symbol mono">V</span><h3>Verification quality</h3><p>Real tests, rendered checks, fresh reviewers, and honest unknowns.</p></article><span class="operator output-arrow" aria-hidden="true">→</span><article class="equation-output"><span class="equation-symbol mono">O</span><h3>Output quality</h3><p>Work that has earned confidence at the level actually checked.</p></article></div>
+      <p class="equation-note">A capable executor cannot rescue a fundamentally bad plan. Good code cannot compensate for missing verification.</p>
+    </section>
+
+    <section class="quality-section numbered-section" aria-labelledby="quality-title">
+      <span class="chapter-number" aria-hidden="true">04</span>
+      <div class="section-head compact"><p class="kicker mono">QUALITY BAR · OBSERVED PROCESS PATTERNS</p><h2 id="quality-title">The useful details live in the tradeoffs</h2></div>
+      <div class="quality-grid"><blockquote><strong>Passing tests can still fail acceptance</strong><span>Tests check selected behavior. Fresh review checks whether the right thing was built cleanly.</span></blockquote><blockquote><strong>Fresh eyes cost another inspection</strong><span>The duplicated work resists shared-story bias.</span></blockquote><blockquote><strong>No proof means unverified</strong><span>Unavailable browser, dependency, or release evidence stays visible.</span></blockquote><blockquote><strong>Even the independent reviewer has to show its work</strong><span>Cross-model findings are checked before they reach the human.</span></blockquote><blockquote><strong>Two repeated failures change the approach</strong><span>The system records the dead end instead of quietly trying it again.</span></blockquote><blockquote><strong>Moving main gets its own check</strong><span>Integration can invalidate work that passed on an older base.</span></blockquote></div>
+    </section>
+
+    <section class="horizon-section grid-field mechanism-section numbered-section" id="long-horizon" data-mechanism="horizon" data-mechanism-phase="verified" aria-labelledby="long-horizon-title">
+      <span class="chapter-number" aria-hidden="true">05</span>
+      <div class="horizon-heading">
+        <p class="kicker mono">LONG HORIZON · VERIFIED ROUNDS</p>
+        <h2 class="reveal" id="long-horizon-title" data-fit-heading aria-label="Long Horizon"><span data-fit-line>Long</span><span data-fit-line>Horizon</span></h2>
+        <p class="horizon-lead reveal">Large work can outlast one context. Long Horizon freezes the goal and acceptance checks, then carries verified progress forward in a state file.</p>
+      </div>
+
+      <div class="horizon-stage reveal" role="group" aria-label="Long Horizon moves one bounded step through separate Manager, Executor, and Auditor contexts before retaining verified progress">
+        <svg class="horizon-route-map" viewBox="0 0 1200 620" aria-hidden="true" focusable="false">
+          <defs>
+            <pattern id="horizon-route-hatch" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M-2 10L10-2M3 13L13 3"/></pattern>
+            <marker id="horizon-route-blue-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L8 4L0 8Z"/></marker>
+            <marker id="horizon-route-green-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L8 4L0 8Z"/></marker>
+          </defs>
+          <g class="horizon-route-base"><path d="M318 196H430"/><path d="M670 196H770"/><path d="M970 196V306"/><path d="M970 426V492H744V548H318"/><path d="M970 426V548H1088"/></g>
+          <path class="horizon-route horizon-route-contract" pathLength="1" d="M318 196H430" marker-end="url(#horizon-route-blue-arrow)"/>
+          <path class="horizon-route horizon-route-execute" pathLength="1" d="M670 196H770" marker-end="url(#horizon-route-blue-arrow)"/>
+          <path class="horizon-route horizon-route-audit" pathLength="1" d="M970 196V306" marker-end="url(#horizon-route-blue-arrow)"/>
+          <path class="horizon-route horizon-route-changed" pathLength="1" d="M970 426V492H744V548H318"/>
+          <path class="horizon-route horizon-route-verified" pathLength="1" d="M970 426V492H744V548H318" marker-end="url(#horizon-route-green-arrow)"/>
+          <path class="horizon-route horizon-route-failed" pathLength="1" d="M970 426V548H1088"/>
+          <path class="horizon-failure-hatch" d="M1000 520H1140V584H1000Z"/>
+          <path class="horizon-failure-strike" pathLength="1" d="M1014 574L1126 530"/>
+          <g class="horizon-packets"><rect class="horizon-packet horizon-packet-execute" x="680" y="187" width="18" height="18"/><rect class="horizon-packet horizon-packet-audit" x="961" y="270" width="18" height="18"/><rect class="horizon-packet horizon-packet-failed" x="1078" y="539" width="18" height="18"/><rect class="horizon-packet horizon-packet-verified" x="337" y="539" width="18" height="18"/></g>
+        </svg>
+
+        <div class="horizon-ledger-head"><span class="horizon-file mono" data-file-label="state.md">state.md</span><span class="horizon-ledger-status mono" aria-hidden="true">ROUND STATE</span></div>
+        <div class="horizon-contract-cells">
+          <div class="horizon-state-cell horizon-frozen"><strong class="mono" data-visual-subheading>FROZEN CONTRACT</strong><small>Goal and acceptance checks</small></div>
+          <div class="horizon-state-cell horizon-remaining"><strong class="mono" data-visual-subheading>REMAINING</strong><small>One bounded next step</small></div>
+        </div>
+
+        <article class="horizon-role horizon-manager"><span class="horizon-role-index mono" aria-hidden="true">ROLE 01</span><h3>MANAGER</h3><p>Selects one remaining step from state.md and writes the bounded brief</p></article>
+
+        <div class="horizon-bays">
+          <article class="horizon-role horizon-executor"><span class="horizon-role-index mono" aria-hidden="true">ROLE 02</span><h3>FRESH EXECUTOR</h3><p>Builds only that step from a fresh context</p></article>
+          <div class="horizon-context-break" aria-hidden="true"><i></i><i></i><i></i></div>
+          <article class="horizon-role horizon-auditor"><span class="horizon-role-index mono" aria-hidden="true">ROLE 03</span><h3>FRESH AUDITOR</h3><p>Rebuilds the evidence from the files without the Executor's report</p></article>
+        </div>
+
+        <div class="horizon-gate"><strong class="mono" data-visual-subheading>COMPLETE / CLEAN / ALIGNED</strong></div>
+        <div class="horizon-outcomes">
+          <div class="horizon-state-cell horizon-verified"><strong class="mono" data-visual-subheading>VERIFIED PROGRESS</strong><small>Audit-passed work retained</small></div>
+          <div class="horizon-state-cell horizon-dead-ends"><strong class="mono" data-visual-subheading>DEAD ENDS</strong><small>DEAD END RETAINED</small></div>
+        </div>
+      </div>
+
+      <div class="horizon-foot reveal">
+        <p class="horizon-payoff">Only audit-passed work enters verified progress. Failed approaches stay under dead ends, so the next round changes route instead of repeating them.</p>
+        <p class="horizon-limit"><strong>Limit:</strong> Fresh inspection costs time. It still depends on available evidence and real separation between roles.</p>
+        <a class="horizon-source mono" data-long-horizon-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/c50c093075e28dacc65dab3fe39067821c672f8c/.claude/skills/long-horizon/SKILL.md">READ LONG HORIZON →</a>
+      </div>
+    </section>
+
+    <section class="context-section grid-field mechanism-section numbered-section" id="context-architecture" data-mechanism="context" data-mechanism-phase="library">
+      <span class="chapter-number" aria-hidden="true">06</span>
+      <div class="context-sec-body">
+        <span class="gtag mono"><b>CONTEXT ARCHITECTURE</b> · SMALL ROOTS · FOCUSED SUBFILES</span>
+        <div class="context-head">
+          <h2 class="reveal" data-fit-heading aria-label="Load only what the work needs"><span data-fit-line>Load only</span><span data-fit-line>what the work needs</span></h2>
+          <div><p class="context-copy reveal"><a class="root-file-ref" data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/CLAUDE.md"><strong>CLAUDE.md</strong></a> and <a class="root-file-ref" data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/AGENTS.md"><strong>AGENTS.md</strong></a> stay small. They point each agent to focused project files only when the work needs them.</p></div>
+        </div>
+        <div class="context-stage reveal" aria-label="Root instructions route agents to focused references and skills on demand">
+          <div class="context-roots">
+            <span class="context-stage-label mono">SESSION START · ALWAYS LOADED</span>
+            <div class="context-root-grid">
+              <a class="context-file context-root" data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/CLAUDE.md"><small class="mono">CLAUDE CODE</small><span class="context-file-name">CLAUDE.md</span><em>Core rules and routing index</em></a>
+              <a class="context-file context-root" data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/AGENTS.md"><small class="mono">CODEX</small><span class="context-file-name">AGENTS.md</span><em>Runtime-specific boundary</em></a>
+            </div>
+          </div>
+          <div class="context-router context-router-in" aria-hidden="true"><i></i></div>
+          <div class="context-index"><small class="mono">ROUTING LAW</small><b>Match the task, then open the relevant file</b></div>
+          <div class="context-router context-router-out" aria-hidden="true"><i></i></div>
+          <div class="context-library">
+            <span class="context-stage-label mono">REFERENCES + SKILLS · LOADED WHEN MATCHED</span>
+            <div class="context-file-grid">
+              <a class="context-file" data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/reference/architecture.md"><span class="context-file-name">architecture.md</span><em>system map</em></a>
+              <a class="context-file" data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/reference/commands.md"><span class="context-file-name">commands.md</span><em>build and test</em></a>
+              <a class="context-file" data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/reference/deployment.md"><span class="context-file-name">deployment.md</span><em>release facts</em></a>
+              <a class="context-file" data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/reference/pitfalls.md"><span class="context-file-name">pitfalls.md</span><em>hard-won lessons</em></a>
+              <a class="context-file" data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/reference/secrets.md"><span class="context-file-name">secrets.md</span><em>safe secret map</em></a>
+              <a class="context-file" data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/reference/tech-stack.md"><span class="context-file-name">tech-stack.md</span><em>tools and versions</em></a>
+              <a class="context-file" data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/tree/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/skills"><span class="context-file-name">SKILL.md</span><em>task workflows</em></a>
+            </div>
+          </div>
+        </div>
+        <p class="context-note mono reveal">ROOT RULES STAY SHORT · REPO FACTS LIVE IN REFERENCES · WORKFLOW DETAIL LOADS ON DEMAND · SOURCE <span data-fact-key="templateRev">2094FA7B</span></p>
+      </div>
+    </section>
+
+    <section class="memory-section light-surface mechanism-section numbered-section" id="memory" data-mechanism="memory" data-mechanism-phase="complete">
+      <span class="chapter-number" aria-hidden="true">07</span>
+      <div class="memory-lead">
+        <p class="kicker mono">COMMITTED PROJECT KNOWLEDGE · ILLUSTRATIVE MEMORY FLOW</p>
+        <h2 class="reveal" data-fit-heading aria-label="Stop solving the same repo problem twice"><span data-fit-line>Stop solving</span><span data-fit-line>the same repo</span><span data-fit-line>problem twice</span></h2>
+        <p class="reveal">Save a lesson once. <a data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/skills/recall/SKILL.md"><strong>/recall</strong></a> brings it back when a later task needs it and shows where it came from.</p>
+      </div>
+      <div class="memory-sequence reveal" aria-label="Three-step repository memory sequence">
+        <article class="memory-card" data-memory-card="observe"><div class="memory-visual"><svg viewBox="0 0 360 230" role="img" aria-label="A session reveals a stale local server"><g class="mechanism-grid"><path d="M20 28H340M20 68H340M20 108H340M20 148H340M20 188H340"/><path d="M52 16V214M116 16V214M180 16V214M244 16V214M308 16V214"/></g><g class="memory-waves"><path d="M22 120C82 34 122 34 180 120S278 206 338 120"/><path d="M22 120C82 62 122 62 180 120S278 178 338 120"/><path d="M22 120C82 92 122 92 180 120S278 148 338 120"/></g><rect class="memory-window" x="84" y="62" width="192" height="112"/><rect class="memory-live" x="84" y="62" width="192" height="22"/><path class="memory-lines" d="M106 108H248M106 130H226M106 152H196"/><rect class="memory-packet memory-observe-packet" x="242" y="140" width="16" height="16"/></svg></div><span class="mono">STEP 01 · OBSERVE</span><strong>A session finds a problem</strong><p>Stale local server · volatile trace</p></article>
+        <article class="memory-card" data-memory-card="commit"><div class="memory-visual"><svg viewBox="0 0 360 230" role="img" aria-label="Recall commits the lesson into a project reference"><g class="memory-tunnel"><path d="M28 34L152 96V134L28 196"/><path d="M70 34L166 96V134L70 196"/><path d="M332 34L208 96V134L332 196"/><path d="M290 34L194 96V134L290 196"/></g><rect class="memory-core" x="140" y="72" width="80" height="86"/><path class="memory-mark" d="M160 98H200M160 116H200M160 134H188"/><rect class="memory-packet memory-write-packet" x="54" y="105" width="18" height="18"/><rect class="memory-packet memory-commit-packet" x="171" y="164" width="18" height="18"/><text x="22" y="216">SAVE LESSON</text><text class="memory-kept" x="228" y="216">pitfalls.md</text></svg></div><span class="mono">STEP 02 · COMMIT</span><strong>Save the fix in the repo</strong><p>Named reference · reviewable repo change</p></article>
+        <article class="memory-card" data-memory-card="retrieve"><div class="memory-visual"><svg viewBox="0 0 360 230" role="img" aria-label="A later task retrieves the retained lesson"><g class="memory-orbit"><ellipse cx="180" cy="115" rx="144" ry="72"/><ellipse cx="180" cy="115" rx="112" ry="72"/><ellipse cx="180" cy="115" rx="76" ry="72"/></g><rect class="memory-later" x="82" y="70" width="196" height="92"/><rect class="memory-retained" x="82" y="70" width="196" height="24"/><text class="memory-window-title" x="100" y="87">KNOWN CHECK AVAILABLE</text><path class="memory-lines" d="M104 118H250M104 138H224"/><rect class="memory-packet memory-recall-packet" x="292" y="106" width="18" height="18"/></svg></div><span class="mono">STEP 03 · RETRIEVE</span><strong>Future sessions reuse it</strong><p>Same repository or clone · retained guidance</p></article>
+      </div>
+      <figure class="memory-console reveal"><figcaption class="mono"><span>MEMORY FLOW · ILLUSTRATIVE</span><span>REPLAY</span></figcaption><div class="memory-console-body mono"><p class="memory-desktop-line">claude · session A · preview shows an outdated version of the site</p><p>/recall saves <span class="memory-line-keep">a known</span> <span class="memory-line-keep">local-preview check</span></p><p class="memory-kept">saved → .claude/reference/pitfalls.md · reviewable repo change</p><p class="memory-off">session ended · context cleared</p><p class="memory-desktop-line">agent · later matching task · same repo or clone</p><p class="memory-kept">/recall reads the cited lesson · known check available</p><span class="memory-cursor" aria-hidden="true"></span></div></figure>
+
+      <section class="memory-discipline reveal" id="memory-discipline" aria-labelledby="memory-discipline-title">
+        <div class="memory-discipline-head">
+          <div class="memory-discipline-title">
+            <span class="gtag mono"><b>MEMORY DISCIPLINE</b> &middot; COMMITTED &middot; REVIEWED &middot; AUDITED</span>
+            <h3 id="memory-discipline-title"><span>Save what</span><span>stays true</span></h3>
+            <p class="memory-discipline-direction">A short <strong>What this project is</strong> block stays loaded every turn, so the model knows what it is building, who it serves, and what the product refuses to compromise on.</p>
+          </div>
+          <div class="memory-discipline-copy">
+            <p>A memory system can fill with notes that later sessions never read. Old snapshots can then steer new work in the wrong direction.</p>
+            <p>Harness Firmware saves only standing knowledge a person confirmed and the code cannot already explain. It commits that knowledge with the repo, audits whether local sessions read it again, and sends stale or unused entries into <strong><a class="skill-ref" href="https://github.com/ryanportfolio/Harness-Firmware/blob/55c92ace9e634f89038b587c18848f8ec89ec950/.claude/skills/refine/SKILL.md">/refine</a></strong> for review.</p>
+          </div>
+        </div>
+        <figure class="memory-comparison reveal" data-source-asset="/harness-firmware/assets/memory-discipline-comparison.svg">
+          <p class="memory-comparison-pan mono" aria-hidden="true">SWIPE TO COMPARE BOTH COLUMNS</p>
+          <div class="memory-comparison-stage">
+            <div class="memory-comparison-sticky" aria-hidden="true">
+              <span class="mono">BAD IMPLEMENTATION</span>
+              <strong>HARNESS FIRMWARE</strong>
+            </div>
+            <div class="memory-comparison-scroll" tabindex="0" role="group" aria-label="Memory discipline comparison graphic. Scroll horizontally on small screens to read both columns.">
+            <svg id="hfc-memory-comparison" data-memory-comparison viewBox="0 0 960 664" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bad implementation versus Harness Firmware: six memory-discipline problems and the firmware mechanism answering each">
+              <title>Bad implementation vs Harness Firmware</title>
+              <style>
+                #hfc-memory-comparison .display { font-family: "Unbounded", system-ui, sans-serif; text-transform: uppercase; letter-spacing: 0.14em; }
+                #hfc-memory-comparison .mono    { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; letter-spacing: 0.12em; }
+                #hfc-memory-comparison .body    { font-family: system-ui, "Segoe UI", sans-serif; }
+
+                #hfc-memory-comparison .row       { opacity: 0; animation: hfc-rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+                #hfc-memory-comparison .hdr       { opacity: 0; animation: hfc-rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+                #hfc-memory-comparison .r0 { animation-delay: 0.55s; } #hfc-memory-comparison .r1 { animation-delay: 1.00s; }
+                #hfc-memory-comparison .r2 { animation-delay: 1.45s; } #hfc-memory-comparison .r3 { animation-delay: 1.90s; }
+                #hfc-memory-comparison .r4 { animation-delay: 2.35s; } #hfc-memory-comparison .r5 { animation-delay: 2.80s; }
+
+                #hfc-memory-comparison .x-mark { stroke-dasharray: 20; stroke-dashoffset: 20; animation: hfc-draw 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+                #hfc-memory-comparison .check  { stroke-dasharray: 30; stroke-dashoffset: 30; animation: hfc-draw 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+                #hfc-memory-comparison .x0 { animation-delay: 0.85s; } #hfc-memory-comparison .c0 { animation-delay: 1.05s; }
+                #hfc-memory-comparison .x1 { animation-delay: 1.30s; } #hfc-memory-comparison .c1 { animation-delay: 1.50s; }
+                #hfc-memory-comparison .x2 { animation-delay: 1.75s; } #hfc-memory-comparison .c2 { animation-delay: 1.95s; }
+                #hfc-memory-comparison .x3 { animation-delay: 2.20s; } #hfc-memory-comparison .c3 { animation-delay: 2.40s; }
+                #hfc-memory-comparison .x4 { animation-delay: 2.65s; } #hfc-memory-comparison .c4 { animation-delay: 2.85s; }
+                #hfc-memory-comparison .x5 { animation-delay: 3.10s; } #hfc-memory-comparison .c5 { animation-delay: 3.30s; }
+
+                #hfc-memory-comparison .pulse { animation: hfc-glowpulse 3.2s ease-in-out 3.8s infinite; }
+
+                @keyframes hfc-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+                @keyframes hfc-draw { to { stroke-dashoffset: 0; } }
+                @keyframes hfc-glowpulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+
+                @media (prefers-reduced-motion: reduce) {
+                  #hfc-memory-comparison .row, #hfc-memory-comparison .hdr { animation: none; opacity: 1; }
+                  #hfc-memory-comparison .x-mark, #hfc-memory-comparison .check { animation: none; stroke-dashoffset: 0; }
+                  #hfc-memory-comparison .pulse { animation: none; opacity: 0.8; }
+                }
+              </style>
+
+              <defs>
+                <pattern id="hfc-grid" width="48" height="48" patternUnits="userSpaceOnUse">
+                  <path d="M0 0H48M0 0V48" fill="none" stroke="#E8F4EA" stroke-opacity="0.075"/>
+                  <path d="M22 24h4M24 22v4" stroke="#E8F4EA" stroke-opacity="0.12" fill="none"/>
+                </pattern>
+                <pattern id="hfc-hatch" width="8" height="8" patternUnits="userSpaceOnUse">
+                  <path d="M-2 8L8-2M2 10L10 2" stroke="#E8F4EA" stroke-opacity="0.10"/>
+                </pattern>
+                <filter id="hfc-glow" x="-60%" y="-60%" width="220%" height="220%">
+                  <feGaussianBlur stdDeviation="3.2" result="b"/>
+                  <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+
+              <!-- panel -->
+              <rect x="0" y="0" width="960" height="664" fill="#070B0C"/>
+              <rect x="0" y="0" width="960" height="664" fill="url(#hfc-grid)"/>
+              <rect x="0.5" y="0.5" width="959" height="663" fill="none" stroke="#E8F4EA" stroke-opacity="0.14"/>
+
+              <!-- column headers -->
+              <g class="hdr" style="animation-delay:0.1s">
+                <text x="28" y="46" class="mono" font-size="13" fill="#E8F4EA" fill-opacity="0.55">BAD IMPLEMENTATION</text>
+                <line x1="28" y1="60" x2="452" y2="60" stroke="#E8F4EA" stroke-opacity="0.2"/>
+              </g>
+              <g class="hdr" style="animation-delay:0.3s">
+                <text x="508" y="46" class="display" font-size="13" fill="#A6FF5E" filter="url(#hfc-glow)">HARNESS FIRMWARE</text>
+                <line x1="508" y1="60" x2="932" y2="60" stroke="#A6FF5E" stroke-opacity="0.45"/>
+              </g>
+
+              <!-- center divider -->
+              <line x1="480" y1="28" x2="480" y2="636" stroke="#E8F4EA" stroke-opacity="0.1" stroke-dasharray="1 6"/>
+
+              <!-- rows: y starts 84, row height 96 -->
+
+              <!-- row 1 -->
+              <g class="row r0">
+                <rect x="28" y="84" width="424" height="80" fill="url(#hfc-hatch)" opacity="0.5"/>
+                <rect x="28.5" y="84.5" width="423" height="79" fill="none" stroke="#E8F4EA" stroke-opacity="0.1"/>
+                <g stroke="#E8F4EA" stroke-opacity="0.7" stroke-width="2.2" stroke-linecap="round" fill="none">
+                  <path class="x-mark x0" d="M50 112 L64 126"/><path class="x-mark x0" d="M64 112 L50 126"/>
+                </g>
+                <text x="84" y="115" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">Memory hides in a per-machine file</text>
+                <text x="84" y="136" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">nobody reviews</text>
+
+                <rect x="508.5" y="84.5" width="423" height="79" fill="none" stroke="#A6FF5E" stroke-opacity="0.22"/>
+                <path class="check c0" d="M528 118 L536 127 L552 106" stroke="#A6FF5E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#hfc-glow)"/>
+                <text x="566" y="115" class="body" font-size="15" fill="#E8F4EA">Knowledge committed to the repo,</text>
+                <text x="566" y="136" class="body" font-size="15" fill="#E8F4EA">reviewed like code on every machine</text>
+              </g>
+
+              <!-- row 2 -->
+              <g class="row r1">
+                <rect x="28" y="176" width="424" height="80" fill="url(#hfc-hatch)" opacity="0.5"/>
+                <rect x="28.5" y="176.5" width="423" height="79" fill="none" stroke="#E8F4EA" stroke-opacity="0.1"/>
+                <g stroke="#E8F4EA" stroke-opacity="0.7" stroke-width="2.2" stroke-linecap="round" fill="none">
+                  <path class="x-mark x1" d="M50 204 L64 218"/><path class="x-mark x1" d="M64 204 L50 218"/>
+                </g>
+                <text x="84" y="207" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">The agent decides alone</text>
+                <text x="84" y="228" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">what to save</text>
+
+                <rect x="508.5" y="176.5" width="423" height="79" fill="none" stroke="#A6FF5E" stroke-opacity="0.22"/>
+                <path class="check c1" d="M528 210 L536 219 L552 198" stroke="#A6FF5E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#hfc-glow)"/>
+                <text x="566" y="207" class="body" font-size="15" fill="#E8F4EA">Every save passes three tests,</text>
+                <text x="566" y="228" class="body" font-size="15" fill="#E8F4EA">confirmed by a person</text>
+              </g>
+
+              <!-- row 3 -->
+              <g class="row r2">
+                <rect x="28" y="268" width="424" height="80" fill="url(#hfc-hatch)" opacity="0.5"/>
+                <rect x="28.5" y="268.5" width="423" height="79" fill="none" stroke="#E8F4EA" stroke-opacity="0.1"/>
+                <g stroke="#E8F4EA" stroke-opacity="0.7" stroke-width="2.2" stroke-linecap="round" fill="none">
+                  <path class="x-mark x2" d="M50 296 L64 310"/><path class="x-mark x2" d="M64 296 L50 310"/>
+                </g>
+                <text x="84" y="299" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">Written three times more often</text>
+                <text x="84" y="320" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">than read</text>
+
+                <rect x="508.5" y="268.5" width="423" height="79" fill="none" stroke="#A6FF5E" stroke-opacity="0.22"/>
+                <path class="check c2" d="M528 302 L536 311 L552 290" stroke="#A6FF5E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#hfc-glow)"/>
+                <text x="566" y="299" class="body" font-size="15" fill="#E8F4EA">An audit counts reads and flags</text>
+                <text x="566" y="320" class="body" font-size="15" fill="#E8F4EA">what is never read</text>
+              </g>
+
+              <!-- row 4 -->
+              <g class="row r3">
+                <rect x="28" y="360" width="424" height="80" fill="url(#hfc-hatch)" opacity="0.5"/>
+                <rect x="28.5" y="360.5" width="423" height="79" fill="none" stroke="#E8F4EA" stroke-opacity="0.1"/>
+                <g stroke="#E8F4EA" stroke-opacity="0.7" stroke-width="2.2" stroke-linecap="round" fill="none">
+                  <path class="x-mark x3" d="M50 388 L64 402"/><path class="x-mark x3" d="M64 388 L50 402"/>
+                </g>
+                <text x="84" y="391" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">Stale snapshots steer</text>
+                <text x="84" y="412" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">later sessions</text>
+
+                <rect x="508.5" y="360.5" width="423" height="79" fill="none" stroke="#A6FF5E" stroke-opacity="0.22"/>
+                <path class="check c3" d="M528 394 L536 403 L552 382" stroke="#A6FF5E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#hfc-glow)"/>
+                <text x="566" y="391" class="body" font-size="15" fill="#E8F4EA">Moments banned at save time; entries</text>
+                <text x="566" y="412" class="body" font-size="15" fill="#E8F4EA">dated, replaced when stale</text>
+              </g>
+
+              <!-- row 5 -->
+              <g class="row r4">
+                <rect x="28" y="452" width="424" height="80" fill="url(#hfc-hatch)" opacity="0.5"/>
+                <rect x="28.5" y="452.5" width="423" height="79" fill="none" stroke="#E8F4EA" stroke-opacity="0.1"/>
+                <g stroke="#E8F4EA" stroke-opacity="0.7" stroke-width="2.2" stroke-linecap="round" fill="none">
+                  <path class="x-mark x4" d="M50 480 L64 494"/><path class="x-mark x4" d="M64 480 L50 494"/>
+                </g>
+                <text x="84" y="483" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">Rules pile up as prose</text>
+                <text x="84" y="504" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">nobody enforces</text>
+
+                <rect x="508.5" y="452.5" width="423" height="79" fill="none" stroke="#A6FF5E" stroke-opacity="0.22"/>
+                <path class="check c4" d="M528 486 L536 495 L552 474" stroke="#A6FF5E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#hfc-glow)"/>
+                <text x="566" y="483" class="body" font-size="15" fill="#E8F4EA">Machine-enforced checks first;</text>
+                <text x="566" y="504" class="body" font-size="15" fill="#E8F4EA">prose is the fallback</text>
+              </g>
+
+              <!-- row 6 -->
+              <g class="row r5">
+                <rect x="28" y="544" width="424" height="80" fill="url(#hfc-hatch)" opacity="0.5"/>
+                <rect x="28.5" y="544.5" width="423" height="79" fill="none" stroke="#E8F4EA" stroke-opacity="0.1"/>
+                <g stroke="#E8F4EA" stroke-opacity="0.7" stroke-width="2.2" stroke-linecap="round" fill="none">
+                  <path class="x-mark x5" d="M50 572 L64 586"/><path class="x-mark x5" d="M64 572 L50 586"/>
+                </g>
+                <text x="84" y="575" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">Instructions list don'ts,</text>
+                <text x="84" y="596" class="body" font-size="15" fill="#E8F4EA" fill-opacity="0.62">give no direction</text>
+
+                <rect x="508.5" y="544.5" width="423" height="79" fill="none" stroke="#A6FF5E" stroke-opacity="0.22"/>
+                <path class="check c5" d="M528 578 L536 587 L552 566" stroke="#A6FF5E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#hfc-glow)"/>
+                <text x="566" y="575" class="body" font-size="15" fill="#E8F4EA">A direction block: what the product</text>
+                <text x="566" y="596" class="body" font-size="15" fill="#E8F4EA">refuses to compromise on</text>
+              </g>
+
+              <!-- footer caption -->
+              <g class="row r5">
+                <text x="28" y="648" class="mono" font-size="11" fill="#E8F4EA" fill-opacity="0.35">MEMORY DISCIPLINE / SIX PROBLEMS, SIX MECHANISMS</text>
+                <circle class="pulse" cx="924" cy="644" r="3" fill="#A6FF5E" filter="url(#hfc-glow)"/>
+              </g>
+            </svg>
+            </div>
+          </div>
+          <figcaption class="memory-comparison-note mono">SANITIZED LOCAL AUDIT OBSERVATION &middot; PER-MACHINE FLOOR ESTIMATE &middot; ADVISORY ONLY &middot; SOURCE SNAPSHOT <span data-memory-rev>55C92ACE</span></figcaption>
+        </figure>
+        <nav class="memory-source-links mono" aria-label="Memory discipline source files">
+          <a href="https://github.com/ryanportfolio/Harness-Firmware/blob/55c92ace9e634f89038b587c18848f8ec89ec950/.claude/scripts/memory-audit.mjs">INSPECT MEMORY AUDIT <span aria-hidden="true">&rarr;</span></a>
+          <a href="https://github.com/ryanportfolio/Harness-Firmware/blob/55c92ace9e634f89038b587c18848f8ec89ec950/.claude/skills/recall/SKILL.md">READ THE RECALL SAVE GATE <span aria-hidden="true">&rarr;</span></a>
+          <a href="https://github.com/ryanportfolio/Harness-Firmware/blob/55c92ace9e634f89038b587c18848f8ec89ec950/.claude/skills/refine/SKILL.md">READ THE REFINE AUDIT PASS <span aria-hidden="true">&rarr;</span></a>
+          <a href="https://github.com/ryanportfolio/Harness-Firmware/blob/55c92ace9e634f89038b587c18848f8ec89ec950/CLAUDE.md#what-this-project-is">READ THE PROJECT DIRECTION RULE <span aria-hidden="true">&rarr;</span></a>
+        </nav>
+      </section>
+    </section>
+
+    <section class="skills-section grid-field light-surface numbered-section" id="skills">
+      <span class="chapter-number" aria-hidden="true">08</span>
+      <div class="section-head skills-intro">
+        <div class="skills-intro-title"><p class="kicker mono">SKILLS BEHIND THE SYSTEM</p><h2 class="skills-intro-heading" data-fit-heading aria-label="Load the right context, Small Steps, Check Evidence, Fresh Review, Failure Recovery"><span data-fit-line>Load the right context</span><span data-fit-line>Small Steps</span><span data-fit-line>Check Evidence</span><span data-fit-line>Fresh Review</span><span data-fit-line>Failure Recovery</span></h2></div>
+        <figure class="skills-intro-system reveal">
+          <img src="/harness-firmware/concept/assets/skills-system-visual.png" alt="" width="1774" height="887" loading="lazy" decoding="async">
+          <figcaption><strong class="skills-capability-heading" data-fit-heading aria-label="The model provides capability"><span data-fit-line>The model provides</span><span data-fit-line>capability</span></strong><span>These skills package methods, checks, stop conditions, and recovery paths for the jobs that need them.</span></figcaption>
+        </figure>
+      </div>
+
+      <div class="skill-group"><div class="skill-group-title"><span class="mono">PLAN + CONTEXT</span><p>Clarify the work and bring in the project knowledge that applies.</p></div><div class="skill-grid">
+        <article class="skill-card" data-skill-reveal><header class="skill-head"><span class="skill-index mono">P.01</span><strong>Recall</strong><small>Bring back the repo lesson that fits this task</small></header><div class="skill-body"><p><b>Problem:</b> useful project knowledge disappears with the chat.</p><ol><li>Find the relevant project reference</li><li>Read the cited source</li><li>Apply the check</li><li>Save only confirmed lessons</li></ol><p><b>Helps by:</b> making known pitfalls available without loading every note every turn.</p><p><b>Limit:</b> retrieval does not prove compliance.</p><a class="skill-source mono" href="https://github.com/ryanportfolio/Harness-Firmware/blob/c50c093075e28dacc65dab3fe39067821c672f8c/.claude/skills/recall/SKILL.md">READ THE SKILL →</a></div></article>
+        <article class="skill-card" data-skill-reveal><header class="skill-head"><span class="skill-index mono">P.02</span><strong>Fable Mode</strong><small>Test the load-bearing unknown before building on it</small></header><div class="skill-body"><p><b>Problem:</b> one plausible assumption can corrupt every later step.</p><ol><li>Define done</li><li>Gather evidence</li><li>Attack the answer</li><li>Verify the claim</li><li>Report unknowns</li></ol><p><b>Helps by:</b> moving hard questions earlier.</p><p><b>Limit:</b> the method supplies discipline. Evidence still has to exist.</p><a class="skill-source mono" href="https://github.com/ryanportfolio/Harness-Firmware/blob/c50c093075e28dacc65dab3fe39067821c672f8c/.claude/skills/fable-mode/SKILL.md">READ THE SKILL →</a></div></article>
+      </div></div>
+
+      <div class="skill-group"><div class="skill-group-title"><span class="mono">VERIFICATION</span><p>Turn confident claims into checks, then challenge the result from fresh viewpoints.</p></div><div class="skill-grid three-up">
+        <article class="skill-card" data-skill-reveal><header class="skill-head"><span class="skill-index mono">V.01</span><strong>Verify This</strong><small>Compare a falsifiable claim under matched conditions</small></header><div class="skill-body"><p><b>Problem:</b> “it works” has no baseline or separating test.</p><ol><li>State the claim so it can fail</li><li>Capture baseline</li><li>Apply treatment</li><li>Compare</li><li>Return a verdict</li></ol><p><b>Helps by:</b> tying confidence to an observable difference.</p><p><b>Limit:</b> missing or confounded evidence returns inconclusive.</p><a class="skill-source mono" href="https://github.com/ryanportfolio/Harness-Firmware/blob/c50c093075e28dacc65dab3fe39067821c672f8c/.claude/skills/verify-this/SKILL.md">READ THE SKILL →</a></div></article>
+        <article class="skill-card" data-skill-reveal><header class="skill-head"><span class="skill-index mono">V.02</span><strong>Impartial Review</strong><small>Ask fresh contexts to inspect the work</small></header><div class="skill-body"><p><b>Problem:</b> builder and reviewer can inherit the same assumptions.</p><ol><li>Freeze scope</li><li>Start fresh reviewers</li><li>Inspect the workspace</li><li>Verify every finding</li><li>Report contract fit</li></ol><p><b>Helps by:</b> widening coverage without treating reviewer confidence as proof.</p><p><b>Limit:</b> fresh context does not automatically mean another model family.</p><a class="skill-source mono" href="https://github.com/ryanportfolio/Harness-Firmware/blob/c50c093075e28dacc65dab3fe39067821c672f8c/.claude/skills/impartial-review/SKILL.md">READ THE SKILL →</a></div></article>
+        <article class="skill-card" data-skill-reveal data-skill-layout="wide"><header class="skill-head"><span class="skill-index mono">V.03</span><strong>Codex Review</strong><small>Have Claude call a different model directly</small></header><div class="skill-body"><div class="skill-wide-copy"><p><b>Problem:</b> a fresh reviewer can still share the builder’s model-family blind spots.</p><p><b>Helps by:</b> avoiding pasted transcripts, copied diffs, and transcription loss.</p><p><b>Limit:</b> cross-model review still needs verification and CLI availability.</p></div><div class="skill-wide-procedure"><ol><li>Claude selects the exact diff</li><li>Claude runs Codex CLI review</li><li>Codex reads the repo directly</li><li>Codex writes a review file</li><li>Claude verifies every finding</li></ol><a class="skill-source mono" href="https://github.com/ryanportfolio/Harness-Firmware/blob/c50c093075e28dacc65dab3fe39067821c672f8c/.claude/skills/codex-review/SKILL.md">READ THE SKILL →</a></div></div></article>
+      </div></div>
+
+      <section class="runtime-section" id="runtime-map" data-mechanism="runtime" data-mechanism-phase="fan-out" aria-labelledby="runtime-heading">
+        <div class="runtime-copy"><p class="kicker mono">RUNTIME SUPPORT · SHARED METHOD · EXPLICIT ADAPTERS</p><h2 class="reveal" id="runtime-heading" data-fit-heading aria-label="Built for Claude Code and Codex"><span data-fit-line>Built for</span><span data-fit-line>Claude Code</span><span data-fit-line>and Codex</span></h2><p class="reveal">Write each skill once. Harness keeps Claude canonical and generates Codex adapters with runtime-specific rules.</p></div>
+        <figure class="runtime-stage reveal"><svg class="runtime-map" viewBox="0 0 760 430" role="img" aria-labelledby="runtime-title runtime-desc"><title id="runtime-title">One canonical skill source supports Claude Code and Codex through runtime-specific adapters</title><desc id="runtime-desc">A skill source moves through an adapter and fans out to separate Claude Code and Codex setups.</desc><g class="mechanism-grid"><path d="M24 36H736M24 92H736M24 148H736M24 204H736M24 260H736M24 316H736M24 372H736"/><path d="M64 20V410M144 20V410M224 20V410M304 20V410M384 20V410M464 20V410M544 20V410M624 20V410M704 20V410"/></g><path class="runtime-route runtime-route-in" d="M252 215H326"/><path class="runtime-route runtime-route-out" d="M404 215H446V117H488M446 215V313H488"/><g class="runtime-card runtime-source"><path d="M42 124H226L252 150V306H42Z"/><path class="runtime-card-rule" d="M60 164H224"/><text class="runtime-label" x="60" y="154">CANONICAL</text><text class="runtime-title" x="60" y="202">SKILL SOURCE</text><text class="runtime-copy-label" x="60" y="232">WRITE ONCE</text></g><g class="runtime-router"><rect x="326" y="176" width="78" height="78"/><path d="M344 195H386M344 213H386M344 231H374"/><text x="346" y="272">ADAPT PER RUNTIME</text></g><g class="runtime-card runtime-target"><path d="M488 48H692L718 74V186H488Z"/><path class="runtime-card-rule" d="M508 88H690"/><text class="runtime-label" x="508" y="78">RUNTIME 01</text><text class="runtime-title" x="508" y="122">CLAUDE CODE</text><text class="runtime-copy-label" x="508" y="150">CANONICAL WORKFLOWS</text></g><g class="runtime-card runtime-target"><path d="M488 244H692L718 270V382H488Z"/><path class="runtime-card-rule" d="M508 284H690"/><text class="runtime-label" x="508" y="274">RUNTIME 02</text><text class="runtime-title" x="508" y="318">CODEX</text><text class="runtime-copy-label" x="508" y="346">GENERATED ADAPTERS</text></g><rect class="runtime-packet runtime-packet-in" x="268" y="208" width="14" height="14"/><rect class="runtime-packet runtime-packet-a" x="450" y="110" width="14" height="14"/><rect class="runtime-packet runtime-packet-b" x="450" y="306" width="14" height="14"/></svg><figcaption class="mono">ONE PLAYBOOK SOURCE · RUNTIME-SPECIFIC SETUP · SNAPSHOT <span data-fact-key="templateRev">2094fa7b</span></figcaption></figure>
+      </section>
+
+      <div class="skill-group"><div class="skill-group-title"><span class="mono">LEARNING + REUSE</span><p>Turn confirmed friction into inspectable improvements for later work.</p></div><div class="skill-grid">
+        <article class="skill-card" data-skill-reveal><header class="skill-head"><span class="skill-index mono">R.01</span><strong>Refine</strong><small>Convert real friction into the smallest durable improvement</small></header><div class="skill-body"><p><b>Problem:</b> the same workflow mistake keeps consuming time.</p><ol><li>Inspect real friction</li><li>Isolate the reusable lesson</li><li>Make a reversible update</li><li>Verify</li><li>Retain or revert</li></ol><p><b>Helps by:</b> improving future work through versioned changes.</p><p><b>Limit:</b> refinement is explicit maintenance, not automatic learning.</p><a class="skill-source mono" href="https://github.com/ryanportfolio/Harness-Firmware/blob/c50c093075e28dacc65dab3fe39067821c672f8c/.claude/skills/refine/SKILL.md">READ THE SKILL →</a></div></article>
+        <article class="skill-card" data-skill-reveal><header class="skill-head"><span class="skill-index mono">R.02</span><strong>Init Project + Sync Starter</strong><small>Start prepared and move generic improvements carefully</small></header><div class="skill-body"><p><b>Problem:</b> a generic template lacks project facts, then shared and local guidance drift.</p><ol><li>Inspect the repository</li><li>Record actual facts</li><li>Compare shared and local behavior</li><li>Apply reusable changes selectively</li><li>Regenerate and verify</li></ol><p><b>Helps by:</b> giving new repositories a strong base while preserving local rules.</p><p><b>Limit:</b> conflicts still require human judgment.</p><div class="source-pair"><a class="skill-source mono" href="https://github.com/ryanportfolio/Harness-Firmware/blob/c50c093075e28dacc65dab3fe39067821c672f8c/.claude/skills/init-project/SKILL.md">INIT PROJECT →</a><a class="skill-source mono" href="https://github.com/ryanportfolio/Harness-Firmware/blob/c50c093075e28dacc65dab3fe39067821c672f8c/.claude/skills/sync-starter/SKILL.md">SYNC STARTER →</a></div></div></article>
+      </div></div>
+    </section>
+
+    <section class="creator-section mechanism-section numbered-section" id="creator" data-mechanism="creator" data-mechanism-phase="ready">
+      <span class="chapter-number" aria-hidden="true">09</span>
+      <div class="creator-heading"><p class="kicker mono">NEW PROJECT · WEB · WINDOWS · MACOS · LINUX</p><h2 class="reveal" data-fit-heading aria-label="Name the repo and the system together"><span data-fit-line>Name the repo</span><span data-fit-line>and the</span><span data-fit-line>system together</span></h2><div><p class="reveal">Name the project once. Harness creates the repo with memory, workflows, and both agent setups already inside.</p><div class="creator-actions reveal"><a class="action primary" href="/harness-firmware/new/">Create a project</a><a class="action" href="https://github.com/ryanportfolio/Harness-Firmware#full-template">Get the local launcher</a></div></div></div>
+      <div class="creator-sequence reveal" aria-label="Three steps from project name to ready repository">
+        <article class="creator-card" data-creator-card="name"><a class="creator-visual" href="/harness-firmware/new/" aria-label="Open the Harness Firmware web project creator"><svg viewBox="0 0 420 280" role="img" aria-label="A new project launcher asks for a project name and destination"><g class="mechanism-grid"><path d="M20 28H400M20 78H400M20 128H400M20 178H400M20 228H400"/><path d="M54 16V264M114 16V264M174 16V264M234 16V264M294 16V264M354 16V264"/></g><rect class="creator-shell" x="52" y="36" width="316" height="208"/><rect class="creator-bar" x="52" y="36" width="316" height="34"/><text class="creator-title" x="70" y="58">NEW PROJECT</text><text class="creator-label" x="76" y="102">PROJECT NAME</text><rect class="creator-field" x="76" y="114" width="268" height="38"/><text class="creator-value" x="92" y="139">my-new-project</text><text class="creator-label" x="76" y="178">DESTINATION</text><rect class="creator-field" x="76" y="188" width="176" height="34"/><rect class="creator-go" x="262" y="188" width="82" height="34"/><text class="creator-go-text" x="278" y="210">CREATE</text></svg></a><span class="mono">STEP 01 · NAME IT</span><strong>Pick a name and folder</strong><p>Use a local launcher on Windows, macOS, or Linux. Or create the repo from GitHub.</p></article>
+        <article class="creator-card" data-creator-card="assemble"><div class="creator-visual"><svg viewBox="0 0 420 280" role="img" aria-label="Harness Firmware adds memory, skills, and runtime adapters to the repository"><g class="creator-tunnel"><path d="M28 38L170 108V172L28 242"/><path d="M82 38L184 108V172L82 242"/><path d="M392 38L250 108V172L392 242"/><path d="M338 38L236 108V172L338 242"/></g><path class="creator-repo" d="M152 68H252L274 90V220H152Z"/><text class="creator-title" x="174" y="98">REPO</text><g class="creator-install creator-install-a"><rect x="174" y="120" width="78" height="22"/><text x="184" y="135">MEMORY</text></g><g class="creator-install creator-install-b"><rect x="174" y="150" width="78" height="22"/><text x="184" y="165">SKILLS</text></g><g class="creator-install creator-install-c"><rect x="174" y="180" width="78" height="22"/><text x="184" y="195">ADAPTERS</text></g><rect class="creator-packet creator-packet-one" x="64" y="131" width="18" height="18"/><rect class="creator-packet creator-packet-two" x="338" y="131" width="18" height="18"/></svg></div><span class="mono">STEP 02 · ASSEMBLE</span><strong>Harness arrives with the repo</strong><p>Project memory, <span data-fact-key="skillCount">30</span> workflows, Claude Code setup, and Codex adapters are already there.</p></article>
+        <article class="creator-card" data-creator-card="ready"><div class="creator-visual"><svg viewBox="0 0 420 280" role="img" aria-label="The new repository is ready to tailor with init-project"><g class="creator-orbit"><ellipse cx="210" cy="140" rx="166" ry="86"/><ellipse cx="210" cy="140" rx="128" ry="86"/><ellipse cx="210" cy="140" rx="88" ry="86"/></g><rect class="creator-ready-window" x="76" y="76" width="268" height="128"/><rect class="creator-ready-bar" x="76" y="76" width="268" height="30"/><text class="creator-title creator-title-dark" x="94" y="96">PROJECT READY</text><path class="creator-ready-lines" d="M100 132H286M100 154H260"/><rect class="creator-ready-tag" x="100" y="172" width="156" height="18"/><text class="creator-ready-text" x="110" y="185">RUN INIT-PROJECT</text></svg></div><span class="mono">STEP 03 · BUILD</span><strong>Open it and start working</strong><p>Run <a data-mechanism-source href="https://github.com/ryanportfolio/Harness-Firmware/blob/2094fa7b0aef3aaa92b70db5c7c296f5bfbecbdc/.claude/skills/init-project/SKILL.md"><strong>init-project</strong></a> once to tailor the system to the repo.</p></article>
+      </div>
+      <p class="mechanism-note mono">WEB: AUTHORIZE GITHUB ONCE · LOCAL: REUSES YOUR EXISTING GH LOGIN · PRIVATE REPO BY DEFAULT · SOURCE <span data-fact-key="templateRev">2094FA7B</span></p>
+    </section>
+
+    <section class="technical-section numbered-section" id="technical">
+      <span class="chapter-number" aria-hidden="true">10</span>
+      <div class="section-head"><p class="kicker mono">TECHNICAL DISCLOSURE</p><h2>Efficiency supports the system</h2><p>Context discipline matters because every instruction competes for attention. It stays below the main story because efficient context cannot replace good planning or proof.</p></div>
+      <div class="disclosure-grid"><details open><summary>Progressive context</summary><p>Small root instructions stay present. Project references and full skill methods load when the task calls for them.</p><p><b>Limit:</b> routing is behavioral. Availability does not prove selection.</p></details><details class="caveman-disclosure" open><summary>Caveman Ultra <span class="disclosure-state mono">OPEN BY DEFAULT</span></summary><p>Caveman Ultra keeps routine human-facing coordination terse while code, commands, errors, and safety decisions stay precise.</p><p><b>Limit:</b> fewer words improve coordination cost. They do not prove better engineering outcomes.</p><a class="skill-source mono" href="https://github.com/ryanportfolio/Harness-Firmware/blob/c50c093075e28dacc65dab3fe39067821c672f8c/.claude/skills/caveman/SKILL.md">READ THE SKILL →</a></details></div>
+    </section>
+
+    <section class="finale" data-mechanism="finale" data-mechanism-phase="ready" aria-label="Use the Harness Firmware template"><span class="finale-residue" aria-hidden="true">READY</span><div class="finale-copy"><p class="mono">POWER-ON · NEW PROJECT · <span data-fact-key="license">MIT</span></p><h2 data-fit-heading aria-label="Boot the next repo warm"><span data-fit-line>Boot the next</span><span data-fit-line>repo warm</span></h2><p>Better software comes from the conditions <span class="finale-around" data-phaser-word data-phaser-target="around">around</span> code generation: a clear target, relevant knowledge, bounded work, real evidence, independent challenge, recovery, and <span class="finale-judgment">human judgment.</span></p></div><div class="finale-actions"><a class="finale-action" href="/harness-firmware/new/"><span class="mono">CREATE A PROJECT</span><strong>Start with the system already inside</strong><b aria-hidden="true">→</b></a><a class="finale-action" href="https://github.com/ryanportfolio/Harness-Firmware"><span class="mono">INSPECT THE SOURCE</span><strong>See every skill, rule, and adapter</strong><b aria-hidden="true">→</b></a></div></section>
+  </main>
+
+  <footer class="footer mono"><span>LOCAL CONCEPT · AUG 2026</span><span>DESKTOP · PHONE · KEYBOARD · STATIC READING</span></footer>
+</body>
+</html>
