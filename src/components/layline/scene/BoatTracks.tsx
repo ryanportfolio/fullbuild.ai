@@ -11,8 +11,8 @@ import {
   InstancedBufferGeometry,
   type Mesh,
 } from "three";
-import { poseAt } from "@/lib/layline/interpolate";
-import type { Pose, RaceData } from "@/lib/layline/types";
+import { poseAt, telemetryTruthAt, truthFixWindow } from "@/lib/layline/interpolate";
+import type { Pose, RaceData, TelemetryTruth } from "@/lib/layline/types";
 import { useReplay } from "../store";
 import {
   CourseLineMaterial,
@@ -59,7 +59,6 @@ const DOT_LIFT = TRACK_LIFT + 0.02;
 /* Parked slots are sent back far enough that their own fade underflows to zero
  * rather than being clipped to it. */
 const DOT_PARK = 1000;
-
 interface Ribbon {
   geometry: BufferGeometry;
   arrays: LineArrays;
@@ -160,6 +159,19 @@ function newPose(): Pose {
   return { x: 0, y: 0, hdg: 0, heel: 0, twa: 0, sog: 0, cog: 0, kite: 0 };
 }
 
+function newTruth(): TelemetryTruth {
+  return {
+    t: 0,
+    beforeIndex: -1,
+    afterIndex: -1,
+    before: null,
+    after: null,
+    u: 0,
+    raw: newPose(),
+    reconstructed: newPose(),
+  };
+}
+
 /**
  * Where each boat has been, in its own hue. Twenty seconds of it, and the lens
  * decides what that history looks like: a fading ribbon off the evaluator in
@@ -170,6 +182,7 @@ export function BoatTracks({ race }: { race: RaceData }) {
   const count = race.boats.length;
   const wind = useMemo(() => swellDirection(race), [race]);
   const pose = useMemo(newPose, []);
+  const truth = useMemo(newTruth, []);
   const ribbonNodes = useMemo<(Mesh | null)[]>(() => race.boats.map(() => null), [race]);
   const dotNode = useRef<Mesh>(null);
 
@@ -238,7 +251,7 @@ export function BoatTracks({ race }: { race: RaceData }) {
   useEffect(() => kit.dispose, [kit]);
 
   useFrame((state) => {
-    const { t, mode } = useReplay.getState();
+    const { t, mode, truthMode, followId } = useReplay.getState();
     const raw = mode === "raw";
     const height = state.gl.domElement.height;
     kit.material.uniforms.uTime.value = t;
@@ -265,8 +278,8 @@ export function BoatTracks({ race }: { race: RaceData }) {
 
     const dots = dotNode.current;
     if (dots === null) return;
-    dots.visible = raw;
-    if (!raw) return;
+    dots.visible = raw || truthMode;
+    if (!raw && !truthMode) return;
 
     /* The camera's own right and up, so a fix reads as a disc from the chase rig
      * four metres off the sea as well as from a hundred and sixty. */
@@ -275,11 +288,26 @@ export function BoatTracks({ race }: { race: RaceData }) {
     kit.dotMaterial.uniforms.uRight.value.set(basis[0], basis[1], basis[2]);
     kit.dotMaterial.uniforms.uUp.value.set(basis[4], basis[5], basis[6]);
 
+    /* Truth mode narrows the point field to nine consecutive measurements on
+     * the selected boat. Raw playback with truth off keeps its existing all
+     * fleet, twenty second history. Both paths copy coordinates directly from
+     * the fix buffers into the persistent instance attributes. */
+    if (truthMode) telemetryTruthAt(race, followId, t, truth);
     for (let i = 0; i < count; i++) {
       const fixes = race.fixes[race.boats[i].id];
       const base = i * FIX_PER_BOAT;
       let written = 0;
-      if (fixes !== undefined) {
+      if (truthMode && race.boats[i].id === followId && fixes !== undefined) {
+        const fixWindow = truthFixWindow(fixes.length, truth.beforeIndex);
+        for (let f = fixWindow.start; f < fixWindow.end; f++) {
+          const fix = fixes[f];
+          const at = base + written;
+          kit.dotData[at * 3] = fix.x;
+          kit.dotData[at * 3 + 1] = -fix.y;
+          kit.dotData[at * 3 + 2] = fix.t;
+          written++;
+        }
+      } else if (!truthMode && fixes !== undefined) {
         for (let f = 0; f < fixes.length && written < FIX_PER_BOAT; f++) {
           const fix = fixes[f];
           if (fix.t > t) break;

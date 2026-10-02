@@ -7,17 +7,15 @@
    governs, so no gradients and no drop shadows; selection is stated the way the
    standings dock states a followed row, an ink wash behind a 2px ink edge.
 
-   Three widths, and only the middle pane is the same shape in all of them:
+   The replay owns the default desktop. Both contextual rails open from 52px
+   registration tabs without remounting the race they refer to. An open race
+   rail takes 220px and an open debrief takes 340px; every other pixel stays
+   with the replay.
 
-   1600 and up   280 / flex / 380, one viewport tall, nothing on the page
-                 scrolls but the rail, the thread and the finish table.
-   1200 to 1599  220 / flex / 340. The rail gives up 60px and the analyst 40
-                 before the viewer gives up any.
-   Under 1200    one column. Three panes will not hold their jobs at a third of
-                 a laptop each, so the rail becomes a chip row across the top,
-                 the viewer takes a stated slice of the viewport and the analyst
-                 runs full width under it. Below 901 the console's own stacked
-                 rules take the viewer apart into its docks.
+   Under 1200 the same controls become horizontal bars around one column. An
+   open race library becomes a chip row, the replay takes a stated viewport
+   slice and the debrief follows it in document flow. Below 901 the console's
+   own stacked rules take the viewer apart into its docks.
    ========================================================================= */
 
 /* The height of the composer bar the analyst pins to the foot of the viewport
@@ -29,16 +27,81 @@
 }
 
 .workspace {
+  --library-track: 52px;
+  --analyst-track: 52px;
+
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   padding: 12px;
 }
 
+/* ---- the two contextual rails ---- */
+
+.libraryPane,
+.analystPane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.paneBar {
+  display: flex;
+  flex: none;
+}
+
+.paneToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 10px;
+  background: var(--hud-ground);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  color: var(--ink);
+  font-family: var(--font-archivo), sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  line-height: 16px;
+  text-transform: uppercase;
+  cursor: var(--house-cursor);
+}
+
+.paneToggle:hover {
+  background: rgba(236, 245, 249, 0.08);
+  border-color: var(--ink-dim);
+}
+
+.paneArrow {
+  color: var(--wind);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.drawerBody {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding-top: 10px;
+}
+
+/* Author styles can outrank the user-agent hidden rule. State the result here
+   so a closed drawer cannot paint or leave any descendant in the tab order. */
+.drawerBody[hidden] {
+  display: none;
+}
+
 /* ---- the race rail ---- */
 
 .library {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 8px;
   min-width: 0;
@@ -149,6 +212,7 @@
 
 .analyst {
   display: flex;
+  flex: 1;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
@@ -188,9 +252,13 @@
 /* ---- under the three-column threshold ---- */
 
 @media (max-width: 1199px) {
-  /* The bar is fixed over the page, so the page ends above it: the colophon is
-     the last thing down here and it is not going under a composer. */
-  .page {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* The composer exists only while its drawer is open. Its fixed bar needs a
+     matching landing strip at the page foot, and a closed drawer needs none. */
+  .page:has(.workspace[data-analyst-open="true"]) {
     padding-bottom: calc(var(--composer-bar) + env(safe-area-inset-bottom));
   }
 
@@ -243,7 +311,35 @@
     /* The prototype bar is 33px: 16px of line inside 8px of padding either
        side, over a 1px rule. */
     height: calc(100vh - 33px);
-    grid-template-columns: 220px minmax(0, 1fr) 340px;
+    grid-template-columns: var(--library-track) minmax(0, 1fr) var(--analyst-track);
+  }
+
+  .workspace[data-library-open="true"] {
+    --library-track: 220px;
+  }
+
+  .workspace[data-analyst-open="true"] {
+    --analyst-track: 340px;
+  }
+
+  /* Closed tabs use their whole viewport-height rail as a target. Their label
+     turns with the rail so the 52px track stays readable without widening. */
+  .workspace[data-library-open="false"] .libraryPane .paneBar,
+  .workspace[data-analyst-open="false"] .analystPane .paneBar {
+    flex: 1;
+  }
+
+  .workspace[data-library-open="false"] .libraryPane .paneToggle,
+  .workspace[data-analyst-open="false"] .analystPane .paneToggle {
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+  }
+
+  .workspace[data-library-open="false"] .libraryPane .paneLabel,
+  .workspace[data-analyst-open="false"] .analystPane .paneLabel {
+    writing-mode: vertical-rl;
   }
 }
 
@@ -263,7 +359,6 @@
   .workspace {
     gap: 16px;
     padding: 16px;
-    grid-template-columns: 280px minmax(0, 1fr) 380px;
   }
 }
 

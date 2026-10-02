@@ -62,6 +62,12 @@ export function RaceWorkspace({
   const pathname = usePathname();
   const storeRaceId = useReplay((state) => state.raceId);
   const [mounted, setMounted] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [analystOpen, setAnalystOpen] = useState(false);
+  /* Mount the analyst on first use, then keep it alive while its drawer is
+   * closed. A question thread and an in-flight answer belong to the selected
+   * race, not to whether its panel is taking width this moment. */
+  const [analystReady, setAnalystReady] = useState(false);
 
   /* Also the back button: a navigation changes the prop, and the store follows
    * it. Selecting a race the store already holds is a no-op, so the mount pass
@@ -89,38 +95,65 @@ export function RaceWorkspace({
   };
 
   return (
-    <main className={styles.workspace}>
-      <section
+    <main
+      className={styles.workspace}
+      data-library-open={libraryOpen}
+      data-analyst-open={analystOpen}
+    >
+      <aside
         id="race-list"
-        className={styles.library}
-        aria-labelledby="race-list-heading"
+        className={styles.libraryPane}
+        aria-label="Race library"
         tabIndex={-1}
       >
-        <h2 id="race-list-heading" className={styles.libraryHeading}>
-          Races
-        </h2>
-        <ul className={styles.rows}>
-          {rows.map((row) => (
-            <li key={row.id}>
-              <button
-                type="button"
-                className={styles.row}
-                aria-current={row.id === raceId ? "true" : undefined}
-                onClick={() => select(row.id)}
-              >
-                <span className={styles.rowName}>{row.name}</span>
-                <span className={styles.rowMeta}>{`${row.venue} · ${row.dateLabel}`}</span>
-                <span className={styles.rowStats}>
-                  <span>{`${row.boats} boats`}</span>
-                  <span>
-                    Winner <strong>{row.elapsed}</strong>
+        <div className={styles.paneBar}>
+          <button
+            id="race-list-toggle"
+            type="button"
+            className={styles.paneToggle}
+            aria-controls="race-library-panel"
+            aria-expanded={libraryOpen}
+            aria-label={libraryOpen ? "Close race library" : "Open race library"}
+            onClick={() => setLibraryOpen((open) => !open)}
+          >
+            <span className={styles.paneArrow} aria-hidden="true">
+              {libraryOpen ? "‹" : "›"}
+            </span>
+            <span className={styles.paneLabel}>Races</span>
+          </button>
+        </div>
+        <section
+          id="race-library-panel"
+          className={`${styles.drawerBody} ${styles.library}`}
+          aria-labelledby="race-list-heading"
+          hidden={!libraryOpen}
+        >
+          <h2 id="race-list-heading" className={styles.libraryHeading}>
+            Race library
+          </h2>
+          <ul className={styles.rows}>
+            {rows.map((row) => (
+              <li key={row.id}>
+                <button
+                  type="button"
+                  className={styles.row}
+                  aria-current={row.id === raceId ? "true" : undefined}
+                  onClick={() => select(row.id)}
+                >
+                  <span className={styles.rowName}>{row.name}</span>
+                  <span className={styles.rowMeta}>{`${row.venue} · ${row.dateLabel}`}</span>
+                  <span className={styles.rowStats}>
+                    <span>{`${row.boats} boats`}</span>
+                    <span>
+                      Winner <strong>{row.elapsed}</strong>
+                    </span>
                   </span>
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </aside>
 
       {/* The id the analyst's moment chips scroll to, same as on the story
           page, so a chip drives the viewer from either layout. */}
@@ -141,24 +174,54 @@ export function RaceWorkspace({
         </LaylineApp>
       </section>
 
-      {/* Remounted with the race. The thread belongs to the race it was asked
-          about, and the unmount aborts an answer still streaming for the race
-          nobody is watching any more. */}
-      <div id="race-analyst" className={styles.analyst} tabIndex={-1}>
-        {analystOffline ? (
-          <div className={styles.analystOffline}>
-            <h2 className={styles.offlineHeading}>Debrief</h2>
-            <p className={styles.offlineLine}>Analyst offline in this build</p>
-            <p className={styles.offlineLine}>
-              It answers when a model key or the mock mode is configured
-            </p>
-          </div>
-        ) : mounted ? (
-          <AnalystSection key={raceId} variant="rail" />
-        ) : (
-          <div className={styles.analystHold} aria-hidden="true" />
-        )}
-      </div>
+      <aside
+        id="race-analyst"
+        className={styles.analystPane}
+        aria-label="Race debrief"
+        tabIndex={-1}
+      >
+        <div className={styles.paneBar}>
+          <button
+            id="race-analyst-toggle"
+            type="button"
+            className={styles.paneToggle}
+            aria-controls="race-debrief-panel"
+            aria-expanded={analystOpen}
+            aria-label={analystOpen ? "Close debrief" : "Open debrief"}
+            onClick={() => {
+              if (!analystOpen) setAnalystReady(true);
+              setAnalystOpen((open) => !open);
+            }}
+          >
+            <span className={styles.paneLabel}>Debrief</span>
+            <span className={styles.paneArrow} aria-hidden="true">
+              {analystOpen ? "›" : "‹"}
+            </span>
+          </button>
+        </div>
+        {/* Remounted with the race. Closing the drawer only hides it, so its
+            thread stays intact. Changing races still aborts any answer for the
+            race nobody is watching. */}
+        <div
+          id="race-debrief-panel"
+          className={`${styles.drawerBody} ${styles.analyst}`}
+          hidden={!analystOpen}
+        >
+          {analystOffline ? (
+            <div className={styles.analystOffline}>
+              <h2 className={styles.offlineHeading}>Debrief</h2>
+              <p className={styles.offlineLine}>Analyst offline in this build</p>
+              <p className={styles.offlineLine}>
+                It answers when a model key or the mock mode is configured
+              </p>
+            </div>
+          ) : mounted && analystReady ? (
+            <AnalystSection key={raceId} variant="rail" />
+          ) : (
+            <div className={styles.analystHold} aria-hidden="true" />
+          )}
+        </div>
+      </aside>
     </main>
   );
 }

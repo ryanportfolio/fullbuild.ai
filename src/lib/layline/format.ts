@@ -43,6 +43,24 @@ export function deg(a: number): string {
   return String(r);
 }
 
+/** Evidence clock to hundredths, with carries resolved before decomposition. */
+export function fixStamp(t: number): string {
+  if (!Number.isFinite(t)) return MISSING;
+  const sign = t < 0 ? "-" : "+";
+  const hundredths = Math.round(Math.abs(t) * 100);
+  const minutes = Math.floor(hundredths / 6000);
+  const seconds = (hundredths - minutes * 6000) / 100;
+  return `T${sign}${String(minutes).padStart(2, "0")}:${seconds.toFixed(2).padStart(5, "0")}`;
+}
+
+/** Unsigned heading to one decimal, wrapped after display-precision rounding. */
+export function heading(value: number): string {
+  if (!Number.isFinite(value)) return MISSING;
+  const roundedTenths = Math.round(value * 10);
+  const wrappedTenths = ((roundedTenths % 3600) + 3600) % 3600;
+  return `${(wrappedTenths / 10).toFixed(1)}°`;
+}
+
 /**
  * Race clock, m:ss against the gun at zero. The prestart counts down, so a
  * part second still reads as the second remaining: -0:00 would claim the gun

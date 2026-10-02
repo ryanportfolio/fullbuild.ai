@@ -198,7 +198,8 @@ function DemandBridge() {
           state.t !== previous.t ||
           state.rig !== previous.rig ||
           state.mode !== previous.mode ||
-          state.followId !== previous.followId
+          state.followId !== previous.followId ||
+          state.truthMode !== previous.truthMode
         ) {
           stamp.current += FROZEN_STEP;
           advance(stamp.current);
@@ -292,6 +293,7 @@ function RenderGate() {
           state.rig !== previous.rig ||
           state.mode !== previous.mode ||
           state.followId !== previous.followId ||
+          state.truthMode !== previous.truthMode ||
           state.chart2d !== previous.chart2d ||
           state.playing !== previous.playing ||
           state.frozen !== previous.frozen ||

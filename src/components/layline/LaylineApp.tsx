@@ -12,6 +12,7 @@ import { StartLine } from "./hud/StartLine";
 import { Timeline } from "./hud/Timeline";
 import { TopBar } from "./hud/TopBar";
 import { Transport } from "./hud/Transport";
+import { TruthInspector } from "./hud/TruthInspector";
 import { VmgStrip } from "./hud/VmgStrip";
 import { ChartView } from "./svg/ChartView";
 import { AUTOPLAY_FROM, raceData, useReplay } from "./store";
@@ -64,6 +65,7 @@ export function LaylineApp({
   const race = useMemo(() => raceData(), []);
   const live = useReplay((state) => state.webglOk);
   const chart2d = useReplay((state) => state.chart2d);
+  const truthMode = useReplay((state) => state.truthMode);
 
   /* On desktop the chart lives 350ms past the renderer's first frame so it
    * can fade out instead of cutting; boot inside its own 1.2s reveal delay
@@ -224,7 +226,7 @@ export function LaylineApp({
         {live ? <Standings race={race} /> : null}
       </div>
       <div className={styles.dockRight} data-dock="instruments">
-        {live ? <Instruments race={race} /> : null}
+        {truthMode ? <TruthInspector race={race} /> : live ? <Instruments race={race} /> : null}
       </div>
       <div className={styles.dockBottom} data-dock="transport">
         {live ? (
@@ -242,6 +244,15 @@ export function LaylineApp({
           {children}
         </div>
       )}
+
+      {/* A context-free truth view. It replaces the static finish sheet only
+          while explicitly requested and reads the same clock and selected
+          boat as the 3D path. The inspector above states why this is 2D. */}
+      {truthMode && !live ? (
+        <div className={styles.truthFallbackLayer}>
+          <ChartView race={race} />
+        </div>
+      ) : null}
 
       <CaptureBridge />
     </div>
