@@ -35,6 +35,11 @@
     "showpiece": "native",
     "writing": "native",
     "external-review": "native",
-    "opus-fullreview": "native"
+    "opus-fullreview": "native",
+    "servers": "native",
+    "wrapup": "native",
+    "init-project": "native",
+    "optimize-context": "native",
+    "sync-starter": "native"
   }
 }
