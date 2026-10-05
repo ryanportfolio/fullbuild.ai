@@ -23,7 +23,7 @@ for comparison, backup, reconciliation, and discovery checks.
 | Status | Skills |
 |---|---|
 | Native | `addskill`, `babysit-ci`, `brainstorming`, `bro`, `caveman`, `dsh-plugin-permanent`, `enhance-prompt`, `external-review`, `fable-mode`, `forge-repo-ui-skill`, `handoff-audit`, `next-round`, `recall`, `refine`, `servers`, `session-hub`, `showpiece`, `wrapup`, `writing`, `writing-plans` |
-| Adapted | `astra-review`, `claude-review`, `codex-review`, `init-project`, `lab`, `optimize-context`, `opus-fullreview`, `sync-starter` |
+| Adapted | `astra-review`, `claude-review`, `codex-review`, `deep-plan`, `init-project`, `lab`, `optimize-context`, `opus-fullreview`, `sync-starter` |
 | Capability-gated | `advocate`, `arena`, `dare`, `design-fullbuild-surfaces`, `impartial-review`, `long-horizon`, `perf-loop`, `reference-site-prototyping`, `showcase-register`, `why`, `wow-loop` |
 | Dangerous | `adopt-repo`, `ship-layline` |
 | Claude-only | `astra-fullreview`, `codex-fullreview`, `compact-review`, `long-horizon-workflows`, `merge` |
