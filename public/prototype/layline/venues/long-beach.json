@@ -1,0 +1,71 @@
+{
+  "id": "long-beach",
+  "origin": {
+    "lat": 33.742,
+    "lon": -118.155
+  },
+  "bearing": 215,
+  "clipRadius": 10500,
+  "dataVersion": "2026-08-31",
+  "sources": {
+    "coastline": "OpenStreetMap via Overpass API",
+    "buildings": "OpenStreetMap via Overpass API (LA County LiDAR heights)",
+    "elevation": "Mapzen Terrarium z11 (AWS Open Data)",
+    "horizon": "Mapzen Terrarium z11/z10 ray march to 90 km (AWS Open Data)"
+  },
+  "attribution": [
+    "Map data (c) OpenStreetMap contributors, ODbL",
+    "Elevation: Mapzen Terrarium tiles via AWS Open Data",
+    "Terrain: USGS 3DEP and NASA SRTM, courtesy of the U.S. Geological Survey"
+  ],
+  "occlusion": {
+    "seed": 1818327372,
+    "supportSamples": 16,
+    "ambientRaysPerSample": 12,
+    "ambientRange": 18,
+    "sunAngularRadiusDeg": 0.2667,
+    "sunRange": 399
+  },
+  "products": {
+    "trees": "7770434cc03e916c9111a8f67aa2eee24cbad48a50ec5cb68ef98edfea51ab75",
+    "shoreline": "1ce6bc6c336c1a7c02314f55061a6074521bd9814df1f614798fbbb6de3e4bdf",
+    "masses": "480df59f80a57d925449d5af3d9d8a0ed994347f48c2e65312a080f1a29291e2"
+  },
+  "stats": {
+    "vertices": 66249,
+    "triangles": 66931,
+    "bytes": 636877,
+    "layers": [
+      {
+        "classId": 5,
+        "name": "curtain",
+        "vertices": 4252,
+        "triangles": 4240
+      },
+      {
+        "classId": 1,
+        "name": "terrain",
+        "vertices": 19075,
+        "triangles": 24930
+      },
+      {
+        "classId": 2,
+        "name": "massing",
+        "vertices": 3500,
+        "triangles": 2169
+      },
+      {
+        "classId": 3,
+        "name": "port",
+        "vertices": 11550,
+        "triangles": 7326
+      },
+      {
+        "classId": 4,
+        "name": "heroes",
+        "vertices": 27872,
+        "triangles": 28266
+      }
+    ]
+  }
+}

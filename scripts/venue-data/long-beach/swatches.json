@@ -1,0 +1,632 @@
+{
+  "product": "swatches",
+  "venue": "long-beach",
+  "schema": 1,
+  "generator": "scripts/layline-derive-scenery.mjs",
+  "title": "Median NAIP colour per material region",
+  "method": "Component-wise median RGB over a pixel set from one pinned NAIP scene. `points` are a fixed window at a named place; `regions` are masks defined by signed distance to the island's OSM ring, so nothing is a hand-picked pixel. Each channel is taken independently, which makes the result representative rather than a pixel that exists.",
+  "ortho": {
+    "service": "https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPImagery/ImageServer",
+    "pin": "lockRaster",
+    "groundSampleM": 0.6,
+    "acquired": "2022-05-11",
+    "rendering": {
+      "rasterFunction": "NaturalColor",
+      "interpolation": "RSP_BilinearInterpolation"
+    },
+    "attribution": "NAIP orthoimagery, USGS/USDA public domain, via The National Map"
+  },
+  "vintage": {
+    "caveat": "The orthophoto is 2022-05-11/12 and the scan is 2023-10-02/03. Anything repainted after May 2022 is the wrong colour here."
+  },
+  "parameters": {
+    "rimSwatchHalfWidthM": 4,
+    "deckSwatchInboardM": 20,
+    "waterSwatchOutboardM": 15
+  },
+  "crops": [
+    {
+      "name": "islandWhite",
+      "metres": 400,
+      "sizePx": 512,
+      "metresPerPixel": 0.78,
+      "bbox3857": [
+        -13153751.577,
+        3995375.158,
+        -13153270.487,
+        3995856.248
+      ],
+      "quad": {
+        "id": 16095,
+        "name": "m_3311815_se_11_060_20220511",
+        "year": 2022,
+        "acquired": "2022-05-11"
+      },
+      "coverage": "box",
+      "whiteFraction": 0
+    },
+    {
+      "name": "islandGrissom",
+      "metres": 400,
+      "sizePx": 512,
+      "metresPerPixel": 0.78,
+      "bbox3857": [
+        -13156158.323,
+        3996274.893,
+        -13155677.196,
+        3996756.02
+      ],
+      "quad": {
+        "id": 16095,
+        "name": "m_3311815_se_11_060_20220511",
+        "year": 2022,
+        "acquired": "2022-05-11"
+      },
+      "coverage": "box",
+      "whiteFraction": 0
+    },
+    {
+      "name": "islandChaffee",
+      "metres": 400,
+      "sizePx": 512,
+      "metresPerPixel": 0.78,
+      "bbox3857": [
+        -13151460.587,
+        3993685.667,
+        -13150979.567,
+        3994166.686
+      ],
+      "quad": {
+        "id": 16104,
+        "name": "m_3311823_ne_11_060_20220511",
+        "year": 2022,
+        "acquired": "2022-05-11"
+      },
+      "coverage": "box",
+      "whiteFraction": 0
+    },
+    {
+      "name": "islandFreeman",
+      "metres": 400,
+      "sizePx": 512,
+      "metresPerPixel": 0.78,
+      "bbox3857": [
+        -13153960.827,
+        3993930.641,
+        -13153479.798,
+        3994411.671
+      ],
+      "quad": {
+        "id": 16104,
+        "name": "m_3311823_ne_11_060_20220511",
+        "year": 2022,
+        "acquired": "2022-05-11"
+      },
+      "coverage": "box",
+      "whiteFraction": 0
+    },
+    {
+      "name": "tankFarm",
+      "metres": 500,
+      "sizePx": 512,
+      "metresPerPixel": 0.98,
+      "bbox3857": [
+        -13159789.647,
+        3998262.169,
+        -13159188.13,
+        3998863.686
+      ],
+      "quad": {
+        "id": 16096,
+        "name": "m_3311815_sw_11_060_20220511",
+        "year": 2022,
+        "acquired": "2022-05-11"
+      },
+      "coverage": "box",
+      "whiteFraction": 0
+    },
+    {
+      "name": "cranesPierJ",
+      "metres": 500,
+      "sizePx": 512,
+      "metresPerPixel": 0.98,
+      "bbox3857": [
+        -13158431.43,
+        3993709.874,
+        -13157830.152,
+        3994311.152
+      ],
+      "quad": {
+        "id": 16105,
+        "name": "m_3311823_nw_11_060_20220511",
+        "year": 2022,
+        "acquired": "2022-05-11"
+      },
+      "coverage": "box",
+      "whiteFraction": 0
+    },
+    {
+      "name": "openWater",
+      "metres": 300,
+      "sizePx": 512,
+      "metresPerPixel": 0.59,
+      "bbox3857": [
+        -13153134.821,
+        3994030.93,
+        -13152774.048,
+        3994391.704
+      ],
+      "quad": {
+        "id": 16104,
+        "name": "m_3311823_ne_11_060_20220511",
+        "year": 2022,
+        "acquired": "2022-05-11"
+      },
+      "coverage": "box",
+      "whiteFraction": 0
+    }
+  ],
+  "points": [
+    {
+      "name": "islandDeck",
+      "material": "islandDeck",
+      "crop": "islandWhite",
+      "quad": {
+        "id": 16095,
+        "name": "m_3311815_se_11_060_20220511",
+        "acquired": "2022-05-11"
+      },
+      "lon": -118.16,
+      "lat": 33.75249,
+      "windowPx": 15,
+      "pixels": 225,
+      "rgb": [
+        177,
+        176,
+        163
+      ],
+      "hex": "#b1b0a3"
+    },
+    {
+      "name": "islandPlanting",
+      "material": "veg",
+      "crop": "islandGrissom",
+      "quad": {
+        "id": 16095,
+        "name": "m_3311815_se_11_060_20220511",
+        "acquired": "2022-05-11"
+      },
+      "lon": -118.18162,
+      "lat": 33.75921,
+      "windowPx": 15,
+      "pixels": 225,
+      "rgb": [
+        141,
+        139,
+        126
+      ],
+      "hex": "#8d8b7e"
+    },
+    {
+      "name": "tankFarm",
+      "material": "tank",
+      "crop": "tankFarm",
+      "quad": {
+        "id": 16096,
+        "name": "m_3311815_sw_11_060_20220511",
+        "acquired": "2022-05-11"
+      },
+      "lon": -118.2137,
+      "lat": 33.7745,
+      "windowPx": 15,
+      "pixels": 225,
+      "rgb": [
+        35,
+        63,
+        72
+      ],
+      "hex": "#233f48"
+    },
+    {
+      "name": "portApron",
+      "material": "apron",
+      "crop": "cranesPierJ",
+      "quad": {
+        "id": 16105,
+        "name": "m_3311823_nw_11_060_20220511",
+        "acquired": "2022-05-11"
+      },
+      "lon": -118.2015,
+      "lat": 33.7405,
+      "windowPx": 15,
+      "pixels": 225,
+      "rgb": [
+        159,
+        165,
+        164
+      ],
+      "hex": "#9fa5a4"
+    },
+    {
+      "name": "openWater",
+      "material": "water",
+      "crop": "openWater",
+      "quad": {
+        "id": 16104,
+        "name": "m_3311823_ne_11_060_20220511",
+        "acquired": "2022-05-11"
+      },
+      "lon": -118.155,
+      "lat": 33.742,
+      "windowPx": 15,
+      "pixels": 225,
+      "rgb": [
+        44,
+        69,
+        61
+      ],
+      "hex": "#2c453d"
+    }
+  ],
+  "regions": [
+    {
+      "name": "islandWhite.deck",
+      "island": "islandWhite",
+      "region": "deck",
+      "material": "islandDeck",
+      "crop": "islandWhite",
+      "band": {
+        "fromM": 32,
+        "from": "inboard of the rim crown"
+      },
+      "quad": {
+        "id": 16095,
+        "name": "m_3311815_se_11_060_20220511",
+        "acquired": "2022-05-11"
+      },
+      "pixels": 44526,
+      "rgb": [
+        127,
+        124,
+        112
+      ],
+      "hex": "#7f7c70"
+    },
+    {
+      "name": "islandWhite.rim",
+      "island": "islandWhite",
+      "region": "rim",
+      "material": "rock",
+      "crop": "islandWhite",
+      "band": {
+        "centreM": 12,
+        "halfWidthM": 4,
+        "from": "the measured rim crown"
+      },
+      "quad": {
+        "id": 16095,
+        "name": "m_3311815_se_11_060_20220511",
+        "acquired": "2022-05-11"
+      },
+      "pixels": 11631,
+      "rgb": [
+        117,
+        116,
+        102
+      ],
+      "hex": "#757466"
+    },
+    {
+      "name": "islandWhite.water",
+      "island": "islandWhite",
+      "region": "water",
+      "material": "water",
+      "crop": "islandWhite",
+      "band": {
+        "toM": -15,
+        "from": "outboard of the OSM waterline"
+      },
+      "quad": {
+        "id": 16095,
+        "name": "m_3311815_se_11_060_20220511",
+        "acquired": "2022-05-11"
+      },
+      "pixels": 150310,
+      "rgb": [
+        42,
+        65,
+        60
+      ],
+      "hex": "#2a413c"
+    },
+    {
+      "name": "islandGrissom.deck",
+      "island": "islandGrissom",
+      "region": "deck",
+      "material": "islandDeck",
+      "crop": "islandGrissom",
+      "band": {
+        "fromM": 29,
+        "from": "inboard of the rim crown"
+      },
+      "quad": {
+        "id": 16095,
+        "name": "m_3311815_se_11_060_20220511",
+        "acquired": "2022-05-11"
+      },
+      "pixels": 38065,
+      "rgb": [
+        131,
+        130,
+        118
+      ],
+      "hex": "#838276"
+    },
+    {
+      "name": "islandGrissom.rim",
+      "island": "islandGrissom",
+      "region": "rim",
+      "material": "rock",
+      "crop": "islandGrissom",
+      "band": {
+        "centreM": 9,
+        "halfWidthM": 4,
+        "from": "the measured rim crown"
+      },
+      "quad": {
+        "id": 16095,
+        "name": "m_3311815_se_11_060_20220511",
+        "acquired": "2022-05-11"
+      },
+      "pixels": 11611,
+      "rgb": [
+        92,
+        101,
+        82
+      ],
+      "hex": "#5c6552"
+    },
+    {
+      "name": "islandGrissom.water",
+      "island": "islandGrissom",
+      "region": "water",
+      "material": "water",
+      "crop": "islandGrissom",
+      "band": {
+        "toM": -15,
+        "from": "outboard of the OSM waterline"
+      },
+      "quad": {
+        "id": 16095,
+        "name": "m_3311815_se_11_060_20220511",
+        "acquired": "2022-05-11"
+      },
+      "pixels": 159508,
+      "rgb": [
+        48,
+        67,
+        73
+      ],
+      "hex": "#304349"
+    },
+    {
+      "name": "islandChaffee.deck",
+      "island": "islandChaffee",
+      "region": "deck",
+      "material": "islandDeck",
+      "crop": "islandChaffee",
+      "band": {
+        "fromM": 28,
+        "from": "inboard of the rim crown"
+      },
+      "quad": {
+        "id": 16104,
+        "name": "m_3311823_ne_11_060_20220511",
+        "acquired": "2022-05-11"
+      },
+      "pixels": 45016,
+      "rgb": [
+        119,
+        114,
+        101
+      ],
+      "hex": "#777265"
+    },
+    {
+      "name": "islandChaffee.rim",
+      "island": "islandChaffee",
+      "region": "rim",
+      "material": "rock",
+      "crop": "islandChaffee",
+      "band": {
+        "centreM": 8,
+        "halfWidthM": 4,
+        "from": "the measured rim crown"
+      },
+      "quad": {
+        "id": 16104,
+        "name": "m_3311823_ne_11_060_20220511",
+        "acquired": "2022-05-11"
+      },
+      "pixels": 11386,
+      "rgb": [
+        98,
+        99,
+        76
+      ],
+      "hex": "#62634c"
+    },
+    {
+      "name": "islandChaffee.water",
+      "island": "islandChaffee",
+      "region": "water",
+      "material": "water",
+      "crop": "islandChaffee",
+      "band": {
+        "toM": -15,
+        "from": "outboard of the OSM waterline"
+      },
+      "quad": {
+        "id": 16104,
+        "name": "m_3311823_ne_11_060_20220511",
+        "acquired": "2022-05-11"
+      },
+      "pixels": 156754,
+      "rgb": [
+        35,
+        66,
+        60
+      ],
+      "hex": "#23423c"
+    },
+    {
+      "name": "islandFreeman.deck",
+      "island": "islandFreeman",
+      "region": "deck",
+      "material": "islandDeck",
+      "crop": "islandFreeman",
+      "band": {
+        "fromM": 31,
+        "from": "inboard of the rim crown"
+      },
+      "quad": {
+        "id": 16104,
+        "name": "m_3311823_ne_11_060_20220511",
+        "acquired": "2022-05-11"
+      },
+      "pixels": 53255,
+      "rgb": [
+        131,
+        129,
+        114
+      ],
+      "hex": "#838172"
+    },
+    {
+      "name": "islandFreeman.rim",
+      "island": "islandFreeman",
+      "region": "rim",
+      "material": "rock",
+      "crop": "islandFreeman",
+      "band": {
+        "centreM": 11,
+        "halfWidthM": 4,
+        "from": "the measured rim crown"
+      },
+      "quad": {
+        "id": 16104,
+        "name": "m_3311823_ne_11_060_20220511",
+        "acquired": "2022-05-11"
+      },
+      "pixels": 12938,
+      "rgb": [
+        107,
+        108,
+        78
+      ],
+      "hex": "#6b6c4e"
+    },
+    {
+      "name": "islandFreeman.water",
+      "island": "islandFreeman",
+      "region": "water",
+      "material": "water",
+      "crop": "islandFreeman",
+      "band": {
+        "toM": -15,
+        "from": "outboard of the OSM waterline"
+      },
+      "quad": {
+        "id": 16104,
+        "name": "m_3311823_ne_11_060_20220511",
+        "acquired": "2022-05-11"
+      },
+      "pixels": 134579,
+      "rgb": [
+        41,
+        65,
+        57
+      ],
+      "hex": "#294139"
+    }
+  ],
+  "valuesSha256": "69d3a069f91327b9fd7ba27c793ed78b0ad31b680a1cecf5d88cca1d5358926e",
+  "inputs": {
+    "manifest": "provenance.json",
+    "note": "Every raw file behind these numbers is listed with its sha256, URL and retrieval date in provenance.json. The digests here pin the exact sets this product read: listSha256 is sha256 over the sorted `<sha256>\\t<file>` lines.",
+    "ortho": [
+      {
+        "file": "naip/m_3311815_se_11_060_20220511-lock16095-512px-400m-fd16e650470d.png",
+        "sha256": "207eceea1236773cc6f00ff4b18e415d42665a2d34ee438cef3f4130203b0a8e",
+        "bytes": 289839,
+        "query": "https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPImagery/ImageServer/exportImage?bbox=-13153751.577%2C3995375.158%2C-13153270.487%2C3995856.248&bboxSR=3857&imageSR=3857&size=512%2C512&format=png24&interpolation=RSP_BilinearInterpolation&mosaicRule=%7B%22mosaicMethod%22%3A%22esriMosaicLockRaster%22%2C%22lockRasterIds%22%3A%5B16095%5D%2C%22ascending%22%3Atrue%2C%22mosaicOperation%22%3A%22MT_FIRST%22%7D&renderingRule=%7B%22rasterFunction%22%3A%22NaturalColor%22%7D&f=image",
+        "retrieved": "2026-08-29"
+      },
+      {
+        "file": "naip/m_3311815_se_11_060_20220511-lock16095-512px-400m-d13b0211dd85.png",
+        "sha256": "710c095d80805a82cd846d6cc69eb028b9dd47928f6f98b719e55c7c08ad5a5e",
+        "bytes": 307855,
+        "query": "https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPImagery/ImageServer/exportImage?bbox=-13156158.323%2C3996274.893%2C-13155677.196%2C3996756.02&bboxSR=3857&imageSR=3857&size=512%2C512&format=png24&interpolation=RSP_BilinearInterpolation&mosaicRule=%7B%22mosaicMethod%22%3A%22esriMosaicLockRaster%22%2C%22lockRasterIds%22%3A%5B16095%5D%2C%22ascending%22%3Atrue%2C%22mosaicOperation%22%3A%22MT_FIRST%22%7D&renderingRule=%7B%22rasterFunction%22%3A%22NaturalColor%22%7D&f=image",
+        "retrieved": "2026-08-29"
+      },
+      {
+        "file": "naip/m_3311823_ne_11_060_20220511-lock16104-512px-400m-1b6b269206c3.png",
+        "sha256": "99a23dcc1e6b1205c2aa7caf59e58a82e94d1dcd45e7adadc5e7abe5412e297f",
+        "bytes": 242980,
+        "query": "https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPImagery/ImageServer/exportImage?bbox=-13151460.587%2C3993685.667%2C-13150979.567%2C3994166.686&bboxSR=3857&imageSR=3857&size=512%2C512&format=png24&interpolation=RSP_BilinearInterpolation&mosaicRule=%7B%22mosaicMethod%22%3A%22esriMosaicLockRaster%22%2C%22lockRasterIds%22%3A%5B16104%5D%2C%22ascending%22%3Atrue%2C%22mosaicOperation%22%3A%22MT_FIRST%22%7D&renderingRule=%7B%22rasterFunction%22%3A%22NaturalColor%22%7D&f=image",
+        "retrieved": "2026-08-29"
+      },
+      {
+        "file": "naip/m_3311823_ne_11_060_20220511-lock16104-512px-400m-3a5bdee58a14.png",
+        "sha256": "cbcc12621cd6f0de08911a0bdb638b4005fc2a28fc0360de5230ff62e540425b",
+        "bytes": 296685,
+        "query": "https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPImagery/ImageServer/exportImage?bbox=-13153960.827%2C3993930.641%2C-13153479.798%2C3994411.671&bboxSR=3857&imageSR=3857&size=512%2C512&format=png24&interpolation=RSP_BilinearInterpolation&mosaicRule=%7B%22mosaicMethod%22%3A%22esriMosaicLockRaster%22%2C%22lockRasterIds%22%3A%5B16104%5D%2C%22ascending%22%3Atrue%2C%22mosaicOperation%22%3A%22MT_FIRST%22%7D&renderingRule=%7B%22rasterFunction%22%3A%22NaturalColor%22%7D&f=image",
+        "retrieved": "2026-08-29"
+      },
+      {
+        "file": "naip/m_3311815_sw_11_060_20220511-lock16096-512px-500m-aa34cfaa205d.png",
+        "sha256": "aa1ec644f446e0f0a0676e147a8e24db633b89f6100aa6f8ac2bd94d93ddb0d1",
+        "bytes": 481283,
+        "query": "https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPImagery/ImageServer/exportImage?bbox=-13159789.647%2C3998262.169%2C-13159188.13%2C3998863.686&bboxSR=3857&imageSR=3857&size=512%2C512&format=png24&interpolation=RSP_BilinearInterpolation&mosaicRule=%7B%22mosaicMethod%22%3A%22esriMosaicLockRaster%22%2C%22lockRasterIds%22%3A%5B16096%5D%2C%22ascending%22%3Atrue%2C%22mosaicOperation%22%3A%22MT_FIRST%22%7D&renderingRule=%7B%22rasterFunction%22%3A%22NaturalColor%22%7D&f=image",
+        "retrieved": "2026-08-29"
+      },
+      {
+        "file": "naip/m_3311823_nw_11_060_20220511-lock16105-512px-500m-fbe4351988b1.png",
+        "sha256": "0b359fabee9158b58024a5595622dc8bcd53c306c27059afab909a8153f3f489",
+        "bytes": 402583,
+        "query": "https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPImagery/ImageServer/exportImage?bbox=-13158431.43%2C3993709.874%2C-13157830.152%2C3994311.152&bboxSR=3857&imageSR=3857&size=512%2C512&format=png24&interpolation=RSP_BilinearInterpolation&mosaicRule=%7B%22mosaicMethod%22%3A%22esriMosaicLockRaster%22%2C%22lockRasterIds%22%3A%5B16105%5D%2C%22ascending%22%3Atrue%2C%22mosaicOperation%22%3A%22MT_FIRST%22%7D&renderingRule=%7B%22rasterFunction%22%3A%22NaturalColor%22%7D&f=image",
+        "retrieved": "2026-08-29"
+      },
+      {
+        "file": "naip/m_3311823_ne_11_060_20220511-lock16104-512px-300m-f72b1637e6c9.png",
+        "sha256": "b950efc607957568c98b0b83385e3a4e886c80fb7902a0327c76574fe8e18728",
+        "bytes": 134925,
+        "query": "https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPImagery/ImageServer/exportImage?bbox=-13153134.821%2C3994030.93%2C-13152774.048%2C3994391.704&bboxSR=3857&imageSR=3857&size=512%2C512&format=png24&interpolation=RSP_BilinearInterpolation&mosaicRule=%7B%22mosaicMethod%22%3A%22esriMosaicLockRaster%22%2C%22lockRasterIds%22%3A%5B16104%5D%2C%22ascending%22%3Atrue%2C%22mosaicOperation%22%3A%22MT_FIRST%22%7D&renderingRule=%7B%22rasterFunction%22%3A%22NaturalColor%22%7D&f=image",
+        "retrieved": "2026-08-29"
+      }
+    ],
+    "osm": [
+      {
+        "file": "overpass-long-beach.json",
+        "sha256": "9b86fe60240520e0a4a3258bb9b87aff3e81692cfa3db894a670bbc72bfac997",
+        "bytes": 460660,
+        "query": "baker Q1: coastline, breakwater and crane ways/nodes over the clip disc + 1500 m",
+        "retrieved": "2026-08-28"
+      },
+      {
+        "file": "overpass-q2-long-beach.json",
+        "sha256": "5133338aa7a6a0485f2a0592703553d393d8fd12dadcc8e4cec807daef7dcfec",
+        "bytes": 533172,
+        "query": "baker Q2: buildings with a height tag at or over MASS_MIN_H",
+        "retrieved": "2026-08-29"
+      },
+      {
+        "file": "overpass-q5-long-beach.json",
+        "sha256": "057c40f07a4494c43c9f05c3acdfd1f3cdae69706ccf2531af569dab983903bf",
+        "bytes": 41430,
+        "query": "baker Q5: hero anchors pinned by OSM id, plus the Signal Hill well cluster",
+        "retrieved": "2026-08-29"
+      }
+    ]
+  }
+}

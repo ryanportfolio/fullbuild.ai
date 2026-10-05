@@ -1,0 +1,97 @@
+{
+  "product": "sea-level",
+  "venue": "long-beach",
+  "schema": 1,
+  "generator": "scripts/layline-derive-scenery.mjs",
+  "title": "Sea plane offset from the water class",
+  "frame": {
+    "description": "Course frame of scripts/layline-bake-venue.mjs: ENU metres about the venue origin, rotated so +y runs up the course axis. 1 unit = 1 m.",
+    "origin": {
+      "lat": 33.742,
+      "lon": -118.155
+    },
+    "bearingDeg": 215,
+    "mPerLat": 110574,
+    "mPerLon": 92567.83,
+    "verticalDatum": "NAVD88 (Geoid18)",
+    "verticalNote": "z is the source file's own elevation, orthometric metres, unshifted."
+  },
+  "method": "Median z of class 9 water returns per patch. This is the tide at scan time in the survey's own vertical datum, which is the plane every other height in these products is measured above.",
+  "parameters": {
+    "waterClasses": [
+      9
+    ]
+  },
+  "acquired": "2023-10-03",
+  "perPatch": [
+    {
+      "patch": "islandWhite",
+      "points": 256986,
+      "z10": 0.61,
+      "z50": 0.67,
+      "z90": 0.73
+    },
+    {
+      "patch": "islandGrissom",
+      "points": 322320,
+      "z10": 0.7,
+      "z50": 0.74,
+      "z90": 0.79
+    },
+    {
+      "patch": "islandChaffee",
+      "points": 89935,
+      "z10": 0.47,
+      "z50": 0.56,
+      "z90": 0.65
+    },
+    {
+      "patch": "islandFreeman",
+      "points": 303358,
+      "z10": 0.58,
+      "z50": 0.63,
+      "z90": 0.69
+    },
+    {
+      "patch": "gatewayTowers",
+      "points": 421570,
+      "z10": 0.8,
+      "z50": 0.81,
+      "z90": 0.82
+    },
+    {
+      "patch": "cranesPierJ",
+      "points": 638311,
+      "z10": 0.63,
+      "z50": 0.66,
+      "z90": 0.69
+    },
+    {
+      "patch": "queenMary",
+      "points": 85988,
+      "z10": 0.71,
+      "z50": 0.75,
+      "z90": 0.77
+    }
+  ],
+  "overall": {
+    "medianOfPatchMediansM": 0.67,
+    "minM": 0.56,
+    "maxM": 0.81
+  },
+  "valuesSha256": "6fc8f8c5c5a86f15ce6415c92af0f56eaa36725e58bdb4b2115a8206da9aa89a",
+  "inputs": {
+    "manifest": "provenance.json",
+    "note": "Every raw file behind these numbers is listed with its sha256, URL and retrieval date in provenance.json. The digests here pin the exact sets this product read: listSha256 is sha256 over the sorted `<sha256>\\t<file>` lines.",
+    "lidar": {
+      "collection": "CA_LosAngeles_1_B23",
+      "count": 1032,
+      "bytes": 172729225,
+      "retrieved": {
+        "first": "2026-08-29",
+        "last": "2026-08-29"
+      },
+      "listSha256": "859d176f227634596183c14f162ed88cdf1cc699162b6d27fd2172fe9d88ff23"
+    }
+  }
+}

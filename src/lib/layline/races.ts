@@ -39,6 +39,18 @@ export interface RaceMeta {
   dateLabel: string;
   seed: number;
   suggestedQuestions: readonly [string, string, string];
+  /** Real-world shore for the scene, baked offline by
+   * `scripts/layline-bake-venue.mjs` from OpenStreetMap and Terrarium
+   * elevation. Absent means the venue keeps the procedural arc. The sim never
+   * reads this: geography is scenery, not physics. */
+  scenery?: {
+    /** Gzipped LVN1 mesh under public/, world-frame, ready to draw. */
+    asset: string;
+    /** Where the course sits on earth and which way +y points, degrees true.
+     * Recorded for rebakes; the mesh already carries the rotation. */
+    origin: { lat: number; lon: number };
+    bearing: number;
+  };
 }
 
 /* The shipped race is first and stays first: it is the default everywhere,
@@ -59,6 +71,14 @@ export const RACES: readonly RaceMeta[] = [
       "How did JPN 18 take the lead",
       "Which boat was fastest downwind",
     ],
+    /* San Pedro Bay inside the breakwater, course axis up the prevailing
+     * sea breeze. The mesh carries the real breakwater, the THUMS oil
+     * islands, the working port and the Palos Verdes ridge. */
+    scenery: {
+      asset: "/prototype/layline/venues/long-beach.bin",
+      origin: { lat: 33.742, lon: -118.155 },
+      bearing: 215,
+    },
   },
   {
     /* Seed 20281113. GBR 21 wins in 47.65 s over an 8.49 s spread after four
