@@ -41,6 +41,8 @@ import styles from "./analyst.module.css";
  * by the route. Suggestion cards render SUGGESTED_QUESTIONS verbatim so the
  * mock route's prefix match always lands. */
 const DROPPED_LINE = "The analyst dropped the connection. Ask again.";
+/* The route answers 429 after two questions per caller in 30 minutes. */
+const RATE_LIMITED_LINE = "That's two questions in 30 minutes, the limit for now. Ask again later.";
 
 /* No citations yet, held at module scope so every commit of a half-streamed
  * answer hands the backdrop and the moment strip the same two objects and
@@ -477,7 +479,7 @@ export function AnalystSection({
         signal: controller.signal,
       });
       if (!res.ok || res.body === null) {
-        fail(DROPPED_LINE);
+        fail(res.status === 429 ? RATE_LIMITED_LINE : DROPPED_LINE);
         return;
       }
       const reader = res.body.getReader();

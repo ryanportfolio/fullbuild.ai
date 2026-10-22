@@ -477,8 +477,8 @@ function sseResponse(stream: ReadableStream<Uint8Array>): Response {
  * their own book, and a cold start empties it, so this bounds casual abuse
  * per warm instance rather than promising a durable quota; the provider
  * spend cap is the real ceiling. Mock mode never reaches it. */
-const RATE_LIMIT = 10;
-const RATE_WINDOW_MS = 60_000;
+const RATE_LIMIT = 2;
+const RATE_WINDOW_MS = 30 * 60_000;
 const rateBook = new Map<string, { count: number; windowStart: number }>();
 
 /* Who to bill a request to. A caller can send any x-forwarded-for it likes and
@@ -802,7 +802,7 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   if (rateLimited(req, Date.now())) {
-    return jsonError(429, "too many requests, give it a minute");
+    return jsonError(429, "too many requests, try again in 30 minutes");
   }
 
   return liveResponse(race, meta, validated, req.signal);
