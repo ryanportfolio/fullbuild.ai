@@ -7,16 +7,18 @@ on:
     types: [opened, synchronize, reopened]
 
 permissions:
-  contents: write
-  pull-requests: write
-  checks: read
-  statuses: read
+  contents: read
 
 jobs:
-  automerge:
+  # Runs the PR's dependency code. Read-only token, no persisted git credentials.
+  smoke:
     if: github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    outputs:
+      ok: ${{ steps.scope.outputs.ok }}
     steps:
       - id: meta
         uses: dependabot/fetch-metadata@v2
@@ -40,6 +42,8 @@ jobs:
 
       - uses: actions/checkout@v4
         if: steps.scope.outputs.ok == 'true'
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         if: steps.scope.outputs.ok == 'true'
@@ -54,24 +58,40 @@ jobs:
           npx playwright-core install --with-deps chromium
           node -e "require('playwright-core').chromium.launch().then(async b => { const p = await b.newPage(); await p.setContent('<h1>ok</h1>'); if (await p.textContent('h1') !== 'ok') throw new Error('page check failed'); console.log('chromium', b.version()); await b.close(); })"
 
+  # Holds the write token. Checks out nothing and runs no PR or dependency code.
+  automerge:
+    needs: smoke
+    if: needs.smoke.outputs.ok == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: read
+      statuses: read
+    steps:
       - name: Wait for the PR's other checks
-        if: steps.scope.outputs.ok == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           SHA: ${{ github.event.pull_request.head.sha }}
           SELF: ${{ github.job }}
+          # Commit status contexts that must exist and succeed before a merge, comma-separated.
+          # A status that has not been posted yet counts as pending, so a slow poster cannot be skipped.
+          REQUIRED_STATUSES: Vercel
         run: |
           for i in $(seq 1 80); do
             runs=$(gh api "repos/$REPO/commits/$SHA/check-runs?per_page=100" --jq "[.check_runs[] | select(.name != \"$SELF\")]")
             pending=$(echo "$runs" | jq '[.[] | select(.status != "completed")] | length')
             failed=$(echo "$runs" | jq '[.[] | select(.status == "completed" and (.conclusion | IN("success","skipped","neutral") | not))] | length')
-            state=$(gh api "repos/$REPO/commits/$SHA/status" --jq '.state')
-            total=$(gh api "repos/$REPO/commits/$SHA/status" --jq '.total_count')
+            status=$(gh api "repos/$REPO/commits/$SHA/status?per_page=100")
+            state=$(echo "$status" | jq -r '.state')
+            total=$(echo "$status" | jq '.total_count')
+            missing=$(echo "$status" | jq --arg req "$REQUIRED_STATUSES" '[$req | split(",")[] | sub("^ +"; "") | sub(" +$"; "") | select(. != "")] - [.statuses[] | select(.state == "success") | .context] | length')
             if [ "$failed" -gt 0 ] || [ "$state" = "failure" ] || [ "$state" = "error" ]; then
               echo "a check failed; leaving the PR open"; exit 1
             fi
-            if [ "$pending" -eq 0 ] && { [ "$total" -eq 0 ] || [ "$state" = "success" ]; }; then
+            if [ "$pending" -eq 0 ] && [ "$missing" -eq 0 ] && { [ "$total" -eq 0 ] || [ "$state" = "success" ]; }; then
               echo "all other checks passed"; exit 0
             fi
             sleep 30
@@ -79,7 +99,6 @@ jobs:
           echo "checks still pending after 40 minutes; leaving the PR open"; exit 1
 
       - name: Merge
-        if: steps.scope.outputs.ok == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
