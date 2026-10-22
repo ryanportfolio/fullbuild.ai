@@ -17,6 +17,8 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
+      # fetch-metadata lists the PR commits, which needs this on private repos
+      pull-requests: read
     outputs:
       ok: ${{ steps.scope.outputs.ok }}
     steps:
