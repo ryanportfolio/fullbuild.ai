@@ -1,0 +1,87 @@
+# Merges Dependabot PRs that only update Playwright packages, once the PR's other checks pass.
+# Owner decision (2026-10-21): Playwright stays on the latest release without a manual review.
+name: Dependabot Playwright auto-merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+  statuses: read
+
+jobs:
+  automerge:
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - id: meta
+        uses: dependabot/fetch-metadata@v2
+
+      - name: Only Playwright packages changed
+        id: scope
+        env:
+          NAMES: ${{ steps.meta.outputs.dependency-names }}
+        run: |
+          ok=true
+          IFS=',' read -ra deps <<< "$NAMES"
+          for d in "${deps[@]}"; do
+            d="$(echo "$d" | xargs)"
+            case "$d" in
+              playwright|playwright-core|@playwright/test) ;;
+              *) ok=false; echo "not a Playwright package: $d" ;;
+            esac
+          done
+          [ ${#deps[@]} -gt 0 ] || ok=false
+          echo "ok=$ok" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        if: steps.scope.outputs.ok == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.scope.outputs.ok == 'true'
+        with:
+          node-version: 22
+
+      - name: Install and launch the new Playwright
+        if: steps.scope.outputs.ok == 'true'
+        working-directory: .${{ steps.meta.outputs.directory }}
+        run: |
+          npm ci
+          npx playwright-core install --with-deps chromium
+          node -e "require('playwright-core').chromium.launch().then(async b => { const p = await b.newPage(); await p.setContent('<h1>ok</h1>'); if (await p.textContent('h1') !== 'ok') throw new Error('page check failed'); console.log('chromium', b.version()); await b.close(); })"
+
+      - name: Wait for the PR's other checks
+        if: steps.scope.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          SELF: ${{ github.job }}
+        run: |
+          for i in $(seq 1 80); do
+            runs=$(gh api "repos/$REPO/commits/$SHA/check-runs?per_page=100" --jq "[.check_runs[] | select(.name != \"$SELF\")]")
+            pending=$(echo "$runs" | jq '[.[] | select(.status != "completed")] | length')
+            failed=$(echo "$runs" | jq '[.[] | select(.status == "completed" and (.conclusion | IN("success","skipped","neutral") | not))] | length')
+            state=$(gh api "repos/$REPO/commits/$SHA/status" --jq '.state')
+            total=$(gh api "repos/$REPO/commits/$SHA/status" --jq '.total_count')
+            if [ "$failed" -gt 0 ] || [ "$state" = "failure" ] || [ "$state" = "error" ]; then
+              echo "a check failed; leaving the PR open"; exit 1
+            fi
+            if [ "$pending" -eq 0 ] && { [ "$total" -eq 0 ] || [ "$state" = "success" ]; }; then
+              echo "all other checks passed"; exit 0
+            fi
+            sleep 30
+          done
+          echo "checks still pending after 40 minutes; leaving the PR open"; exit 1
+
+      - name: Merge
+        if: steps.scope.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: gh pr merge --squash --delete-branch --match-head-commit "$SHA" "$PR_URL"
