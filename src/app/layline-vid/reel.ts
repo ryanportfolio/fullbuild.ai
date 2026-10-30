@@ -22,7 +22,8 @@
    engine that takes the declared type at its word has nothing to decode. The
    tape did nothing when tapped on a phone. It then lived in public/, which
    played, but every deployment stored its own 49.6 MB copy and production
-   deployments are kept for days, so it ate the team's Deployment Storage.
+   deployments were kept for 365 days (now 7), so it ate the team's
+   Deployment Storage.
    The Blob store `fullbuild-media` serves the same bytes (sha256 checked) as
    `Content-Type: video/mp4`, `Content-Disposition: inline`, with
    `206 Partial Content` on a range request and

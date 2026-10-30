@@ -31,7 +31,7 @@ test('the tape facts file states the measured figures', async () => {
      public/ also plays, but every deployment stores it again. */
   assert.match(
     reel,
-    /src: 'https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\/layline-vid\/tape-1080p60-[A-Za-z0-9]+\.mp4'/,
+    /src: 'https:\/\/p5kn0bl2lyy7d3zt\.public\.blob\.vercel-storage\.com\/layline-vid\/tape-1080p60-[A-Za-z0-9]+\.mp4'/,
     'src is the Vercel Blob copy',
   );
   assert.ok(!reel.includes('releases/download/'), 'never back to release-asset hosting');
@@ -107,7 +107,7 @@ test('the sheet ships its floor assets', async () => {
 
 test('the tape is not shipped in the deployment', async () => {
   /* Every deployment stores its own copy of public/, and production
-     deployments are kept for days, so a 49.6 MB tape there multiplies. */
+     deployments are kept for 7 days, so a 49.6 MB tape there multiplies. */
   await assert.rejects(stat(file('public/layline-vid/tape-1080p60.mp4')), { code: 'ENOENT' });
 });
 

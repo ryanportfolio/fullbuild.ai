@@ -19,7 +19,7 @@ test('Maranatha ships one complete progressive-enhancement experience', async ()
   assert.equal((page.match(/<h1[ >]/g) ?? []).length, 1, 'exactly one h1');
   assert.match(page, /<h1>Our Story<\/h1>/);
   assert.match(page, /<video[^>]+id="farm-film"[^>]+muted[^>]+playsinline[^>]+preload="metadata"[^>]+poster="\/prototype\/maranatha\/assets\/poster\.jpg"/s);
-  assert.match(page, /src="https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\/prototype\/maranatha\/assets\/farm1-48-scrub-[A-Za-z0-9]+\.mp4"/);
+  assert.match(page, /src="https:\/\/p5kn0bl2lyy7d3zt\.public\.blob\.vercel-storage\.com\/prototype\/maranatha\/assets\/farm1-48-scrub-[A-Za-z0-9]+\.mp4"/);
   assert.match(page, /class="skip-link"/);
   assert.match(page, /<svg[^>]+class="exchange-map"[^>]+aria-label=/s);
   assert.match(page, /class="visually-hidden"/);

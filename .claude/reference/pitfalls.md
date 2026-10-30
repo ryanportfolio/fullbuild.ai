@@ -399,8 +399,8 @@ the CLI appends a random suffix to the name even with
 `--add-random-suffix false`, so copy the URL it prints.
 
 Don't put large video in `public/` instead. It plays, but every deployment
-stores its own copy and production deployments are kept for days, so roughly
-100 MB of video in `public/` used most of the team's 10 GB Deployment Storage
+stores its own copy and production deployments were kept for 365 days (now
+7), so roughly 100 MB of video in `public/` used most of the team's 10 GB Deployment Storage
 (2026-10-29). `/layline-vid` was re-cut CRF 22 to CRF 29 for 47.3 MB at SSIM Y
 0.994 against the master, with duration, frame count and fps unchanged so
 nothing the sheet prints moved. A re-cut re-derives the poster, the scrub sheet
