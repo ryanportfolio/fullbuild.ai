@@ -29,10 +29,11 @@
      ffmpeg -i out.mp4 -vf "fps=1/2,scale=160:90,tile=12x11" -frames:v 1 \
        -q:v 6 public/<sheet>/scrub-sprites.jpg
 
-   The encoded file is committed to public/, which is what makes the response
+   The encoded file is uploaded to the Vercel Blob store fullbuild-media
+   (see .claude/reference/pitfalls.md for the command), which serves it as
    `video/mp4`; a GitHub release asset is served `application/octet-stream` as
-   an attachment and a strict media engine will not decode it. That is what
-   sets the CRF: a committed file stays under 50 MB, and CRF 29 lands at
+   an attachment and a strict media engine will not decode it. Don't commit it
+   to public/: every deployment would store its own copy. CRF 29 lands at
    47.3 MB and SSIM Y 0.994 against the master. Re-cutting it means re-running
    steps 2-4 and this script, because every figure the sheet prints comes off
    the file it actually serves.

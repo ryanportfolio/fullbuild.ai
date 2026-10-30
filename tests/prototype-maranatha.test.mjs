@@ -19,7 +19,7 @@ test('Maranatha ships one complete progressive-enhancement experience', async ()
   assert.equal((page.match(/<h1[ >]/g) ?? []).length, 1, 'exactly one h1');
   assert.match(page, /<h1>Our Story<\/h1>/);
   assert.match(page, /<video[^>]+id="farm-film"[^>]+muted[^>]+playsinline[^>]+preload="metadata"[^>]+poster="\/prototype\/maranatha\/assets\/poster\.jpg"/s);
-  assert.match(page, /src="\/prototype\/maranatha\/assets\/farm1-48-scrub\.mp4"/);
+  assert.match(page, /src="https:\/\/p5kn0bl2lyy7d3zt\.public\.blob\.vercel-storage\.com\/prototype\/maranatha\/assets\/farm1-48-scrub-[A-Za-z0-9]+\.mp4"/);
   assert.match(page, /class="skip-link"/);
   assert.match(page, /<svg[^>]+class="exchange-map"[^>]+aria-label=/s);
   assert.match(page, /class="visually-hidden"/);
@@ -88,10 +88,8 @@ test('Maranatha ships one complete progressive-enhancement experience', async ()
   );
 });
 
-test('Maranatha ships the supplied film and local type assets', async () => {
+test('Maranatha ships its local type assets and leaves the films in Vercel Blob', async () => {
   for (const path of [
-    'public/prototype/maranatha/assets/farm1.mp4',
-    'public/prototype/maranatha/assets/farm1-48-scrub.mp4',
     'public/prototype/maranatha/assets/poster.jpg',
     'public/prototype/maranatha/assets/fonts/newsreader-latin.woff2',
     'public/prototype/maranatha/assets/fonts/newsreader-italic-latin.woff2',
@@ -100,9 +98,14 @@ test('Maranatha ships the supplied film and local type assets', async () => {
   ]) {
     await access(file(path));
   }
-  const video = await stat(file('public/prototype/maranatha/assets/farm1.mp4'));
-  assert.equal(video.size, 37_416_199, 'the supplied film is copied byte-for-byte');
-  const scrubVideo = await stat(file('public/prototype/maranatha/assets/farm1-48-scrub.mp4'));
-  assert.ok(scrubVideo.size > 5_000_000, 'the scrub encode is unexpectedly small');
-  assert.ok(scrubVideo.size < video.size, 'the scrub encode should be lighter than the source');
+  /* The supplied film (farm1.mp4, 37,416,199 bytes) and its scrub encode
+     (farm1-48-scrub.mp4, 18,404,930 bytes) are kept byte-for-byte in the
+     Vercel Blob store fullbuild-media under prototype/maranatha/assets/.
+     In public/ every deployment would store them again. */
+  for (const path of [
+    'public/prototype/maranatha/assets/farm1.mp4',
+    'public/prototype/maranatha/assets/farm1-48-scrub.mp4',
+  ]) {
+    await assert.rejects(stat(file(path)), { code: 'ENOENT' }, `${path} stays out of the deployment`);
+  }
 });
