@@ -7,9 +7,9 @@ const file = (path) => new URL(`../${path}`, import.meta.url);
 
 /* E-02's own eval harness: every countable claim the exhibit sheet prints is
    re-derived here from the committed data, so a drifted number fails loudly
-   instead of shipping. The A/V deliverable is committed too, at
-   public/layline-vid/tape-1080p60.mp4; its figures were measured with ffprobe
-   on that file and are pinned below. */
+   instead of shipping. The A/V deliverable lives in the Vercel Blob store
+   fullbuild-media (REEL.src); its figures were measured with ffprobe on that
+   file and are pinned below. */
 
 const DURATION = 257.53; // ffprobe: container duration of tape-1080p60.mp4
 const FRAMES = 15450; // ffprobe: video stream nb_frames
@@ -23,13 +23,17 @@ test('the tape facts file states the measured figures', async () => {
   assert.match(reel, /fps: '60\.00'/);
   assert.match(reel, /width: 1920/);
   assert.match(reel, /height: 1080/);
-  /* THE TAPE IS SERVED FROM THIS ORIGIN, and that is a playback contract, not
-     a preference. A GitHub release asset is handed over as
+  /* THE TAPE IS SERVED FROM VERCEL BLOB, and the host is a playback contract,
+     not a preference. A GitHub release asset is handed over as
      application/octet-stream with an attachment disposition, which is a
      download rather than a video, and a media engine that trusts the declared
-     type has nothing to decode. Same-origin static means Vercel declares
-     video/mp4. */
-  assert.match(reel, /src: '\/layline-vid\/tape-1080p60\.mp4'/, 'src is a same-origin static path');
+     type has nothing to decode. Blob declares video/mp4 inline. A copy in
+     public/ also plays, but every deployment stores it again. */
+  assert.match(
+    reel,
+    /src: 'https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\/layline-vid\/tape-1080p60-[A-Za-z0-9]+\.mp4'/,
+    'src is the Vercel Blob copy',
+  );
   assert.ok(!reel.includes('releases/download/'), 'never back to release-asset hosting');
 
   // 60 fps exactly, so the frame count and the duration have to agree to
@@ -101,15 +105,10 @@ test('the sheet ships its floor assets', async () => {
   assert.equal(FRAMES, 15450, 'pinned frame figure unchanged');
 });
 
-test('the tape itself is committed, and stays under the size a repo can carry', async () => {
-  const s = await stat(file('public/layline-vid/tape-1080p60.mp4'));
-
-  assert.ok(s.size > 20_000_000, 'the full tape, not a placeholder');
-  /* 50 MB is where GitHub starts warning on a committed file, and it is what
-     picked CRF 29 over 28 (54.2 MB at SSIM Y 0.995, against 47.3 MB at 0.994).
-     A re-cut that busts this ceiling needs a hosting decision, not a bigger
-     number here. */
-  assert.ok(s.size < 50_000_000, `tape is ${(s.size / 1e6).toFixed(1)} MB, under the 50 MB ceiling`);
+test('the tape is not shipped in the deployment', async () => {
+  /* Every deployment stores its own copy of public/, and production
+     deployments are kept for days, so a 49.6 MB tape there multiplies. */
+  await assert.rejects(stat(file('public/layline-vid/tape-1080p60.mp4')), { code: 'ENOENT' });
 });
 
 test('fullscreen is the tape\'s, and the native controls come with it', async () => {

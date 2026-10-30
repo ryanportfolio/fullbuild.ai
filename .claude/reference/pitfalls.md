@@ -390,13 +390,21 @@ plays anyway, which is how it ships; an engine that takes the declared type at
 its word has no media to decode, and the element just sits there. Reported on
 `/layline-vid`: play did nothing on a phone.
 
-Fix: commit the file under `public/` and serve it same-origin. Vercel declares
-`video/mp4` with ranges intact (measured on
-`/prototype/maranatha/assets/farm1.mp4`). That puts the bytes in git forever,
-so the encode has to earn its size: `/layline-vid` re-cut CRF 22 to CRF 29 for
-47.3 MB at SSIM Y 0.994 against the master, with duration, frame count and fps
-unchanged so nothing the sheet prints moved. Re-derive the poster, the scrub
-sheet and `peaks.json` from the file actually served, and re-measure SSIM;
+Fix: serve it from the Vercel Blob store `fullbuild-media` (team
+sardonicasts-projects, connected to this project). Measured on the tape:
+`Content-Type: video/mp4`, `Content-Disposition: inline`, `206 Partial Content`
+on a range request, `Access-Control-Allow-Origin: *`. Upload with
+`vercel blob put <file> --pathname <path> --access public --content-type video/mp4 --multipart true`;
+the CLI appends a random suffix to the name even with
+`--add-random-suffix false`, so copy the URL it prints.
+
+Don't put large video in `public/` instead. It plays, but every deployment
+stores its own copy and production deployments are kept for days, so roughly
+100 MB of video in `public/` used most of the team's 10 GB Deployment Storage
+(2026-10-29). `/layline-vid` was re-cut CRF 22 to CRF 29 for 47.3 MB at SSIM Y
+0.994 against the master, with duration, frame count and fps unchanged so
+nothing the sheet prints moved. A re-cut re-derives the poster, the scrub sheet
+and `peaks.json` from the file actually served, and re-measures SSIM;
 `scripts/reel-peaks.mjs` carries the whole pipeline in its header.
 
 Same class, same page: `Element.requestFullscreen` does not exist on iOS
