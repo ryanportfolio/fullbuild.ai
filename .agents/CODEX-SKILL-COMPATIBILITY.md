@@ -24,7 +24,7 @@ for comparison, backup, reconciliation, and discovery checks.
 |---|---|
 | Native | `addskill`, `babysit-ci`, `brainstorming`, `bro`, `caveman`, `dsh-plugin-permanent`, `enhance-prompt`, `external-review`, `fable-mode`, `forge-repo-ui-skill`, `handoff-audit`, `next-round`, `recall`, `refine`, `servers`, `session-hub`, `showpiece`, `wrapup`, `writing`, `writing-plans` |
 | Adapted | `apply-firmware`, `astra-review`, `claude-review`, `codex-review`, `deep-plan`, `init-project`, `lab`, `optimize-context`, `opus-fullreview`, `sync-starter` |
-| Capability-gated | `advocate`, `arena`, `cache-loop`, `conversion-ux`, `dare`, `design-fullbuild-surfaces`, `design-prototypes`, `impartial-review`, `long-horizon`, `motion-design`, `perf-loop`, `product-walkthrough`, `redesign-concepts`, `reference-site-prototyping`, `security-loop`, `seo-loop`, `showcase-register`, `ui-quality`, `why`, `wow-animation`, `wow-loop` |
+| Capability-gated | `advocate`, `arena`, `cache-loop`, `climb-loop`, `conversion-ux`, `dare`, `design-fullbuild-surfaces`, `design-prototypes`, `impartial-review`, `long-horizon`, `motion-design`, `perf-loop`, `product-walkthrough`, `redesign-concepts`, `reference-site-prototyping`, `security-loop`, `seo-loop`, `showcase-register`, `ui-quality`, `why`, `wow-animation`, `wow-loop` |
 | Dangerous | `adopt-repo`, `ship-layline` |
 | Claude-only | `astra-fullreview`, `codex-fullreview`, `codex-image-gen`, `coordinate`, `gauntlet`, `long-horizon-workflows`, `merge` |
 
